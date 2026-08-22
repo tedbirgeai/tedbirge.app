@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+
+import { storeGuard } from "@/lib/api-degrade.server";
 import { z } from "zod";
 
 /**
@@ -54,7 +56,7 @@ export const Route = createFileRoute("/api/public/telemetry")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      POST: async ({ request }) => {
+      POST: async ({ request }) => storeGuard(async () => {
         const licenseKey = request.headers.get("x-tedbirge-license")?.trim();
         if (!licenseKey || licenseKey.length < 16 || licenseKey.length > 128) {
           return json({ error: "missing_or_invalid_license" }, 401);
@@ -323,7 +325,7 @@ export const Route = createFileRoute("/api/public/telemetry")({
           // Bölge profili: düğüm bu değeri kendi taşıyıcı kilidi için kullanır.
           region: parsed.region ?? "TR",
         });
-      },
+      }, CORS),
     },
   },
 });

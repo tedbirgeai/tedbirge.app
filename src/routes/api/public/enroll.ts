@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+
+import { storeGuard } from "@/lib/api-degrade.server";
 import { z } from "zod";
 
 /**
@@ -32,7 +34,7 @@ export const Route = createFileRoute("/api/public/enroll")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      POST: async ({ request }) => {
+      POST: async ({ request }) => storeGuard(async () => {
         let parsed;
         try {
           parsed = Body.parse(await request.json());
@@ -131,7 +133,7 @@ export const Route = createFileRoute("/api/public/enroll")({
             queue: `${origin}/api/public/queue`,
           },
         });
-      },
+      }, CORS),
     },
   },
 });

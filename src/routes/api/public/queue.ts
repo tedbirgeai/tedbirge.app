@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+
+import { storeGuard } from "@/lib/api-degrade.server";
 import { z } from "zod";
 
 /**
@@ -55,7 +57,7 @@ export const Route = createFileRoute("/api/public/queue")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      POST: async ({ request }) => {
+      POST: async ({ request }) => storeGuard(async () => {
         const licenseKey = request.headers.get("x-tedbirge-license")?.trim();
         if (!licenseKey || licenseKey.length < 16 || licenseKey.length > 128) {
           return json({ error: "missing_or_invalid_license" }, 401);
@@ -188,7 +190,7 @@ export const Route = createFileRoute("/api/public/queue")({
         if (error) return json({ error: "ack_failed" }, 500);
         await logUsage(200);
         return json({ ok: true, delivered: parsed.ids.length });
-      },
+      }, CORS),
     },
   },
 });
