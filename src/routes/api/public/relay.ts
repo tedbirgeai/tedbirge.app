@@ -58,7 +58,24 @@ function json(data: unknown, status = 200) {
 
 function storageUnavailable(operation: string, error: unknown) {
   console.error(`[relay] ${operation} başarısız`, error);
-  return json({ ok: false, error: "depo_kapali", degraded: true }, 503);
+  return new Response(
+    JSON.stringify({ ok: false, error: "depo_kapali", degraded: true }),
+    {
+      status: 503,
+      headers: {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+        "retry-after": "30",
+      },
+    },
+  );
+}
+
+function deadline<T>(promise: PromiseLike<T>, milliseconds: number): Promise<T | null> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), milliseconds)),
+  ]);
 }
 
 function clientKey(request: Request) {
@@ -88,18 +105,24 @@ export const Route = createFileRoute("/api/public/relay")({
         const readOnly = parsed.action === "lookup" || parsed.action === "pull";
 
         const { checkApiRateLimit } = await import("@/lib/api-rate-limit.server");
-        const perNode = await checkApiRateLimit("relay:node", actor, {
-          perMinute: readOnly ? 300 : 180,
-          perDay: 200_000,
-        });
-        const perIp = perNode.ok
-          ? await checkApiRateLimit("relay:ip", clientKey(request), {
-              perMinute: 3_000,
-              perDay: 1_000_000,
-            })
+        const perNode = await deadline(
+          checkApiRateLimit("relay:node", actor, {
+            perMinute: readOnly ? 300 : 180,
+            perDay: 200_000,
+          }),
+          750,
+        );
+        const perIp = perNode?.ok
+          ? await deadline(
+              checkApiRateLimit("relay:ip", clientKey(request), {
+                perMinute: 3_000,
+                perDay: 1_000_000,
+              }),
+              750,
+            )
           : perNode;
-        const limit = perNode.ok ? perIp : perNode;
-        if (!limit.ok) {
+        const limit = perNode?.ok ? perIp : perNode;
+        if (limit && !limit.ok) {
           return new Response(JSON.stringify({ ok: false, error: limit.message }), {
             status: 429,
             headers: {
@@ -123,6 +146,7 @@ export const Route = createFileRoute("/api/public/relay")({
         }
 
         try {
+        const storeSignal = AbortSignal.timeout(3_000);
         if (parsed.action === "publish") {
           const { error } = await supabaseAdmin.from("relay_directory").upsert(
             {
@@ -133,7 +157,7 @@ export const Route = createFileRoute("/api/public/relay")({
               updated_at: new Date().toISOString(),
             },
             { onConflict: "node_id" },
-          );
+          ).abortSignal(storeSignal);
           if (error) return storageUnavailable("dizin kaydı", error);
           return json({ ok: true });
         }
@@ -146,7 +170,8 @@ export const Route = createFileRoute("/api/public/relay")({
             .from("relay_directory")
             .select("node_id, person_id, sign_public, box_public")
             .eq("node_id", parsed.nodeId)
-            .maybeSingle();
+            .maybeSingle()
+            .abortSignal(storeSignal);
           if (selfError) return storageUnavailable("düğüm araması", selfError);
 
           const person = self?.person_id ?? parsed.nodeId;
@@ -154,7 +179,8 @@ export const Route = createFileRoute("/api/public/relay")({
             .from("relay_directory")
             .select("node_id, person_id, sign_public, box_public")
             .eq("person_id", person)
-            .limit(20);
+            .limit(20)
+            .abortSignal(storeSignal);
           if (fanoutError) return storageUnavailable("bağlı cihaz araması", fanoutError);
 
           const map = new Map<
@@ -196,7 +222,8 @@ export const Route = createFileRoute("/api/public/relay")({
           }));
           const { error } = await supabaseAdmin
             .from("relay_envelopes")
-            .upsert(rows, { onConflict: "pkt_id", ignoreDuplicates: true });
+            .upsert(rows, { onConflict: "pkt_id", ignoreDuplicates: true })
+            .abortSignal(storeSignal);
           if (error) return storageUnavailable("zarf kuyruğu", error);
           // Alıcı kapalıysa cihazını uyandır: yalnızca "yeni şifreli mesaj var"
           // sinyali gider; içerik sunucudan geçmez.
@@ -229,14 +256,16 @@ export const Route = createFileRoute("/api/public/relay")({
             .from("relay_envelopes")
             .delete()
             .in("target_node", mailboxes)
-            .in("pkt_id", parsed.ack);
+            .in("pkt_id", parsed.ack)
+            .abortSignal(storeSignal);
           if (ackError) return storageUnavailable("teslim onayı", ackError);
         }
         // Süresi dolmuş zarfları temizle (ucuz, indeksli).
         const { error: cleanupError } = await supabaseAdmin
           .from("relay_envelopes")
           .delete()
-          .lt("expires_at", new Date().toISOString());
+          .lt("expires_at", new Date().toISOString())
+          .abortSignal(storeSignal);
         if (cleanupError) return storageUnavailable("süre temizliği", cleanupError);
 
         const { data, error: pullError } = await supabaseAdmin
@@ -245,7 +274,8 @@ export const Route = createFileRoute("/api/public/relay")({
           .in("target_node", mailboxes)
           .order("priority", { ascending: true })
           .order("created_at", { ascending: true })
-          .limit(MAX_PULL);
+          .limit(MAX_PULL)
+          .abortSignal(storeSignal);
         if (pullError) return storageUnavailable("zarf teslimi", pullError);
 
         return json({
