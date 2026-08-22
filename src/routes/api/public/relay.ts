@@ -56,12 +56,17 @@ function json(data: unknown, status = 200) {
   });
 }
 
+/**
+ * Depo geçici olarak kapalıyken HTTP hatası döndürmeyiz: istemci zaten
+ * yerel kuyrukta bekletiyor. Hata kodu, tarayıcı/istemci hata katmanlarını
+ * gereksizce tetikliyordu; bunun yerine 200 + `degraded` sözleşmesi.
+ */
 function storageUnavailable(operation: string, error: unknown) {
   console.error(`[relay] ${operation} başarısız`, error);
   return new Response(
-    JSON.stringify({ ok: false, error: "depo_kapali", degraded: true }),
+    JSON.stringify({ ok: false, error: "depo_kapali", degraded: true, retryAfter: 30 }),
     {
-      status: 503,
+      status: 200,
       headers: {
         "content-type": "application/json",
         "cache-control": "no-store",
