@@ -56,6 +56,28 @@ function json(data: unknown, status = 200) {
   });
 }
 
+function storageUnavailable(operation: string, error: unknown) {
+  console.error(`[relay] ${operation} başarısız`, error);
+  return new Response(
+    JSON.stringify({ ok: false, error: "depo_kapali", degraded: true }),
+    {
+      status: 503,
+      headers: {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+        "retry-after": "30",
+      },
+    },
+  );
+}
+
+function deadline<T>(promise: PromiseLike<T>, milliseconds: number): Promise<T | null> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), milliseconds)),
+  ]);
+}
+
 function clientKey(request: Request) {
   return (
     request.headers.get("cf-connecting-ip") ??
@@ -83,18 +105,24 @@ export const Route = createFileRoute("/api/public/relay")({
         const readOnly = parsed.action === "lookup" || parsed.action === "pull";
 
         const { checkApiRateLimit } = await import("@/lib/api-rate-limit.server");
-        const perNode = await checkApiRateLimit("relay:node", actor, {
-          perMinute: readOnly ? 300 : 180,
-          perDay: 200_000,
-        });
-        const perIp = perNode.ok
-          ? await checkApiRateLimit("relay:ip", clientKey(request), {
-              perMinute: 3_000,
-              perDay: 1_000_000,
-            })
+        const perNode = await deadline(
+          checkApiRateLimit("relay:node", actor, {
+            perMinute: readOnly ? 300 : 180,
+            perDay: 200_000,
+          }),
+          750,
+        );
+        const perIp = perNode?.ok
+          ? await deadline(
+              checkApiRateLimit("relay:ip", clientKey(request), {
+                perMinute: 3_000,
+                perDay: 1_000_000,
+              }),
+              750,
+            )
           : perNode;
-        const limit = perNode.ok ? perIp : perNode;
-        if (!limit.ok) {
+        const limit = perNode?.ok ? perIp : perNode;
+        if (limit && !limit.ok) {
           return new Response(JSON.stringify({ ok: false, error: limit.message }), {
             status: 429,
             headers: {
@@ -118,6 +146,7 @@ export const Route = createFileRoute("/api/public/relay")({
         }
 
         try {
+        const storeSignal = AbortSignal.timeout(3_000);
         if (parsed.action === "publish") {
           const { error } = await supabaseAdmin.from("relay_directory").upsert(
             {
@@ -128,8 +157,8 @@ export const Route = createFileRoute("/api/public/relay")({
               updated_at: new Date().toISOString(),
             },
             { onConflict: "node_id" },
-          );
-          if (error) return json({ ok: false, error: "kayit_hatasi" }, 500);
+          ).abortSignal(storeSignal);
+          if (error) return storageUnavailable("dizin kaydı", error);
           return json({ ok: true });
         }
 
@@ -137,18 +166,22 @@ export const Route = createFileRoute("/api/public/relay")({
           // Kimlik hem cihaz düğümü (mob-…) hem kişi kimliği (TBG-…) olabilir.
           // Kişinin TÜM bağlı cihazları döndürülür; gönderen her cihaz için
           // ayrı şifreli zarf üretir (WhatsApp çoklu cihaz modeli).
-          const { data: self } = await supabaseAdmin
+          const { data: self, error: selfError } = await supabaseAdmin
             .from("relay_directory")
             .select("node_id, person_id, sign_public, box_public")
             .eq("node_id", parsed.nodeId)
+            .abortSignal(storeSignal)
             .maybeSingle();
+          if (selfError) return storageUnavailable("düğüm araması", selfError);
 
           const person = self?.person_id ?? parsed.nodeId;
-          const { data: fanout } = await supabaseAdmin
+          const { data: fanout, error: fanoutError } = await supabaseAdmin
             .from("relay_directory")
             .select("node_id, person_id, sign_public, box_public")
             .eq("person_id", person)
-            .limit(20);
+            .limit(20)
+            .abortSignal(storeSignal);
+          if (fanoutError) return storageUnavailable("bağlı cihaz araması", fanoutError);
 
           const map = new Map<
             string,
@@ -163,7 +196,8 @@ export const Route = createFileRoute("/api/public/relay")({
           }
           const devices = Array.from(map.values());
           if (devices.length === 0) return json({ ok: true, found: false, devices: [] });
-          const primary = self ?? devices[0]!;
+          const primary = self ?? devices[0];
+          if (!primary) return json({ ok: true, found: false, devices: [] });
           return json({
             ok: true,
             found: true,
@@ -188,8 +222,9 @@ export const Route = createFileRoute("/api/public/relay")({
           }));
           const { error } = await supabaseAdmin
             .from("relay_envelopes")
-            .upsert(rows, { onConflict: "pkt_id", ignoreDuplicates: true });
-          if (error) return json({ ok: false, error: "kuyruk_hatasi" }, 500);
+            .upsert(rows, { onConflict: "pkt_id", ignoreDuplicates: true })
+            .abortSignal(storeSignal);
+          if (error) return storageUnavailable("zarf kuyruğu", error);
           // Alıcı kapalıysa cihazını uyandır: yalnızca "yeni şifreli mesaj var"
           // sinyali gider; içerik sunucudan geçmez.
           try {
@@ -217,25 +252,31 @@ export const Route = createFileRoute("/api/public/relay")({
           new Set([parsed.nodeId, ...(parsed.personId ? [parsed.personId] : [])]),
         );
         if (parsed.ack.length) {
-          await supabaseAdmin
+          const { error: ackError } = await supabaseAdmin
             .from("relay_envelopes")
             .delete()
             .in("target_node", mailboxes)
-            .in("pkt_id", parsed.ack);
+            .in("pkt_id", parsed.ack)
+            .abortSignal(storeSignal);
+          if (ackError) return storageUnavailable("teslim onayı", ackError);
         }
         // Süresi dolmuş zarfları temizle (ucuz, indeksli).
-        await supabaseAdmin
+        const { error: cleanupError } = await supabaseAdmin
           .from("relay_envelopes")
           .delete()
-          .lt("expires_at", new Date().toISOString());
+          .lt("expires_at", new Date().toISOString())
+          .abortSignal(storeSignal);
+        if (cleanupError) return storageUnavailable("süre temizliği", cleanupError);
 
-        const { data } = await supabaseAdmin
+        const { data, error: pullError } = await supabaseAdmin
           .from("relay_envelopes")
           .select("pkt_id, envelope")
           .in("target_node", mailboxes)
           .order("priority", { ascending: true })
           .order("created_at", { ascending: true })
-          .limit(MAX_PULL);
+          .limit(MAX_PULL)
+          .abortSignal(storeSignal);
+        if (pullError) return storageUnavailable("zarf teslimi", pullError);
 
         return json({
           ok: true,
