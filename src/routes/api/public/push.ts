@@ -85,40 +85,47 @@ export const Route = createFileRoute("/api/public/push")({
           });
         }
 
-        const dispatch = await import("@/lib/push-dispatch.server");
+        // Bulut deposu kapalıyken 500 yerine "geçici olarak kapalı" döneriz;
+        // istemci bildirim kaydını sonra yeniden dener, arayüz bozulmaz.
+        try {
+          const dispatch = await import("@/lib/push-dispatch.server");
 
-        if (parsed.action === "subscribe") {
-          const ok = await dispatch.registerPushSubscription(parsed);
-          return json({ ok });
+          if (parsed.action === "subscribe") {
+            const ok = await dispatch.registerPushSubscription(parsed);
+            return json({ ok });
+          }
+
+          if (parsed.action === "native-subscribe") {
+            const ok = await dispatch.registerNativeToken(parsed);
+            return json({ ok });
+          }
+
+          if (parsed.action === "native-unsubscribe") {
+            const ok = await dispatch.removeNativeToken(parsed.token);
+            return json({ ok });
+          }
+
+          if (parsed.action === "unsubscribe") {
+            const ok = await dispatch.removePushSubscription(parsed.endpoint);
+            return json({ ok });
+          }
+
+          const sent = await dispatch.notifyNode(parsed.to, {
+            kind: parsed.kind,
+            title: parsed.kind === "call" ? "Gelen arama" : "Yeni mesaj",
+            body:
+              parsed.kind === "call"
+                ? "Tedbirge üzerinden sizi arıyor."
+                : "Şifreli yeni mesajınız var.",
+            tag: parsed.kind === "call" ? "tedbirge-call" : "tedbirge-chat",
+            url: parsed.kind === "call" ? "/chat?call=1" : "/chat",
+            peer: parsed.peer,
+          });
+          return json({ ok: true, sent });
+        } catch (error) {
+          console.error("[push] depo erişilemedi", error);
+          return json({ ok: false, error: "depo_kapali", degraded: true }, 503);
         }
-
-        if (parsed.action === "native-subscribe") {
-          const ok = await dispatch.registerNativeToken(parsed);
-          return json({ ok });
-        }
-
-        if (parsed.action === "native-unsubscribe") {
-          const ok = await dispatch.removeNativeToken(parsed.token);
-          return json({ ok });
-        }
-
-        if (parsed.action === "unsubscribe") {
-          const ok = await dispatch.removePushSubscription(parsed.endpoint);
-          return json({ ok });
-        }
-
-        const sent = await dispatch.notifyNode(parsed.to, {
-          kind: parsed.kind,
-          title: parsed.kind === "call" ? "Gelen arama" : "Yeni mesaj",
-          body:
-            parsed.kind === "call"
-              ? "Tedbirge üzerinden sizi arıyor."
-              : "Şifreli yeni mesajınız var.",
-          tag: parsed.kind === "call" ? "tedbirge-call" : "tedbirge-chat",
-          url: parsed.kind === "call" ? "/chat?call=1" : "/chat",
-          peer: parsed.peer,
-        });
-        return json({ ok: true, sent });
       },
     },
   },
