@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { storeGuard } from "@/lib/api-degrade.server";
+
 /**
  * Tek sistem sağlık uç noktası.
  * Kimlik doğrulama: X-Tedbirge-License başlığındaki lisans anahtarı.
@@ -23,7 +25,7 @@ export const Route = createFileRoute("/api/public/health")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      GET: async ({ request }) => {
+      GET: async ({ request }) => storeGuard(async () => {
         const licenseKey = request.headers.get("x-tedbirge-license")?.trim();
         if (!licenseKey || licenseKey.length < 16 || licenseKey.length > 128) {
           return json({ error: "missing_or_invalid_license" }, 401);
@@ -43,7 +45,7 @@ export const Route = createFileRoute("/api/public/health")({
         const { computeHealth } = await import("@/lib/health.server");
         const report = await computeHealth(supabaseAdmin as never, [license.id]);
         return json(report);
-      },
+      }, CORS),
     },
   },
 });
