@@ -147,7 +147,7 @@ export const Route = createFileRoute("/api/public/relay")({
         try {
           ({ supabaseAdmin } = await import("@/integrations/supabase/client.server"));
         } catch {
-          return json({ ok: false, error: "depo_kapali", degraded: true }, 503);
+          return json({ ok: false, error: "depo_kapali", degraded: true, retryAfter: 30 });
         }
 
         try {
@@ -289,7 +289,7 @@ export const Route = createFileRoute("/api/public/relay")({
         });
         } catch (error) {
           console.error("[relay] depo erişilemedi", error);
-          return json({ ok: false, error: "depo_kapali", degraded: true }, 503);
+          return json({ ok: false, error: "depo_kapali", degraded: true, retryAfter: 30 });
         }
       },
     },
