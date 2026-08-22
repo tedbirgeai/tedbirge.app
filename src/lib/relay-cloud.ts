@@ -60,8 +60,14 @@ async function call<T>(body: unknown): Promise<T | null> {
       return null;
     }
     if (!res.ok) return null;
+    const payload = (await res.json()) as T & { degraded?: boolean; retryAfter?: number };
+    // Depo geçici kapalı: HTTP 200 ama `degraded` bayrağı ile gelir.
+    if (payload && typeof payload === "object" && payload.degraded) {
+      void noteBusy(payload.retryAfter && payload.retryAfter > 0 ? payload.retryAfter : 30);
+      return null;
+    }
     cooldownStep = 0;
-    return (await res.json()) as T;
+    return payload as T;
   } catch {
     return null;
   }
