@@ -170,8 +170,8 @@ export const Route = createFileRoute("/api/public/relay")({
             .from("relay_directory")
             .select("node_id, person_id, sign_public, box_public")
             .eq("node_id", parsed.nodeId)
-            .maybeSingle()
-            .abortSignal(storeSignal);
+            .abortSignal(storeSignal)
+            .maybeSingle();
           if (selfError) return storageUnavailable("düğüm araması", selfError);
 
           const person = self?.person_id ?? parsed.nodeId;
