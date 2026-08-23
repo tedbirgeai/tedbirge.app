@@ -89,21 +89,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { httpEquiv: "Content-Security-Policy", content: "upgrade-insecure-requests" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "Tedbirge Protokol — Off-Grid Mesh Ağ Geçidi" },
+      { title: "Tedbirge® WebOS — Otonom P2P Ağ İşletim Sistemi (tedbirge.app)" },
       {
         name: "description",
-        content: "Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı.",
+        content:
+          "Tedbirge® WebOS: taşıyıcı-bağımsız, sıfır-bilgi P2P ağ işletim sistemi. İnternet kesilse de çalışan mesh haberleşme ve veri taşıma katmanı.",
       },
-      { name: "author", content: "Tedbirge Protokol" },
-      { property: "og:title", content: "Tedbirge Protokol" },
-      { property: "og:description", content: "İnternet olmadan çalışan kurumsal mesh altyapısı." },
+      { name: "author", content: "Tedbirge" },
+      { property: "og:title", content: "Tedbirge® WebOS — Otonom P2P Ağ İşletim Sistemi" },
+      {
+        property: "og:description",
+        content: "İnternet kesilse de çalışan, sıfır-bilgi P2P ağ işletim sistemi.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "theme-color", content: "#0b1020" },
+      { name: "twitter:title", content: "Tedbirge® WebOS — Otonom P2P Ağ İşletim Sistemi" },
+      {
+        name: "twitter:description",
+        content: "İnternet kesilse de çalışan, sıfır-bilgi P2P ağ işletim sistemi.",
+      },
+      { name: "theme-color", content: "#f8fafc" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: "Tedbirge" },
+
       { name: "mobile-web-app-capable", content: "yes" },
     ],
 
