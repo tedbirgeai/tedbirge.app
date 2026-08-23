@@ -63,7 +63,41 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Tema-duyarlı palet: yardımcı sınıflar (bg-slate-800, text-emerald-400 …)
+     doğrudan tema değişkenlerinden okur. Böylece tema değişimi saf CSS
+     yeniden boyamadır; React yeniden render olmaz. */
+  --color-slate-50: var(--tb-slate-50);
+  --color-slate-100: var(--tb-slate-100);
+  --color-slate-200: var(--tb-slate-200);
+  --color-slate-300: var(--tb-slate-300);
+  --color-slate-400: var(--tb-slate-400);
+  --color-slate-500: var(--tb-slate-500);
+  --color-slate-600: var(--tb-slate-600);
+  --color-slate-700: var(--tb-slate-700);
+  --color-slate-800: var(--tb-slate-800);
+  --color-slate-900: var(--tb-slate-900);
+  --color-slate-950: var(--tb-slate-950);
+  --color-emerald-200: var(--tb-emerald-200);
+  --color-emerald-300: var(--tb-emerald-300);
+  --color-emerald-400: var(--tb-emerald-400);
+  --color-emerald-500: var(--tb-emerald-500);
+  --color-emerald-600: var(--tb-emerald-600);
+  --color-emerald-950: var(--tb-emerald-950);
+  --color-cyan-200: var(--tb-cyan-200);
+  --color-cyan-300: var(--tb-cyan-300);
+  --color-cyan-400: var(--tb-cyan-400);
+  --color-cyan-500: var(--tb-cyan-500);
+  --color-amber-100: var(--tb-amber-100);
+  --color-amber-200: var(--tb-amber-200);
+  --color-amber-400: var(--tb-amber-400);
+  --color-amber-500: var(--tb-amber-500);
+  --color-rose-300: var(--tb-rose-300);
+  --color-rose-400: var(--tb-rose-400);
+  --color-rose-500: var(--tb-rose-500);
+  --color-rose-600: var(--tb-rose-600);
 }
+
 
 :root {
   --radius: 0.25rem;
@@ -536,52 +570,51 @@ body {
 }
 
 /* ------------------------------------------------------------------
- * TEDBİRGE OS — KİLİTLİ KOYU SİBER (Dark Cyber / P2P) TASARIM KAPSAMI
- * Tüm rotalarda tek renk dili: #06090e zemin, #0b101d panel,
- * emerald/cyan vurgu, muted slate metin. `.tbos` kapsamı shadcn
- * tokenlarını ve iç içe geçmiş `.wa-scope` panellerini de bağlar.
+ * TEDBİRGE® WebOS — TEK RENK DİLİ KAPSAMI
+ * Tüm yüzeyler `--tb-*` tema değişkenlerinden beslenir; `.tbos` kapsamı
+ * shadcn tokenlarını ve iç içe geçmiş `.wa-scope` panellerini de bağlar.
  * ---------------------------------------------------------------- */
 .tbos,
 .tbos .wa,
 .tbos .wa-scope {
-  --background: #06090e;
-  --foreground: #e2e8f0;
-  --card: #0b101d;
-  --card-foreground: #e2e8f0;
-  --popover: #0b101d;
-  --popover-foreground: #e2e8f0;
-  --primary: #10b981;
-  --primary-foreground: #04120c;
-  --secondary: #111a2b;
-  --secondary-foreground: #cbd5e1;
-  --muted: #111a2b;
-  --muted-foreground: #94a3b8;
-  --accent: #06b6d4;
-  --accent-foreground: #04120c;
-  --destructive: #f43f5e;
+  --background: var(--tb-bg);
+  --foreground: var(--tb-text);
+  --card: var(--tb-panel-solid);
+  --card-foreground: var(--tb-text);
+  --popover: var(--tb-panel-solid);
+  --popover-foreground: var(--tb-text);
+  --primary: var(--tb-accent);
+  --primary-foreground: #ffffff;
+  --secondary: var(--tb-bg-soft);
+  --secondary-foreground: var(--tb-text);
+  --muted: var(--tb-bg-soft);
+  --muted-foreground: var(--tb-muted);
+  --accent: var(--tb-accent-2);
+  --accent-foreground: #ffffff;
+  --destructive: var(--tb-rose-500);
   --destructive-foreground: #ffffff;
-  --border: rgba(16, 185, 129, 0.15);
-  --input: rgba(16, 185, 129, 0.22);
-  --ring: #10b981;
-  --sidebar: #0b101d;
-  --sidebar-foreground: #e2e8f0;
-  --sidebar-border: rgba(16, 185, 129, 0.15);
-  /* WhatsApp kabuk belirteçleri koyu siber karşılıklarına bağlanır */
-  --wa-panel: #0b101d;
-  --wa-panel-soft: #111a2b;
-  --wa-border: rgba(16, 185, 129, 0.15);
-  --wa-text: #e2e8f0;
-  --wa-muted: #94a3b8;
-  --wa-accent: #10b981;
-  --wa-accent-soft: rgba(16, 185, 129, 0.12);
-  --wa-bubble-in: #0b101d;
-  --wa-bubble-out: rgba(16, 185, 129, 0.16);
-  --wa-chat-bg: #06090e;
-  --wa-bg: #06090e;
-  --wa-tick: #64748b;
-  --wa-tick-read: #10b981;
-  background-color: #06090e;
-  color: #e2e8f0;
+  --border: var(--tb-border);
+  --input: var(--tb-border);
+  --ring: var(--tb-accent);
+  --sidebar: var(--tb-panel-solid);
+  --sidebar-foreground: var(--tb-text);
+  --sidebar-border: var(--tb-border);
+  /* WhatsApp kabuk belirteçleri aktif temaya bağlanır */
+  --wa-panel: var(--tb-panel-solid);
+  --wa-panel-soft: var(--tb-bg-soft);
+  --wa-border: var(--tb-border);
+  --wa-text: var(--tb-text);
+  --wa-muted: var(--tb-muted);
+  --wa-accent: var(--tb-accent);
+  --wa-accent-soft: color-mix(in srgb, var(--tb-accent) 14%, transparent);
+  --wa-bubble-in: var(--tb-panel-solid);
+  --wa-bubble-out: color-mix(in srgb, var(--tb-accent) 16%, transparent);
+  --wa-chat-bg: var(--tb-bg);
+  --wa-bg: var(--tb-bg);
+  --wa-tick: var(--tb-muted);
+  --wa-tick-read: var(--tb-accent);
+  background-color: var(--tb-bg);
+  color: var(--tb-text);
   font-family: var(--font-osui);
 }
 
@@ -592,16 +625,20 @@ body {
 }
 
 .tbos .bg-white {
-  background-color: #0b101d;
+  background-color: var(--tb-panel-solid);
 }
 
-/* Siber ızgara zemin efekti */
+.tbos .text-white {
+  color: var(--tb-panel-solid);
+}
+
+/* Izgara zemin efekti — aktif temadan beslenir */
 @utility cyber-grid {
-  background-color: #06090e;
+  background-color: var(--tb-bg);
   background-image:
-    linear-gradient(to right, rgba(16, 185, 129, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(16, 185, 129, 0.07) 1px, transparent 1px),
-    radial-gradient(1000px 500px at 20% -10%, rgba(6, 182, 212, 0.1), transparent 65%);
+    linear-gradient(to right, var(--tb-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--tb-grid) 1px, transparent 1px),
+    radial-gradient(1000px 500px at 20% -10%, var(--tb-glow), transparent 65%);
   background-size: 44px 44px, 44px 44px, auto;
 }
 
@@ -618,11 +655,12 @@ body {
 }
 .tbos-window {
   animation: tbos-window-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
-  border: 1px solid rgba(16, 185, 129, 0.15);
-  background: rgba(11, 16, 29, 0.92);
+  border: 1px solid var(--tb-border);
+  background: var(--tb-panel);
   backdrop-filter: blur(18px) saturate(140%);
-  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+  box-shadow: var(--tb-shadow);
 }
+
 
 @media (prefers-reduced-motion: reduce) {
   .tbos-window {
@@ -638,4 +676,151 @@ body {
   to {
     left: calc(100% - 3rem);
   }
+}
+
+/* ==================================================================
+ * TEDBİRGE® WebOS — DİNAMİK TEMA KATMANI
+ * Üç tema: "crystal" (Açık Kristal, varsayılan), "soft" (Açık Soft
+ * Minimal), "night" (Gece Modu). Tercih `documentElement.dataset.theme`
+ * üzerinden yazılır; tüm renkler CSS Custom Property'den okunduğu için
+ * tema değişimi sıfır React re-render maliyetiyle gerçekleşir.
+ * ================================================================ */
+
+:root,
+:root[data-theme="crystal"] {
+  --tb-bg: #f8fafc;
+  --tb-bg-soft: #eef2f7;
+  --tb-panel: rgba(255, 255, 255, 0.72);
+  --tb-panel-solid: #ffffff;
+  --tb-panel-soft: rgba(241, 245, 249, 0.85);
+  --tb-text: #0f172a;
+  --tb-muted: #52627a;
+  --tb-accent: #0f9d76;
+  --tb-accent-2: #0e7490;
+  --tb-border: rgba(15, 23, 42, 0.1);
+  --tb-grid: rgba(15, 118, 110, 0.09);
+  --tb-glow: rgba(14, 116, 144, 0.1);
+  --tb-shadow: 0 24px 60px -28px rgba(15, 23, 42, 0.35);
+
+  --tb-slate-50: #020617;
+  --tb-slate-100: #0f172a;
+  --tb-slate-200: #1e293b;
+  --tb-slate-300: #334155;
+  --tb-slate-400: #52627a;
+  --tb-slate-500: #64748b;
+  --tb-slate-600: #94a3b8;
+  --tb-slate-700: #cbd5e1;
+  --tb-slate-800: #e2e8f0;
+  --tb-slate-900: #f1f5f9;
+  --tb-slate-950: #f8fafc;
+  --tb-emerald-200: #065f46;
+  --tb-emerald-300: #059669;
+  --tb-emerald-400: #0f9d76;
+  --tb-emerald-500: #0d9268;
+  --tb-emerald-600: #047857;
+  --tb-emerald-950: #ecfdf5;
+  --tb-cyan-200: #155e75;
+  --tb-cyan-300: #0e7490;
+  --tb-cyan-400: #0891b2;
+  --tb-cyan-500: #0e7490;
+  --tb-amber-100: #78350f;
+  --tb-amber-200: #92400e;
+  --tb-amber-400: #b45309;
+  --tb-amber-500: #92400e;
+  --tb-rose-300: #be123c;
+  --tb-rose-400: #e11d48;
+  --tb-rose-500: #be123c;
+  --tb-rose-600: #9f1239;
+}
+
+:root[data-theme="soft"] {
+  --tb-bg: #fafafa;
+  --tb-bg-soft: #f4f4f5;
+  --tb-panel: rgba(255, 255, 255, 0.9);
+  --tb-panel-solid: #ffffff;
+  --tb-panel-soft: #f4f4f5;
+  --tb-text: #18181b;
+  --tb-muted: #5f6672;
+  --tb-accent: #2563eb;
+  --tb-accent-2: #475569;
+  --tb-border: rgba(24, 24, 27, 0.09);
+  --tb-grid: rgba(24, 24, 27, 0.05);
+  --tb-glow: rgba(37, 99, 235, 0.07);
+  --tb-shadow: 0 18px 40px -26px rgba(24, 24, 27, 0.3);
+
+  --tb-slate-50: #09090b;
+  --tb-slate-100: #18181b;
+  --tb-slate-200: #27272a;
+  --tb-slate-300: #3f3f46;
+  --tb-slate-400: #5f6672;
+  --tb-slate-500: #71717a;
+  --tb-slate-600: #a1a1aa;
+  --tb-slate-700: #d4d4d8;
+  --tb-slate-800: #e7e7ea;
+  --tb-slate-900: #f4f4f5;
+  --tb-slate-950: #fafafa;
+  --tb-emerald-200: #1e40af;
+  --tb-emerald-300: #1d4ed8;
+  --tb-emerald-400: #2563eb;
+  --tb-emerald-500: #2563eb;
+  --tb-emerald-600: #1d4ed8;
+  --tb-emerald-950: #eff6ff;
+  --tb-cyan-200: #334155;
+  --tb-cyan-300: #475569;
+  --tb-cyan-400: #475569;
+  --tb-cyan-500: #334155;
+  --tb-amber-100: #78350f;
+  --tb-amber-200: #92400e;
+  --tb-amber-400: #b45309;
+  --tb-amber-500: #92400e;
+  --tb-rose-300: #be123c;
+  --tb-rose-400: #e11d48;
+  --tb-rose-500: #be123c;
+  --tb-rose-600: #9f1239;
+}
+
+:root[data-theme="night"] {
+  --tb-bg: #06090e;
+  --tb-bg-soft: #0b101d;
+  --tb-panel: rgba(11, 16, 29, 0.92);
+  --tb-panel-solid: #0b101d;
+  --tb-panel-soft: #111a2b;
+  --tb-text: #e2e8f0;
+  --tb-muted: #94a3b8;
+  --tb-accent: #10b981;
+  --tb-accent-2: #06b6d4;
+  --tb-border: rgba(16, 185, 129, 0.15);
+  --tb-grid: rgba(16, 185, 129, 0.07);
+  --tb-glow: rgba(6, 182, 212, 0.1);
+  --tb-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+
+  --tb-slate-50: #f8fafc;
+  --tb-slate-100: #f1f5f9;
+  --tb-slate-200: #e2e8f0;
+  --tb-slate-300: #cbd5e1;
+  --tb-slate-400: #94a3b8;
+  --tb-slate-500: #64748b;
+  --tb-slate-600: #475569;
+  --tb-slate-700: #334155;
+  --tb-slate-800: #1e293b;
+  --tb-slate-900: #0f172a;
+  --tb-slate-950: #020617;
+  --tb-emerald-200: #a7f3d0;
+  --tb-emerald-300: #6ee7b7;
+  --tb-emerald-400: #34d399;
+  --tb-emerald-500: #10b981;
+  --tb-emerald-600: #059669;
+  --tb-emerald-950: #022c22;
+  --tb-cyan-200: #a5f3fc;
+  --tb-cyan-300: #67e8f9;
+  --tb-cyan-400: #22d3ee;
+  --tb-cyan-500: #06b6d4;
+  --tb-amber-100: #fef3c7;
+  --tb-amber-200: #fde68a;
+  --tb-amber-400: #fbbf24;
+  --tb-amber-500: #f59e0b;
+  --tb-rose-300: #fda4af;
+  --tb-rose-400: #fb7185;
+  --tb-rose-500: #f43f5e;
+  --tb-rose-600: #e11d48;
 }
