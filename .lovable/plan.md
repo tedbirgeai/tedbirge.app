@@ -1,66 +1,67 @@
-# Tedbirge Web-OS — Zero-Touch Düğüm, Kör Aktarım ve Canlı Komut Merkezi
+# Tedbirge® WebOS — Açık Kristal Tema, Marka Eşitlemesi ve tedbirge.dev Ayrımı
 
-Mevcut P2P sohbet, WebRTC ve E2EE katmanına dokunmadan; otomatik düğüm başlatma, arka plan dayanıklılığı, kör aktarım ve gerçek veriyle beslenen bir komut merkezi tamamlanacak.
+Salt-okunur tarama tamamlandı. Aşağıdaki plan; WebRTC, P2P mesh, Rust-Wasm çekirdeği, E2EE ve `kernel.worker.ts` katmanlarına **hiç dokunmadan** yalnızca sunum, tema, marka ve dokümantasyon katmanını dönüştürür.
 
-## Kod tabanında doğrulanan mevcut durum
+## 1. Vizyon / Misyon / Değer uyumu
 
-- `src/lib/node-runtime.ts` düğümü yalnızca daha önce elle açılmışsa (`tedbirge.browser-node.auto === "1"`) başlatıyor. İlk ziyarette cihaz canlı düğüm olmuyor.
-- `src/lib/pwa-install.ts` `beforeinstallprompt` olayını yakalıyor ve iOS tespiti yapıyor; ancak OS bazlı (Android/Windows/macOS) yönlendirme ve "yalnızca tarayıcıdayken göster" mantığı arayüze tam bağlı değil.
-- `src/lib/browser-node.ts` ICE yapılandırmasını (`iceServers`, `iceTransportPolicy: "all"`) kuruyor; `src/lib/call/engine.ts` TURN sunucularını içeriyor. Symmetric NAT için peer-relay yolu Dijkstra motoruna otomatik devredilmiyor.
-- `Navigator.locks` kod tabanında hiç kullanılmıyor; arka plan dayanıklılığı yalnızca `visibilitychange` dinleyicilerine bağlı.
-- `src/components/shell/CommandCenter.tsx` içindeki telemetri kartları sabit değerler kullanıyor (ör. `18,420` aktif düğüm, `1.4 TB`, sabit OS dağılım yüzdeleri).
-- `src/components/Dashboard.tsx` içinde sabit `NODES` dizisi ve `SIM_LOGS` simülasyon günlükleri var; radar ve log akışı kısmen gerçek olaylara bağlı.
-- Eş limiti (`src/lib/peer-limit.ts`, `FREE_PEER_LIMIT = 5`) ana iş parçacığında uygulanıyor; `src/kernel/kernel.worker.ts` peer sayımı yapmıyor.
+| İlke | Mevcut durum | Planın katkısı |
+| --- | --- | --- |
+| Sovereignty & Resilience | Çekirdek (Rust-Wasm + Dijkstra mesh + DHT) hazır ve çalışıyor | Dokunulmuyor; yalnızca durum göstergesi başlıkta netleşiyor |
+| Sıfır karmaşa / tek tık | `/chat` girişi çok adımlı ve koyu-açık form karması | Tek eylem: "Tek Tıkla Yerel Düğüm Girişi" |
+| Zero-Knowledge | E2EE ve kasa katmanı yerinde | Değişmiyor; arayüzde jargon yasağı korunuyor |
+| Zero Legacy Debt | `.tbos` koyu tema 12 dosyada sabit kodlanmış | Tek token kaynağına indirgenir, ikinci bir tema dili doğmaz |
+| DX/UI Harmony | Geliştirici yüzeyi yok | `tedbirge.dev` ayrı repo olarak konumlandırılır, app bant genişliğine yük binmez |
 
-## Yapılacaklar
+## 2. Etkilenecek dosya haritası (adım adım)
 
-### 1. Zero-touch düğüm açılışı
-- Uygulama açılır açılmaz düğüm ve DHT bağlantısı otomatik başlatılacak; "ağa katıl" onayı kaldırılacak. Kullanıcı isterse ayarlardan durdurabilecek (tercih kalıcı).
-- Çekirdek (Wasm varsa Wasm, yoksa TS) açılışta hazır edilecek, hata durumunda sessiz düşüş korunacak.
+**A. Tema altyapısı**
+- `src/styles.css` — `.tbos` bloğu koyu sabit değerlerden `var(--tb-*)` referanslarına çevrilir; üç tema seti (`[data-theme="crystal"]`, `"soft"`, `"night"`) `:root` altında tanımlanır. Mevcut `.wa` / `.wa-scope` eşleşmeleri korunur, yalnızca kaynak değişkenleri değişir.
+- Yeni `src/lib/ui/theme.ts` — tema okuma/yazma (`localStorage: tedbirge.theme`), `document.documentElement.dataset.theme` yazımı, SSR-güvenli varsayılan (`crystal`), FOUC önleyici küçük inline script `src/routes/__root.tsx` head'ine eklenir.
+- `src/components/shell/NodeSettingsPanel.tsx` — "Arayüz Teması" bölümü (Açık Kristal / Açık Soft Minimal / Gece Modu).
 
-### 2. Smart OS kurulum akışı
-- OS tespiti (Android / iOS / Windows / macOS / Linux) tek bir yardımcı modülde toplanacak.
-- "Uygulamayı Cihaza Yükle" yalnızca tarayıcı modunda görünecek, standalone modda gizlenecek.
-- Android/masaüstünde tek tık `beforeinstallprompt`; iOS'ta Paylaş → Ana Ekrana Ekle yönergesi.
+**B. Açık cam yüzeye geçen ekranlar** (yalnızca sınıf/token düzeyi)
+- `src/components/Dashboard.tsx`, `src/components/shell/CommandCenter.tsx`, `FeedPanel.tsx`, `WorkspacePanel.tsx`, `SecurityPanel.tsx`, `MeshStatusDialog.tsx`, `AppsDialog.tsx`, `CapabilityDialog.tsx`, `FileTransferDialog.tsx`, `RelaySettingsDialog.tsx`, `NodeTestModal.tsx`, `PaywallModal.tsx`
+- `src/components/Messenger.tsx`, `src/components/chat/*` (kabuk yüzeyleri), `src/routes/chat.tsx`, `src/routes/kurumsal.tsx`, `src/routes/index.tsx`, `src/routes/system.tsx`, `src/components/site/SiteChrome.tsx`
+- Kural: sabit `bg-[#06090e]`, `text-white` benzeri değerler kaldırılır; yalnızca semantik token sınıfları kalır.
 
-### 3. Kör aktarım (blind relay) ve store-and-forward
-- Çevrimdışıyken üretilen şifreli `.tpack` zarfları IndexedDB kuyruğuna güvenle yazılacak (mevcut kuyruk sağlamlaştırılacak).
-- İnternetli bir eş kapsama girdiğinde kuyruk otomatik olarak o eşe devredilecek.
-- Aktarıcı cihaz zarfı açmadan (yalnızca yönlendirme başlığını okuyarak) küresel ağa iletecek; içerik çözme yolu kodla engellenecek.
+**C. Marka ve metadata**
+- `src/routes/__root.tsx` — başlık "Tedbirge® WebOS — Otonom P2P Ağ İşletim Sistemi (tedbirge.app)", og/twitter alanları eşitlenir.
+- `public/manifest.webmanifest` — `name`/`short_name`: "Tedbirge® WebOS"; `theme_color`/`background_color` açık kristal (`#F8FAFC`).
+- `package.json` — `name: "tedbirge-app"`.
+- Dashboard sol üst başlık: `Tedbirge® WebOS | SİSTEM DURUMU: ÇEVRİMİÇİ` (durum gerçek düğüm durumundan okunur, uydurulmaz).
+- `src/lib/protocol-layers.ts`, `business-plan.ts`, `src/routes/*` içindeki "tedbirge-protokol"/"tedbirge-panel" metinleri "tedbirge.app" veya "Tedbirge® WebOS" ile değişir (marka çatısı "Tedbirge Protocol" kavramsal katman adı olarak korunur).
+- Log önekleri `src/lib/diagnostics.ts` ve log yayıcılarda `[tedbirge.app]` olarak standartlaştırılır — çekirdek worker mesaj sözleşmesi değişmez, yalnızca görüntüleme öneki.
 
-### 4. Arka plan ve uyku direnci
-- `Navigator.locks` ile uzun ömürlü çekirdek kilidi alınacak; Service Worker / Background Sync kayıtları tamamlanacak.
-- Ön plana dönüş ve ağ değişiminde (`online`, `visibilitychange`, `Network Information`) kopan tüneller anında yeniden el sıkışacak (üstel geri çekilmeli hızlı yeniden bağlanma).
+**D. `/chat` giriş sadeleştirmesi**
+- `src/components/chat/PhoneOnboarding.tsx` + `src/routes/chat.tsx`: birincil eylem "Tek Tıkla Yerel Düğüm Girişi (Zero-Touch Node ID)". Mevcut TOTP/numara-çıpalı kimlik akışı ikincil seçenek olarak korunur (silinmez).
 
-### 5. Symmetric NAT ve peer-relay fallback
-- STUN/TURN zinciri doğrulanacak; ICE başarısızlığı ölçülebilir hale gelecek.
-- Doğrudan bağlantı kurulamazsa Dijkstra motoru açık erişimli 3. bir düğümü kör aktarıcı olarak rotaya ekleyecek; veri şifreli halde o düğüm üzerinden gidecek.
+**E. `tedbirge.dev` — ayrı repo haritası (bu repoda yalnızca köprü)**
+- Bu repoda yapılacak: Header/Footer/Terminal bileşenlerine `https://tedbirge.dev` harici bağlantısı (`rel="noopener"`), `src/components/site/SiteChrome.tsx` ve Dashboard alt barı.
+- Ayrı repo için çıkarılan SDK haritası (kod taşınmaz, yalnızca ihracat listesi):
+  - `@tedbirge/sdk` (npm): `src/kernel/contract.ts` tipleri, `route-codec.ts`, `kernel-worker-bridge.ts` istemci API'si, `src/lib/mesh/dht.ts` ve `mesh-routing.ts` saf fonksiyonları, `src/lib/e2ee.ts` genel yüzeyi.
+  - `cargo add tedbirge-core`: `crates/tedbirge-kernel` rota/digest fonksiyonları.
+  - WASM Playground: `public/kernel/tedbirge_kernel.wasm` dosyasının dev portalına kopyalanmış sürümü üzerinden çalışır; app ağına istek atmaz.
 
-### 6. Çekirdekte 5 eş limiti
-- Aktif eş sayısı `kernel.worker.ts` içinde gerçek zamanlı izlenecek; 6. bağlantı denemesi çekirdek katmanında durdurulacak.
-- Limit aşımında UI'ya olay düşecek ve `PaywallModal` (glassmorphic) açılacak: Kurumsal Lisans ve "Düğümleri Yönet" seçenekleriyle.
+## 3. Sıfır re-render tema mimarisi
 
-### 7. Gerçek verili komut merkezi
-Tüm mock değerler kaldırılacak, kartlar canlı kaynaklardan beslenecek:
-- Aktif düğüm sayısı → DHT/eş listesi
-- OS bilgisi → gerçek cihaz tespiti
-- Trafik sayaçları → gerçek gönderilen/alınan bayt
-- CPU/RAM/ping → `performance.memory`, `hardwareConcurrency` ve ölçülen RTT (desteklenmeyen alan varsa "yok" gösterilir, uydurma değer üretilmez)
-- Canlı akış görselleştirici gerçek eş listesine bağlanacak
-- Adaptör şeması (Uygulama Verisi → Tedbirge OS Adaptörü → Transport Substrate) gerçek aktif taşıyıcıyı gösterecek
+- Tek yazma noktası: `document.documentElement.dataset.theme = "crystal" | "soft" | "night"`. React state ağacı bu değişimden etkilenmez; yalnızca ayarlar panelindeki seçili rozet lokal state tutar.
+- Tüm renkler `var(--tb-surface)`, `var(--tb-glass)`, `var(--tb-accent)` gibi Custom Property'lerden okunur; tema değişimi tarayıcı tarafında saf CSS yeniden boyamadır.
+- `@theme inline` içindeki shadcn tokenları bu değişkenlere bağlanır; böylece hem `.wa` sohbet kabuğu hem OS pencereleri tek kaynaktan beslenir.
+- FOUC: `__root.tsx` head'inde 3 satırlık senkron script tercih edilen temayı ilk boyamadan önce uygular.
 
-### 8. Node test ve gerçek log konsolu
-- Sağ üstte "Interactive Node Test" butonu; mevcut URL'yi taşıyan QR modalı.
-- Sağ panelde `HH:mm:ss.SSS` damgalı, kaydırılabilir, doğrudan çekirdek işçisinden akan gerçek log konsolu; simülasyon günlükleri kaldırılacak.
+## 4. Koruma sınırları
 
-## Teknik notlar
+Dokunulmayacak: `src/kernel/*` (worker, ipc, wasm-provider, multipath, supervisor), `crates/tedbirge-kernel`, `src/lib/browser-node.ts`, `src/lib/call/*`, `src/lib/crypto/*`, `src/lib/e2ee.ts`, `src/lib/mesh/*` iş mantığı, Supabase entegrasyon dosyaları, rota dosya adları ve import yolları.
 
-- Dokunulacak başlıca dosyalar: `src/lib/node-runtime.ts`, `src/lib/browser-node.ts`, `src/lib/pwa-install.ts`, `src/kernel/kernel.worker.ts`, `src/kernel/kernel-worker-bridge.ts`, `src/lib/mesh/dht.ts`, `src/lib/mesh-routing.ts`, `src/components/Dashboard.tsx`, `src/components/shell/CommandCenter.tsx`, `src/components/shell/PaywallModal.tsx`, `src/components/shell/NodeTestModal.tsx`; yeni: OS tespiti, canlı metrik toplayıcı, blind-relay yardımcıları.
-- Sohbet/WebRTC/E2EE dosyalarının mevcut sözleşmeleri değişmeyecek; yalnızca ek olay ve ölçüm noktaları takılacak.
-- Ölçülemeyen metrik uydurulmayacak; tarayıcı desteklemiyorsa açıkça "yok" gösterilecek.
-- Bitişte `tsgo --noEmit` ve derleme çıktısı 0 hata olarak raporlanacak.
+## 5. Doğrulama taahhüdü
+
+- `bunx tsgo --noEmit` → 0 hata.
+- `bun run build` → 0 hata.
+- `bunx vitest run` → mevcut çekirdek testleri (kernel, apps) yeşil.
+- Görsel doğrulama: `/`, `/chat`, `/kurumsal`, `/system` üç temada da ekran görüntüsüyle kontrol.
 
 ## Kapsam dışı
 
-- Ödeme/Paddle canlı entegrasyonu (yalnızca modal üzerinden yönlendirme).
-- Barındırılan veritabanı duraklatılmış durumda; bulut rölesi bağımlı akışlar mevcut zarif düşüş davranışını koruyacak.
+- `tedbirge.dev` reposunun kendisinin oluşturulması ve Vercel bağlanması (ayrı repo işi; burada yalnızca köprü ve SDK haritası).
+- Paddle canlı ödeme entegrasyonu.
+- Duraklatılmış barındırılan veritabanına bağlı akışlar; mevcut zarif düşüş korunur.
