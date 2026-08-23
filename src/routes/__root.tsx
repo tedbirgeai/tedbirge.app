@@ -142,11 +142,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="tr" className="dark">
+    <html lang="tr" className="dark" data-theme={DEFAULT_THEME}>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body className="bg-[#06090e]">
+      <body className="bg-[var(--tb-bg)]">
         {children}
         <Scripts />
       </body>
