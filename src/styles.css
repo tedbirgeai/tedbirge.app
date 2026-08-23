@@ -63,7 +63,41 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Tema-duyarlı palet: yardımcı sınıflar (bg-slate-800, text-emerald-400 …)
+     doğrudan tema değişkenlerinden okur. Böylece tema değişimi saf CSS
+     yeniden boyamadır; React yeniden render olmaz. */
+  --color-slate-50: var(--tb-slate-50);
+  --color-slate-100: var(--tb-slate-100);
+  --color-slate-200: var(--tb-slate-200);
+  --color-slate-300: var(--tb-slate-300);
+  --color-slate-400: var(--tb-slate-400);
+  --color-slate-500: var(--tb-slate-500);
+  --color-slate-600: var(--tb-slate-600);
+  --color-slate-700: var(--tb-slate-700);
+  --color-slate-800: var(--tb-slate-800);
+  --color-slate-900: var(--tb-slate-900);
+  --color-slate-950: var(--tb-slate-950);
+  --color-emerald-200: var(--tb-emerald-200);
+  --color-emerald-300: var(--tb-emerald-300);
+  --color-emerald-400: var(--tb-emerald-400);
+  --color-emerald-500: var(--tb-emerald-500);
+  --color-emerald-600: var(--tb-emerald-600);
+  --color-emerald-950: var(--tb-emerald-950);
+  --color-cyan-200: var(--tb-cyan-200);
+  --color-cyan-300: var(--tb-cyan-300);
+  --color-cyan-400: var(--tb-cyan-400);
+  --color-cyan-500: var(--tb-cyan-500);
+  --color-amber-100: var(--tb-amber-100);
+  --color-amber-200: var(--tb-amber-200);
+  --color-amber-400: var(--tb-amber-400);
+  --color-amber-500: var(--tb-amber-500);
+  --color-rose-300: var(--tb-rose-300);
+  --color-rose-400: var(--tb-rose-400);
+  --color-rose-500: var(--tb-rose-500);
+  --color-rose-600: var(--tb-rose-600);
 }
+
 
 :root {
   --radius: 0.25rem;
