@@ -21,7 +21,7 @@ import { bootAccessEngine } from "../lib/access-tiers";
 import { ensureOfflineGrant } from "../lib/offline-license";
 import { runOneTimePurge } from "../lib/hard-reset";
 import { syncViewportUnits } from "../lib/ui/viewport";
-import { DEFAULT_THEME, THEME_BOOT_SCRIPT } from "../lib/ui/theme";
+import { THEME_BOOT_SCRIPT } from "../lib/ui/theme";
 import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
@@ -143,7 +143,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="tr" className="dark" data-theme={DEFAULT_THEME}>
+    <html lang="tr" className="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <HeadContent />
