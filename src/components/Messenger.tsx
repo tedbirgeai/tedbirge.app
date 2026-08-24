@@ -320,7 +320,7 @@ function WaveBars({ delayed }: { delayed?: boolean }) {
 /** Boş slot: 8'li matrisi her koşulda korur. */
 function EmptyTile() {
   return (
-    <div className="flex aspect-video max-h-44 w-full flex-col items-center justify-center rounded-lg border border-dashed border-emerald-500/15 bg-[#090e18] p-3 text-center font-osmono text-[10px] text-slate-600">
+    <div className="flex aspect-video max-h-44 w-full flex-col items-center justify-center rounded-lg border border-dashed border-emerald-500/15 bg-[var(--tb-panel-solid)] p-3 text-center font-osmono text-[10px] text-slate-600">
       <Network className="mb-1 h-4 w-4 text-slate-700" />
       Eş Bekleniyor
       <span className="text-[9px] text-slate-700">Pasif Düğüm</span>
@@ -331,7 +331,7 @@ function EmptyTile() {
 function VideoTile({ p, camOn }: { p: Participant; camOn: boolean }) {
   return (
     <div
-      className={`relative flex aspect-video max-h-44 w-full flex-col justify-between overflow-hidden rounded-lg border bg-[#0e1626] p-3 ${
+      className={`relative flex aspect-video max-h-44 w-full flex-col justify-between overflow-hidden rounded-lg border bg-[var(--tb-bg-soft)] p-3 ${
         p.active
           ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.35)]"
           : "border-emerald-500/20"
@@ -676,7 +676,7 @@ export default function Messenger() {
               <PanelTitle icon={<Network className="h-3.5 w-3.5 text-cyan-400" />}>
                 P2P TOPOLOJİSİ
               </PanelTitle>
-              <div className="relative mt-2 min-h-[160px] w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[#070b13]">
+              <div className="relative mt-2 min-h-[160px] w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[var(--tb-bg)]">
                 <MiniMeshCanvas />
               </div>
               <div className="mt-2 space-y-1 border-t border-slate-800/60 pt-2 font-osmono text-[10px] text-slate-400">
@@ -728,7 +728,7 @@ export default function Messenger() {
               </AppErrorBoundary>
             ) : center === "network" ? (
               <div className="my-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 font-osmono text-[11px]">
-                <div className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
+                <div className="rounded-lg border border-slate-800 bg-[var(--tb-panel-solid)] p-3">
                   <div className="mb-2 text-slate-300">KAPSAMA ÖZETİ</div>
                   <Row k="ÇEVRİMİÇİ EŞ:" v={String(peers)} tone="text-emerald-400" />
                   <Row k="DOĞRUDAN P2P:" v={String(directPeers)} tone="text-cyan-400" />
@@ -739,7 +739,7 @@ export default function Messenger() {
                   <Row k="GECİKME:" v={node.rttMs != null ? `${node.rttMs} ms` : "—"} />
                   <Row k="KUYRUK:" v={String(node.queued)} />
                 </div>
-                <div className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
+                <div className="rounded-lg border border-slate-800 bg-[var(--tb-panel-solid)] p-3">
                   <div className="mb-2 text-slate-300">KEŞFEDİLEN DÜĞÜMLER</div>
                   {participants.filter((p) => !p.self).length === 0 ? (
                     <p className="text-slate-600">Sinyal bekleniyor…</p>
@@ -754,7 +754,7 @@ export default function Messenger() {
                       ))
                   )}
                 </div>
-                <div className="relative h-56 overflow-hidden rounded-lg border border-slate-800 bg-[#070b13]">
+                <div className="relative h-56 overflow-hidden rounded-lg border border-slate-800 bg-[var(--tb-bg)]">
                   <MiniMeshCanvas />
                 </div>
               </div>

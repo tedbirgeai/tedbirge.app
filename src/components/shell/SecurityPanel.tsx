@@ -21,7 +21,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
+    <section className="rounded-lg border border-slate-800 bg-[var(--tb-panel-solid)] p-3">
       <div className="mb-2 flex items-center gap-2 font-osmono text-[11px] font-bold uppercase tracking-wider text-slate-300">
         <span className="text-emerald-400">{icon}</span>
         {title}

@@ -473,7 +473,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="relative h-full w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[#070b13]">
+              <div className="relative h-full w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[var(--tb-bg)]">
                 <MeshCanvas />
                 <div className="absolute bottom-3 left-3 flex flex-wrap items-center gap-4 rounded-lg border border-slate-800 bg-slate-900/90 px-3 py-1.5 font-mono text-[10px] text-slate-400 backdrop-blur-sm">
                   <span className="flex items-center gap-1.5">
