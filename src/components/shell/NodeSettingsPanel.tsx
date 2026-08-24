@@ -7,7 +7,9 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { Bell, Cpu, HardDrive, KeyRound, RefreshCw, Trash2 } from "lucide-react";
+import { Bell, Cpu, HardDrive, KeyRound, Palette, RefreshCw, Trash2 } from "lucide-react";
+
+import { THEMES, getTheme, setTheme, type ThemeId } from "@/lib/ui/theme";
 
 import { useNodeRuntime, pingNodePeers } from "@/lib/node-runtime";
 import { activeKernelProvider } from "@/kernel/boot";
@@ -60,7 +62,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
+    <section className="rounded-lg border border-slate-800 bg-[var(--tb-panel-solid)] p-3">
       <div className="mb-2 flex items-center gap-2 font-osmono text-[11px] font-bold uppercase tracking-wider text-slate-300">
         <span className="text-cyan-400">{icon}</span>
         {title}
@@ -138,6 +140,7 @@ export function NodeSettingsPanel() {
   const [queued, setQueued] = useState<number>(0);
   const [prefs, setPrefs] = useState<Prefs>(() => readPrefs());
   const [notice, setNotice] = useState<string | null>(null);
+  const [theme, setThemeState] = useState<ThemeId>(() => getTheme());
   const [perm, setPerm] = useState<string>("default");
 
   useEffect(() => {
@@ -327,6 +330,36 @@ export function NodeSettingsPanel() {
           on={prefs.focus}
           onToggle={() => savePrefs({ ...prefs, focus: !prefs.focus })}
         />
+      </Section>
+
+      <Section icon={<Palette className="h-3.5 w-3.5" />} title="Arayüz teması">
+        <p className="pb-1 text-slate-500">
+          Tema tercihi bu cihazda saklanır; renkler anında uygulanır.
+        </p>
+        <div className="grid gap-1.5">
+          {THEMES.map((t) => {
+            const on = theme === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => {
+                  setTheme(t.id);
+                  setThemeState(t.id);
+                }}
+                className={`flex min-h-10 items-center justify-between gap-3 rounded-lg border px-3 text-left text-[11px] transition-colors ${
+                  on
+                    ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-300"
+                    : "border-slate-800 bg-slate-900/60 text-slate-300 hover:bg-slate-900"
+                }`}
+              >
+                <span className="font-medium">{t.label}</span>
+                <span className="text-slate-500">{t.hint}</span>
+              </button>
+            );
+          })}
+        </div>
       </Section>
     </div>
   );
