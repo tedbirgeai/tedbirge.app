@@ -266,14 +266,14 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
             <Box className="h-4 w-4 text-cyan-400" />
-            <span>tedbirge-protokol</span>
+            <span>Tedbirge® WebOS</span>
             <span className="rounded border border-emerald-500/30 bg-emerald-950/80 px-1.5 py-0.5 font-mono text-[10px] text-emerald-400">
               v2.7.1
             </span>
           </div>
           <span className="hidden text-slate-600 sm:inline">|</span>
           <span className="hidden font-mono text-slate-400 md:inline">
-            tedbirgeai/tedbirge-protokol/src
+            tedbirge.app · otonom P2P ağ işletim sistemi
           </span>
         </div>
 
@@ -550,6 +550,14 @@ export default function Dashboard() {
 
           <footer className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-2.5 font-mono text-xs">
             <div className="flex flex-wrap items-center gap-6">
+              <a
+                href="https://tedbirge.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan-400 hover:underline"
+              >
+                tedbirge.dev · geliştirici portalı
+              </a>
               <div className="flex items-center gap-2">
                 <Network className="h-3.5 w-3.5 text-cyan-400" />
                 <span>
