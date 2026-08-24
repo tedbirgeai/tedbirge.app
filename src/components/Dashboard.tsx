@@ -193,7 +193,7 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 ${className ?? ""}`}>
+    <div className={`rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 ${className ?? ""}`}>
       <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-xs font-bold text-slate-300">
         {icon}
         <span>{title}</span>
@@ -261,19 +261,19 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden bg-[#06090e] text-slate-400">
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 bg-[#0b101d] px-3 py-2 text-[11px] sm:gap-3 sm:px-4 sm:py-2.5 sm:text-xs">
+    <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden bg-[var(--tb-bg)] text-slate-400">
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 bg-[var(--tb-panel-solid)] px-3 py-2 text-[11px] sm:gap-3 sm:px-4 sm:py-2.5 sm:text-xs">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
             <Box className="h-4 w-4 text-cyan-400" />
-            <span>tedbirge-protokol</span>
+            <span>Tedbirge® WebOS</span>
             <span className="rounded border border-emerald-500/30 bg-emerald-950/80 px-1.5 py-0.5 font-mono text-[10px] text-emerald-400">
               v2.7.1
             </span>
           </div>
           <span className="hidden text-slate-600 sm:inline">|</span>
           <span className="hidden font-mono text-slate-400 md:inline">
-            tedbirgeai/tedbirge-protokol/src
+            tedbirge.app · otonom P2P ağ işletim sistemi
           </span>
         </div>
 
@@ -314,7 +314,7 @@ export default function Dashboard() {
       </header>
 
       <div className="flex flex-1 gap-2 overflow-hidden p-2">
-        <aside className="hidden w-56 flex-col justify-between rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 text-xs lg:flex">
+        <aside className="hidden w-56 flex-col justify-between rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 text-xs lg:flex">
           <div>
             <div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Gezinme
@@ -458,7 +458,7 @@ export default function Dashboard() {
               </Card>
             </div>
 
-            <div className="relative flex min-h-[360px] flex-col overflow-hidden rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 xl:col-span-6">
+            <div className="relative flex min-h-[360px] flex-col overflow-hidden rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 xl:col-span-6">
               <div className="z-10 mb-2 flex items-center justify-between text-xs font-bold text-slate-200">
                 <div className="flex items-center gap-2">
                   <Activity className="h-4 w-4 text-emerald-400" />
@@ -473,7 +473,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="relative h-full w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[#070b13]">
+              <div className="relative h-full w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[var(--tb-bg)]">
                 <MeshCanvas />
                 <div className="absolute bottom-3 left-3 flex flex-wrap items-center gap-4 rounded-lg border border-slate-800 bg-slate-900/90 px-3 py-1.5 font-mono text-[10px] text-slate-400 backdrop-blur-sm">
                   <span className="flex items-center gap-1.5">
@@ -508,7 +508,7 @@ export default function Dashboard() {
                 </div>
               </Card>
 
-              <div className="flex min-h-[220px] flex-1 flex-col rounded-lg border border-slate-800/80 bg-[#0b101d] p-3">
+              <div className="flex min-h-[220px] flex-1 flex-col rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3">
                 <div className="mb-2 flex items-center gap-2 border-b border-slate-800 pb-2 font-mono text-xs font-bold text-slate-300">
                   <TerminalSquare className="h-3.5 w-3.5 text-emerald-400" /> P2P TERMINAL
                 </div>
@@ -548,8 +548,16 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <footer className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-800/80 bg-[#0b101d] p-2.5 font-mono text-xs">
+          <footer className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-2.5 font-mono text-xs">
             <div className="flex flex-wrap items-center gap-6">
+              <a
+                href="https://tedbirge.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan-400 hover:underline"
+              >
+                tedbirge.dev · geliştirici portalı
+              </a>
               <div className="flex items-center gap-2">
                 <Network className="h-3.5 w-3.5 text-cyan-400" />
                 <span>

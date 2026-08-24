@@ -33,7 +33,7 @@ export const Route = createFileRoute("/system")({
 
 function SystemRoute() {
   return (
-    <main className="fixed inset-0 z-40 flex flex-col bg-[#06090e]">
+    <main className="fixed inset-0 z-40 flex flex-col bg-[var(--tb-bg)]">
       <ShellProvider initialApp="chats">
         <SystemConsole />
       </ShellProvider>

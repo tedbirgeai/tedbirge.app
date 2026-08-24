@@ -387,17 +387,17 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
               type="button"
               disabled={busy || !e164 || !name.trim()}
               onClick={() => startVerification()}
-              className="wa-press mt-5 w-full rounded-full px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
-              style={{ background: "var(--wa-accent)" }}
+              className="mt-5 w-full rounded-full border px-4 py-2.5 text-xs font-medium disabled:opacity-60"
+              style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
             >
-              Yerel doğrulamayı başlat
+              Kod ile doğrula (isteğe bağlı)
             </button>
             <button
               type="button"
               disabled={busy || !e164 || !name.trim()}
               onClick={() => void quickJoin()}
-              className="mt-3 w-full rounded-full border px-4 py-2.5 text-xs font-medium disabled:opacity-60"
-              style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
+              className="wa-press order-first mt-3 w-full rounded-full px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+              style={{ background: "var(--wa-accent)" }}
             >
               {busy ? "Bağlanıyor…" : "Tek tıkla yerel düğüm girişi"}
             </button>

@@ -262,7 +262,7 @@ function MiniMeshCanvas() {
 function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <section
-      className={`rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 ${className ?? ""}`}
+      className={`rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 ${className ?? ""}`}
     >
       {children}
     </section>
@@ -320,7 +320,7 @@ function WaveBars({ delayed }: { delayed?: boolean }) {
 /** Boş slot: 8'li matrisi her koşulda korur. */
 function EmptyTile() {
   return (
-    <div className="flex aspect-video max-h-44 w-full flex-col items-center justify-center rounded-lg border border-dashed border-emerald-500/15 bg-[#090e18] p-3 text-center font-osmono text-[10px] text-slate-600">
+    <div className="flex aspect-video max-h-44 w-full flex-col items-center justify-center rounded-lg border border-dashed border-emerald-500/15 bg-[var(--tb-panel-solid)] p-3 text-center font-osmono text-[10px] text-slate-600">
       <Network className="mb-1 h-4 w-4 text-slate-700" />
       Eş Bekleniyor
       <span className="text-[9px] text-slate-700">Pasif Düğüm</span>
@@ -331,7 +331,7 @@ function EmptyTile() {
 function VideoTile({ p, camOn }: { p: Participant; camOn: boolean }) {
   return (
     <div
-      className={`relative flex aspect-video max-h-44 w-full flex-col justify-between overflow-hidden rounded-lg border bg-[#0e1626] p-3 ${
+      className={`relative flex aspect-video max-h-44 w-full flex-col justify-between overflow-hidden rounded-lg border bg-[var(--tb-bg-soft)] p-3 ${
         p.active
           ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.35)]"
           : "border-emerald-500/20"
@@ -511,16 +511,16 @@ export default function Messenger() {
     node.peers.filter((p) => p.direct).length + (sim && livePeers.length === 0 ? 1 : 0);
 
   return (
-    <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden overflow-x-hidden bg-[#06090e] font-osui text-slate-400">
+    <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden overflow-x-hidden bg-[var(--tb-bg)] font-osui text-slate-400">
       <style>{`@keyframes tbg-wave{0%,100%{height:4px}50%{height:16px}}`}</style>
 
       {/* ÜST BAR */}
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 bg-[#0b101d] px-3 py-2 text-[11px]">
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 bg-[var(--tb-panel-solid)] px-3 py-2 text-[11px]">
         <div className="flex min-w-0 items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
           <Box className="h-4 w-4 shrink-0 text-cyan-400" />
-          <span>Web-OS</span>
+          <span>Tedbirge® WebOS</span>
           <span className="hidden truncate font-normal text-slate-500 sm:inline">
-            tedbirge-protokol/src
+            tedbirge.app · otonom P2P ağ işletim sistemi
           </span>
         </div>
 
@@ -559,7 +559,7 @@ export default function Messenger() {
       {/* ANA DÜZEN */}
       <div className="flex min-h-0 flex-1 gap-2 overflow-hidden p-2">
         {/* SOL MENÜ */}
-        <aside className="hidden w-52 shrink-0 flex-col justify-between overflow-y-auto rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 text-xs lg:flex xl:h-[calc(100vh-110px)]">
+        <aside className="hidden w-52 shrink-0 flex-col justify-between overflow-y-auto rounded-lg border border-[rgba(16,185,129,0.15)] bg-[var(--tb-panel-solid)] p-3 text-xs lg:flex xl:h-[calc(100vh-110px)]">
           <div>
             <div className="mb-2 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Gezinme
@@ -676,7 +676,7 @@ export default function Messenger() {
               <PanelTitle icon={<Network className="h-3.5 w-3.5 text-cyan-400" />}>
                 P2P TOPOLOJİSİ
               </PanelTitle>
-              <div className="relative mt-2 min-h-[160px] w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[#070b13]">
+              <div className="relative mt-2 min-h-[160px] w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[var(--tb-bg)]">
                 <MiniMeshCanvas />
               </div>
               <div className="mt-2 space-y-1 border-t border-slate-800/60 pt-2 font-osmono text-[10px] text-slate-400">
@@ -689,7 +689,7 @@ export default function Messenger() {
           </div>
 
           {/* ORTA BLOK — VİDEO IZGARASI / GÖMÜLÜ AĞ PANELİ */}
-          <div className="flex h-full min-h-[360px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-6 xl:h-[calc(100vh-110px)] xl:min-h-0">
+          <div className="flex h-full min-h-[360px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[var(--tb-panel-solid)] p-3 xl:col-span-6 xl:h-[calc(100vh-110px)] xl:min-h-0">
             <PanelTitle
               icon={
                 center === "video" ? (
@@ -728,7 +728,7 @@ export default function Messenger() {
               </AppErrorBoundary>
             ) : center === "network" ? (
               <div className="my-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 font-osmono text-[11px]">
-                <div className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
+                <div className="rounded-lg border border-slate-800 bg-[var(--tb-panel-solid)] p-3">
                   <div className="mb-2 text-slate-300">KAPSAMA ÖZETİ</div>
                   <Row k="ÇEVRİMİÇİ EŞ:" v={String(peers)} tone="text-emerald-400" />
                   <Row k="DOĞRUDAN P2P:" v={String(directPeers)} tone="text-cyan-400" />
@@ -739,7 +739,7 @@ export default function Messenger() {
                   <Row k="GECİKME:" v={node.rttMs != null ? `${node.rttMs} ms` : "—"} />
                   <Row k="KUYRUK:" v={String(node.queued)} />
                 </div>
-                <div className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
+                <div className="rounded-lg border border-slate-800 bg-[var(--tb-panel-solid)] p-3">
                   <div className="mb-2 text-slate-300">KEŞFEDİLEN DÜĞÜMLER</div>
                   {participants.filter((p) => !p.self).length === 0 ? (
                     <p className="text-slate-600">Sinyal bekleniyor…</p>
@@ -754,7 +754,7 @@ export default function Messenger() {
                       ))
                   )}
                 </div>
-                <div className="relative h-56 overflow-hidden rounded-lg border border-slate-800 bg-[#070b13]">
+                <div className="relative h-56 overflow-hidden rounded-lg border border-slate-800 bg-[var(--tb-bg)]">
                   <MiniMeshCanvas />
                 </div>
               </div>
@@ -885,7 +885,7 @@ export default function Messenger() {
           </div>
 
           {/* SAĞ BLOK — ŞİFRELİ MESAJLAŞMA */}
-          <div className="flex h-full min-h-[360px] min-w-0 flex-col overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-3 xl:h-[calc(100vh-110px)] xl:min-h-0">
+          <div className="flex h-full min-h-[360px] min-w-0 flex-col overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[var(--tb-panel-solid)] p-3 xl:col-span-3 xl:h-[calc(100vh-110px)] xl:min-h-0">
             <PanelTitle
               icon={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
               right={
@@ -981,8 +981,16 @@ export default function Messenger() {
       </div>
 
       {/* ALT TELEMETRİ BARI */}
-      <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-slate-800/80 bg-[#0b101d] px-3 py-1.5 font-osmono text-[10px]">
+      <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-slate-800/80 bg-[var(--tb-panel-solid)] px-3 py-1.5 font-osmono text-[10px]">
         <div className="flex flex-wrap items-center gap-3">
+          <a
+            href="https://tedbirge.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-cyan-400 hover:underline"
+          >
+            tedbirge.dev
+          </a>
           <span className="text-slate-400">
             AĞ: <strong className="text-emerald-400">CANLI</strong>
           </span>

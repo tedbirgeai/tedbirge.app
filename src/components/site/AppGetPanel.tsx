@@ -42,7 +42,7 @@ export function AppGetPanel() {
         await QRCode.toDataURL(url, {
           width: 512,
           margin: 1,
-          color: { dark: "#0b1020", light: "#ffffff" },
+          color: { dark: "var(--tb-bg)", light: "#ffffff" },
         }),
       );
     } catch {
