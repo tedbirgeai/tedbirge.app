@@ -21,6 +21,7 @@ import { bootAccessEngine } from "../lib/access-tiers";
 import { ensureOfflineGrant } from "../lib/offline-license";
 import { runOneTimePurge } from "../lib/hard-reset";
 import { syncViewportUnits } from "../lib/ui/viewport";
+import { DEFAULT_THEME, THEME_BOOT_SCRIPT } from "../lib/ui/theme";
 import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {

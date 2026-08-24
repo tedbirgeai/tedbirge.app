@@ -262,7 +262,7 @@ function MiniMeshCanvas() {
 function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <section
-      className={`rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 ${className ?? ""}`}
+      className={`rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 ${className ?? ""}`}
     >
       {children}
     </section>
@@ -511,11 +511,11 @@ export default function Messenger() {
     node.peers.filter((p) => p.direct).length + (sim && livePeers.length === 0 ? 1 : 0);
 
   return (
-    <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden overflow-x-hidden bg-[#06090e] font-osui text-slate-400">
+    <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden overflow-x-hidden bg-[var(--tb-bg)] font-osui text-slate-400">
       <style>{`@keyframes tbg-wave{0%,100%{height:4px}50%{height:16px}}`}</style>
 
       {/* ÜST BAR */}
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 bg-[#0b101d] px-3 py-2 text-[11px]">
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 bg-[var(--tb-panel-solid)] px-3 py-2 text-[11px]">
         <div className="flex min-w-0 items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
           <Box className="h-4 w-4 shrink-0 text-cyan-400" />
           <span>Web-OS</span>
@@ -559,7 +559,7 @@ export default function Messenger() {
       {/* ANA DÜZEN */}
       <div className="flex min-h-0 flex-1 gap-2 overflow-hidden p-2">
         {/* SOL MENÜ */}
-        <aside className="hidden w-52 shrink-0 flex-col justify-between overflow-y-auto rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 text-xs lg:flex xl:h-[calc(100vh-110px)]">
+        <aside className="hidden w-52 shrink-0 flex-col justify-between overflow-y-auto rounded-lg border border-[rgba(16,185,129,0.15)] bg-[var(--tb-panel-solid)] p-3 text-xs lg:flex xl:h-[calc(100vh-110px)]">
           <div>
             <div className="mb-2 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Gezinme
@@ -689,7 +689,7 @@ export default function Messenger() {
           </div>
 
           {/* ORTA BLOK — VİDEO IZGARASI / GÖMÜLÜ AĞ PANELİ */}
-          <div className="flex h-full min-h-[360px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-6 xl:h-[calc(100vh-110px)] xl:min-h-0">
+          <div className="flex h-full min-h-[360px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[var(--tb-panel-solid)] p-3 xl:col-span-6 xl:h-[calc(100vh-110px)] xl:min-h-0">
             <PanelTitle
               icon={
                 center === "video" ? (
@@ -885,7 +885,7 @@ export default function Messenger() {
           </div>
 
           {/* SAĞ BLOK — ŞİFRELİ MESAJLAŞMA */}
-          <div className="flex h-full min-h-[360px] min-w-0 flex-col overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-3 xl:h-[calc(100vh-110px)] xl:min-h-0">
+          <div className="flex h-full min-h-[360px] min-w-0 flex-col overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[var(--tb-panel-solid)] p-3 xl:col-span-3 xl:h-[calc(100vh-110px)] xl:min-h-0">
             <PanelTitle
               icon={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
               right={
@@ -981,7 +981,7 @@ export default function Messenger() {
       </div>
 
       {/* ALT TELEMETRİ BARI */}
-      <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-slate-800/80 bg-[#0b101d] px-3 py-1.5 font-osmono text-[10px]">
+      <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-slate-800/80 bg-[var(--tb-panel-solid)] px-3 py-1.5 font-osmono text-[10px]">
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-slate-400">
             AĞ: <strong className="text-emerald-400">CANLI</strong>

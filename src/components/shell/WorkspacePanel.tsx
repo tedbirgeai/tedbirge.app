@@ -81,7 +81,7 @@ const TILES: {
  * ------------------------------------------------------------------
  * Uygulama ızgarası masaüstü işletim sistemi mantığıyla çalışır:
  * her simge rota değiştirmeden ekran ortasında bir pencere açar.
- * Renkler kilitli koyu siber (#06090e / #0b101d) paletinden gelir.
+ * Renkler kilitli koyu siber (var(--tb-bg) / var(--tb-panel-solid)) paletinden gelir.
  */
 export function WorkspacePanel() {
   const [win, setWin] = useState<WindowId | null>(null);
@@ -128,7 +128,7 @@ export function WorkspacePanel() {
                 else if (t.id === "transfer") setTransfer(true);
                 else setWin(t.id);
               }}
-              className="wa-press flex min-h-24 flex-col justify-between rounded-2xl border border-emerald-500/15 bg-[#0b101d] p-3 text-left transition-colors hover:border-emerald-500/40"
+              className="wa-press flex min-h-24 flex-col justify-between rounded-2xl border border-emerald-500/15 bg-[var(--tb-panel-solid)] p-3 text-left transition-colors hover:border-emerald-500/40"
             >
               <Tile icon={t.icon} label={t.label} hint={t.hint} />
             </button>
