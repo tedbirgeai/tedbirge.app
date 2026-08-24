@@ -518,9 +518,9 @@ export default function Messenger() {
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 bg-[var(--tb-panel-solid)] px-3 py-2 text-[11px]">
         <div className="flex min-w-0 items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
           <Box className="h-4 w-4 shrink-0 text-cyan-400" />
-          <span>Web-OS</span>
+          <span>Tedbirge® WebOS</span>
           <span className="hidden truncate font-normal text-slate-500 sm:inline">
-            tedbirge-protokol/src
+            tedbirge.app · otonom P2P ağ işletim sistemi
           </span>
         </div>
 
@@ -983,6 +983,14 @@ export default function Messenger() {
       {/* ALT TELEMETRİ BARI */}
       <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-slate-800/80 bg-[var(--tb-panel-solid)] px-3 py-1.5 font-osmono text-[10px]">
         <div className="flex flex-wrap items-center gap-3">
+          <a
+            href="https://tedbirge.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-cyan-400 hover:underline"
+          >
+            tedbirge.dev
+          </a>
           <span className="text-slate-400">
             AĞ: <strong className="text-emerald-400">CANLI</strong>
           </span>
