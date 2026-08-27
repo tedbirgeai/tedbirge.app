@@ -186,28 +186,41 @@ function Card({
 
 /** Tedbirge Protocol P2P Web-OS kontrol paneli. */
 export default function Dashboard() {
-  const [logs, setLogs] = useState<LogLine[]>([
-    { time: "14:32:18", text: "[DURUM] Dijkstra rotası hesaplandı" },
-    { time: "14:32:18", text: "[BİLGİ] Eşleşme el sıkışması tamam" },
-    { time: "14:32:19", text: "[GÜVENLİK] AES-256-GCM Şifreleme Aktif" },
-    { time: "14:32:20", text: "[DURUM] Düğüm doğrulaması başarılı" },
-    { time: "14:32:20", text: "[BİLGİ] Topoloji güncellendi" },
-    { time: "14:32:21", text: "[DURUM] Yeni eş bağlandı: NODE_789E" },
-    { time: "14:32:22", text: "[DURUM] Bant genişliği ölçümü tamam" },
-  ]);
+  const live = useLiveTelemetry();
+  const [logs, setLogs] = useState<LogLine[]>([]);
   const [command, setCommand] = useState("");
   const [nodeTestOpen, setNodeTestOpen] = useState(false);
   const logRef = useRef<HTMLDivElement | null>(null);
+  const seenRef = useRef(0);
 
+  // Terminal akışı: yalnızca gerçek çekirdek olayları (gönderim/rota/hata).
   useEffect(() => {
-    const id = window.setInterval(() => {
-      const now = new Date();
-      const time = now.toLocaleTimeString("tr-TR", { hour12: false });
-      const text = SIM_LOGS[Math.floor(Math.random() * SIM_LOGS.length)];
-      setLogs((prev) => [...prev.slice(-60), { time, text }]);
-    }, 4000);
-    return () => window.clearInterval(id);
+    const flush = () => {
+      const events = [...kernelEvents()].reverse();
+      if (events.length <= seenRef.current) {
+        if (events.length < seenRef.current) seenRef.current = events.length;
+        return;
+      }
+      const fresh = events.slice(seenRef.current);
+      seenRef.current = events.length;
+      setLogs((prev) => [
+        ...prev.slice(-60),
+        ...fresh.map((e) => ({
+          time: new Date(e.at).toLocaleTimeString("tr-TR", { hour12: false }),
+          text:
+            e.op === "error"
+              ? `[HATA] ${e.detail}`
+              : e.op === "route"
+                ? `[ROTA] ${e.detail} · ${e.ms}ms`
+                : `[GÖNDERİM] ${e.detail} · ${e.ok ? "teslim" : "kuyrukta"} · ${e.ms}ms`,
+          ...(e.ok ? {} : { tone: "warn" as const }),
+        })),
+      ]);
+    };
+    flush();
+    return onKernelTelemetry(flush);
   }, []);
+
 
   // Çekirdek katmanı uyarıları (ör. ücretsiz eş limiti) canlı akışa düşer.
   useEffect(() => {
