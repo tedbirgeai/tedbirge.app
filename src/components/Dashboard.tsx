@@ -34,29 +34,14 @@ import { KERNEL_LOG_EVENT, type KernelLogDetail } from "@/lib/peer-limit";
 
 type LogLine = { time: string; text: string; tone?: "warn" };
 
-const NODES = [
-  { label: "NODE_BF3A", latency: "45 ms", dist: 120, angle: 0 },
-  { label: "NODE_C1D2", latency: "18 ms", dist: 140, angle: 45 },
-  { label: "NODE_789E", latency: "22 ms", dist: 160, angle: 85 },
-  { label: "NODE_4A7D", latency: "31 ms", dist: 130, angle: 130 },
-  { label: "NODE_2E9C", latency: "16 ms", dist: 150, angle: 170 },
-  { label: "NODE_9F3B", latency: "27 ms", dist: 120, angle: 215 },
-  { label: "NODE_03A1", latency: "33 ms", dist: 155, angle: 260 },
-  { label: "NODE_6C8E", latency: "20 ms", dist: 140, angle: 300 },
-  { label: "NODE_A7B2", latency: "28 ms", dist: 165, angle: 335 },
-];
-
-const SIM_LOGS = [
-  "[BİLGİ] Ping tazelendi: 18ms",
-  "[GÜVENLİK] ZK-proof doğrulaması başarılı",
-  "[DURUM] Bant genişliği kararlı: 85.7 Mbps",
-  "[BİLGİ] Yeni paket yönlendirildi -> Frankfurt",
-  "[DURUM] Mesh rotaları güncellendi",
-];
-
-/** Canvas tabanlı canlı P2P mesh topolojisi (yalnızca görselleştirme). */
-function MeshCanvas() {
+/**
+ * Canlı P2P mesh topolojisi — yalnızca gerçek eş verisi çizilir.
+ * Eş yoksa hiçbir düğüm uydurulmaz; boş durum mesajı gösterilir.
+ */
+function MeshCanvas({ peers }: { peers: PeerTelemetry[] }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
+  const peersRef = useRef(peers);
+  peersRef.current = peers;
 
   useEffect(() => {
     const canvas = ref.current;
@@ -64,15 +49,9 @@ function MeshCanvas() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const nodes = NODES.map((n) => ({ ...n, x: 0, y: 0 }));
-    const particles = Array.from({ length: 15 }, () => ({
-      nodeIndex: Math.floor(Math.random() * nodes.length),
-      progress: Math.random(),
-      speed: 0.005 + Math.random() * 0.008,
-    }));
-
     let pulseRadius = 0;
     let raf = 0;
+    let stopped = false;
 
     const resize = () => {
       const parent = canvas.parentElement;
@@ -87,6 +66,7 @@ function MeshCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
+      const list = peersRef.current;
 
       pulseRadius = (pulseRadius + 0.6) % 180;
       ctx.beginPath();
@@ -95,24 +75,28 @@ function MeshCanvas() {
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      nodes.forEach((node) => {
-        const rad = (node.angle * Math.PI) / 180;
-        node.x = cx + Math.cos(rad) * node.dist;
-        node.y = cy + Math.sin(rad) * node.dist;
+      const radius = Math.max(70, Math.min(cx, cy) - 40);
+      list.forEach((peer, i) => {
+        const rad = (i / Math.max(1, list.length)) * Math.PI * 2;
+        // Gecikme arttıkça düğüm merkezden uzaklaşır (gerçek ölçüm).
+        const scale = peer.rttMs === null ? 0.8 : Math.min(1, 0.55 + peer.rttMs / 600);
+        const x = cx + Math.cos(rad) * radius * scale;
+        const y = cy + Math.sin(rad) * radius * scale;
 
         ctx.beginPath();
         ctx.moveTo(cx, cy);
-        ctx.lineTo(node.x, node.y);
-        ctx.strokeStyle = "rgba(6, 182, 212, 0.3)";
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 4]);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = peer.direct ? "rgba(16, 185, 129, 0.55)" : "rgba(100, 116, 139, 0.4)";
+        // Kenar kalınlığı = ters ağırlık (düşük maliyetli hat daha kalın).
+        ctx.lineWidth = peer.weight === null ? 1 : Math.max(1, Math.min(4, 6 / (peer.weight + 1)));
+        if (!peer.direct) ctx.setLineDash([4, 4]);
         ctx.stroke();
         ctx.setLineDash([]);
 
         ctx.beginPath();
-        ctx.arc(node.x, node.y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = "#06b6d4";
-        ctx.shadowColor = "#06b6d4";
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = peer.direct ? "#10b981" : "#06b6d4";
+        ctx.shadowColor = ctx.fillStyle;
         ctx.shadowBlur = 8;
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -120,27 +104,9 @@ function MeshCanvas() {
         ctx.font = '10px "JetBrains Mono", ui-monospace, monospace';
         ctx.fillStyle = "#94a3b8";
         ctx.textAlign = "center";
-        ctx.fillText(node.label, node.x, node.y + 16);
+        ctx.fillText(peer.nodeId.slice(0, 10), x, y + 16);
         ctx.fillStyle = "#10b981";
-        ctx.fillText(node.latency, node.x, node.y + 27);
-      });
-
-      particles.forEach((p) => {
-        p.progress += p.speed;
-        if (p.progress > 1) {
-          p.progress = 0;
-          p.nodeIndex = Math.floor(Math.random() * nodes.length);
-        }
-        const target = nodes[p.nodeIndex];
-        const px = cx + (target.x - cx) * p.progress;
-        const py = cy + (target.y - cy) * p.progress;
-        ctx.beginPath();
-        ctx.arc(px, py, 3, 0, Math.PI * 2);
-        ctx.fillStyle = "#00ff9d";
-        ctx.shadowColor = "#00ff9d";
-        ctx.shadowBlur = 10;
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.fillText(peer.rttMs === null ? "—" : `${peer.rttMs} ms`, x, y + 27);
       });
 
       ctx.beginPath();
@@ -159,18 +125,33 @@ function MeshCanvas() {
       ctx.textAlign = "center";
       ctx.fillText("THIS_NODE", cx, cy + 3);
 
-      raf = requestAnimationFrame(animate);
+      if (!stopped) raf = requestAnimationFrame(animate);
     };
     raf = requestAnimationFrame(animate);
 
+    // Sekme arka plana düştüğünde çizimi tamamen durdur (CPU/pil koruması).
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        stopped = true;
+        cancelAnimationFrame(raf);
+      } else if (stopped) {
+        stopped = false;
+        raf = requestAnimationFrame(animate);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     return () => {
+      stopped = true;
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
   return <canvas ref={ref} className="block h-full w-full" />;
 }
+
 
 function Row({ k, v, tone }: { k: string; v: string; tone?: string }) {
   return (
