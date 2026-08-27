@@ -395,61 +395,86 @@ export default function Dashboard() {
             <div className="flex min-w-0 flex-col gap-2 xl:overflow-y-auto xl:col-span-3">
               <Card title="AĞ ÖZETİ" icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>
                 <div className="flex items-baseline justify-between">
-                  <span className="font-mono text-3xl font-extrabold text-emerald-400">823</span>
-                  <span className="text-xs font-medium text-slate-400">AKTİF DÜĞÜM</span>
+                  <span className="font-mono text-3xl font-extrabold text-emerald-400">
+                    {live.directPeers}
+                  </span>
+                  <span className="text-xs font-medium text-slate-400">DOĞRUDAN EŞ</span>
                 </div>
                 <div className="mt-2 space-y-1 border-t border-slate-800/60 pt-2 font-mono text-xs text-slate-400">
-                  <Row k="TOPLAM DÜĞÜM:" v="1,284" />
-                  <Row k="AKTİF BAĞLANTI:" v="823" tone="text-emerald-400" />
-                  <Row k="ÇALIŞMA SÜRESİ:" v="12g 6sa" />
-                  <Row k="PROTOKOL:" v="P2P v2.7.1" tone="text-cyan-400" />
+                  <Row k="GÖRÜLEN EŞ:" v={String(live.peers.length)} />
+                  <Row
+                    k="DÜĞÜM:"
+                    v={live.running ? "ÇALIŞIYOR" : "KAPALI"}
+                    tone={live.running ? "text-emerald-400" : "text-amber-400"}
+                  />
+                  <Row k="OTURUM SÜRESİ:" v={formatUptime(live.uptimeMs)} />
+                  <Row k="KUYRUK:" v={String(live.queued)} tone="text-cyan-400" />
                 </div>
               </Card>
 
-              <Card title="WASM KUM HAVUZU" icon={<Cpu className="h-3.5 w-3.5 text-cyan-400" />}>
+              <Card title="ÇEKİRDEK (WASM)" icon={<Cpu className="h-3.5 w-3.5 text-cyan-400" />}>
                 <div className="space-y-1.5 font-mono text-xs text-slate-400">
-                  <Row k="BELLEK KULLANIMI:" v="64.2 MB" />
-                  <Row k="YIĞIN (HEAP):" v="42.7 MB" />
-                  <Row k="STACK:" v="9.8 MB" />
+                  <Row k="İŞÇİ:" v={live.worker.alive ? "AKTİF" : "YOK"} />
+                  <Row k="WASM ÇEKİRDEK:" v={live.worker.wasm ? "YÜKLÜ" : "TS YEDEĞİ"} />
+                  <Row k="ABI:" v={live.worker.abi ? `v${live.worker.abi}` : "—"} />
                   <div className="flex items-center justify-between pt-1">
                     <span>DURUM:</span>
-                    <span className="rounded border border-emerald-500/30 bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
-                      KARARLI
+                    <span
+                      className={`rounded border px-2 py-0.5 text-[10px] font-bold ${
+                        live.lastError
+                          ? "border-amber-500/30 bg-amber-950 text-amber-400"
+                          : "border-emerald-500/30 bg-emerald-950 text-emerald-400"
+                      }`}
+                    >
+                      {live.lastError ? "UYARI" : "KARARLI"}
                     </span>
                   </div>
                 </div>
               </Card>
 
               <Card
-                title="P2P BANT GENİŞLİĞİ"
+                title="ÖLÇÜLEN HAT KAPASİTESİ"
                 icon={<Gauge className="h-3.5 w-3.5 text-emerald-400" />}
                 className="flex-1"
               >
                 <div className="space-y-3 font-mono">
                   <div>
                     <div className="mb-1 flex justify-between text-xs text-slate-400">
-                      <span>YÜKLEME:</span>
-                      <span className="font-bold text-emerald-400">↑ 85.7 Mbps</span>
+                      <span>TOPLAM KALAN:</span>
+                      <span className="font-bold text-emerald-400">
+                        {live.totalFreeKbps === null
+                          ? "ölçüm yok"
+                          : `${(live.totalFreeKbps / 1000).toFixed(1)} Mbps`}
+                      </span>
                     </div>
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
-                      <div className="h-full w-[85%] rounded-full bg-emerald-400" />
+                      <div
+                        className="h-full rounded-full bg-emerald-400 transition-all"
+                        style={{
+                          width: `${Math.min(100, ((live.totalFreeKbps ?? 0) / 1000 / 50) * 100)}%`,
+                        }}
+                      />
                     </div>
                   </div>
                   <div>
                     <div className="mb-1 flex justify-between text-xs text-slate-400">
-                      <span>İNDİRME:</span>
-                      <span className="font-bold text-cyan-400">↓ 32.4 Mbps</span>
+                      <span>ORTALAMA RTT:</span>
+                      <span className="font-bold text-cyan-400">{fmt(live.avgRttMs, " ms")}</span>
                     </div>
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
-                      <div className="h-full w-[35%] rounded-full bg-cyan-400" />
+                      <div
+                        className="h-full rounded-full bg-cyan-400 transition-all"
+                        style={{ width: `${Math.min(100, ((live.avgRttMs ?? 0) / 500) * 100)}%` }}
+                      />
                     </div>
                   </div>
                   <div className="flex justify-between border-t border-slate-800 pt-2 text-xs text-slate-400">
-                    <span>AKTARILAN VERİ:</span>
-                    <span className="text-slate-200">2.54 TB</span>
+                    <span>GÖNDERİLEN ZARF:</span>
+                    <span className="text-slate-200">{live.sent}</span>
                   </div>
                 </div>
               </Card>
+
             </div>
 
             <div className="relative flex min-h-[360px] flex-col overflow-hidden rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 xl:col-span-6">
