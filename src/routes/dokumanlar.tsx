@@ -527,14 +527,30 @@ function Docs() {
     <SitePage>
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-6xl px-6 py-14">
-          <SectionLabel>Dokümanlar</SectionLabel>
+          <SectionLabel>Geliştirici Portalı</SectionLabel>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
             Kurulumdan üretime
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-            Tek statik binary; Node.js, dış CDN veya internet gerektirmez. Aşağıdaki bölümler
-            off-grid saha, kurumsal veri merkezi, güvenlik ve regülasyon uyumunu kapsar.
+            Tek statik binary; Node.js, dış CDN veya internet gerektirmez. Aşağıdaki bölümler SDK
+            başlangıcı, protokol mimarisi, Rust-Wasm çekirdek, off-grid saha, kurumsal veri merkezi,
+            güvenlik ve regülasyon uyumunu kapsar.
           </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              to="/api-dokumantasyon"
+              title="Geliştirici Portalı & API Dokümantasyonu"
+              className="rounded-sm border border-border px-5 py-2.5 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+            >
+              API Dokümantasyonu
+            </Link>
+            <a
+              href="/api/public/openapi.json"
+              className="rounded-sm border border-border px-5 py-2.5 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+            >
+              OpenAPI 3.1 (.json)
+            </a>
+          </div>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
