@@ -4,6 +4,15 @@ version = "0.1.0"
 edition = "2021"
 description = "Tedbirge OS çekirdeği — yönlendirme ağırlığı ve ikili çerçeve yardımcıları (wasm32)"
 
+[features]
+default = ["wasm"]
+# Tarayıcı/Wasm hedefi: no_std + alloc + dahili serbest-liste ayırıcısı.
+wasm = []
+# Ana makine (test/araç) hedefi: standart kütüphane.
+std = []
+# Çıplak donanım (gömülü) hedefi: statik arena + panic handler.
+bare = []
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 path = "src/lib.rs"

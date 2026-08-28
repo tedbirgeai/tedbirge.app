@@ -18,6 +18,8 @@ import { localSubgraph, shortestPath } from "@/lib/mesh-routing";
 type KernelExports = {
   abi_version: () => number;
   digest32?: (ptr: number, len: number) => number;
+  /** Faz C: çekirdeğe taşınan Dijkstra. */
+  route_solve?: (ptr: number, len: number) => number;
   kernel_alloc?: (len: number) => number;
   kernel_free?: (ptr: number, len: number) => void;
   memory?: WebAssembly.Memory;
@@ -67,6 +69,39 @@ function digest(bytes: Uint8Array): number {
   return digestJs(bytes);
 }
 
+/**
+ * Faz C — Rota hesabını Wasm çekirdeğine devreder.
+ * Modül yoksa, ayırma başarısızsa veya çağrı çökerse `null` döner ve
+ * çağıran taraf TypeScript motoruna düşer (davranış aynıdır).
+ */
+function routeViaWasm(request: ArrayBuffer): ArrayBuffer | null {
+  const mod = wasm;
+  if (!mod?.route_solve || !mod.kernel_alloc || !mod.kernel_free || !mod.memory) return null;
+  const bytes = new Uint8Array(request);
+  let inPtr = 0;
+  try {
+    inPtr = mod.kernel_alloc(bytes.length);
+    if (!inPtr) return null;
+    new Uint8Array(mod.memory.buffer, inPtr, bytes.length).set(bytes);
+    const outPtr = mod.route_solve(inPtr, bytes.length);
+    if (!outPtr) return null;
+    const len = new DataView(mod.memory.buffer).getUint32(outPtr, true);
+    const out = mod.memory.buffer.slice(outPtr + 4, outPtr + 4 + len);
+    mod.kernel_free(outPtr, len + 4);
+    return out;
+  } catch {
+    return null;
+  } finally {
+    if (inPtr) {
+      try {
+        mod.kernel_free(inPtr, bytes.length);
+      } catch {
+        /* yoksay */
+      }
+    }
+  }
+}
+
 function reply(op: number, corrId: number, payload: ArrayBuffer) {
   const frame = encodeFrame(op, corrId, payload);
   (self as unknown as Worker).postMessage(frame, [frame]);
@@ -96,6 +131,12 @@ self.onmessage = (e: MessageEvent<ArrayBuffer>) => {
   }
 
   if (frame.op === OP.ROUTE) {
+    // Önce Rust/Wasm çekirdeği; başarısızsa TypeScript motoru.
+    const native = routeViaWasm(frame.payload);
+    if (native) {
+      reply(OP.ROUTE_RESULT, frame.corrId, native);
+      return;
+    }
     const req = decodeRouteRequest(frame.payload);
     // k-hop yerel mesh: yarıçap dışındaki düğümler DHT katmanına bırakılır.
     const scoped = localSubgraph(req.graph, req.from, req.radius);
