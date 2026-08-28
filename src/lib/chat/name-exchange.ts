@@ -17,6 +17,8 @@
 
 import { sendMesh } from "@/lib/node-runtime";
 import { getAlias } from "@/lib/chat/profile";
+import { getDeviceKind, getDeviceName } from "@/lib/identity/device";
+import { rememberPeerIdentity } from "@/lib/identity/peer-identity";
 import { getStoredPersonId } from "@/lib/chat/anchor";
 import { linkNodeToPerson, resolveDisplayName, writeClaimedName } from "@/lib/chat/name-resolver";
 import { logSync } from "@/lib/chat/sync-log";
@@ -25,6 +27,10 @@ export type NameExchange = {
   t: "name-req" | "name-res";
   alias?: string;
   personId?: string;
+  /** İnsan dostu cihaz adı (ör. "Windows PC"). Eski sürümlerde yoktur. */
+  device?: string;
+  /** Cihaz türü — ikon seçimi için. */
+  kind?: "desktop" | "mobile" | "tablet" | "browser";
 };
 
 export function isNameExchange(value: unknown): value is NameExchange {
@@ -47,6 +53,8 @@ export async function requestNameFrom(peerId: string): Promise<void> {
       t: "name-req",
       alias: getAlias(),
       personId: getStoredPersonId(),
+      device: getDeviceName(),
+      kind: getDeviceKind(),
     } satisfies NameExchange);
   } catch (error) {
     logSync("uyarı", "Ad talebi gönderilemedi", String(error));
@@ -62,6 +70,8 @@ export async function answerNameTo(peerId: string): Promise<void> {
       t: "name-res",
       alias,
       personId: getStoredPersonId(),
+      device: getDeviceName(),
+      kind: getDeviceKind(),
     } satisfies NameExchange);
   } catch (error) {
     logSync("uyarı", "Ad beyanı gönderilemedi", String(error));
@@ -77,6 +87,8 @@ export async function announceName(): Promise<void> {
       t: "name-res",
       alias,
       personId: getStoredPersonId(),
+      device: getDeviceName(),
+      kind: getDeviceKind(),
     } satisfies NameExchange);
   } catch (error) {
     logSync("uyarı", "Ad duyurusu gönderilemedi", String(error));
@@ -87,9 +99,15 @@ export async function announceName(): Promise<void> {
  * Karşı taraftan gelen adı tek ad kanalına yazar.
  * @returns Arayüzün tazelenmesi gerekiyorsa true.
  */
-export function applyRemoteName(nodeId: string, alias?: string, personId?: string): boolean {
+export function applyRemoteName(
+  nodeId: string,
+  alias?: string,
+  personId?: string,
+  device?: string,
+  kind?: NameExchange["kind"],
+): boolean {
   if (!nodeId) return false;
-  let changed = false;
+  let changed = rememberPeerIdentity(nodeId, { alias, device, kind });
   if (personId && personId !== nodeId) {
     linkNodeToPerson(nodeId, personId);
     changed = true;
