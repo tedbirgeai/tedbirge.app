@@ -1,46 +1,39 @@
 /**
- * TEDBIRGE WEB-OS — P2P MESSENGER & VIDEO
+ * TEDBIRGE® WEBOS — ÇALIŞMA ALANI
  * ------------------------------------------------------------------
- * Duyarlı (masaüstü / tablet / mobil) Web-OS kabuğu: sol gezinme,
- * ağ özeti + canlı canvas topolojisi, P2P video ızgarası ve uçtan uca
- * şifreli mesajlaşma sütunu. Düğüm bileşen yüklendiğinde arka planda
- * otomatik ateşlenir; kullanıcı hiçbir butona basmaz.
+ * Sade, tek renk "Açık Kristal" B2B çalışma alanı: Sohbet · Dosyalar ·
+ * Ekip · Ağ & Sistem Durumu. Tüm renkler `--tb-*` token'larından okunur.
+ *
+ * VERİ DÜRÜSTLÜĞÜ: Bu ekranda hiçbir sayı uydurulmaz. Gerçek bir eş
+ * bağlanmadıkça durum "1 Düğüm (Bu Cihaz) · Yerel Mod" olarak gösterilir,
+ * ölçülmemiş metrikler "—" basar.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
-  Box,
-  CircleUser,
-  Clock,
-  Folder,
   FolderOpen,
-  FolderTree,
-  Globe,
-  LayoutDashboard,
   Lock,
+  MessageSquare,
   Mic,
   MonitorUp,
-  MoreHorizontal,
-  Network,
   Paperclip,
   PhoneOff,
-  Search,
-  Settings,
-  Share2,
-  Shield,
+  Send,
+  Settings2,
   ShieldCheck,
-  TerminalSquare,
   Users,
   Video,
 } from "lucide-react";
 
 import { toast } from "sonner";
 
-import { useNodeRuntime } from "@/lib/node-runtime";
+import { useNodeRuntime, describeNode } from "@/lib/node-runtime";
+import { useLiveTelemetry, formatUptime } from "@/lib/telemetry/live-store";
 import { NodeSettingsPanel } from "@/components/shell/NodeSettingsPanel";
 import { SecurityPanel } from "@/components/shell/SecurityPanel";
 import { AppErrorBoundary } from "@/components/shell/AppErrorBoundary";
+import { FilesApp } from "@/components/shell/apps/FilesApp";
 
 import {
   broadcastText,
@@ -58,27 +51,16 @@ type Participant = {
   id: string;
   name: string;
   handle: string;
-  alias?: string;
-  active?: boolean;
   self?: boolean;
+  direct?: boolean;
 };
 
-/** Kriptografik kimlikten okunabilir yerel takma ad üretir (İsim/Cisim). */
-const ALIAS_POOL = [
-  "Node Alpha",
-  "Node Beta",
-  "Node Gamma",
-  "Node Delta",
-  "Node Epsilon",
-  "Node Zeta",
-  "Node Eta",
-  "Node Theta",
-];
+type TabId = "chat" | "files" | "team" | "system";
 
-export function peerAlias(id: string): string {
-  let sum = 0;
-  for (const ch of id) sum = (sum + ch.charCodeAt(0)) % 4096;
-  return ALIAS_POOL[sum % ALIAS_POOL.length]!;
+/** Ölçüm yoksa asla değer uydurmaz. */
+function metric(value: number | null | undefined, unit = "", digits = 0): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+  return `${value.toFixed(digits)}${unit}`;
 }
 
 /**
@@ -96,7 +78,6 @@ function useLocalMedia() {
     setMode("data");
   };
 
-  /** Yalnızca kullanıcı etkileşimiyle çağrılır. */
   const request = async (kind: "av" | "audio") => {
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       setMode("data");
@@ -127,9 +108,13 @@ function useLocalMedia() {
   return { mode, request, stop };
 }
 
-/** Mini mesh topolojisi — yeniden boyutlandırmaya duyarlı canvas döngüsü. */
-function MiniMeshCanvas() {
+/**
+ * Mesh topolojisi — YALNIZCA gerçek düğümleri çizer.
+ * Eş yoksa tek bir merkez düğüm (bu cihaz) görünür; sahte uydu düğüm yoktur.
+ */
+function MeshCanvas({ peerIds }: { peerIds: string[] }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
+  const peersKey = peerIds.join("|");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -139,18 +124,10 @@ function MiniMeshCanvas() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const nodes = [
-      { x: 0.2, y: 0.28, r: 4.5, label: "NODE_83A1" },
-      { x: 0.8, y: 0.2, r: 4.5, label: "NODE_6C8E" },
-      { x: 0.86, y: 0.7, r: 4.5, label: "NODE_789E" },
-      { x: 0.3, y: 0.82, r: 4.5, label: "NODE_1F2B" },
-      { x: 0.14, y: 0.62, r: 4.5, label: "NODE_44C0" },
-    ];
-    // Her kenarda dolaşan veri paketi (0–1 arası ilerleme).
-    const packets = nodes.map((_, i) => ({ t: i * 0.17, speed: 0.004 + (i % 3) * 0.0018 }));
-
-    let raf = 0;
-    let pulse = 0;
+    const ids = peersKey ? peersKey.split("|") : [];
+    const styles = getComputedStyle(document.documentElement);
+    const accent = styles.getPropertyValue("--tb-accent").trim() || "#0f9d76";
+    const muted = styles.getPropertyValue("--tb-muted").trim() || "#52627a";
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -160,249 +137,138 @@ function MiniMeshCanvas() {
     };
     resize();
 
-    const observer = new ResizeObserver(resize);
+    const observer = new ResizeObserver(() => {
+      resize();
+      draw();
+    });
     observer.observe(parent);
-    window.addEventListener("resize", resize);
 
-    const draw = () => {
-      const w = parent.clientWidth;
-      const h = parent.clientHeight;
+    function draw() {
+      if (!ctx) return;
+      const w = parent!.clientWidth;
+      const h = parent!.clientHeight;
       ctx.clearRect(0, 0, w, h);
+      const cx = w / 2;
+      const cy = h / 2;
+      const radius = Math.max(40, Math.min(w, h) / 2 - 34);
 
-      const cx = w * 0.5;
-      const cy = h * 0.5;
-      pulse = (pulse + 0.35) % Math.max(24, Math.min(w, h) / 2);
+      ids.forEach((id, i) => {
+        const angle = (i / ids.length) * Math.PI * 2 - Math.PI / 2;
+        const nx = cx + Math.cos(angle) * radius;
+        const ny = cy + Math.sin(angle) * radius;
 
-      // Merkez nabız halkası
-      ctx.beginPath();
-      ctx.arc(cx, cy, pulse, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(16, 185, 129, ${Math.max(0, 0.35 - pulse / 200)})`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      nodes.forEach((n, i) => {
-        const nx = w * n.x;
-        const ny = h * n.y;
-
-        // Bağlantı çizgisi
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.lineTo(nx, ny);
-        ctx.strokeStyle = "rgba(6, 182, 212, 0.28)";
-        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = muted;
+        ctx.globalAlpha = 0.35;
         ctx.lineWidth = 1;
         ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
 
-        // Hareketli veri paketi
-        const p = packets[i]!;
-        p.t = (p.t + p.speed) % 1;
-        const px = cx + (nx - cx) * p.t;
-        const py = cy + (ny - cy) * p.t;
         ctx.beginPath();
-        ctx.arc(px, py, 2, 0, Math.PI * 2);
-        ctx.fillStyle = "#22d3ee";
-        ctx.shadowColor = "#06b6d4";
-        ctx.shadowBlur = 8;
+        ctx.arc(nx, ny, 5, 0, Math.PI * 2);
+        ctx.fillStyle = accent;
         ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // Çevre düğüm (cyan glow)
-        ctx.beginPath();
-        ctx.arc(nx, ny, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = "#06b6d4";
-        ctx.shadowColor = "rgba(6,182,212,0.9)";
-        ctx.shadowBlur = 12;
-        ctx.fill();
-        ctx.shadowBlur = 0;
 
         if (w > 200) {
-          ctx.font = "8px ui-monospace, monospace";
-          ctx.fillStyle = "rgba(148,163,184,0.75)";
+          ctx.font = "9px ui-monospace, monospace";
+          ctx.fillStyle = muted;
           ctx.textAlign = nx > cx ? "right" : "left";
-          ctx.fillText(n.label, nx + (nx > cx ? -8 : 8), ny - 8);
+          ctx.fillText(id.slice(0, 10), nx + (nx > cx ? -9 : 9), ny - 8);
         }
       });
 
-      // Merkez THIS_NODE (emerald glow)
       ctx.beginPath();
-      ctx.arc(cx, cy, 11, 0, Math.PI * 2);
-      ctx.fillStyle = "#091512";
-      ctx.strokeStyle = "#10b981";
+      ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+      ctx.strokeStyle = accent;
       ctx.lineWidth = 2;
-      ctx.shadowColor = "rgba(16,185,129,0.9)";
-      ctx.shadowBlur = 16;
-      ctx.fill();
       ctx.stroke();
-      ctx.shadowBlur = 0;
 
-      if (w > 200) {
-        ctx.font = "8px ui-monospace, monospace";
-        ctx.fillStyle = "rgba(16,185,129,0.9)";
+      if (w > 180) {
+        ctx.font = "9px ui-monospace, monospace";
+        ctx.fillStyle = muted;
         ctx.textAlign = "center";
-        ctx.fillText("THIS_NODE", cx, cy + 24);
+        ctx.fillText("Bu cihaz", cx, cy + 24);
       }
+    }
 
-      raf = requestAnimationFrame(draw);
-    };
-    raf = requestAnimationFrame(draw);
+    draw();
+    return () => observer.disconnect();
+  }, [peersKey]);
 
-    return () => {
-      cancelAnimationFrame(raf);
-      observer.disconnect();
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-
-  return (
-    <canvas id="meshTopologyCanvas" ref={ref} className="block h-full w-full bg-transparent" />
-  );
+  return <canvas ref={ref} className="block h-full w-full bg-transparent" />;
 }
 
-function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
+function Card({
+  title,
+  children,
+  className,
+}: {
+  title?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <section
-      className={`rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 ${className ?? ""}`}
+      className={`rounded-xl p-4 backdrop-blur-sm ${className ?? ""}`}
+      style={{
+        background: "var(--tb-panel)",
+        border: "1px solid var(--tb-border)",
+        color: "var(--tb-text)",
+      }}
     >
+      {title ? (
+        <h3
+          className="mb-3 text-[11px] font-semibold uppercase tracking-wider"
+          style={{ color: "var(--tb-muted)" }}
+        >
+          {title}
+        </h3>
+      ) : null}
       {children}
     </section>
   );
 }
 
-function PanelTitle({
-  icon,
-  children,
-  right,
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  right?: React.ReactNode;
-}) {
+function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-2 text-xs font-bold text-slate-300">
-      <span className="flex min-w-0 items-center gap-2 truncate">
-        {icon}
-        <span className="truncate">{children}</span>
+    <div className="flex justify-between gap-3 py-1 text-[13px]">
+      <span style={{ color: "var(--tb-muted)" }}>{k}</span>
+      <span className="truncate font-medium" style={{ color: "var(--tb-text)" }}>
+        {v}
       </span>
-      {right}
     </div>
   );
 }
 
-function Row({ k, v, tone }: { k: string; v: string; tone?: string }) {
-  return (
-    <div className="flex justify-between gap-3">
-      <span>{k}</span>
-      <span className={tone ?? "text-slate-200"}>{v}</span>
-    </div>
-  );
-}
-
-function WaveBars({ delayed }: { delayed?: boolean }) {
-  const bars = [0.1, 0.3, 0.5];
-  return (
-    <span className="flex items-end gap-0.5 text-emerald-400">
-      {bars.map((d) => (
-        <span
-          key={d}
-          className="w-1 rounded bg-emerald-400"
-          style={{
-            height: delayed ? 12 : 10,
-            animation: "tbg-wave 1.2s infinite ease-in-out",
-            animationDelay: `${d}s`,
-          }}
-        />
-      ))}
-    </span>
-  );
-}
-
-/** Boş slot: 8'li matrisi her koşulda korur. */
-function EmptyTile() {
-  return (
-    <div className="flex aspect-video max-h-44 w-full flex-col items-center justify-center rounded-lg border border-dashed border-emerald-500/15 bg-[var(--tb-panel-solid)] p-3 text-center font-osmono text-[10px] text-slate-600">
-      <Network className="mb-1 h-4 w-4 text-slate-700" />
-      Eş Bekleniyor
-      <span className="text-[9px] text-slate-700">Pasif Düğüm</span>
-    </div>
-  );
-}
-
-function VideoTile({ p, camOn }: { p: Participant; camOn: boolean }) {
-  return (
-    <div
-      className={`relative flex aspect-video max-h-44 w-full flex-col justify-between overflow-hidden rounded-lg border bg-[var(--tb-bg-soft)] p-3 ${
-        p.active
-          ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.35)]"
-          : "border-emerald-500/20"
-      }`}
-    >
-      {p.active ? (
-        <span className="absolute left-2 top-2 rounded border border-emerald-500/30 bg-emerald-950/80 px-1.5 py-0.5 font-osmono text-[9px] text-emerald-400">
-          AKTİF KONUŞMACI
-        </span>
-      ) : null}
-
-      <div className="my-2 flex min-h-0 flex-1 items-center justify-center">
-        <span
-          className={`grid h-14 w-14 place-items-center rounded-full border-2 font-osmono text-sm font-bold ${
-            p.self
-              ? "border-emerald-400/60 bg-emerald-950/50 text-emerald-400"
-              : "border-cyan-500/40 bg-slate-950 text-cyan-300"
-          } ${p.self && !camOn ? "opacity-40" : ""}`}
-        >
-          {p.self ? <Box className="h-6 w-6 text-emerald-400" /> : <Network className="h-6 w-6" />}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between gap-2 font-osmono text-[11px]">
-        <div className="min-w-0">
-          <div className="truncate font-bold text-slate-200">{p.alias ?? p.name}</div>
-          <div className="truncate text-[9px] text-cyan-400/80">{p.name}</div>
-          <div className="truncate text-[9px] text-slate-500">{p.handle}</div>
-        </div>
-        {p.active || p.self ? (
-          <WaveBars delayed={p.self} />
-        ) : (
-          <Mic className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
-        )}
-      </div>
-    </div>
-  );
-}
-
-/** Tedbirge Web-OS P2P Messenger & Video kabuğu. */
+/** Tedbirge® WebOS çalışma alanı. */
 export default function Messenger() {
   const node = useNodeRuntime();
+  const tele = useLiveTelemetry();
+  const status = describeNode(node);
   const { mode: media, request: requestMedia, stop: stopMedia } = useLocalMedia();
+
+  const [tab, setTab] = useState<TabId>("chat");
+  const [systemView, setSystemView] = useState<"network" | "security" | "settings">("network");
   const [draft, setDraft] = useState("");
   const [feed, setFeed] = useState<LiveMessage[]>([]);
   const [route, setRoute] = useState<{ hops: number; cost: number } | null>(null);
-  // Yerel WebRTC kontrol durumları — hepsi KAPALI başlar (izin istenmez).
   const [camOn, setCamOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
   const [inCall, setInCall] = useState(false);
-  // Canlı test: ağda eş yokken sanal bir P2P düğümü bağlar.
-  const [sim, setSim] = useState(false);
-  // Orta panel görünümü: video ızgarası veya gömülü ağ/kapsama paneli.
-  const [center, setCenter] = useState<"video" | "network" | "security" | "settings">("video");
-  // Sinyal kanalından gelen canlı eş kimlikleri (BroadcastChannel + bulut).
   const [signalPeers, setSignalPeers] = useState<string[]>([]);
-  // Sunucu ve ilk istemci render'ı aynı etiketi basar (hidrasyon uyuşmazlığı olmaz).
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
 
-  // Yerel + bulut sinyal kanalı: yan yanaki iki cihaz birbirini anında görür.
   useEffect(() => subscribeLivePeers(setSignalPeers), []);
 
-  // Cihaz açıldığı anda kendini canlı düğüm olarak tanıtır (manuel buton yok).
   useEffect(() => {
     void ensureLiveNode();
     return onLiveMessage((msg) => setFeed((prev) => [...prev.slice(-80), msg]));
   }, []);
 
-  // Dijkstra rotası gerçek eş listesi ve ölçülen gecikmeye göre tazelenir.
   useEffect(() => {
     let alive = true;
     void measureRoute(node.nodeId, node.peers, node.rttMs).then((r) => {
@@ -414,54 +280,33 @@ export default function Messenger() {
   }, [node.nodeId, node.peers, node.rttMs]);
 
   const selfLabel = hydrated ? nodeLabel(node.nodeId) : nodeLabel("");
-
   const livePeers: LivePeer[] = useMemo(() => toLivePeers(node.peers), [node.peers]);
 
   const participants: Participant[] = useMemo(() => {
-    const list: Participant[] = [
+    return [
       {
         id: node.nodeId || "self",
         name: selfLabel,
-        alias: "Bu Cihaz",
         handle:
-          media === "data" ? "sadece veri düğümü" : media === "audio" ? "yalnız ses" : "bu cihaz",
+          media === "data" ? "bu cihaz · veri düğümü" : media === "audio" ? "bu cihaz · ses" : "bu cihaz · ses ve görüntü",
         self: true,
       },
       ...livePeers.map((p) => ({
         id: p.id,
         name: p.label,
-        alias: peerAlias(p.id),
         handle: p.direct ? "doğrudan P2P" : "röle üzerinden",
-        active: p.direct,
+        direct: p.direct,
       })),
-      // Sinyal kanalından keşfedilen cihazlar (aynı adresi açan telefonlar).
       ...signalPeers
         .filter((id) => !livePeers.some((p) => p.id === id))
-        .map((id) => ({
-          id,
-          name: id,
-          alias: peerAlias(id),
-          handle: "sinyal kanalı · çevrimiçi",
-          active: true,
-        })),
+        .map((id) => ({ id, name: id, handle: "sinyal kanalı · çevrimiçi", direct: false })),
     ];
-    if (sim && livePeers.length === 0) {
-      list.push({
-        id: "sim-peer",
-        name: "NODE_789E",
-        alias: "Node Alpha (Simülasyon)",
-        handle: "sanal eş · canlı test",
-        active: true,
-      });
-    }
-    return list;
-  }, [livePeers, media, node.nodeId, selfLabel, sim, signalPeers]);
+  }, [livePeers, media, node.nodeId, selfLabel, signalPeers]);
 
-  /** 8'li sabit matris: boş kalan slotlar pasif düğüm kartıyla korunur. */
-  const slots = useMemo(
-    () => Array.from({ length: 8 }, (_, i) => participants[i] ?? null),
-    [participants],
-  );
+  const peerCount = participants.length - 1;
+  const localMode = peerCount === 0;
+  const nodeCountLabel = localMode ? "1 düğüm (bu cihaz)" : `${participants.length} düğüm`;
+  const networkLabel = localMode ? "Yerel Mod" : status.text;
 
   const stamp = () =>
     new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
@@ -474,552 +319,491 @@ export default function Messenger() {
       ...prev,
       { id: `self-${Date.now()}`, from: selfLabel, at: stamp(), text, self: true },
     ]);
-    if (sim && livePeers.length === 0) {
-      const echo = text;
-      setTimeout(() => {
-        setFeed((prev) => [
-          ...prev,
-          {
-            id: `sim-${Date.now()}`,
-            from: "NODE_789E · Node Alpha",
-            at: stamp(),
-            text: `Paket alındı: “${echo}” (şifreli, 1 sıçrama)`,
-          },
-        ]);
-      }, 650);
-      return;
-    }
     await broadcastText(text);
   };
 
-  /** Canlı test / sinyal simülatörü: sanal eşi anında ağa alır. */
-  const startSimulator = () => {
-    setSim(true);
-    setFeed((prev) => [
-      ...prev,
-      {
-        id: `sim-join-${Date.now()}`,
-        from: "NODE_789E · Node Alpha",
-        at: stamp(),
-        text: "Sanal eş bağlandı. Uçtan uca şifreli kanal açık — mesaj yazabilirsiniz.",
-      },
-    ]);
-  };
-
-  const peers = node.peers.length + (sim && livePeers.length === 0 ? 1 : 0);
-  const directPeers =
-    node.peers.filter((p) => p.direct).length + (sim && livePeers.length === 0 ? 1 : 0);
+  const navItems: { id: TabId; label: string; icon: typeof MessageSquare }[] = [
+    { id: "chat", label: "Sohbet", icon: MessageSquare },
+    { id: "files", label: "Dosyalar", icon: FolderOpen },
+    { id: "team", label: "Ekip", icon: Users },
+  ];
 
   return (
-    <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden overflow-x-hidden bg-[var(--tb-bg)] font-osui text-slate-400">
-      <style>{`@keyframes tbg-wave{0%,100%{height:4px}50%{height:16px}}`}</style>
-
+    <div
+      className="flex h-[100dvh] w-full flex-col overflow-hidden font-osui"
+      style={{ background: "var(--tb-bg)", color: "var(--tb-text)" }}
+    >
       {/* ÜST BAR */}
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 bg-[var(--tb-panel-solid)] px-3 py-2 text-[11px]">
-        <div className="flex min-w-0 items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
-          <Box className="h-4 w-4 shrink-0 text-cyan-400" />
-          <span>Tedbirge® WebOS</span>
-          <span className="hidden truncate font-normal text-slate-500 sm:inline">
-            tedbirge.app · otonom P2P ağ işletim sistemi
+      <header
+        className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-[12px] backdrop-blur-sm"
+        style={{ background: "var(--tb-panel)", borderBottom: "1px solid var(--tb-border)" }}
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="text-[14px] font-semibold" style={{ color: "var(--tb-text)" }}>
+            Tedbirge® WebOS
+          </span>
+          <span className="hidden truncate sm:inline" style={{ color: "var(--tb-muted)" }}>
+            tedbirge.app çalışma alanı
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900/80 px-2.5 py-1">
-            <span className="hidden text-slate-400 sm:inline">SİSTEM DURUMU:</span>
-            <span className="inline-flex items-center gap-1.5 font-medium text-emerald-400">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> start.ts
-              ÇEVRİMİÇİ
-            </span>
-            <span className="ml-1 hidden items-center gap-1.5 font-medium text-emerald-400 md:inline-flex">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> server.ts
-              ÇEVRİMİÇİ
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 rounded border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-1 font-osmono text-emerald-400">
-            <Shield className="h-3.5 w-3.5" />
-            <span>GÜVENLİ (AES-256-GCM)</span>
-          </div>
-          <div className="hidden items-center gap-2 text-slate-400 lg:flex">
-            <Clock className="h-3.5 w-3.5 text-cyan-400" />
-            <span>
-              ÇALIŞMA SÜRESİ: <strong className="font-osmono text-slate-200">12g 6sa 24dk</strong>
-            </span>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className="inline-flex items-center gap-2 rounded-full px-3 py-1"
+            style={{ background: "var(--tb-panel-soft)", border: "1px solid var(--tb-border)" }}
+          >
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ background: localMode ? "var(--tb-muted)" : "var(--tb-accent)" }}
+            />
+            <span style={{ color: "var(--tb-muted)" }}>Ağ durumu:</span>
+            <strong style={{ color: "var(--tb-text)" }}>{networkLabel}</strong>
+          </span>
+          <span
+            className="hidden items-center gap-1.5 rounded-full px-3 py-1 sm:inline-flex"
+            style={{ background: "var(--tb-panel-soft)", border: "1px solid var(--tb-border)", color: "var(--tb-muted)" }}
+          >
+            <Lock className="h-3.5 w-3.5" /> Uçtan uca şifreli
+          </span>
           <Link
             to="/panel"
-            className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900 px-2.5 py-1 text-slate-200 hover:border-emerald-500/40 hover:text-emerald-300"
+            className="rounded-full px-3 py-1 transition-colors"
+            style={{ background: "var(--tb-panel-soft)", border: "1px solid var(--tb-border)", color: "var(--tb-text)" }}
           >
-            <CircleUser className="h-3.5 w-3.5 text-cyan-400" />
-            <span className="font-osmono">node_admin</span>
+            Hesabım
           </Link>
         </div>
       </header>
 
-      {/* ANA DÜZEN */}
-      <div className="flex min-h-0 flex-1 gap-2 overflow-hidden p-2">
+      <div className="flex min-h-0 flex-1 gap-3 overflow-hidden p-3">
         {/* SOL MENÜ */}
-        <aside className="hidden w-52 shrink-0 flex-col justify-between overflow-y-auto rounded-lg border border-[rgba(16,185,129,0.15)] bg-[var(--tb-panel-solid)] p-3 text-xs lg:flex xl:h-[calc(100vh-110px)]">
-          <div>
-            <div className="mb-2 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              Gezinme
-            </div>
-            <nav className="space-y-1 font-osmono">
-              <span className="flex items-center gap-2 rounded border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-2 font-medium text-emerald-400">
-                <FolderOpen className="h-3.5 w-3.5" /> routes/
-              </span>
-              {["kernel/", "components/", "wasm/"].map((f) => (
-                <span
-                  key={f}
-                  className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-                >
-                  <Folder className="h-3.5 w-3.5" /> {f}
-                </span>
-              ))}
-            </nav>
+        <aside
+          className="hidden w-56 shrink-0 flex-col justify-between rounded-xl p-3 backdrop-blur-sm lg:flex"
+          style={{ background: "var(--tb-panel)", border: "1px solid var(--tb-border)" }}
+        >
+          <nav className="space-y-1">
+            {navItems.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTab(id)}
+                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] transition-colors"
+                style={
+                  tab === id
+                    ? { background: "var(--tb-panel-soft)", color: "var(--tb-accent)", fontWeight: 600 }
+                    : { color: "var(--tb-muted)" }
+                }
+              >
+                <Icon className="h-4 w-4" /> {label}
+              </button>
+            ))}
+          </nav>
 
-            <div className="mb-2 mt-5 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              Sistem
-            </div>
-            <nav className="space-y-1">
-              <button
-                type="button"
-                onClick={() => setCenter("video")}
-                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
-                  center === "video" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
-                }`}
-              >
-                <LayoutDashboard className="h-3.5 w-3.5 text-cyan-400" /> Kontrol Paneli
-              </button>
-              <button
-                type="button"
-                onClick={() => setCenter("network")}
-                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
-                  center === "network" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
-                }`}
-              >
-                <Share2 className="h-3.5 w-3.5 text-cyan-400" /> Ağ / Kapsama
-              </button>
-              <Link
-                to="/system"
-                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
-              >
-                <TerminalSquare className="h-3.5 w-3.5 text-cyan-400" /> Terminal
-              </Link>
-              <Link
-                to="/app"
-                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
-              >
-                <FolderTree className="h-3.5 w-3.5 text-cyan-400" /> Dosyalar
-              </Link>
-              <button
-                type="button"
-                onClick={() => setCenter("security")}
-                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
-                  center === "security" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
-                }`}
-              >
-                <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" /> Güvenlik
-              </button>
-              <button
-                type="button"
-                onClick={() => setCenter("settings")}
-                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
-                  center === "settings" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
-                }`}
-              >
-                <Settings className="h-3.5 w-3.5 text-cyan-400" /> Ayarlar
-              </button>
-            </nav>
-          </div>
-
-          <div className="space-y-1 rounded-lg border border-slate-800 bg-slate-900/90 p-2.5 font-osmono text-[10px]">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">P2P AĞ DURUMU</span>
-              <span className="flex items-center gap-1 font-bold text-emerald-400">
-                <span className="h-1.5 w-1.5 animate-ping rounded-full bg-emerald-400" /> BAĞLI
-              </span>
-            </div>
-            <div className="text-slate-400">
-              DÜĞÜM KİMLİĞİ: <span className="text-slate-200">THIS_NODE</span>
-            </div>
-            <div className="text-slate-400">
-              ROL: <span className="font-bold text-cyan-400">SÜPER EŞ</span>
-            </div>
-            <div className="text-slate-400">
-              SÜRÜM: <span className="text-slate-200">v2.7.1</span>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setTab("system")}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] transition-colors"
+              style={
+                tab === "system"
+                  ? { background: "var(--tb-panel-soft)", color: "var(--tb-accent)", fontWeight: 600 }
+                  : { color: "var(--tb-muted)" }
+              }
+            >
+              <Settings2 className="h-4 w-4" /> Ağ &amp; Sistem Durumu
+            </button>
+            <div
+              className="rounded-lg p-3 text-[12px]"
+              style={{ background: "var(--tb-panel-soft)", color: "var(--tb-muted)" }}
+            >
+              <div className="truncate">
+                Kimlik: <strong style={{ color: "var(--tb-text)" }}>{selfLabel}</strong>
+              </div>
+              <div>{nodeCountLabel}</div>
             </div>
           </div>
         </aside>
 
-        {/* İÇERİK: 3 BLOK */}
-        <main className="grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-2 overflow-y-auto xl:grid-cols-12 xl:overflow-hidden">
-          {/* SOL BLOK — AĞ ÖZETİ + TOPOLOJİ */}
-          <div className="flex min-w-0 flex-col gap-2 xl:col-span-3 xl:h-[calc(100vh-110px)] xl:overflow-y-auto">
-            <Panel className="space-y-2">
-              <PanelTitle icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>
-                AĞ ÖZETİ
-              </PanelTitle>
-              <div className="flex items-baseline justify-between pt-1">
-                <span className="font-osmono text-3xl font-extrabold text-emerald-400">823</span>
-                <span className="text-xs font-medium text-slate-400">AKTİF DÜĞÜM</span>
-              </div>
-              <div className="space-y-1 border-t border-slate-800/60 pt-2 font-osmono text-[11px] text-slate-400">
-                <Row k="TOPLAM DÜĞÜM:" v="1,284" />
-                <Row k="AKTİF BAĞLANTI:" v="823" tone="text-emerald-400" />
-                <Row k="AĞ ÇALIŞMA SÜRESİ:" v="12g 6sa 24dk" />
-                <Row k="PROTOKOL:" v="P2P v2.7.1" tone="text-cyan-400" />
-              </div>
-            </Panel>
-
-            <Panel className="flex min-h-[280px] flex-1 flex-col">
-              <PanelTitle icon={<Network className="h-3.5 w-3.5 text-cyan-400" />}>
-                P2P TOPOLOJİSİ
-              </PanelTitle>
-              <div className="relative mt-2 min-h-[160px] w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[var(--tb-bg)]">
-                <MiniMeshCanvas />
-              </div>
-              <div className="mt-2 space-y-1 border-t border-slate-800/60 pt-2 font-osmono text-[10px] text-slate-400">
-                <Row k="ORT. GECİKME:" v="12ms" tone="text-emerald-400" />
-                <Row k="PAKET KAYBI:" v="%0.12" tone="text-emerald-400" />
-                <Row k="BANT GENİŞLİĞİ PUANI:" v="98.7 / 100" tone="text-cyan-400" />
-                <Row k="AĞ SAĞLIĞI:" v="MÜKEMMEL" tone="font-bold text-emerald-400" />
-              </div>
-            </Panel>
-          </div>
-
-          {/* ORTA BLOK — VİDEO IZGARASI / GÖMÜLÜ AĞ PANELİ */}
-          <div className="flex h-full min-h-[360px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[var(--tb-panel-solid)] p-3 xl:col-span-6 xl:h-[calc(100vh-110px)] xl:min-h-0">
-            <PanelTitle
-              icon={
-                center === "video" ? (
-                  <Video className="h-4 w-4 text-emerald-400" />
-                ) : center === "security" ? (
-                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                ) : center === "settings" ? (
-                  <Settings className="h-4 w-4 text-emerald-400" />
-                ) : (
-                  <Share2 className="h-4 w-4 text-emerald-400" />
-                )
-              }
-              right={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
-            >
-              <span className="flex items-center gap-2">
-                {center === "video"
-                  ? "P2P VİDEO VE SES"
-                  : center === "security"
-                    ? "GÜVENLİK VE DOĞRULAMA"
-                    : center === "settings"
-                      ? "DÜĞÜM AYARLARI"
-                      : "AĞ VE KAPSAMA"}
-                <span className="hidden rounded border border-slate-800 bg-slate-900 px-2 py-0.5 font-osmono text-[10px] font-normal text-slate-400 sm:inline-flex sm:items-center sm:gap-1">
-                  <Users className="h-3 w-3 text-cyan-400" /> {participants.length} KATILIMCI
-                </span>
-              </span>
-            </PanelTitle>
-
-            {center === "settings" ? (
-              <AppErrorBoundary title="Ayarlar penceresi yüklenemedi">
-                <NodeSettingsPanel />
-              </AppErrorBoundary>
-            ) : center === "security" ? (
-              <AppErrorBoundary title="Güvenlik penceresi yüklenemedi">
-                <SecurityPanel />
-              </AppErrorBoundary>
-            ) : center === "network" ? (
-              <div className="my-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 font-osmono text-[11px]">
-                <div className="rounded-lg border border-slate-800 bg-[var(--tb-panel-solid)] p-3">
-                  <div className="mb-2 text-slate-300">KAPSAMA ÖZETİ</div>
-                  <Row k="ÇEVRİMİÇİ EŞ:" v={String(peers)} tone="text-emerald-400" />
-                  <Row k="DOĞRUDAN P2P:" v={String(directPeers)} tone="text-cyan-400" />
-                  <Row
-                    k="ROTA:"
-                    v={route ? `${route.hops} sıçrama · maliyet ${route.cost}` : "ölçülüyor"}
-                  />
-                  <Row k="GECİKME:" v={node.rttMs != null ? `${node.rttMs} ms` : "—"} />
-                  <Row k="KUYRUK:" v={String(node.queued)} />
-                </div>
-                <div className="rounded-lg border border-slate-800 bg-[var(--tb-panel-solid)] p-3">
-                  <div className="mb-2 text-slate-300">KEŞFEDİLEN DÜĞÜMLER</div>
-                  {participants.filter((p) => !p.self).length === 0 ? (
-                    <p className="text-slate-600">Sinyal bekleniyor…</p>
-                  ) : (
-                    participants
-                      .filter((p) => !p.self)
-                      .map((p) => (
-                        <div key={p.id} className="flex justify-between gap-2 py-0.5">
-                          <span className="truncate text-slate-300">{p.alias ?? p.name}</span>
-                          <span className="shrink-0 text-emerald-400">{p.handle}</span>
-                        </div>
-                      ))
-                  )}
-                </div>
-                <div className="relative h-56 overflow-hidden rounded-lg border border-slate-800 bg-[var(--tb-bg)]">
-                  <MiniMeshCanvas />
-                </div>
-              </div>
-            ) : (
-              <div className="my-2 grid h-full min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-2 sm:grid-cols-2 lg:grid-cols-3">
-                {slots.map((p, i) =>
-                  p ? (
-                    <VideoTile key={p.id} p={p} camOn={camOn} />
-                  ) : (
-                    <EmptyTile key={`empty-${i}`} />
-                  ),
-                )}
-              </div>
-            )}
-
-            <div
-              className="shrink-0 rounded-lg border border-slate-800 bg-slate-900/60 p-2"
-              hidden={center === "security" || center === "settings"}
-            >
-              <div className="mb-2 text-center font-osmono text-[10px] text-slate-500">
-                {!inCall
-                  ? "GÖRÜŞME SONLANDIRILDI"
-                  : media === "data"
-                    ? "SADECE VERİ DÜĞÜMÜ — KAMERA/MİKROFON KAPALI"
-                    : media === "audio"
-                      ? "SES DÜĞÜMÜ — KAMERA KAPALI"
-                      : "DOĞRUDAN P2P WEBRTC AKIŞI"}{" "}
-                | AES-256-GCM |{" "}
-                {node.rttMs != null ? `${node.rttMs}ms GECİKME` : "GECİKME ÖLÇÜLÜYOR"}
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {[
-                  {
-                    icon: Video,
-                    label: camOn ? "Kamerayı kapat" : "Kamerayı aç",
-                    on: camOn,
-                    // İzin YALNIZCA burada, kullanıcı tıkladığında istenir.
-                    toggle: () => {
-                      if (camOn) {
-                        setCamOn(false);
-                        if (!micOn) stopMedia();
-                        return;
-                      }
-                      void requestMedia("av").then((ok) => setCamOn(ok));
-                    },
-                  },
-                  {
-                    icon: Mic,
-                    label: micOn ? "Mikrofonu sessize al" : "Mikrofonu aç",
-                    on: micOn,
-                    toggle: () => {
-                      if (micOn) {
-                        setMicOn(false);
-                        if (!camOn) stopMedia();
-                        return;
-                      }
-                      void requestMedia(camOn ? "av" : "audio").then((ok) => setMicOn(ok));
-                    },
-                  },
-                  {
-                    icon: MonitorUp,
-                    label: screenOn ? "Ekran paylaşımını durdur" : "Ekran paylaş",
-                    on: screenOn,
-                    toggle: () => setScreenOn((v) => !v),
-                  },
-                ].map(({ icon: Icon, label, on, toggle }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    aria-label={label}
-                    aria-pressed={on}
-                    title={label}
-                    onClick={toggle}
-                    className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors ${
-                      on
-                        ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-400"
-                        : "border-rose-500/50 bg-rose-500/15 text-rose-400"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </button>
-                ))}
+        {/* İÇERİK */}
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-hidden">
+          {/* Mobil sekme çubuğu */}
+          <div className="flex gap-2 overflow-x-auto lg:hidden">
+            {[...navItems, { id: "system" as TabId, label: "Ağ & Sistem", icon: Settings2 }].map(
+              ({ id, label, icon: Icon }) => (
                 <button
+                  key={id}
                   type="button"
-                  aria-label="Katılımcılar"
-                  title="Katılımcılar"
-                  onClick={() => setSim((v) => v || livePeers.length === 0)}
-                  className="grid h-10 w-10 place-items-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:border-emerald-500/40 hover:text-emerald-400"
-                >
-                  <Users className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Diğer"
-                  title="Diğer"
-                  className="grid h-10 w-10 place-items-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:border-emerald-500/40 hover:text-emerald-400"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  aria-label={inCall ? "Görüşmeyi bitir" : "Görüşmeyi başlat"}
-                  title={inCall ? "Görüşmeyi bitir" : "Görüşmeyi başlat"}
-                  onClick={() => {
-                    if (inCall) {
-                      setInCall(false);
-                      setCamOn(false);
-                      setMicOn(false);
-                      setScreenOn(false);
-                      stopMedia();
-                      return;
-                    }
-                    // "Arama Başlat" — izin isteminin tek tetikleyicisi.
-                    void requestMedia("av").then((ok) => {
-                      setInCall(true);
-                      setCamOn(ok);
-                      setMicOn(ok);
-                    });
+                  onClick={() => setTab(id)}
+                  className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px]"
+                  style={{
+                    background: tab === id ? "var(--tb-panel-soft)" : "var(--tb-panel)",
+                    border: "1px solid var(--tb-border)",
+                    color: tab === id ? "var(--tb-accent)" : "var(--tb-muted)",
                   }}
-                  className={`grid h-10 w-10 place-items-center rounded-lg text-white ${
-                    inCall ? "bg-rose-600 hover:bg-rose-500" : "bg-emerald-600 hover:bg-emerald-500"
-                  }`}
                 >
-                  <PhoneOff className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5" /> {label}
                 </button>
-              </div>
-            </div>
+              ),
+            )}
           </div>
 
-          {/* SAĞ BLOK — ŞİFRELİ MESAJLAŞMA */}
-          <div className="flex h-full min-h-[360px] min-w-0 flex-col overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[var(--tb-panel-solid)] p-3 xl:col-span-3 xl:h-[calc(100vh-110px)] xl:min-h-0">
-            <PanelTitle
-              icon={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
-              right={
-                <span className="rounded border border-emerald-500/30 bg-emerald-950/40 px-1.5 py-0.5 font-osmono text-[9px] text-emerald-400">
-                  UÇTAN UCA ŞİFRELEME AKTİF
-                </span>
-              }
-            >
-              ŞİFRELEME MESAJLAŞMA
-            </PanelTitle>
-
-            {livePeers.length === 0 && !sim ? (
-              <button
-                type="button"
-                onClick={startSimulator}
-                className="mt-2 w-full rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 font-osmono text-[11px] font-bold text-cyan-300 hover:bg-cyan-500/20"
+          {tab === "chat" ? (
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden xl:grid-cols-3">
+              <div
+                className="flex min-h-0 flex-col overflow-hidden rounded-xl backdrop-blur-sm xl:col-span-2"
+                style={{ background: "var(--tb-panel)", border: "1px solid var(--tb-border)" }}
               >
-                CANLI TEST / SİNYAL SİMÜLATÖRÜ
-              </button>
-            ) : null}
+                <div
+                  className="flex shrink-0 items-center justify-between gap-2 px-4 py-3"
+                  style={{ borderBottom: "1px solid var(--tb-border)" }}
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-[15px] font-semibold">Mesh Yayını</div>
+                    <div className="truncate text-[12px]" style={{ color: "var(--tb-muted)" }}>
+                      {localMode
+                        ? "Yerel Mod · eş bekleniyor"
+                        : `${peerCount} eş${route ? ` · ${route.hops} sıçrama` : ""}`}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (inCall) {
+                        setInCall(false);
+                        setCamOn(false);
+                        setMicOn(false);
+                        setScreenOn(false);
+                        stopMedia();
+                        return;
+                      }
+                      void requestMedia("av").then((ok) => {
+                        setInCall(true);
+                        setCamOn(ok);
+                        setMicOn(ok);
+                      });
+                    }}
+                    className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-medium"
+                    style={
+                      inCall
+                        ? { background: "var(--tb-panel-soft)", border: "1px solid var(--tb-border)", color: "var(--tb-text)" }
+                        : { background: "var(--tb-accent)", color: "var(--tb-bg)" }
+                    }
+                  >
+                    {inCall ? <PhoneOff className="h-4 w-4" /> : <Video className="h-4 w-4" />}
+                    {inCall ? "Görüşmeyi bitir" : "Görüşme başlat"}
+                  </button>
+                </div>
 
-            <div className="flex items-center justify-between gap-2 py-2 text-xs">
-              <span className="flex min-w-0 items-center gap-2 truncate">
-                <span
-                  className={`h-2 w-2 shrink-0 rounded-full ${directPeers > 0 ? "bg-emerald-400" : "bg-slate-600"}`}
-                />
-                <strong className="truncate text-slate-200">Mesh Yayını</strong>
-                <span className="shrink-0 text-[10px] text-slate-500">
-                  {peers} eş{route ? ` · ${route.hops} sıçrama` : ""}
-                </span>
-              </span>
-              <Search className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-            </div>
-
-            <div className="my-1 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 font-osmono text-xs">
-              {feed.length === 0 ? (
-                <p className="pt-6 text-center text-[11px] text-slate-500">
-                  Bağlı Eş Bulunmuyor / Sinyal Bekleniyor…
-                </p>
-              ) : null}
-              {feed.map((m) => (
-                <div key={m.id} className="space-y-1">
-                  <div className="flex justify-between gap-2 text-[10px] text-slate-400">
-                    <span className="truncate font-bold text-slate-300">
-                      {m.self ? `Siz · ${selfLabel}` : m.from}
-                    </span>
-                    <span className="flex shrink-0 items-center gap-1">
-                      {m.at} <Lock className="h-2.5 w-2.5 text-emerald-400" />
+                {inCall ? (
+                  <div
+                    className="flex shrink-0 flex-wrap items-center gap-2 px-4 py-2 text-[12px]"
+                    style={{ borderBottom: "1px solid var(--tb-border)", color: "var(--tb-muted)" }}
+                  >
+                    {[
+                      {
+                        icon: Video,
+                        label: camOn ? "Kamerayı kapat" : "Kamerayı aç",
+                        on: camOn,
+                        toggle: () => {
+                          if (camOn) {
+                            setCamOn(false);
+                            if (!micOn) stopMedia();
+                            return;
+                          }
+                          void requestMedia("av").then((ok) => setCamOn(ok));
+                        },
+                      },
+                      {
+                        icon: Mic,
+                        label: micOn ? "Mikrofonu kapat" : "Mikrofonu aç",
+                        on: micOn,
+                        toggle: () => {
+                          if (micOn) {
+                            setMicOn(false);
+                            if (!camOn) stopMedia();
+                            return;
+                          }
+                          void requestMedia(camOn ? "av" : "audio").then((ok) => setMicOn(ok));
+                        },
+                      },
+                      {
+                        icon: MonitorUp,
+                        label: screenOn ? "Ekran paylaşımını durdur" : "Ekran paylaş",
+                        on: screenOn,
+                        toggle: () => setScreenOn((v) => !v),
+                      },
+                    ].map(({ icon: Icon, label, on, toggle }) => (
+                      <button
+                        key={label}
+                        type="button"
+                        aria-label={label}
+                        aria-pressed={on}
+                        title={label}
+                        onClick={toggle}
+                        className="grid h-9 w-9 place-items-center rounded-lg"
+                        style={{
+                          border: "1px solid var(--tb-border)",
+                          background: on ? "var(--tb-panel-soft)" : "transparent",
+                          color: on ? "var(--tb-accent)" : "var(--tb-muted)",
+                        }}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </button>
+                    ))}
+                    <span>
+                      Gecikme: {node.rttMs != null ? `${node.rttMs} ms` : "—"} · Katılımcı:{" "}
+                      {participants.length}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-300">{m.text}</p>
-                </div>
-              ))}
-            </div>
+                ) : null}
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void send();
-              }}
-              className="flex shrink-0 items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/90 p-2"
-            >
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
+                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
+                  {feed.length === 0 ? (
+                    <p className="pt-10 text-center text-[13px]" style={{ color: "var(--tb-muted)" }}>
+                      Henüz mesaj yok. Eş bağlandığında konuşma burada görünür.
+                    </p>
+                  ) : null}
+                  {feed.map((m) => (
+                    <div key={m.id} className="space-y-1">
+                      <div className="flex justify-between gap-2 text-[11px]" style={{ color: "var(--tb-muted)" }}>
+                        <span className="truncate font-medium">
+                          {m.self ? `Siz · ${selfLabel}` : m.from}
+                        </span>
+                        <span className="shrink-0">{m.at}</span>
+                      </div>
+                      <p
+                        className="inline-block max-w-full rounded-lg px-3 py-2 text-[14px]"
+                        style={{
+                          background: m.self ? "var(--tb-panel-soft)" : "transparent",
+                          border: "1px solid var(--tb-border)",
+                        }}
+                      >
+                        {m.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <form
+                  onSubmit={(e) => {
                     e.preventDefault();
                     void send();
-                  }
-                }}
-                placeholder="Şifreli mesajınızı yazın..."
-                className="min-w-0 flex-1 bg-transparent font-osmono text-xs text-slate-200 outline-none placeholder:text-slate-500"
-              />
-              <button
-                type="button"
-                aria-label="Dosya ekle"
-                className="grid h-8 w-8 place-items-center text-slate-400 hover:text-slate-200"
-              >
-                <Paperclip className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => void send()}
-                disabled={!draft.trim()}
-                className="shrink-0 rounded-md bg-emerald-600 px-3 py-1.5 font-osmono text-[11px] font-bold text-white hover:bg-emerald-500 disabled:opacity-40"
-              >
-                Gönder
-              </button>
-            </form>
-          </div>
+                  }}
+                  className="flex shrink-0 items-center gap-2 px-3 py-3"
+                  style={{ borderTop: "1px solid var(--tb-border)" }}
+                >
+                  <button
+                    type="button"
+                    aria-label="Dosya ekle"
+                    onClick={() => setTab("files")}
+                    className="grid h-9 w-9 place-items-center rounded-lg"
+                    style={{ color: "var(--tb-muted)" }}
+                  >
+                    <Paperclip className="h-4 w-4" />
+                  </button>
+                  <input
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    placeholder="Mesaj yazın…"
+                    className="min-w-0 flex-1 rounded-lg px-3 py-2 text-[14px] outline-none"
+                    style={{
+                      background: "var(--tb-panel-soft)",
+                      border: "1px solid var(--tb-border)",
+                      color: "var(--tb-text)",
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!draft.trim()}
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] font-medium disabled:opacity-40"
+                    style={{ background: "var(--tb-accent)", color: "var(--tb-bg)" }}
+                  >
+                    <Send className="h-4 w-4" /> Gönder
+                  </button>
+                </form>
+              </div>
+
+              <div className="hidden min-h-0 flex-col gap-3 overflow-y-auto xl:flex">
+                <Card title="Katılımcılar">
+                  <div className="space-y-2">
+                    {participants.map((p) => (
+                      <div key={p.id} className="flex items-center justify-between gap-2 text-[13px]">
+                        <span className="truncate">{p.self ? `${p.name} (siz)` : p.name}</span>
+                        <span className="shrink-0 text-[11px]" style={{ color: "var(--tb-muted)" }}>
+                          {p.handle}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+                <Card title="Oturum">
+                  <Row k="Düğüm" value-placeholder="" v={nodeCountLabel} />
+                  <Row k="Ağ durumu" v={networkLabel} />
+                  <Row k="Kuyruk" v={String(node.queued)} />
+                  <Row k="Gecikme" v={node.rttMs != null ? `${node.rttMs} ms` : "—"} />
+                </Card>
+              </div>
+            </div>
+          ) : null}
+
+          {tab === "files" ? (
+            <div
+              className="min-h-0 flex-1 overflow-y-auto rounded-xl p-4 backdrop-blur-sm"
+              style={{ background: "var(--tb-panel)", border: "1px solid var(--tb-border)" }}
+            >
+              <AppErrorBoundary title="Dosyalar yüklenemedi">
+                <FilesApp />
+              </AppErrorBoundary>
+            </div>
+          ) : null}
+
+          {tab === "team" ? (
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
+              <Card title="Ekip">
+                {participants.length === 1 ? (
+                  <p className="text-[13px]" style={{ color: "var(--tb-muted)" }}>
+                    Şu an yalnızca bu cihaz bağlı (Yerel Mod). Bir eş katıldığında burada listelenir.
+                  </p>
+                ) : null}
+                <div className="space-y-2">
+                  {participants.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-[13px]"
+                      style={{ background: "var(--tb-panel-soft)" }}
+                    >
+                      <span className="truncate font-medium">
+                        {p.self ? `${p.name} (siz)` : p.name}
+                      </span>
+                      <span className="shrink-0 text-[12px]" style={{ color: "var(--tb-muted)" }}>
+                        {p.handle}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          ) : null}
+
+          {tab === "system" ? (
+            <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+              <div className="flex shrink-0 gap-2">
+                {(
+                  [
+                    { id: "network", label: "Ağ durumu", icon: Settings2 },
+                    { id: "security", label: "Güvenlik", icon: ShieldCheck },
+                    { id: "settings", label: "Düğüm ayarları", icon: Settings2 },
+                  ] as const
+                ).map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setSystemView(id)}
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px]"
+                    style={{
+                      background: systemView === id ? "var(--tb-panel-soft)" : "var(--tb-panel)",
+                      border: "1px solid var(--tb-border)",
+                      color: systemView === id ? "var(--tb-accent)" : "var(--tb-muted)",
+                    }}
+                  >
+                    <Icon className="h-3.5 w-3.5" /> {label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                {systemView === "settings" ? (
+                  <AppErrorBoundary title="Ayarlar penceresi yüklenemedi">
+                    <NodeSettingsPanel />
+                  </AppErrorBoundary>
+                ) : systemView === "security" ? (
+                  <AppErrorBoundary title="Güvenlik penceresi yüklenemedi">
+                    <SecurityPanel />
+                  </AppErrorBoundary>
+                ) : (
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    <Card title="Ağ özeti">
+                      <div className="flex items-baseline justify-between pb-2">
+                        <span className="text-3xl font-semibold" style={{ color: "var(--tb-accent)" }}>
+                          {participants.length}
+                        </span>
+                        <span className="text-[12px]" style={{ color: "var(--tb-muted)" }}>
+                          {localMode ? "düğüm (yalnızca bu cihaz)" : "aktif düğüm"}
+                        </span>
+                      </div>
+                      <Row k="Ağ durumu" v={networkLabel} />
+                      <Row k="Doğrudan P2P eş" v={String(tele.directPeers)} />
+                      <Row k="Kuyruktaki zarf" v={String(tele.queued)} />
+                      <Row k="Oturum süresi" v={formatUptime(tele.uptimeMs)} />
+                    </Card>
+
+                    <Card title="Ölçümler">
+                      <Row k="Ortalama gecikme" v={metric(tele.avgRttMs, " ms")} />
+                      <Row k="Kalan bant genişliği" v={metric(tele.totalFreeKbps, " kbps")} />
+                      <Row
+                        k="Rota"
+                        v={route ? `${route.hops} sıçrama · maliyet ${route.cost}` : "—"}
+                      />
+                      <Row k="Gönderilen / hatalı" v={`${tele.sent} / ${tele.failed}`} />
+                      <Row k="İmzasız reddedilen" v={String(tele.droppedUnsigned)} />
+                    </Card>
+
+                    <Card title="P2P topolojisi" className="lg:col-span-2">
+                      <div
+                        className="relative h-64 w-full overflow-hidden rounded-lg"
+                        style={{ background: "var(--tb-bg-soft)" }}
+                      >
+                        <MeshCanvas peerIds={participants.filter((p) => !p.self).map((p) => p.id)} />
+                      </div>
+                      {localMode ? (
+                        <p className="pt-3 text-[12px]" style={{ color: "var(--tb-muted)" }}>
+                          Yerel Mod: henüz eş bağlanmadı, bu yüzden topolojide yalnızca bu cihaz var.
+                        </p>
+                      ) : null}
+                    </Card>
+
+                    <Card title="Çekirdek" className="lg:col-span-2">
+                      <Row k="İşçi" v={tele.worker.alive ? "çalışıyor" : "kapalı"} />
+                      <Row k="Wasm çekirdeği" v={tele.worker.wasm ? "etkin" : "devre dışı"} />
+                      <Row
+                        k="Taşıma"
+                        v={tele.worker.shared ? "paylaşımlı bellek (kopyasız)" : "transferable"}
+                      />
+                      <Row k="Son hata" v={tele.lastError ?? "—"} />
+                    </Card>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null}
         </main>
       </div>
 
-      {/* ALT TELEMETRİ BARI */}
-      <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-slate-800/80 bg-[var(--tb-panel-solid)] px-3 py-1.5 font-osmono text-[10px]">
-        <div className="flex flex-wrap items-center gap-3">
+      {/* ALT BAR */}
+      <footer
+        className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2 text-[11px]"
+        style={{
+          background: "var(--tb-panel)",
+          borderTop: "1px solid var(--tb-border)",
+          color: "var(--tb-muted)",
+        }}
+      >
+        <span>
+          {nodeCountLabel} · {networkLabel}
+        </span>
+        <span className="flex items-center gap-3">
+          <span>Gecikme: {metric(tele.avgRttMs, " ms")}</span>
+          <span>Kuyruk: {tele.queued}</span>
           <a
             href="https://tedbirge.dev"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-cyan-400 hover:underline"
+            className="hover:underline"
+            style={{ color: "var(--tb-accent)" }}
           >
             tedbirge.dev
           </a>
-          <span className="text-slate-400">
-            AĞ: <strong className="text-emerald-400">CANLI</strong>
-          </span>
-          <span className="text-slate-400">
-            YÜKLEME: <strong className="text-slate-200">85.7 Mbps</strong>
-          </span>
-          <span className="text-slate-400">
-            İNDİRME: <strong className="text-slate-200">32.4 Mbps</strong>
-          </span>
-          <span className="hidden text-slate-400 md:inline">
-            SİSTEM YÜKÜ: <strong className="text-emerald-400">NORMAL</strong> · CPU:{" "}
-            <strong className="text-slate-200">23%</strong> · RAM:{" "}
-            <strong className="text-slate-200">41%</strong> · GPU:{" "}
-            <strong className="text-slate-200">18%</strong>
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="hidden text-slate-400 lg:inline">
-            DİSK G/Ç: <strong className="text-slate-200">48%</strong> · OKUMA: 248 MB/s · YAZMA: 182
-            MB/s
-          </span>
-          <span className="text-slate-400">
-            EŞ AKTİVİTESİ: <span className="text-emerald-400">+{peers} CANLI</span> ·{" "}
-            <span className="text-rose-400">-3 DÜŞEN</span>
-          </span>
-          <span className="flex items-center gap-1 font-bold text-emerald-400">
-            <Shield className="h-3 w-3" /> AES-256-GCM
-          </span>
-        </div>
+        </span>
       </footer>
     </div>
   );
