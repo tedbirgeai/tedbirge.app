@@ -1,7 +1,7 @@
 {
-  "name": "Tedbirge",
+  "name": "Tedbirge® WebOS",
   "short_name": "Tedbirge",
-  "description": "Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı. Uçtan uca şifreli sohbet, sesli/görüntülü görüşme, saha pilotu ve uyum panosu.",
+  "description": "Tedbirge® WebOS: taşıyıcı-bağımsız, sıfır-bilgi P2P ağ işletim sistemi. Uçtan uca şifreli sohbet, görüşme ve veri taşıma.",
   "start_url": "/chat",
   "id": "/",
   "scope": "/",
