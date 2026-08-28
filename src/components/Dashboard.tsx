@@ -593,31 +593,41 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1 text-slate-400">
-                  <ArrowUp className="h-3 w-3 text-emerald-400" /> YÜKLEME:{" "}
-                  <strong className="text-slate-200">85.7 Mbps</strong>
+                  <ArrowUp className="h-3 w-3 text-emerald-400" /> GÖNDERİM:{" "}
+                  <strong className="text-slate-200">{live.sent}</strong>
                 </span>
                 <span className="flex items-center gap-1 text-slate-400">
-                  <ArrowDown className="h-3 w-3 text-cyan-400" /> İNDİRME:{" "}
-                  <strong className="text-slate-200">32.4 Mbps</strong>
+                  <ArrowDown className="h-3 w-3 text-cyan-400" /> KUYRUK:{" "}
+                  <strong className="text-slate-200">{live.queued}</strong>
                 </span>
               </div>
               <div className="hidden items-center gap-3 border-l border-slate-800 pl-6 lg:flex">
                 <span className="text-slate-400">
-                  SİSTEM YÜKÜ: <strong className="text-emerald-400">NORMAL</strong>
+                  ÇEKİRDEK:{" "}
+                  <strong className={live.lastError ? "text-amber-400" : "text-emerald-400"}>
+                    {live.lastError ? "UYARI" : "NORMAL"}
+                  </strong>
                 </span>
                 <div className="flex items-center gap-2 text-[10px]">
-                  <span>CPU:</span>
+                  <span>RTT:</span>
                   <div className="h-1.5 w-16 rounded bg-slate-800">
-                    <div className="h-full w-[23%] rounded bg-emerald-400" />
+                    <div
+                      className="h-full rounded bg-emerald-400"
+                      style={{ width: `${Math.min(100, ((live.avgRttMs ?? 0) / 500) * 100)}%` }}
+                    />
                   </div>
-                  <span className="text-slate-200">23%</span>
+                  <span className="text-slate-200">{fmt(live.avgRttMs, " ms")}</span>
                 </div>
                 <div className="flex items-center gap-2 text-[10px]">
-                  <span>RAM:</span>
+                  <span>EŞ:</span>
                   <div className="h-1.5 w-16 rounded bg-slate-800">
-                    <div className="h-full w-[41%] rounded bg-cyan-400" />
+                    <div
+                      className="h-full rounded bg-cyan-400"
+                      style={{ width: `${Math.min(100, (live.directPeers / 5) * 100)}%` }}
+                    />
                   </div>
-                  <span className="text-slate-200">41%</span>
+                  <span className="text-slate-200">{live.directPeers}/5</span>
+
                 </div>
               </div>
             </div>
