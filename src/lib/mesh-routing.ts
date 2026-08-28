@@ -146,12 +146,16 @@ export function edgeCost(edge: Edge): number {
 export function metricEdgeCost(edge: Edge): number {
   const t = transportById(edge.transport);
   const sample = linkMetrics(edge.to);
-  if (!sample.at) return edgeCost(edge);
+  // Faz B: arızalı/karantinadaki hat üstel cezayla ağırlaşır, iyileştikçe erir.
+  const health = edgePenalty(edge.to);
+  if (!sample.at) return edgeCost(edge) * health;
   return (
     weightFromMetrics({ ...sample, quality: Math.min(sample.quality, edge.quality) }, t.penalty) *
-    1000
+    1000 *
+    health
   );
 }
+
 
 /**
  * k-HOP YEREL ALT GRAFİK
