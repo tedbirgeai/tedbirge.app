@@ -11,13 +11,13 @@ export const Route = createFileRoute("/giris")({
 
   head: () => ({
     meta: [
-      { title: "Giriş — Tedbirge Protokol Müşteri Paneli" },
+      { title: "Giriş — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge müşteri paneline giriş yapın; lisanslarınızı, abonelik durumunuzu ve pilot başvurularınızı yönetin.",
       },
-      { property: "og:title", content: "Tedbirge — Giriş" },
+      { property: "og:title", content: "Giriş — tedbirge.app" },
       { property: "og:description", content: "Tedbirge müşteri paneli girişi ve hesap oluşturma." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://tedbirge-gateway.lovable.app/giris" },

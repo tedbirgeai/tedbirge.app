@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 export const Route = createFileRoute("/cevrimdisi")({
   head: () => ({
     meta: [
-      { title: "Çevrimdışı mod — Tedbirge Protokol" },
+      { title: "Çevrimdışı Mod — tedbirge.app" },
       {
         name: "description",
         content:
           "Bağlantı yokken Tedbirge Protokol önbellekten açılır. Saha modunda ne çalışır, ne çalışmaz burada.",
       },
-      { property: "og:title", content: "Çevrimdışı mod — Tedbirge Protokol" },
+      { property: "og:title", content: "Çevrimdışı Mod — tedbirge.app" },
       {
         property: "og:description",
         content: "İnternet kesildiğinde uygulama açık kalır; veriler bağlantı dönünce eşitlenir.",

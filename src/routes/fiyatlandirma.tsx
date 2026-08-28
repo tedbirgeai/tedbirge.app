@@ -9,13 +9,13 @@ import { NextStep } from "@/components/site/NextStep";
 export const Route = createFileRoute("/fiyatlandirma")({
   head: () => ({
     meta: [
-      { title: "Fiyatlandırma — Tedbirge Protocol Resilience-as-a-Service" },
+      { title: "Fiyatlandırma — tedbirge.app" },
       {
         name: "description",
         content:
           "Resilience-as-a-Service (RaaS) paketleri: Freemium, Community, Enterprise ve Operator. Şeffaf düğüm başına fiyat, 30 gün koşulsuz iade.",
       },
-      { property: "og:title", content: "Tedbirge Protocol — RaaS Fiyatlandırma" },
+      { property: "og:title", content: "Fiyatlandırma — tedbirge.app" },
       {
         property: "og:description",
         content:

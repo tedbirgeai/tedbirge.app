@@ -3,7 +3,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { MERE_CONDUIT } from "@/lib/regulation";
 import { EGRESS_POLICY } from "@/lib/egress-guard";
 
-const TITLE = "Güvenlik & Tehdit Modeli — Sıfır-Bilgi Geçidin Sınırları";
+const TITLE = "Güvenlik — tedbirge.app";
 const DESC =
   "Tedbirge Protokol'in tehdit modeli: kriptografik temeller, hangi saldırganlara karşı koruma sağlanır, sıfır-bilgi iddiasının kapsamı, bilinen sınırlar ve zafiyet bildirim süreci.";
 const URL = "https://tedbirge-gateway.lovable.app/guvenlik";

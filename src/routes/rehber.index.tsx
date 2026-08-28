@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { guides } from "@/lib/guides";
 
-const TITLE = "Rehber — Off-Grid Mesh ve Sıfır-Bilgi Ağ Yazıları";
+const TITLE = "Rehber — tedbirge.app";
 const DESC =
   "Tedbirge mühendislik rehberleri: off-grid mesh kurulumu, afet haberleşmesi mimarisi ve sıfır-bilgi tünel geçidinin VPN'den farkı.";
 const URL = "https://tedbirge-gateway.lovable.app/rehber";

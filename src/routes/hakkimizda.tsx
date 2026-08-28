@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
-const TITLE = "Hakkımızda — Tedbirge Protokol'ü Kim Geliştiriyor";
+const TITLE = "Hakkımızda — tedbirge.app";
 const DESC =
   "Tedbirge Protokol'ün arkasındaki ekip, mühendislik ilkeleri, açık kaynak yaklaşımı ve kurumsal iletişim bilgileri. Satıcı ünvanı: Mehmet DİNÇ (Tedbirge Protokol), Türkiye.";
 const URL = "https://tedbirge-gateway.lovable.app/hakkimizda";

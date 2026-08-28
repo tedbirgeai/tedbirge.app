@@ -4,13 +4,13 @@ import Messenger from "@/components/Messenger";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Tedbirge Protocol — İnternet Kesilse de Çalışan Ağ" },
+      { title: "Tedbirge® WebOS — tedbirge.app" },
       {
         name: "description",
         content:
           "İnternet kesildiğinde de çalışmaya devam eden kurumsal ağ altyapısı: uçtan uca şifreli mesh haberleşme, 10 taşıyıcı ve Resilience-as-a-Service abonelik modeli.",
       },
-      { property: "og:title", content: "Tedbirge Protocol — İnternet Kesilse de Çalışan Ağ" },
+      { property: "og:title", content: "Tedbirge® WebOS — tedbirge.app" },
       {
         property: "og:description",
         content:

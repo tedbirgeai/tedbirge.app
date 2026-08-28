@@ -6,13 +6,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/iletisim")({
   head: () => ({
     meta: [
-      { title: "Pilot ve İletişim — Tedbirge Protokol" },
+      { title: "İletişim — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge ile 30 günlük saha pilotu başlatın. Mühendislik ekibimizle mesh kurulumu ve faturalama entegrasyonu için görüşme planlayın.",
       },
-      { property: "og:title", content: "Tedbirge — Pilot Başvurusu" },
+      { property: "og:title", content: "İletişim — tedbirge.app" },
       {
         property: "og:description",
         content:

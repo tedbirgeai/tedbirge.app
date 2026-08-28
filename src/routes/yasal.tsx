@@ -3,7 +3,7 @@ import { useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { CONTRACT_ANNEXES, REG_VERSION, REG_REVIEWED, REG_VENDOR } from "@/lib/regulation";
 
-const TITLE = "Sözleşme Ekleri — Örnek Şablonlar | Tedbirge Protokol";
+const TITLE = "Sözleşme Ekleri — tedbirge.app";
 const DESC =
   "Ek-A spektrum taahhüdü, Ek-B 5651 log sorumluluk devri ve Ek-C ihracat/yaptırım kontrolü son kullanıcı beyanı için kopyalanabilir örnek sözleşme eki şablonları.";
 const URL = "https://tedbirge-gateway.lovable.app/yasal";

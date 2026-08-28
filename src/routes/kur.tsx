@@ -4,7 +4,7 @@ import { EasyConsole } from "@/components/site/EasyConsole";
 import { NextStep } from "@/components/site/NextStep";
 import { HybridAccessCard } from "@/components/site/HybridAccessCard";
 
-const TITLE = "Kolay Kurulum — Tedbirge Protokol Ağınızı 3 Adımda Kurun";
+const TITLE = "Kurulum — tedbirge.app";
 const DESC =
   "Tedbirge Protokol kurulum sihirbazı: tek tıkla ağı başlatın, yeni düğüm ekleyin ve bağlantı durumunu yeşil/kırmızı göstergelerle izleyin. Kriptografi arka planda otomatik çalışır.";
 const CANONICAL = "https://tedbirge-gateway.lovable.app/kur";

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
-const TITLE = "İhracat Kontrolü & Çift Kullanım Beyanı — Tedbirge Protokol";
+const TITLE = "İhracat Uyumu — tedbirge.app";
 const DESC =
   "Tedbirge Protokol'in kriptografik yetenekleri, Wassenaar Düzenlemesi kapsamındaki sınıflandırması, yasaklı ülke politikası ve son kullanıcı beyanı süreci.";
 const URL = "https://tedbirge-gateway.lovable.app/ihracat-uyum";

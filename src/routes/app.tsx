@@ -7,13 +7,13 @@ export const Route = createFileRoute("/app")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Tedbirge OS Çalışma Alanı — Uygulamalar" },
+      { title: "Çalışma Alanı — tedbirge.app" },
       {
         name: "description",
         content:
           "Messenger, müzik, medya oynatıcı, dosya yöneticisi ve eşler arası aktarım araçlarını tek ekranda toplayan merkeziyetsiz çalışma alanı.",
       },
-      { property: "og:title", content: "Tedbirge OS Çalışma Alanı — Uygulamalar" },
+      { property: "og:title", content: "Çalışma Alanı — tedbirge.app" },
       {
         property: "og:description",
         content:

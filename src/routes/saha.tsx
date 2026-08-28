@@ -8,7 +8,7 @@ import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 import { DiagnosticsPanel } from "@/components/site/DiagnosticsPanel";
 import { HybridAccessCard } from "@/components/site/HybridAccessCard";
 
-const TITLE = "Saha Erişimi — Tedbirge Protokol'e Ücretsiz Tarayıcı Erişimi";
+const TITLE = "Saha Erişimi — tedbirge.app";
 const DESC =
   "Sahadaki ekipler Tedbirge Protokol'i kurulum yapmadan tarayıcıdan test etsin: ücretsiz erişim linki, QR kod ve telefon, tablet ya da bilgisayara uygulama olarak ekleme adımları.";
 const CANONICAL = "https://tedbirge-gateway.lovable.app/saha";

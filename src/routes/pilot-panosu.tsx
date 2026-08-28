@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { pilotChecklist, pilotGroups, type PilotCheckItem } from "@/lib/pilot-checklist";
 
-const TITLE = "Pilot Uyum Panosu — Kontrol Listesi, Kanıt Zinciri ve PDF Raporu";
+const TITLE = "Pilot Panosu — tedbirge.app";
 const DESC =
   "Tedbirge Protokol pilot kurulumları için takip panosu: 23 maddelik uyum kontrol listesi, dosya karması ile kanıt taşıma zinciri, ilerleme takibi ve tek tıkla PDF uyum raporu.";
 const URL = "https://tedbirge-gateway.lovable.app/pilot-panosu";

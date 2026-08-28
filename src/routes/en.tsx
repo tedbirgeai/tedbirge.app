@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
-const TITLE = "Tedbirge Protocol — Carrier-Agnostic Zero-Knowledge Mesh Transport";
+const TITLE = "Overview — tedbirge.app";
 const DESC =
   "Tedbirge Protocol is a single-binary, carrier-agnostic zero-knowledge tunnel gateway and mesh SDK. Nine physical transports, AES-256-GCM, Ed25519, works fully off-grid.";
 const URL = "https://tedbirge-gateway.lovable.app/en";

@@ -6,13 +6,13 @@ import { NextStep } from "@/components/site/NextStep";
 export const Route = createFileRoute("/protokol")({
   head: () => ({
     meta: [
-      { title: "Tedbirge Protocol — 7 Katmanlı Bağlantı Sürekliliği Mimarisi" },
+      { title: "Protokol — tedbirge.app" },
       {
         name: "description",
         content:
           "Trust, Edge, Loop, Off-Grid, Sense, Console ve Relay katmanları: kurulum gerektirmeyen, uçtan uca şifreli kurumsal bağlantı sürekliliği platformu.",
       },
-      { property: "og:title", content: "Tedbirge Protocol — 7 Katmanlı Mimari" },
+      { property: "og:title", content: "Protokol — tedbirge.app" },
       {
         property: "og:description",
         content:

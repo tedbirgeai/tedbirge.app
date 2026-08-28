@@ -6,13 +6,13 @@ import { HCL, HCL_DISCLAIMER, HCL_STATUS_LABEL, HCL_VERSION } from "@/lib/hcl";
 export const Route = createFileRoute("/dokumanlar")({
   head: () => ({
     meta: [
-      { title: "Dokümanlar — Tedbirge Protokol Kurulum ve CLI" },
+      { title: "Dokümanlar — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge kurulum, off-grid ve kurumsal çalıştırma kılavuzu, CLI komutları, çevre değişkenleri, güvenlik modeli ve doğrulama adımları — aranabilir dokümantasyon.",
       },
-      { property: "og:title", content: "Tedbirge Dokümanlar" },
+      { property: "og:title", content: "Dokümanlar — tedbirge.app" },
       {
         property: "og:description",
         content: "Kurulum, CLI komutları, çevre değişkenleri ve üretim dağıtım rehberi.",

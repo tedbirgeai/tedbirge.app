@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
-const TITLE = "Afet ve Kamu Güvenliği Haberleşmesi — Tedbirge Protokol";
+const TITLE = "Afet ve Kamu — tedbirge.app";
 const DESC =
   "GSM ve elektrik çöktüğünde saha içi haberleşmeyi ayakta tutan off-grid mesh altyapısı. AFAD, il afet müdürlükleri, itfaiye ve arama-kurtarma ekipleri için sayısal telsize tamamlayıcı veri katmanı.";
 const URL = "https://tedbirge-gateway.lovable.app/afet-kamu";

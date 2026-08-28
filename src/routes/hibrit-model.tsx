@@ -4,13 +4,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/hibrit-model")({
   head: () => ({
     meta: [
-      { title: "Hibrit Overlay Modeli — Tedbirge Protokol" },
+      { title: "Hibrit Model — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge direk dikmez, kablo döşemez, uydu fırlatmaz. Mevcut internet ve mevcut modemler üzerine kurulan hibrit overlay ile veri taşıma maliyetini düşürür. Emsal firmalar ve gerçek ölçüm yöntemi.",
       },
-      { property: "og:title", content: "Hibrit Overlay Modeli — Tedbirge Protokol" },
+      { property: "og:title", content: "Hibrit Model — tedbirge.app" },
       {
         property: "og:description",
         content:
