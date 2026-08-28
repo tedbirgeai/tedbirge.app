@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { HCL, HCL_DISCLAIMER, HCL_STATUS_LABEL, HCL_VERSION } from "@/lib/hcl";
@@ -346,6 +346,125 @@ TEDBIRGE_EXIT_NODE=true`,
       },
     ],
   },
+  {
+    id: "sdk-baslangic",
+    group: "SDK",
+    title: "SDK başlangıç — tarayıcı düğümü",
+    summary: "Düğümü başlat, eş bağla, mesaj ve dosya gönder; tümü uygulama içi API ile.",
+    entries: [
+      {
+        type: "text",
+        body: "Tarayıcı düğümü uygulama açıldığında otomatik başlar. Kendi ekranınızdan programatik olarak kullanmak isterseniz çalışma zamanı kancaları aşağıdaki gibidir; sunucu, CDN veya harici SDK paketi indirmeye gerek yoktur.",
+      },
+      {
+        type: "code",
+        body: `import { useNodeRuntime, describeNode } from "@/lib/node-runtime";
+
+function Panel() {
+  const node = useNodeRuntime();      // düğümü başlatır ve canlı durumu döner
+  const s = describeNode(node);       // { text, directPeers, queued }
+  return <span>{s.text} · eş {s.directPeers} · kuyruk {s.queued}</span>;
+}`,
+      },
+      {
+        type: "text",
+        body: "Eş bağlama: eşin TBG kimliği (veya QR kodu) ile bağlantı kurulur; NAT arkasındaki cihazlar için TURN devreye girer, doğrudan yol yoksa zarf röle kuyruğuna alınır ve eş çevrimiçi olduğunda teslim edilir.",
+      },
+      {
+        type: "code",
+        body: `import { sendMessage, sendMedia } from "@/lib/chat/engine";
+
+await sendMessage(peerId, "saha raporu hazır");   // E2EE metin
+await sendMedia(peerId, file);                    // parçalı dosya aktarımı`,
+      },
+      {
+        type: "table",
+        rows: [
+          ["Kimlik", "GSM numarasına çıpalı TBG-XXXX düğüm kimliği"],
+          ["Taşıma", "WebRTC DataChannel · yoksa röle kuyruğu (store-and-forward)"],
+          ["Şifreleme", "Uçtan uca; röle yalnızca şifreli zarfı görür"],
+          ["Ücretsiz sınır", "5 eşzamanlı eş (Community); üstü lisans gerektirir"],
+        ],
+      },
+    ],
+  },
+  {
+    id: "protokol-mimarisi",
+    group: "SDK",
+    title: "Protokol mimarisi — zarf, röle ve yönlendirme",
+    summary: "Zarf yapısı, store-and-forward, çok-sıçramalı rota, replay koruması ve egress sınırı.",
+    entries: [
+      {
+        type: "text",
+        body: "Her mesaj bir zarf (envelope) olarak taşınır: gönderen kimliği, hedef kimliği, sıra numarası, zaman damgası, imza ve şifreli yük. Ara düğümler yükü çözemez; yalnızca başlıktaki yönlendirme alanlarını okur.",
+      },
+      {
+        type: "code",
+        body: `envelope {
+  from      TBG kimliği (imzalı)
+  to        hedef kimliği
+  seq       artan sıra numarası (replay penceresi)
+  ts        zaman damgası
+  ttl       kalan sıçrama hakkı (dinamik)
+  sig       gönderen imzası
+  payload   uçtan uca şifreli yük
+}`,
+      },
+      {
+        type: "table",
+        rows: [
+          ["Doğrudan yol", "WebRTC DataChannel; en düşük gecikme"],
+          ["Çok-sıçramalı", "Dijkstra maliyeti = RTT × taşıyıcı ağırlığı; DHT ile eş keşfi"],
+          ["Store-and-forward", "Hedef çevrimdışıysa zarf kuyruğa alınır, bağlanınca teslim edilir"],
+          ["Hat sağlığı", "Üstel ceza ve karantina; bozuk hat rota maliyetinden düşer"],
+          ["Replay/imza koruması", "Kayan sıra penceresi + imza doğrulaması (mesh guard)"],
+          ["Egress sınırı", "Genel internete çıkış kilitlidir; Tedbirge VPN/proxy değildir"],
+        ],
+      },
+      {
+        type: "text",
+        body: "TTL her sıçramada azalır ve döngü oluşumunu engeller. Aynı zarf iki kez geldiğinde sıra penceresi tarafından sessizce düşürülür; böylece gossip yayılımı sonsuz döngüye girmez.",
+      },
+    ],
+  },
+  {
+    id: "rust-wasm-kernel",
+    group: "SDK",
+    title: "Rust-Wasm çekirdek entegrasyonu",
+    summary: "crates/tedbirge-kernel derlemesi, işçi/IPC v2, paylaşımlı halka tamponu ve TS geri düşüşü.",
+    entries: [
+      {
+        type: "text",
+        body: "Yönlendirme ve özet hesabı, no_std olarak derlenen bir Rust çekirdeğinde çalışır. Çekirdek wasm32-unknown-unknown hedefine derlenir ve public/kernel/tedbirge_kernel.wasm olarak yayınlanır; tarayıcı bu dosyayı bir Web Worker içinde yükler.",
+      },
+      {
+        type: "code",
+        body: `# çekirdeği derle ve public/kernel altına yayınla
+bash scripts/build-kernel.sh
+
+# çıktı
+public/kernel/tedbirge_kernel.wasm`,
+      },
+      {
+        type: "table",
+        rows: [
+          ["crates/tedbirge-kernel", "no_std Rust çekirdeği; memory.grow tabanlı ayırıcı"],
+          ["src/kernel/kernel.worker.ts", "Wasm'i yükleyen işçi; ROUTE ve DIGEST işleri"],
+          ["src/kernel/route-codec.ts", "Grafiğin ikili (zero-copy) kodlaması"],
+          ["src/kernel/shared-ring.ts", "SharedArrayBuffer + Atomics SPSC halka tamponu (IPC v2)"],
+          ["src/kernel/ts-provider.ts", "Wasm kullanılamazsa devreye giren TypeScript geri düşüşü"],
+        ],
+      },
+      {
+        type: "text",
+        body: "Paylaşımlı halka tamponu yalnızca çapraz-kaynak izolasyonu (COOP/COEP başlıkları) etkinken kullanılabilir. İzolasyon yoksa veya Wasm yüklenemezse çekirdek köprüsü otomatik olarak postMessage ve TypeScript motoruna düşer; rota sonuçları iki motorda birebir aynıdır (eşitlik testi: src/kernel/__tests__/wasm-route-parity.test.ts).",
+      },
+      {
+        type: "text",
+        body: "Çekirdek durumu ve IPC modu Web-OS içinde Ayarlar panelinden izlenebilir; telemetri API'sinin şeması için API dokümantasyonu sayfasına bakın.",
+      },
+    ],
+  },
 ];
 
 const REPORT_FILES: { format: string; label: string; meta: string; href: string }[] = [
@@ -408,14 +527,30 @@ function Docs() {
     <SitePage>
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-6xl px-6 py-14">
-          <SectionLabel>Dokümanlar</SectionLabel>
+          <SectionLabel>Geliştirici Portalı</SectionLabel>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
             Kurulumdan üretime
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-            Tek statik binary; Node.js, dış CDN veya internet gerektirmez. Aşağıdaki bölümler
-            off-grid saha, kurumsal veri merkezi, güvenlik ve regülasyon uyumunu kapsar.
+            Tek statik binary; Node.js, dış CDN veya internet gerektirmez. Aşağıdaki bölümler SDK
+            başlangıcı, protokol mimarisi, Rust-Wasm çekirdek, off-grid saha, kurumsal veri merkezi,
+            güvenlik ve regülasyon uyumunu kapsar.
           </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              to="/api-dokumantasyon"
+              title="Geliştirici Portalı & API Dokümantasyonu"
+              className="rounded-sm border border-border px-5 py-2.5 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+            >
+              API Dokümantasyonu
+            </Link>
+            <a
+              href="/api/public/openapi.json"
+              className="rounded-sm border border-border px-5 py-2.5 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+            >
+              OpenAPI 3.1 (.json)
+            </a>
+          </div>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}

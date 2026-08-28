@@ -587,14 +587,14 @@ export default function Dashboard() {
 
           <footer className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-2.5 font-mono text-xs">
             <div className="flex flex-wrap items-center gap-6">
-              <a
-                href="https://tedbirge.dev"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/dokumanlar"
+                title="Geliştirici Portalı & API Dokümantasyonu"
+                aria-label="Geliştirici Portalı & API Dokümantasyonu"
                 className="text-cyan-400 hover:underline"
               >
-                tedbirge.dev · geliştirici portalı
-              </a>
+                Geliştirici Portalı
+              </Link>
               <div className="flex items-center gap-2">
                 <Network className="h-3.5 w-3.5 text-cyan-400" />
                 <span>

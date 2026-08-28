@@ -834,15 +834,15 @@ export default function Messenger() {
         <span className="flex items-center gap-3">
           <span>Gecikme: {metric(tele.avgRttMs, " ms")}</span>
           <span>Kuyruk: {tele.queued}</span>
-          <a
-            href="https://tedbirge.dev"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/dokumanlar"
+            title="Geliştirici Portalı & API Dokümantasyonu"
+            aria-label="Geliştirici Portalı & API Dokümantasyonu"
             className="hover:underline"
             style={{ color: "var(--tb-accent)" }}
           >
-            tedbirge.dev
-          </a>
+            Geliştirici Portalı
+          </Link>
         </span>
       </footer>
     </div>
