@@ -13,6 +13,7 @@ import { THEMES, getTheme, setTheme, type ThemeId } from "@/lib/ui/theme";
 
 import { useNodeRuntime, pingNodePeers } from "@/lib/node-runtime";
 import { activeKernelProvider } from "@/kernel/boot";
+import { kernelTransport } from "@/kernel/kernel-worker-bridge";
 import { kernelMetrics, onKernelTelemetry } from "@/kernel/telemetry";
 import { kernelHealth, onKernelHealth } from "@/kernel/supervisor";
 import {
@@ -177,6 +178,7 @@ export function NodeSettingsPanel() {
 
   const metrics = kernelMetrics();
   const health = kernelHealth();
+  const transport = kernelTransport();
 
   const backup = async () => {
     const payload = {
