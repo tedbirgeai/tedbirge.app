@@ -43,9 +43,18 @@ function Row({ k, v, tone = "text-slate-200" }: { k: string; v: string; tone?: s
 export function SecurityPanel() {
   const node = useNodeRuntime();
   const [events, setEvents] = useState<EventRecord[]>([]);
+  const gate = useSyncExternalStore(onGuardStats, guardStats, guardStats);
+  const [quarantine, setQuarantine] = useState<ReturnType<typeof edgeHealthSnapshot>>([]);
 
   useEffect(() => {
     void listEvents().then((rows) => setEvents(rows.slice(-12).reverse()));
+  }, []);
+
+  useEffect(() => {
+    const tick = () => setQuarantine(edgeHealthSnapshot());
+    tick();
+    const id = setInterval(tick, 4000);
+    return () => clearInterval(id);
   }, []);
 
   const verified = node.peers.filter((p) => p.verified).length;
@@ -63,6 +72,41 @@ export function SecurityPanel() {
           tone={node.droppedUnsigned ? "text-amber-400" : "text-emerald-400"}
         />
       </Section>
+
+      <Section icon={<ShieldAlert className="h-3.5 w-3.5" />} title="Paket doğrulama kapısı">
+        <Row k="KABUL EDİLEN:" v={String(gate.accepted)} tone="text-emerald-400" />
+        <Row
+          k="İMZASIZ:"
+          v={String(gate.unsigned)}
+          tone={gate.unsigned ? "text-rose-400" : "text-slate-200"}
+        />
+        <Row
+          k="TEKRAR (REPLAY):"
+          v={String(gate.replay)}
+          tone={gate.replay ? "text-amber-400" : "text-slate-200"}
+        />
+        <Row k="MÜKERRER:" v={String(gate.duplicate)} />
+        <Row k="BİÇİMSİZ:" v={String(gate.malformed)} />
+        <Row k="SON GEREKÇE:" v={gate.lastReason ?? "—"} />
+        <Row
+          k="KARANTİNADAKİ HAT:"
+          v={
+            quarantine.filter((e) => e.quarantined).length
+              ? quarantine
+                  .filter((e) => e.quarantined)
+                  .map((e) => e.peerId)
+                  .join(", ")
+              : "yok"
+          }
+          tone={
+            quarantine.some((e) => e.quarantined) ? "text-amber-400" : "text-emerald-400"
+          }
+        />
+        <p className="pt-1 text-[10px] leading-relaxed text-slate-500">
+          Arızalı hat kendiliğinden karantinaya alınır, düzeldikçe ceza erir — ağ kendini onarır.
+        </p>
+      </Section>
+
 
       <Section icon={<Fingerprint className="h-3.5 w-3.5" />} title="Cihaz kimliği">
         <Row k="DÜĞÜM KİMLİĞİ:" v={node.nodeId || "—"} />
