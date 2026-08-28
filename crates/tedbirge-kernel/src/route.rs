@@ -13,6 +13,7 @@
 //!   u8 ulaşılabilir, u32 maliyet(×1000), u16 yol uzunluğu + adlar,
 //!   u16 atlama sayısı + [ad, ad, u8 taşıyıcı, u8 kalite]
 
+use crate::round_half_up;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -249,7 +250,7 @@ pub fn solve(input: &[u8]) -> Vec<u8> {
 
     let mut w = Writer::new();
     w.u8(1);
-    let scaled = (total * 1000.0).round();
+    let scaled = round_half_up(total * 1000.0);
     w.u32(if scaled >= u32::MAX as f64 {
         u32::MAX - 1
     } else {

@@ -32,7 +32,7 @@ static ALLOCATOR: heap::FreeListAlloc = heap::FreeListAlloc;
 #[cfg(all(not(feature = "std"), not(test)))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
-    core::abort()
+    loop {}
 }
 
 /// Kabuğun beklediği ABI sürümü.
@@ -263,10 +263,8 @@ mod tests {
 
         let out = route::solve(&req);
         assert_eq!(out[0], 1, "ulaşılabilir olmalı");
-        let hop_count = out[out.len() - 1 - 0]; // son okunacak alan değil; yol uzunluğunu kontrol et
-        let _ = hop_count;
-        // Yol: A, B, C
-        let path_len = out[9] as usize | ((out[10] as usize) << 8);
+        // Yol: A, B, C  (u8 reachable + u32 cost = 5 bayt başlık)
+        let path_len = out[5] as usize | ((out[6] as usize) << 8);
         assert_eq!(path_len, 3);
     }
 
