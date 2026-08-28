@@ -719,18 +719,20 @@ body {
   --tb-emerald-500: #0d9268;
   --tb-emerald-600: #047857;
   --tb-emerald-950: #ecfdf5;
-  --tb-cyan-200: #155e75;
-  --tb-cyan-300: #0e7490;
-  --tb-cyan-400: #0891b2;
-  --tb-cyan-500: #0e7490;
-  --tb-amber-100: #78350f;
-  --tb-amber-200: #92400e;
-  --tb-amber-400: #b45309;
-  --tb-amber-500: #92400e;
-  --tb-rose-300: #be123c;
-  --tb-rose-400: #e11d48;
-  --tb-rose-500: #be123c;
-  --tb-rose-600: #9f1239;
+  /* Tek renk vurgusu: ikinci hue yok — cyan de aynı vurgu ailesine bağlanır. */
+  --tb-cyan-200: #0b7d5d;
+  --tb-cyan-300: #0d9268;
+  --tb-cyan-400: #0f9d76;
+  --tb-cyan-500: #0b7d5d;
+  /* Tek uyarı tonu: amber ve rose aynı tona indirgenir. */
+  --tb-amber-100: #b3453a;
+  --tb-amber-200: #b3453a;
+  --tb-amber-400: #b3453a;
+  --tb-amber-500: #9c3a31;
+  --tb-rose-300: #b3453a;
+  --tb-rose-400: #b3453a;
+  --tb-rose-500: #9c3a31;
+  --tb-rose-600: #9c3a31;
 }
 
 :root[data-theme="soft"] {
