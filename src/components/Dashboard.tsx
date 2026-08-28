@@ -588,9 +588,13 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <Network className="h-3.5 w-3.5 text-cyan-400" />
                 <span>
-                  AĞ: <strong className="text-emerald-400">CANLI</strong>
+                  AĞ:{" "}
+                  <strong className={live.online ? "text-emerald-400" : "text-amber-400"}>
+                    {live.running ? (live.online ? "CANLI" : "ÇEVRİMDIŞI") : "KAPALI"}
+                  </strong>
                 </span>
               </div>
+
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1 text-slate-400">
                   <ArrowUp className="h-3 w-3 text-emerald-400" /> GÖNDERİM:{" "}
