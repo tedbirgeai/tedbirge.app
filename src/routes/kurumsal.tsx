@@ -18,10 +18,10 @@ export const Route = createFileRoute("/kurumsal")({
           "Kesintisiz bağlantı, otomatik yedekleme ve çevrimdışı veri güvenliği. 2 tıkla kurulan kurumsal ağ platformu.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/kurumsal" },
+      { property: "og:url", content: "https://tedbirge-app.lovable.app/kurumsal" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/kurumsal" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/kurumsal" }],
   }),
   component: KurumsalPage,
 });

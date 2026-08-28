@@ -5,7 +5,7 @@ import { guides } from "@/lib/guides";
 const TITLE = "Rehber — tedbirge.app";
 const DESC =
   "Tedbirge mühendislik rehberleri: off-grid mesh kurulumu, afet haberleşmesi mimarisi ve sıfır-bilgi tünel geçidinin VPN'den farkı.";
-const URL = "https://tedbirge-gateway.lovable.app/rehber";
+const URL = "https://tedbirge-app.lovable.app/rehber";
 
 export const Route = createFileRoute("/rehber/")({
   head: () => ({

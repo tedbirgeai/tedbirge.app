@@ -22,7 +22,7 @@ export const Route = createFileRoute("/app")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/app" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/app" }],
   }),
   component: AppWorkspaceRoute,
 });

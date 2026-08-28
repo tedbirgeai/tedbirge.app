@@ -212,7 +212,7 @@ export async function testFieldRoute(origin: string): Promise<{ ok: boolean; mes
     if (!res.ok) {
       return {
         ok: false,
-        message: `Saha sayfası açılmadı (HTTP ${res.status}). Yayınlanmış adresi kullanın: tedbirge-gateway.lovable.app/saha`,
+        message: `Saha sayfası açılmadı (HTTP ${res.status}). Yayınlanmış adresi kullanın: tedbirge-app.lovable.app/saha`,
       };
     }
     return { ok: true, message: `QR hedefi doğrulandı: ${url}` };

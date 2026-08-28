@@ -19,10 +19,10 @@ export const Route = createFileRoute("/protokol")({
           "Kesintisiz bağlantı için 7 katman ve Resilience-as-a-Service abonelik modeli. Karmaşık kurulum yok, 2 tıkla aktif.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/protokol" },
+      { property: "og:url", content: "https://tedbirge-app.lovable.app/protokol" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/protokol" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/protokol" }],
   }),
   component: ProtocolPage,
 });

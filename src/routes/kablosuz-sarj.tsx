@@ -19,7 +19,7 @@ export const Route = createFileRoute("/kablosuz-sarj")({
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/kablosuz-sarj" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/kablosuz-sarj" }],
   }),
   component: WirelessChargingPage,
 });

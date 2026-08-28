@@ -5,7 +5,7 @@ import { describeNode, startNode, useNodeRuntime } from "@/lib/node-runtime";
 const TITLE = "Ağa Katıl — tedbirge.app";
 const DESC =
   "Yakınınızdaki Tedbirge güvenli haberleşme ağına tek dokunuşla katılın. Kurulum, kayıt veya ödeme gerekmez; bağlantı uçtan uca şifrelidir.";
-const CANONICAL = "https://tedbirge-gateway.lovable.app/katil";
+const CANONICAL = "https://tedbirge-app.lovable.app/katil";
 
 export const Route = createFileRoute("/katil")({
   head: () => ({

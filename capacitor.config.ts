@@ -7,7 +7,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
  * dosyalarla tamamen çevrimdışı açılır.
  *
  * Geliştirme sırasında canlı önizlemeye bağlanmak isterseniz:
- *   CAP_LIVE_URL=https://tedbirge-gateway.lovable.app npx cap sync
+ *   CAP_LIVE_URL=https://tedbirge-app.lovable.app npx cap sync
  */
 const liveUrl = process.env["CAP_LIVE_URL"];
 

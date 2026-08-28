@@ -195,7 +195,7 @@ export function IrCameraBoard({
 
   const alarms = frames.filter((f) => f.alarm).slice(0, 8);
 
-  const snippet = `curl -X POST https://tedbirge-gateway.lovable.app/api/public/telemetry \\
+  const snippet = `curl -X POST https://tedbirge-app.lovable.app/api/public/telemetry \\
   -H "Content-Type: application/json" \\
   -H "X-Tedbirge-License: ${licenseKey ?? "<LISANS_ANAHTARINIZ>"}" \\
   -d '{"node_id":"ir-kamera-1","kind":"ir_camera","region":"TR","carrier":"wifi",

@@ -121,7 +121,7 @@ export function manualBlocks(signPublicB64: string): string[] {
   return fingerprintOfKey(signPublicB64).split("-");
 }
 
-const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
+const FALLBACK_ORIGIN = "https://tedbirge-app.lovable.app";
 
 /**
  * QR yükü — telefon kamerası doğrudan açabilsin diye normal bir https

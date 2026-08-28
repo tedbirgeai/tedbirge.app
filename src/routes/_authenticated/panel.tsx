@@ -145,7 +145,7 @@ const TABS: { id: TabId; label: string; needs?: "operate" | "manage" }[] = [
 function MobileStationCard() {
   const [origin, setOrigin] = useState("");
   useEffect(() => setOrigin(window.location.origin), []);
-  const sahaLink = origin ? `${origin}/saha` : "https://tedbirge-gateway.lovable.app/saha";
+  const sahaLink = origin ? `${origin}/saha` : "https://tedbirge-app.lovable.app/saha";
 
   return (
     <div className="rounded-sm border border-primary/30 bg-primary/5 p-6">
@@ -926,7 +926,7 @@ function quickStart(key?: string) {
   return [
     {
       title: "Ajanı tek komutla indirin",
-      code: "curl -fsSL https://tedbirge-gateway.lovable.app/install.sh | sh",
+      code: "curl -fsSL https://tedbirge-app.lovable.app/install.sh | sh",
     },
     {
       title: "Lisans ve düğüm kimliğini tanımlayın",

@@ -4,7 +4,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 const TITLE = "İzinler — tedbirge.app";
 const DESC =
   "Tedbirge Protokol'i Türkiye'de aktif çalıştırmak için hangi kurumdan hangi izin, belge veya bildirim gerekir? BTK yetkilendirme, telsiz kurma izni, frekans tahsisi, KVKK VERBİS, ETBİS, ihracat kontrolü ve kamu alım belgeleri madde madde.";
-const URL = "https://tedbirge-gateway.lovable.app/izinler";
+const URL = "https://tedbirge-app.lovable.app/izinler";
 
 export const Route = createFileRoute("/izinler")({
   head: () => ({

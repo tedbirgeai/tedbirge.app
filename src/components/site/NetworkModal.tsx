@@ -98,7 +98,7 @@ export function NetworkModal({
   const { profile, save } = useProfile();
   const alerts = useStatusAlerts();
   const [active, setActive] = useState<NetworkTab>(tab);
-  const [origin, setOrigin] = useState("https://tedbirge-gateway.lovable.app");
+  const [origin, setOrigin] = useState("https://tedbirge-app.lovable.app");
   const [qr, setQr] = useState("");
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);

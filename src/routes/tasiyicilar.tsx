@@ -19,10 +19,10 @@ export const Route = createFileRoute("/tasiyicilar")({
       },
 
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/tasiyicilar" },
+      { property: "og:url", content: "https://tedbirge-app.lovable.app/tasiyicilar" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/tasiyicilar" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/tasiyicilar" }],
   }),
   component: Carriers,
 });

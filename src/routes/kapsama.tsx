@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 const TITLE = "Kapsama Planlayıcı — tedbirge.app";
 const DESC =
   "Evden uzaklaşınca bağlantı nasıl kopmaz? Taşıyıcı, arazi ve anten yüksekliğine göre atlama menzilini, gereken röle düğüm sayısını hesaplayın; gerçek saha ölçümü girip simülasyonu kalibre edin.";
-const URL = "https://tedbirge-gateway.lovable.app/kapsama";
+const URL = "https://tedbirge-app.lovable.app/kapsama";
 
 export const Route = createFileRoute("/kapsama")({
   head: () => ({

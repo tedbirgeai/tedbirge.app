@@ -19,7 +19,7 @@ export const Route = createFileRoute("/enerji")({
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/enerji" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/enerji" }],
   }),
   component: EnergyPage,
 });
