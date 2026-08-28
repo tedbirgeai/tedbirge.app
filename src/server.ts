@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { withCoiHeaders } from "./lib/coi-headers";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -49,7 +50,9 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const normalized = await normalizeCatastrophicSsrResponse(response);
+      // Faz D: WebOS rotalarında çapraz kaynak yalıtımı (SharedArrayBuffer).
+      return withCoiHeaders(normalized, new URL(request.url).pathname);
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {

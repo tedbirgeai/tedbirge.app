@@ -6,6 +6,22 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { VitePWA } from "vite-plugin-pwa";
+import { COI_HEADERS, isIsolatedPath } from "./src/lib/coi-headers";
+
+// Faz D: geliştirme sunucusunda da WebOS rotalarına COOP/COEP uygular;
+// böylece SharedArrayBuffer halka tamponu önizlemede de test edilebilir.
+const crossOriginIsolation = {
+  name: "tedbirge-cross-origin-isolation",
+  configureServer(server: { middlewares: { use: (fn: (req: { url?: string }, res: { setHeader: (k: string, v: string) => void }, next: () => void) => void) => void } }) {
+    server.middlewares.use((req, res, next) => {
+      const path = (req.url ?? "/").split("?")[0];
+      if (isIsolatedPath(path)) {
+        for (const [k, v] of Object.entries(COI_HEADERS)) res.setHeader(k, v);
+      }
+      next();
+    });
+  },
+};
 
 export default defineConfig({
   tanstackStart: {
@@ -20,6 +36,7 @@ export default defineConfig({
       __TEDBIRGE_BUILD_ID__: JSON.stringify(new Date().toISOString()),
     },
     plugins: [
+      crossOriginIsolation,
       VitePWA({
         strategies: "generateSW",
         registerType: "autoUpdate",
