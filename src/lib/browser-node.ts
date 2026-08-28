@@ -35,11 +35,13 @@ import {
   forwardEnvelope,
   openEnvelope,
   witnessClock,
-
   TTL_EXHAUSTED_NOTICE,
   type EnvelopeKind,
   type MeshEnvelopeV2,
 } from "@/lib/mesh-envelope";
+import { admitEnvelope } from "@/lib/mesh/guard";
+import { reportEdgeFailure, reportEdgeSuccess } from "@/lib/mesh/edge-health";
+
 import {
   alreadySeen,
   appendEvent,
