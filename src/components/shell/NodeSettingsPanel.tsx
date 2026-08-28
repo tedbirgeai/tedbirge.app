@@ -249,6 +249,15 @@ export function NodeSettingsPanel() {
           tone="text-cyan-400"
         />
         <Row
+          k="IPC TAŞIMASI:"
+          v={
+            transport.shared
+              ? `Paylaşımlı bellek (v${transport.protocol}, kopyasız)`
+              : `Transferable (v${transport.protocol}${transport.isolated ? "" : ", yalıtım kapalı"})`
+          }
+          tone={transport.shared ? "text-emerald-400" : "text-amber-400"}
+        />
+        <Row
           k="SAĞLIK:"
           v={health.health}
           tone={health.health === "healthy" ? "text-emerald-400" : "text-amber-400"}
