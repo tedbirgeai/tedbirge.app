@@ -11,7 +11,8 @@
 
 /// <reference lib="webworker" />
 
-import { decodeFrame, encodeFrame, OP } from "@/kernel/ipc";
+import { decodeFrame, encodeFrame, IPC_PROTOCOL_VERSION, OP, type RingInit } from "@/kernel/ipc";
+import { SharedRing } from "@/kernel/shared-ring";
 import { decodeRouteRequest, encodeRouteResult } from "@/kernel/route-codec";
 import { localSubgraph, shortestPath } from "@/lib/mesh-routing";
 
