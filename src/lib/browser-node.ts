@@ -34,12 +34,14 @@ import {
   encodeEnvelope,
   forwardEnvelope,
   openEnvelope,
-  verifyEnvelope,
   witnessClock,
   TTL_EXHAUSTED_NOTICE,
   type EnvelopeKind,
   type MeshEnvelopeV2,
 } from "@/lib/mesh-envelope";
+import { admitEnvelope } from "@/lib/mesh/guard";
+import { reportEdgeFailure, reportEdgeSuccess } from "@/lib/mesh/edge-health";
+
 import {
   alreadySeen,
   appendEvent,
@@ -1153,13 +1155,16 @@ export class BrowserNode {
       /* zarf olabilir */
     }
 
-    // 2) MeshEnvelope v2 — imza doğrulanmadan hiçbir işlem yapılmaz.
+    // 2) MeshEnvelope v2 — tek doğrulama kapısı: imza + tekrar penceresi +
+    // mükerrer özet. Kapıdan geçmeyen paket işlenmez ve röle edilmez.
     const env = decodeEnvelope(raw);
     if (!env) return;
-    if (!verifyEnvelope(env)) {
+    const verdict = admitEnvelope(env);
+    if (!verdict.ok) {
+      if (verdict.reason === "duplicate") return;
       this.emit({ droppedUnsigned: this.state.droppedUnsigned + 1 });
       recordDrop();
-      void appendEvent("security", `İmzası doğrulanamayan paket düşürüldü (${from}).`);
+      void appendEvent("security", `Paket düşürüldü (${from}): ${verdict.note}`);
       return;
     }
     if (await alreadySeen(env.h.pktId)) return;
@@ -1169,7 +1174,11 @@ export class BrowserNode {
     recordRx(env.h.hops ?? 0);
     // Canlılık ve dizin gözlemi: paketi taşıyan komşu üzerinden kaynak düğüm
     // kaç sıçrama uzakta olduğuyla birlikte DHT dizinine yazılır.
-    if (this.peers.has(from)) this.peerSeen.set(from, Date.now());
+    if (this.peers.has(from)) {
+      this.peerSeen.set(from, Date.now());
+      // Çalışan hat: karantina cezası geri alınır.
+      reportEdgeSuccess(from);
+    }
     observeNode(this.nodeId, {
       nodeId: env.h.from,
       via: this.peers.has(from) ? from : env.h.from,
@@ -1191,10 +1200,17 @@ export class BrowserNode {
         if (direct?.dc?.readyState === "open") {
           try {
             direct.dc.send(raw);
+            if (hop) reportEdgeSuccess(hop);
           } catch {
+            // Hat düştü: ağırlığı cezalandır, yedek yola saç.
+            if (hop) reportEdgeFailure(hop);
             this.broadcastRaw(raw, from);
           }
-        } else this.broadcastRaw(raw, from);
+        } else {
+          if (hop) reportEdgeFailure(hop);
+          this.broadcastRaw(raw, from);
+        }
+
         recordRelay();
         this.emit({ lastRelayAt: new Date().toISOString(), notice: null });
       } else {
