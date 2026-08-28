@@ -99,7 +99,7 @@ export function fmt(value: number | null, unit = "", digits = 0): string {
 export function useLiveTelemetry(): LiveTelemetry {
   const node = useNodeRuntime();
   const [tick, setTick] = useState(0);
-  const [worker, setWorker] = useState<KernelWorkerInfo>({ alive: false, wasm: false, abi: 0 });
+  const [worker, setWorker] = useState<KernelWorkerInfo>({ alive: false, wasm: false, abi: 0, protocol: 0, shared: false });
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval> | null = null;
