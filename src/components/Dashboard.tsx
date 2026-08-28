@@ -11,8 +11,6 @@ import {
   Clock,
   Cpu,
   Expand,
-  Folder,
-  FolderOpen,
   FolderTree,
   Gauge,
   Globe,

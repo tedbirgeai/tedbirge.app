@@ -288,7 +288,11 @@ export default function Messenger() {
         id: node.nodeId || "self",
         name: selfLabel,
         handle:
-          media === "data" ? "bu cihaz · veri düğümü" : media === "audio" ? "bu cihaz · ses" : "bu cihaz · ses ve görüntü",
+          media === "data"
+            ? "bu cihaz · veri düğümü"
+            : media === "audio"
+              ? "bu cihaz · ses"
+              : "bu cihaz · ses ve görüntü",
         self: true,
       },
       ...livePeers.map((p) => ({
@@ -361,14 +365,22 @@ export default function Messenger() {
           </span>
           <span
             className="hidden items-center gap-1.5 rounded-full px-3 py-1 sm:inline-flex"
-            style={{ background: "var(--tb-panel-soft)", border: "1px solid var(--tb-border)", color: "var(--tb-muted)" }}
+            style={{
+              background: "var(--tb-panel-soft)",
+              border: "1px solid var(--tb-border)",
+              color: "var(--tb-muted)",
+            }}
           >
             <Lock className="h-3.5 w-3.5" /> Uçtan uca şifreli
           </span>
           <Link
             to="/panel"
             className="rounded-full px-3 py-1 transition-colors"
-            style={{ background: "var(--tb-panel-soft)", border: "1px solid var(--tb-border)", color: "var(--tb-text)" }}
+            style={{
+              background: "var(--tb-panel-soft)",
+              border: "1px solid var(--tb-border)",
+              color: "var(--tb-text)",
+            }}
           >
             Hesabım
           </Link>
@@ -390,7 +402,11 @@ export default function Messenger() {
                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] transition-colors"
                 style={
                   tab === id
-                    ? { background: "var(--tb-panel-soft)", color: "var(--tb-accent)", fontWeight: 600 }
+                    ? {
+                        background: "var(--tb-panel-soft)",
+                        color: "var(--tb-accent)",
+                        fontWeight: 600,
+                      }
                     : { color: "var(--tb-muted)" }
                 }
               >
@@ -406,7 +422,11 @@ export default function Messenger() {
               className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] transition-colors"
               style={
                 tab === "system"
-                  ? { background: "var(--tb-panel-soft)", color: "var(--tb-accent)", fontWeight: 600 }
+                  ? {
+                      background: "var(--tb-panel-soft)",
+                      color: "var(--tb-accent)",
+                      fontWeight: 600,
+                    }
                   : { color: "var(--tb-muted)" }
               }
             >
@@ -485,7 +505,11 @@ export default function Messenger() {
                     className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-medium"
                     style={
                       inCall
-                        ? { background: "var(--tb-panel-soft)", border: "1px solid var(--tb-border)", color: "var(--tb-text)" }
+                        ? {
+                            background: "var(--tb-panel-soft)",
+                            border: "1px solid var(--tb-border)",
+                            color: "var(--tb-text)",
+                          }
                         : { background: "var(--tb-accent)", color: "var(--tb-bg)" }
                     }
                   >
@@ -559,13 +583,19 @@ export default function Messenger() {
 
                 <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
                   {feed.length === 0 ? (
-                    <p className="pt-10 text-center text-[13px]" style={{ color: "var(--tb-muted)" }}>
+                    <p
+                      className="pt-10 text-center text-[13px]"
+                      style={{ color: "var(--tb-muted)" }}
+                    >
                       Henüz mesaj yok. Eş bağlandığında konuşma burada görünür.
                     </p>
                   ) : null}
                   {feed.map((m) => (
                     <div key={m.id} className="space-y-1">
-                      <div className="flex justify-between gap-2 text-[11px]" style={{ color: "var(--tb-muted)" }}>
+                      <div
+                        className="flex justify-between gap-2 text-[11px]"
+                        style={{ color: "var(--tb-muted)" }}
+                      >
                         <span className="truncate font-medium">
                           {m.self ? `Siz · ${selfLabel}` : m.from}
                         </span>
@@ -627,7 +657,10 @@ export default function Messenger() {
                 <Card title="Katılımcılar">
                   <div className="space-y-2">
                     {participants.map((p) => (
-                      <div key={p.id} className="flex items-center justify-between gap-2 text-[13px]">
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between gap-2 text-[13px]"
+                      >
                         <span className="truncate">{p.self ? `${p.name} (siz)` : p.name}</span>
                         <span className="shrink-0 text-[11px]" style={{ color: "var(--tb-muted)" }}>
                           {p.handle}
@@ -662,7 +695,8 @@ export default function Messenger() {
               <Card title="Ekip">
                 {participants.length === 1 ? (
                   <p className="text-[13px]" style={{ color: "var(--tb-muted)" }}>
-                    Şu an yalnızca bu cihaz bağlı (Yerel Mod). Bir eş katıldığında burada listelenir.
+                    Şu an yalnızca bu cihaz bağlı (Yerel Mod). Bir eş katıldığında burada
+                    listelenir.
                   </p>
                 ) : null}
                 <div className="space-y-2">
@@ -724,7 +758,10 @@ export default function Messenger() {
                   <div className="grid gap-3 lg:grid-cols-2">
                     <Card title="Ağ özeti">
                       <div className="flex items-baseline justify-between pb-2">
-                        <span className="text-3xl font-semibold" style={{ color: "var(--tb-accent)" }}>
+                        <span
+                          className="text-3xl font-semibold"
+                          style={{ color: "var(--tb-accent)" }}
+                        >
                           {participants.length}
                         </span>
                         <span className="text-[12px]" style={{ color: "var(--tb-muted)" }}>
@@ -753,11 +790,14 @@ export default function Messenger() {
                         className="relative h-64 w-full overflow-hidden rounded-lg"
                         style={{ background: "var(--tb-bg-soft)" }}
                       >
-                        <MeshCanvas peerIds={participants.filter((p) => !p.self).map((p) => p.id)} />
+                        <MeshCanvas
+                          peerIds={participants.filter((p) => !p.self).map((p) => p.id)}
+                        />
                       </div>
                       {localMode ? (
                         <p className="pt-3 text-[12px]" style={{ color: "var(--tb-muted)" }}>
-                          Yerel Mod: henüz eş bağlanmadı, bu yüzden topolojide yalnızca bu cihaz var.
+                          Yerel Mod: henüz eş bağlanmadı, bu yüzden topolojide yalnızca bu cihaz
+                          var.
                         </p>
                       ) : null}
                     </Card>
