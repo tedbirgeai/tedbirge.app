@@ -9,7 +9,9 @@
  */
 
 import { linkMetrics, weightFromMetrics } from "@/lib/mesh/link-metrics";
+import { edgePenalty } from "@/lib/mesh/edge-health";
 import { transitConfig } from "@/lib/transit-config";
+
 
 export type TransportId =
   | "openwrt-gateway"
