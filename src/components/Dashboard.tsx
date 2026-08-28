@@ -39,7 +39,6 @@ import {
   type PeerTelemetry,
 } from "@/lib/telemetry/live-store";
 
-
 type LogLine = { time: string; text: string; tone?: "warn" };
 
 /**
@@ -160,7 +159,6 @@ function MeshCanvas({ peers }: { peers: PeerTelemetry[] }) {
   return <canvas ref={ref} className="block h-full w-full" />;
 }
 
-
 function Row({ k, v, tone }: { k: string; v: string; tone?: string }) {
   return (
     <div className="flex justify-between gap-3">
@@ -182,7 +180,9 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 ${className ?? ""}`}>
+    <div
+      className={`rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 ${className ?? ""}`}
+    >
       <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-xs font-bold text-slate-300">
         {icon}
         <span>{title}</span>
@@ -230,9 +230,7 @@ export default function Dashboard() {
     return () => {
       off();
     };
-
   }, []);
-
 
   // Çekirdek katmanı uyarıları (ör. ücretsiz eş limiti) canlı akışa düşer.
   useEffect(() => {
@@ -304,7 +302,6 @@ export default function Dashboard() {
             <span>
               OTURUM SÜRESİ:{" "}
               <strong className="font-mono text-slate-200">{formatUptime(live.uptimeMs)}</strong>
-
             </span>
           </div>
           <button
@@ -488,7 +485,6 @@ export default function Dashboard() {
                   </div>
                 </div>
               </Card>
-
             </div>
 
             <div className="relative flex min-h-[360px] flex-col overflow-hidden rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 xl:col-span-6">
@@ -556,7 +552,6 @@ export default function Dashboard() {
                       {!live.running ? "KAPALI" : live.lastError ? "İZLENİYOR" : "SAĞLIKLI"}
                     </span>
                   </div>
-
                 </div>
               </Card>
 
@@ -656,7 +651,6 @@ export default function Dashboard() {
                     />
                   </div>
                   <span className="text-slate-200">{live.directPeers}/5</span>
-
                 </div>
               </div>
             </div>
