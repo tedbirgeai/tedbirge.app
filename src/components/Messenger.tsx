@@ -14,14 +14,18 @@ import { Link } from "@tanstack/react-router";
 import {
   FolderOpen,
   Lock,
+  Globe,
   MessageSquare,
   Mic,
+  Monitor,
   MonitorUp,
   Paperclip,
   PhoneOff,
   Send,
   Settings2,
   ShieldCheck,
+  Smartphone,
+  Tablet,
   Users,
   Video,
 } from "lucide-react";
@@ -47,10 +51,40 @@ import {
   type LivePeer,
 } from "@/services/signaling";
 
+import {
+  composeIdentityLabel,
+  getDeviceKind,
+  getDeviceName,
+  shortBadge,
+  type DeviceKind,
+} from "@/lib/identity/device";
+import { getAlias } from "@/lib/chat/profile";
+import { getPeerIdentity, onPeerIdentity, peerDisplayLabel } from "@/lib/identity/peer-identity";
+
+const LINK_HINTS = {
+  direct: "Aynı yerel ağda aracı olmadan doğrudan bağlı",
+  relay: "Şifreli paketler bir ara düğüm üzerinden taşınıyor; içerik açılamaz",
+} as const;
+
+function DeviceIcon({ kind }: { kind: DeviceKind }) {
+  const cls = "h-4 w-4 shrink-0";
+  const style = { color: "var(--tb-muted)" };
+  if (kind === "mobile") return <Smartphone className={cls} style={style} aria-hidden />;
+  if (kind === "tablet") return <Tablet className={cls} style={style} aria-hidden />;
+  if (kind === "desktop") return <Monitor className={cls} style={style} aria-hidden />;
+  return <Globe className={cls} style={style} aria-hidden />;
+}
+
 type Participant = {
   id: string;
+  /** İnsan dostu ad: "Ahmet — Windows PC" */
   name: string;
+  /** Teknik kimlik rozeti: #B32 */
+  badge: string;
   handle: string;
+  /** Durum etiketi üzerindeki açıklama. */
+  hint?: string;
+  kind: DeviceKind;
   self?: boolean;
   direct?: boolean;
 };
@@ -260,7 +294,9 @@ export default function Messenger() {
   const [inCall, setInCall] = useState(false);
   const [signalPeers, setSignalPeers] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [identityTick, setIdentityTick] = useState(0);
   useEffect(() => setHydrated(true), []);
+  useEffect(() => onPeerIdentity(() => setIdentityTick((n) => n + 1)), []);
 
   useEffect(() => subscribeLivePeers(setSignalPeers), []);
 
@@ -283,29 +319,47 @@ export default function Messenger() {
   const livePeers: LivePeer[] = useMemo(() => toLivePeers(node.peers), [node.peers]);
 
   const participants: Participant[] = useMemo(() => {
+    void identityTick;
+    const selfName =
+      composeIdentityLabel(hydrated ? getAlias() : "", hydrated ? getDeviceName() : "") ||
+      selfLabel;
     return [
       {
         id: node.nodeId || "self",
-        name: selfLabel,
+        name: selfName,
+        badge: shortBadge(node.nodeId),
+        kind: hydrated ? getDeviceKind() : "browser",
         handle:
           media === "data"
-            ? "bu cihaz · veri düğümü"
+            ? "Bu cihaz · yalnız veri"
             : media === "audio"
-              ? "bu cihaz · ses"
-              : "bu cihaz · ses ve görüntü",
+              ? "Bu cihaz · ses"
+              : "Bu cihaz · ses ve görüntü",
+        hint: "Şu an kullandığınız cihaz",
         self: true,
       },
       ...livePeers.map((p) => ({
         id: p.id,
-        name: p.label,
-        handle: p.direct ? "doğrudan P2P" : "röle üzerinden",
+        name: peerDisplayLabel(p.id),
+        badge: shortBadge(p.id),
+        kind: getPeerIdentity(p.id).kind ?? "browser",
+        handle: p.direct ? "Doğrudan bağlı" : "Güvenli röle aktarımı",
+        hint: p.direct ? LINK_HINTS.direct : LINK_HINTS.relay,
         direct: p.direct,
       })),
       ...signalPeers
         .filter((id) => !livePeers.some((p) => p.id === id))
-        .map((id) => ({ id, name: id, handle: "sinyal kanalı · çevrimiçi", direct: false })),
+        .map((id) => ({
+          id,
+          name: peerDisplayLabel(id),
+          badge: shortBadge(id),
+          kind: getPeerIdentity(id).kind ?? ("browser" as DeviceKind),
+          handle: "Güvenli röle aktarımı · çevrimiçi",
+          hint: LINK_HINTS.relay,
+          direct: false,
+        })),
     ];
-  }, [livePeers, media, node.nodeId, selfLabel, signalPeers]);
+  }, [hydrated, identityTick, livePeers, media, node.nodeId, selfLabel, signalPeers]);
 
   const peerCount = participants.length - 1;
   const localMode = peerCount === 0;
@@ -482,7 +536,7 @@ export default function Messenger() {
                     <div className="truncate text-[12px]" style={{ color: "var(--tb-muted)" }}>
                       {localMode
                         ? "Yerel Mod · eş bekleniyor"
-                        : `${peerCount} eş${route ? ` · ${route.hops} sıçrama` : ""}`}
+                        : `${peerCount} eş${route ? ` · ${route.hops} adım` : ""}`}
                     </div>
                   </div>
                   <button
@@ -661,8 +715,22 @@ export default function Messenger() {
                         key={p.id}
                         className="flex items-center justify-between gap-2 text-[13px]"
                       >
-                        <span className="truncate">{p.self ? `${p.name} (siz)` : p.name}</span>
-                        <span className="shrink-0 text-[11px]" style={{ color: "var(--tb-muted)" }}>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <DeviceIcon kind={p.kind} />
+                          <span className="truncate">{p.self ? `${p.name} (siz)` : p.name}</span>
+                          <span
+                            className="shrink-0 text-[10px] tabular-nums"
+                            style={{ color: "var(--tb-muted)", opacity: 0.65 }}
+                            title="Teknik düğüm kimliği"
+                          >
+                            {p.badge}
+                          </span>
+                        </span>
+                        <span
+                          className="shrink-0 text-[11px]"
+                          style={{ color: "var(--tb-muted)" }}
+                          title={p.hint}
+                        >
                           {p.handle}
                         </span>
                       </div>
@@ -706,10 +774,24 @@ export default function Messenger() {
                       className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-[13px]"
                       style={{ background: "var(--tb-panel-soft)" }}
                     >
-                      <span className="truncate font-medium">
-                        {p.self ? `${p.name} (siz)` : p.name}
+                      <span className="flex min-w-0 items-center gap-2">
+                        <DeviceIcon kind={p.kind} />
+                        <span className="truncate font-medium">
+                          {p.self ? `${p.name} (siz)` : p.name}
+                        </span>
+                        <span
+                          className="shrink-0 text-[10px] tabular-nums"
+                          style={{ color: "var(--tb-muted)", opacity: 0.65 }}
+                          title="Teknik düğüm kimliği"
+                        >
+                          {p.badge}
+                        </span>
                       </span>
-                      <span className="shrink-0 text-[12px]" style={{ color: "var(--tb-muted)" }}>
+                      <span
+                        className="shrink-0 text-[12px]"
+                        style={{ color: "var(--tb-muted)" }}
+                        title={p.hint}
+                      >
                         {p.handle}
                       </span>
                     </div>
@@ -779,7 +861,7 @@ export default function Messenger() {
                       <Row k="Kalan bant genişliği" v={metric(tele.totalFreeKbps, " kbps")} />
                       <Row
                         k="Rota"
-                        v={route ? `${route.hops} sıçrama · maliyet ${route.cost}` : "—"}
+                        v={route ? `${route.hops} adım · maliyet ${route.cost}` : "—"}
                       />
                       <Row k="Gönderilen / hatalı" v={`${tele.sent} / ${tele.failed}`} />
                       <Row k="İmzasız reddedilen" v={String(tele.droppedUnsigned)} />

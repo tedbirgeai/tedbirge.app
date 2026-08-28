@@ -1209,6 +1209,9 @@ type ChatPayload = {
   forwardedFrom?: string;
   /** Numara-çıpalı kişi kimliği — ad tek kanalda birleşsin diye taşınır. */
   personId?: string;
+  /** İnsan dostu cihaz adı ve türü (ad beyanı protokolü). */
+  device?: string;
+  kind?: "desktop" | "mobile" | "tablet" | "browser";
 };
 
 async function onChat(from: string, raw: unknown) {
@@ -1218,7 +1221,7 @@ async function onChat(from: string, raw: unknown) {
 
   // Ad talebi / ad beyanı: başlıklar her cihazda aynı görünsün.
   if (isNameExchange(p)) {
-    const changed = applyRemoteName(from, p.alias, p.personId);
+    const changed = applyRemoteName(from, p.alias, p.personId, p.device, p.kind);
     if (p.t === "name-req") void answerNameTo(from);
     if (changed) {
       await refreshConversations();
