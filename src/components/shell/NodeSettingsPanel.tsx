@@ -13,6 +13,7 @@ import { THEMES, getTheme, setTheme, type ThemeId } from "@/lib/ui/theme";
 
 import { useNodeRuntime, pingNodePeers } from "@/lib/node-runtime";
 import { activeKernelProvider } from "@/kernel/boot";
+import { kernelTransport } from "@/kernel/kernel-worker-bridge";
 import { kernelMetrics, onKernelTelemetry } from "@/kernel/telemetry";
 import { kernelHealth, onKernelHealth } from "@/kernel/supervisor";
 import {
@@ -177,6 +178,7 @@ export function NodeSettingsPanel() {
 
   const metrics = kernelMetrics();
   const health = kernelHealth();
+  const transport = kernelTransport();
 
   const backup = async () => {
     const payload = {
@@ -247,6 +249,15 @@ export function NodeSettingsPanel() {
           k="ETKİN SAĞLAYICI:"
           v={activeKernelProvider() === "wasm" ? "WebAssembly çekirdek" : "TypeScript çekirdek"}
           tone="text-cyan-400"
+        />
+        <Row
+          k="IPC TAŞIMASI:"
+          v={
+            transport.shared
+              ? `Paylaşımlı bellek (v${transport.protocol}, kopyasız)`
+              : `Transferable (v${transport.protocol}${transport.isolated ? "" : ", yalıtım kapalı"})`
+          }
+          tone={transport.shared ? "text-emerald-400" : "text-amber-400"}
         />
         <Row
           k="SAĞLIK:"

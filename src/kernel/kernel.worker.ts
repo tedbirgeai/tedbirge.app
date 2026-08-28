@@ -11,7 +11,8 @@
 
 /// <reference lib="webworker" />
 
-import { decodeFrame, encodeFrame, OP } from "@/kernel/ipc";
+import { decodeFrame, encodeFrame, IPC_PROTOCOL_VERSION, OP, type RingInit } from "@/kernel/ipc";
+import { SharedRing } from "@/kernel/shared-ring";
 import { decodeRouteRequest, encodeRouteResult } from "@/kernel/route-codec";
 import { localSubgraph, shortestPath } from "@/lib/mesh-routing";
 
@@ -102,21 +103,33 @@ function routeViaWasm(request: ArrayBuffer): ArrayBuffer | null {
   }
 }
 
-function reply(op: number, corrId: number, payload: ArrayBuffer) {
-  const frame = encodeFrame(op, corrId, payload);
-  (self as unknown as Worker).postMessage(frame, [frame]);
+/* ---------------- Faz D: paylaşımlı halka tampon taşıması ---------------- */
+
+let ringIn: SharedRing | null = null;
+let ringOut: SharedRing | null = null;
+
+function post(bytes: ArrayBuffer) {
+  if (ringOut && ringOut.push(new Uint8Array(bytes))) return;
+  (self as unknown as Worker).postMessage(bytes, [bytes]);
 }
 
-self.onmessage = (e: MessageEvent<ArrayBuffer>) => {
-  const frame = decodeFrame(e.data);
+function reply(op: number, corrId: number, payload: ArrayBuffer) {
+  post(encodeFrame(op, corrId, payload));
+}
+
+function handle(buf: ArrayBuffer) {
+  const frame = decodeFrame(buf);
   if (!frame) return;
 
   if (frame.op === OP.HELLO) {
     void ensureWasm().then((mod) => {
-      const out = new ArrayBuffer(2);
+      const out = new ArrayBuffer(4);
       const view = new DataView(out);
       view.setUint8(0, mod ? 1 : 0);
       view.setUint8(1, mod ? mod.abi_version() : 0);
+      // Protokol sürümü ve etkin taşıma (0: postMessage, 1: paylaşımlı halka).
+      view.setUint8(2, IPC_PROTOCOL_VERSION);
+      view.setUint8(3, ringIn && ringOut ? 1 : 0);
       reply(OP.HELLO_RESULT, frame.corrId, out);
     });
     return;
@@ -147,7 +160,36 @@ self.onmessage = (e: MessageEvent<ArrayBuffer>) => {
     reply(OP.ROUTE_RESULT, frame.corrId, encodeRouteResult(route));
     return;
   }
+}
+
+/** Halka tampon pompası — `Atomics.waitAsync` ile bloklamadan bekler. */
+async function pump() {
+  for (;;) {
+    const ring = ringIn;
+    if (!ring) return;
+    let drained = false;
+    for (;;) {
+      const msg = ring.pop();
+      if (!msg) break;
+      drained = true;
+      handle(msg.buffer.slice(msg.byteOffset, msg.byteOffset + msg.byteLength) as ArrayBuffer);
+    }
+    if (!drained) await ring.waitForData(50);
+  }
+}
+
+self.onmessage = (e: MessageEvent<ArrayBuffer | RingInit>) => {
+  const data = e.data;
+  if (data && !(data instanceof ArrayBuffer) && (data as RingInit).t === "ring") {
+    const init = data as RingInit;
+    ringIn = SharedRing.attach(init.c2w);
+    ringOut = SharedRing.attach(init.w2c);
+    void pump();
+    return;
+  }
+  handle(data as ArrayBuffer);
 };
 
 // İlk fırsatta Wasm'ı ısıt: ilk rota isteği gecikmesin.
 void ensureWasm();
+

@@ -14,6 +14,16 @@
 
 export const FRAME_HEADER_BYTES = 12;
 
+/**
+ * IPC protokol sürümü.
+ *  1 — postMessage + Transferable (Faz A-C)
+ *  2 — SharedArrayBuffer halka tamponu (Faz D); v1 yolu yedek olarak kalır.
+ */
+export const IPC_PROTOCOL_VERSION = 2;
+
+/** Halka tampon el sıkışması (yalnızca `crossOriginIsolated` ortamlarda). */
+export type RingInit = { t: "ring"; c2w: SharedArrayBuffer; w2c: SharedArrayBuffer };
+
 export const OP = {
   /** Rota isteği (grafik + kaynak + hedef). */
   ROUTE: 1,
