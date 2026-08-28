@@ -99,81 +99,59 @@
 }
 
 
-:root {
-  --radius: 0.25rem;
-  --background: oklch(0.27 0.155 273);
-  --foreground: oklch(0.98 0.005 275);
-  --card: oklch(0.32 0.15 273);
-  --card-foreground: oklch(0.98 0.005 275);
-  --popover: oklch(0.30 0.15 273);
-  --popover-foreground: oklch(0.98 0.005 275);
-  --primary: oklch(0.68 0.17 148);
-  --primary-foreground: oklch(0.99 0.01 150);
-  --secondary: oklch(0.37 0.14 273);
-  --secondary-foreground: oklch(0.98 0.005 275);
-  --muted: oklch(0.35 0.13 273);
-  --muted-foreground: oklch(0.82 0.055 275);
-  --accent: oklch(0.78 0.10 275);
-  --accent-foreground: oklch(0.25 0.15 273);
-  --destructive: oklch(0.62 0.21 25);
-  --destructive-foreground: oklch(0.99 0.003 250);
-  --border: oklch(1 0 0 / 16%);
-  --input: oklch(1 0 0 / 18%);
-  --ring: oklch(0.68 0.17 148);
-  --chart-1: oklch(0.68 0.17 148);
-  --chart-2: oklch(0.78 0.10 275);
-  --chart-3: oklch(0.6 0.2 268);
-  --chart-4: oklch(0.85 0.13 95);
-  --chart-5: oklch(0.7 0.19 20);
-  --sidebar: oklch(0.30 0.15 273);
-  --sidebar-foreground: oklch(0.98 0.005 275);
-  --sidebar-primary: oklch(0.68 0.17 148);
-  --sidebar-primary-foreground: oklch(0.99 0.01 150);
-  --sidebar-accent: oklch(0.37 0.14 273);
-  --sidebar-accent-foreground: oklch(0.98 0.005 275);
-  --sidebar-border: oklch(1 0 0 / 16%);
-  --sidebar-ring: oklch(0.68 0.17 148);
-}
-
+/* ------------------------------------------------------------------
+ * TEK TEMA KAYNAĞI
+ * shadcn tokenları doğrudan Açık Kristal (`--tb-*`) setine bağlıdır.
+ * Koyu görünüm yalnızca `data-theme="night"` seçildiğinde gelir;
+ * ikinci bir renk dili yoktur.
+ * ---------------------------------------------------------------- */
+:root,
 .dark {
   --radius: 0.25rem;
-  --background: oklch(0.27 0.155 273);
-  --foreground: oklch(0.98 0.005 275);
-  --card: oklch(0.32 0.15 273);
-  --card-foreground: oklch(0.98 0.005 275);
-  --popover: oklch(0.30 0.15 273);
-  --popover-foreground: oklch(0.98 0.005 275);
-  --primary: oklch(0.68 0.17 148);
-  --primary-foreground: oklch(0.99 0.01 150);
-  --secondary: oklch(0.37 0.14 273);
-  --secondary-foreground: oklch(0.98 0.005 275);
-  --muted: oklch(0.35 0.13 273);
-  --muted-foreground: oklch(0.82 0.055 275);
-  --accent: oklch(0.78 0.10 275);
-  --accent-foreground: oklch(0.25 0.15 273);
-  --destructive: oklch(0.62 0.21 25);
-  --destructive-foreground: oklch(0.99 0.003 250);
-  --border: oklch(1 0 0 / 16%);
-  --input: oklch(1 0 0 / 18%);
-  --ring: oklch(0.68 0.17 148);
-  --chart-1: oklch(0.68 0.17 148);
-  --chart-2: oklch(0.78 0.10 275);
-  --chart-3: oklch(0.6 0.2 268);
-  --chart-4: oklch(0.85 0.13 95);
-  --chart-5: oklch(0.7 0.19 20);
-  --sidebar: oklch(0.30 0.15 273);
-  --sidebar-foreground: oklch(0.98 0.005 275);
-  --sidebar-primary: oklch(0.68 0.17 148);
-  --sidebar-primary-foreground: oklch(0.99 0.01 150);
-  --sidebar-accent: oklch(0.37 0.14 273);
-  --sidebar-accent-foreground: oklch(0.98 0.005 275);
-  --sidebar-border: oklch(1 0 0 / 16%);
-  --sidebar-ring: oklch(0.68 0.17 148);
+  --background: var(--tb-bg);
+  --foreground: var(--tb-text);
+  --card: var(--tb-panel-solid);
+  --card-foreground: var(--tb-text);
+  --popover: var(--tb-panel-solid);
+  --popover-foreground: var(--tb-text);
+  --primary: var(--tb-accent);
+  --primary-foreground: #ffffff;
+  --secondary: var(--tb-bg-soft);
+  --secondary-foreground: var(--tb-text);
+  --muted: var(--tb-bg-soft);
+  --muted-foreground: var(--tb-muted);
+  --accent: var(--tb-bg-soft);
+  --accent-foreground: var(--tb-text);
+  --destructive: var(--tb-rose-500);
+  --destructive-foreground: #ffffff;
+  --border: var(--tb-border);
+  --input: var(--tb-border);
+  --ring: var(--tb-accent);
+  --chart-1: var(--tb-accent);
+  --chart-2: var(--tb-accent-2);
+  --chart-3: var(--tb-muted);
+  --chart-4: var(--tb-amber-400);
+  --chart-5: var(--tb-rose-500);
+  --sidebar: var(--tb-panel-solid);
+  --sidebar-foreground: var(--tb-text);
+  --sidebar-primary: var(--tb-accent);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--tb-bg-soft);
+  --sidebar-accent-foreground: var(--tb-text);
+  --sidebar-border: var(--tb-border);
+  --sidebar-ring: var(--tb-accent);
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
+  }
+
+  /* Rota geçişlerinde renk sıçramasını (FOUC) önlemek için zemin
+     html üzerinde de sabitlenir. */
+  html {
+    background-color: var(--tb-bg);
+    color: var(--tb-text);
   }
 
   body {
@@ -194,8 +172,8 @@
 
 @utility grid-bg {
   background-image:
-    linear-gradient(to right, oklch(1 0 0 / 5%) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(1 0 0 / 5%) 1px, transparent 1px);
+    linear-gradient(to right, var(--tb-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--tb-grid) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 
@@ -270,18 +248,18 @@
  * Yalnızca /sohbet ve ana sohbet ekranında kullanılır.
  * ---------------------------------------------------------------- */
 .wa {
-  --wa-panel: #ffffff;
-  --wa-panel-soft: #eef2f4;
-  --wa-border: #dde5e9;
-  --wa-text: #0d1b22;
-  --wa-muted: #5b6b75;
-  --wa-accent: #0b7d6c;
-  --wa-accent-soft: #d9f1ea;
-  --wa-bubble-in: #ffffff;
-  --wa-bubble-out: #d9f1ea;
-  --wa-chat-bg: #f5f8f9;
-  --wa-tick: #7a8b94;
-  --wa-tick-read: #0b7d6c;
+  --wa-panel: var(--tb-panel-solid);
+  --wa-panel-soft: var(--tb-bg-soft);
+  --wa-border: var(--tb-border);
+  --wa-text: var(--tb-text);
+  --wa-muted: var(--tb-muted);
+  --wa-accent: var(--tb-accent);
+  --wa-accent-soft: color-mix(in srgb, var(--tb-accent) 14%, transparent);
+  --wa-bubble-in: var(--tb-panel-solid);
+  --wa-bubble-out: color-mix(in srgb, var(--tb-accent) 16%, transparent);
+  --wa-chat-bg: var(--tb-bg);
+  --wa-tick: var(--tb-muted);
+  --wa-tick-read: var(--tb-accent);
   /* WhatsApp ölçü tokenları — satır, avatar ve alt sekme yüksekliği */
   --wa-row-h: 72px;
   --wa-avatar: 52px;
@@ -294,41 +272,40 @@
 
 /* ------------------------------------------------------------------
  * Sohbet pencereleri (Rehber, kimlik kartı, doğrulama) için tek renk
- * dili: shadcn tokenları WhatsApp açık yeşil temasına bağlanır. Böylece
- * pencerelerde koyu mavi/mor ton kalmaz.
+ * dili: shadcn tokenları aktif Tedbirge temasına bağlanır.
  * ---------------------------------------------------------------- */
 .wa-scope {
-  --background: #ffffff;
-  --foreground: #0d1b22;
-  --card: #ffffff;
-  --card-foreground: #0d1b22;
-  --popover: #ffffff;
-  --popover-foreground: #0d1b22;
-  --primary: #0b7d6c;
+  --background: var(--tb-bg);
+  --foreground: var(--tb-text);
+  --card: var(--tb-panel-solid);
+  --card-foreground: var(--tb-text);
+  --popover: var(--tb-panel-solid);
+  --popover-foreground: var(--tb-text);
+  --primary: var(--tb-accent);
   --primary-foreground: #ffffff;
-  --secondary: #eef2f4;
-  --secondary-foreground: #0d1b22;
-  --muted: #eef2f4;
-  --muted-foreground: #5b6b75;
-  --accent: #d9f1ea;
-  --accent-foreground: #0b5c50;
-  --border: #dde5e9;
-  --input: #dde5e9;
-  --ring: #0b7d6c;
+  --secondary: var(--tb-bg-soft);
+  --secondary-foreground: var(--tb-text);
+  --muted: var(--tb-bg-soft);
+  --muted-foreground: var(--tb-muted);
+  --accent: var(--tb-bg-soft);
+  --accent-foreground: var(--tb-text);
+  --border: var(--tb-border);
+  --input: var(--tb-border);
+  --ring: var(--tb-accent);
   /* Kendi kendine yeten kapsam: .wa atası olmayan (portal/overlay) panellerde
-     de açık yeşil/gri tema tokenları tanımlı olsun. */
-  --wa-panel: #ffffff;
-  --wa-panel-soft: #eef2f4;
-  --wa-border: #dde5e9;
-  --wa-text: #0d1b22;
-  --wa-muted: #5b6b75;
-  --wa-accent: #0b7d6c;
-  --wa-accent-soft: #d9f1ea;
-  --wa-bubble-in: #ffffff;
-  --wa-bubble-out: #d9f1ea;
-  --wa-chat-bg: #f5f8f9;
-  --wa-tick: #7a8b94;
-  --wa-tick-read: #0b7d6c;
+     de tema tokenları tanımlı olsun. */
+  --wa-panel: var(--tb-panel-solid);
+  --wa-panel-soft: var(--tb-bg-soft);
+  --wa-border: var(--tb-border);
+  --wa-text: var(--tb-text);
+  --wa-muted: var(--tb-muted);
+  --wa-accent: var(--tb-accent);
+  --wa-accent-soft: color-mix(in srgb, var(--tb-accent) 14%, transparent);
+  --wa-bubble-in: var(--tb-panel-solid);
+  --wa-bubble-out: color-mix(in srgb, var(--tb-accent) 16%, transparent);
+  --wa-chat-bg: var(--tb-bg);
+  --wa-tick: var(--tb-muted);
+  --wa-tick-read: var(--tb-accent);
   background-color: var(--wa-panel, #ffffff);
   color: var(--wa-text, #0d1b22);
 }
