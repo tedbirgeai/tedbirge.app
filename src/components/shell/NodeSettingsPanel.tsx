@@ -219,8 +219,63 @@ export function NodeSettingsPanel() {
       ) : null}
 
       <Section icon={<KeyRound className="h-3.5 w-3.5" />} title="P2P düğüm yapılandırması">
+        <div className="mb-2 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+          {editing ? (
+            <div className="space-y-1.5">
+              <input
+                value={aliasDraft}
+                onChange={(e) => setAliasDraft(e.target.value)}
+                placeholder="Görünen adınız"
+                aria-label="Görünen adınız"
+                className="min-h-9 w-full rounded border border-slate-700 bg-slate-950 px-2 text-[11px] text-slate-100"
+              />
+              <input
+                value={deviceDraft}
+                onChange={(e) => setDeviceDraft(e.target.value)}
+                placeholder="Cihaz adı (ör. Windows PC)"
+                aria-label="Cihaz adı"
+                className="min-h-9 w-full rounded border border-slate-700 bg-slate-950 px-2 text-[11px] text-slate-100"
+              />
+              <div className="flex gap-2">
+                <Action
+                  label="Kaydet"
+                  icon={<Pencil className="h-3.5 w-3.5" />}
+                  onClick={() => {
+                    if (aliasDraft.trim()) setAlias(aliasDraft);
+                    setDeviceName(deviceDraft);
+                    setEditing(false);
+                    setIdentity(
+                      composeIdentityLabel(getAlias(), getDeviceName()) || "Bu cihaz",
+                    );
+                    void announceName();
+                    setNotice("Kimliğiniz güncellendi ve eşlere duyuruldu.");
+                  }}
+                />
+                <Action
+                  label="İptal"
+                  icon={<RefreshCw className="h-3.5 w-3.5" />}
+                  onClick={() => setEditing(false)}
+                />
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setAliasDraft(getAlias());
+                setDeviceDraft(getDeviceName());
+                setEditing(true);
+              }}
+              className="flex min-h-9 w-full items-center justify-between gap-2 text-left text-[11px] text-slate-200"
+            >
+              <span className="truncate font-medium">{identity}</span>
+              <Pencil className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
+            </button>
+          )}
+        </div>
         <Row k="DÜĞÜM KİMLİĞİ:" v={node.nodeId || "—"} />
-        <Row k="MESH KANALI:" v="tedbirge-signal" />
+        <Row k="MESH KANALI:" v="Güvenli röle aktarımı" />
+
         <Row
           k="KEŞİF:"
           v={
