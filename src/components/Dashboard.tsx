@@ -31,6 +31,14 @@ import { CommandCenter } from "@/components/shell/CommandCenter";
 import { PaywallModal } from "@/components/shell/PaywallModal";
 import { NodeTestModal } from "@/components/shell/NodeTestModal";
 import { KERNEL_LOG_EVENT, type KernelLogDetail } from "@/lib/peer-limit";
+import { kernelEvents, onKernelTelemetry } from "@/kernel/telemetry";
+import {
+  fmt,
+  formatUptime,
+  useLiveTelemetry,
+  type PeerTelemetry,
+} from "@/lib/telemetry/live-store";
+
 
 type LogLine = { time: string; text: string; tone?: "warn" };
 
