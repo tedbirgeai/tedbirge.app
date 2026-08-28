@@ -104,7 +104,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Tedbirge® WebOS — Otonom P2P Ağ İşletim Sistemi" },
+      { name: "twitter:title", content: "Tedbirge® WebOS — tedbirge.app" },
       {
         name: "twitter:description",
         content: "İnternet kesilse de çalışan, sıfır-bilgi P2P ağ işletim sistemi.",
