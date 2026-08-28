@@ -523,15 +523,34 @@ export default function Dashboard() {
                 icon={<ChartLine className="h-3.5 w-3.5 text-cyan-400" />}
               >
                 <div className="space-y-2 font-mono text-xs text-slate-400">
-                  <Row k="İLETİLEN PAKETLER:" v="1.24M" />
-                  <Row k="HESAPLANAN ROTALAR:" v="5.38K" />
-                  <Row k="ORTALAMA GECİKME:" v="24.7 ms" tone="text-emerald-400" />
-                  <Row k="PAKET KAYBI:" v="%0.12" tone="text-emerald-400" />
-                  <Row k="BANT GENİŞLİĞİ PUANI:" v="98.7 / 100" tone="text-cyan-400" />
+                  <Row k="GÖNDERİLEN ZARF:" v={String(live.sent)} />
+                  <Row k="HESAPLANAN ROTALAR:" v={String(live.routes)} />
+                  <Row
+                    k="ORTALAMA GÖNDERİM:"
+                    v={live.avgSendMs ? `${live.avgSendMs.toFixed(0)} ms` : "ölçüm yok"}
+                    tone="text-emerald-400"
+                  />
+                  <Row k="BAŞARISIZ:" v={String(live.failed)} tone="text-amber-400" />
+                  <Row
+                    k="İMZASIZ REDDEDİLEN:"
+                    v={String(live.droppedUnsigned)}
+                    tone="text-cyan-400"
+                  />
                   <div className="flex items-center justify-between border-t border-slate-800 pt-1">
                     <span>AĞ SAĞLIĞI:</span>
-                    <span className="font-bold tracking-wider text-emerald-400">MÜKEMMEL</span>
+                    <span
+                      className={`font-bold tracking-wider ${
+                        !live.running
+                          ? "text-slate-400"
+                          : live.lastError
+                            ? "text-amber-400"
+                            : "text-emerald-400"
+                      }`}
+                    >
+                      {!live.running ? "KAPALI" : live.lastError ? "İZLENİYOR" : "SAĞLIKLI"}
+                    </span>
                   </div>
+
                 </div>
               </Card>
 
