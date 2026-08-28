@@ -90,7 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { httpEquiv: "Content-Security-Policy", content: "upgrade-insecure-requests" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "Tedbirge® WebOS — Otonom P2P Ağ İşletim Sistemi (tedbirge.app)" },
+      { title: "Tedbirge® WebOS — tedbirge.app" },
       {
         name: "description",
         content:
