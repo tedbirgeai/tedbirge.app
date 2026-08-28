@@ -6,7 +6,7 @@ import { EGRESS_POLICY } from "@/lib/egress-guard";
 const TITLE = "Güvenlik — tedbirge.app";
 const DESC =
   "Tedbirge Protokol'in tehdit modeli: kriptografik temeller, hangi saldırganlara karşı koruma sağlanır, sıfır-bilgi iddiasının kapsamı, bilinen sınırlar ve zafiyet bildirim süreci.";
-const URL = "https://tedbirge-gateway.lovable.app/guvenlik";
+const URL = "https://tedbirge-app.lovable.app/guvenlik";
 
 export const Route = createFileRoute("/guvenlik")({
   head: () => ({

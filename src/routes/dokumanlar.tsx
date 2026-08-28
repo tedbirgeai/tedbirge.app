@@ -18,10 +18,10 @@ export const Route = createFileRoute("/dokumanlar")({
         content: "Kurulum, CLI komutları, çevre değişkenleri ve üretim dağıtım rehberi.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/dokumanlar" },
+      { property: "og:url", content: "https://tedbirge-app.lovable.app/dokumanlar" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/dokumanlar" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/dokumanlar" }],
   }),
   component: Docs,
 });

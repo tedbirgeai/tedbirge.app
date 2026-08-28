@@ -12,7 +12,7 @@ import {
 const TITLE = "Spektrum & Uyum — tedbirge.app";
 const DESC =
   "Tedbirge Protokol taşıyıcılarının bölge bazlı spektrum, güç ve görev döngüsü sınırları: AB/TR, ABD/Kanada, Birleşik Krallık, Körfez, APAC ve Afrika profilleri.";
-const URL = "https://tedbirge-gateway.lovable.app/uyumluluk";
+const URL = "https://tedbirge-app.lovable.app/uyumluluk";
 
 export const Route = createFileRoute("/uyumluluk")({
   head: () => ({

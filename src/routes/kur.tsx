@@ -7,7 +7,7 @@ import { HybridAccessCard } from "@/components/site/HybridAccessCard";
 const TITLE = "Kurulum — tedbirge.app";
 const DESC =
   "Tedbirge Protokol kurulum sihirbazı: tek tıkla ağı başlatın, yeni düğüm ekleyin ve bağlantı durumunu yeşil/kırmızı göstergelerle izleyin. Kriptografi arka planda otomatik çalışır.";
-const CANONICAL = "https://tedbirge-gateway.lovable.app/kur";
+const CANONICAL = "https://tedbirge-app.lovable.app/kur";
 
 export const Route = createFileRoute("/kur")({
   head: () => ({

@@ -4,7 +4,7 @@ import QRCode from "qrcode";
 import { describeNode, startNode, stopNode, useNodeRuntime } from "@/lib/node-runtime";
 import { NetworkModal, type NetworkTab } from "@/components/site/NetworkModal";
 
-const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
+const FALLBACK_ORIGIN = "https://tedbirge-app.lovable.app";
 const FREE_NODE_QUOTA = 5;
 const SEEN_KEY = "tedbirge.easy.seen-nodes";
 

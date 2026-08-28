@@ -4,7 +4,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 const TITLE = "Overview — tedbirge.app";
 const DESC =
   "Tedbirge Protocol is a single-binary, carrier-agnostic zero-knowledge tunnel gateway and mesh SDK. Nine physical transports, AES-256-GCM, Ed25519, works fully off-grid.";
-const URL = "https://tedbirge-gateway.lovable.app/en";
+const URL = "https://tedbirge-app.lovable.app/en";
 
 export const Route = createFileRoute("/en")({
   head: () => ({
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/en")({
     ],
     links: [
       { rel: "canonical", href: URL },
-      { rel: "alternate", hrefLang: "tr", href: "https://tedbirge-gateway.lovable.app/" },
+      { rel: "alternate", hrefLang: "tr", href: "https://tedbirge-app.lovable.app/" },
       { rel: "alternate", hrefLang: "en", href: URL },
     ],
     scripts: [

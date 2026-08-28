@@ -17,10 +17,10 @@ export const Route = createFileRoute("/hibrit-model")({
           "Asset-light overlay: telekom rakip değil taşıyıcıdır. Emsal firmalar, tasarruf mekanizmaları ve dürüst ölçüm çerçevesi.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/hibrit-model" },
+      { property: "og:url", content: "https://tedbirge-app.lovable.app/hibrit-model" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/hibrit-model" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/hibrit-model" }],
   }),
   component: HybridModel,
 });

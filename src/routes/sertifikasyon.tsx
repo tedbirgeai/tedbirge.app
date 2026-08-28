@@ -4,7 +4,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 const TITLE = "Sertifikasyon — tedbirge.app";
 const DESC =
   "Tedbirge Protokol taşıyıcılarının geçmesi gereken radyo, EMC, güvenlik ve kripto testleri; ülke bazlı onay rejimleri ve henüz kapsanmayan taşıyıcı boşlukları.";
-const URL = "https://tedbirge-gateway.lovable.app/sertifikasyon";
+const URL = "https://tedbirge-app.lovable.app/sertifikasyon";
 
 export const Route = createFileRoute("/sertifikasyon")({
   head: () => ({

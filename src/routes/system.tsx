@@ -26,7 +26,7 @@ export const Route = createFileRoute("/system")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/system" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/system" }],
   }),
   component: SystemRoute,
 });

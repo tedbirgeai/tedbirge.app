@@ -86,7 +86,7 @@ function buildMarkdown(lead: Lead): string {
     `- 5651: Kamuya açık erişim noktalarında karşılama/kayıt akışı ve olay günlüğü sağlanır.`,
     ``,
     `## Kanıt taşıma`,
-    `Belgelerin bütünlük kayıtlarını Pilot Uyum Panosu üzerinden alın: https://tedbirge-gateway.lovable.app/pilot-panosu`,
+    `Belgelerin bütünlük kayıtlarını Pilot Uyum Panosu üzerinden alın: https://tedbirge-app.lovable.app/pilot-panosu`,
     ``,
     `Mehmet DİNÇ (Tedbirge Protokol) — Türkiye`,
   );

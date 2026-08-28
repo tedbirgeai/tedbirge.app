@@ -22,10 +22,10 @@ export const Route = createFileRoute("/fiyatlandirma")({
           "Freemium, Community, Enterprise ve Operator paketleri; düğüm başına ve kullanım bazlı abonelik.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/fiyatlandirma" },
+      { property: "og:url", content: "https://tedbirge-app.lovable.app/fiyatlandirma" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/fiyatlandirma" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/fiyatlandirma" }],
   }),
   component: Pricing,
 });

@@ -17,7 +17,7 @@ import {
   type PeerVerifyTarget,
 } from "@/components/site/PeerVerifyDialog";
 
-const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
+const FALLBACK_ORIGIN = "https://tedbirge-app.lovable.app";
 
 /**
  * Tek ekranlı onboarding: cihazı (telefon/tablet/bilgisayar) donanımsız

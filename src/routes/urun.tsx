@@ -17,10 +17,10 @@ export const Route = createFileRoute("/urun")({
         content: "Tek statik binary içinde tünel, mesh, güvenlik, defter ve panel katmanları.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/urun" },
+      { property: "og:url", content: "https://tedbirge-app.lovable.app/urun" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/urun" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/urun" }],
   }),
   component: Product,
 });
