@@ -31,6 +31,13 @@ import { CommandCenter } from "@/components/shell/CommandCenter";
 import { PaywallModal } from "@/components/shell/PaywallModal";
 import { NodeTestModal } from "@/components/shell/NodeTestModal";
 import { KERNEL_LOG_EVENT, type KernelLogDetail } from "@/lib/peer-limit";
+import { kernelEvents, onKernelTelemetry } from "@/kernel/telemetry";
+import {
+  fmt,
+  formatUptime,
+  useLiveTelemetry,
+  type PeerTelemetry,
+} from "@/lib/telemetry/live-store";
 
 type LogLine = { time: string; text: string; tone?: "warn" };
 
@@ -152,7 +159,6 @@ function MeshCanvas({ peers }: { peers: PeerTelemetry[] }) {
   return <canvas ref={ref} className="block h-full w-full" />;
 }
 
-
 function Row({ k, v, tone }: { k: string; v: string; tone?: string }) {
   return (
     <div className="flex justify-between gap-3">
@@ -174,7 +180,9 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 ${className ?? ""}`}>
+    <div
+      className={`rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 ${className ?? ""}`}
+    >
       <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-xs font-bold text-slate-300">
         {icon}
         <span>{title}</span>
@@ -218,9 +226,11 @@ export default function Dashboard() {
       ]);
     };
     flush();
-    return onKernelTelemetry(flush);
+    const off = onKernelTelemetry(flush);
+    return () => {
+      off();
+    };
   }, []);
-
 
   // Çekirdek katmanı uyarıları (ör. ücretsiz eş limiti) canlı akışa düşer.
   useEffect(() => {
@@ -290,7 +300,8 @@ export default function Dashboard() {
           <div className="hidden items-center gap-2 text-slate-400 lg:flex">
             <Clock className="h-3.5 w-3.5 text-cyan-400" />
             <span>
-              ÇALIŞMA SÜRESİ: <strong className="font-mono text-slate-200">12g 6sa 24dk</strong>
+              OTURUM SÜRESİ:{" "}
+              <strong className="font-mono text-slate-200">{formatUptime(live.uptimeMs)}</strong>
             </span>
           </div>
           <button
@@ -474,7 +485,6 @@ export default function Dashboard() {
                   </div>
                 </div>
               </Card>
-
             </div>
 
             <div className="relative flex min-h-[360px] flex-col overflow-hidden rounded-lg border border-slate-800/80 bg-[var(--tb-panel-solid)] p-3 xl:col-span-6">
@@ -493,7 +503,7 @@ export default function Dashboard() {
               </div>
 
               <div className="relative h-full w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[var(--tb-bg)]">
-                <MeshCanvas />
+                <MeshCanvas peers={live.peers} />
                 <div className="absolute bottom-3 left-3 flex flex-wrap items-center gap-4 rounded-lg border border-slate-800 bg-slate-900/90 px-3 py-1.5 font-mono text-[10px] text-slate-400 backdrop-blur-sm">
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block h-0.5 w-2.5 bg-emerald-400" /> DOĞRUDAN BAĞLANTI
@@ -515,14 +525,32 @@ export default function Dashboard() {
                 icon={<ChartLine className="h-3.5 w-3.5 text-cyan-400" />}
               >
                 <div className="space-y-2 font-mono text-xs text-slate-400">
-                  <Row k="İLETİLEN PAKETLER:" v="1.24M" />
-                  <Row k="HESAPLANAN ROTALAR:" v="5.38K" />
-                  <Row k="ORTALAMA GECİKME:" v="24.7 ms" tone="text-emerald-400" />
-                  <Row k="PAKET KAYBI:" v="%0.12" tone="text-emerald-400" />
-                  <Row k="BANT GENİŞLİĞİ PUANI:" v="98.7 / 100" tone="text-cyan-400" />
+                  <Row k="GÖNDERİLEN ZARF:" v={String(live.sent)} />
+                  <Row k="HESAPLANAN ROTALAR:" v={String(live.routes)} />
+                  <Row
+                    k="ORTALAMA GÖNDERİM:"
+                    v={live.avgSendMs ? `${live.avgSendMs.toFixed(0)} ms` : "ölçüm yok"}
+                    tone="text-emerald-400"
+                  />
+                  <Row k="BAŞARISIZ:" v={String(live.failed)} tone="text-amber-400" />
+                  <Row
+                    k="İMZASIZ REDDEDİLEN:"
+                    v={String(live.droppedUnsigned)}
+                    tone="text-cyan-400"
+                  />
                   <div className="flex items-center justify-between border-t border-slate-800 pt-1">
                     <span>AĞ SAĞLIĞI:</span>
-                    <span className="font-bold tracking-wider text-emerald-400">MÜKEMMEL</span>
+                    <span
+                      className={`font-bold tracking-wider ${
+                        !live.running
+                          ? "text-slate-400"
+                          : live.lastError
+                            ? "text-amber-400"
+                            : "text-emerald-400"
+                      }`}
+                    >
+                      {!live.running ? "KAPALI" : live.lastError ? "İZLENİYOR" : "SAĞLIKLI"}
+                    </span>
                   </div>
                 </div>
               </Card>
@@ -580,36 +608,49 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <Network className="h-3.5 w-3.5 text-cyan-400" />
                 <span>
-                  AĞ: <strong className="text-emerald-400">CANLI</strong>
+                  AĞ:{" "}
+                  <strong className={live.online ? "text-emerald-400" : "text-amber-400"}>
+                    {live.running ? (live.online ? "CANLI" : "ÇEVRİMDIŞI") : "KAPALI"}
+                  </strong>
                 </span>
               </div>
+
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1 text-slate-400">
-                  <ArrowUp className="h-3 w-3 text-emerald-400" /> YÜKLEME:{" "}
-                  <strong className="text-slate-200">85.7 Mbps</strong>
+                  <ArrowUp className="h-3 w-3 text-emerald-400" /> GÖNDERİM:{" "}
+                  <strong className="text-slate-200">{live.sent}</strong>
                 </span>
                 <span className="flex items-center gap-1 text-slate-400">
-                  <ArrowDown className="h-3 w-3 text-cyan-400" /> İNDİRME:{" "}
-                  <strong className="text-slate-200">32.4 Mbps</strong>
+                  <ArrowDown className="h-3 w-3 text-cyan-400" /> KUYRUK:{" "}
+                  <strong className="text-slate-200">{live.queued}</strong>
                 </span>
               </div>
               <div className="hidden items-center gap-3 border-l border-slate-800 pl-6 lg:flex">
                 <span className="text-slate-400">
-                  SİSTEM YÜKÜ: <strong className="text-emerald-400">NORMAL</strong>
+                  ÇEKİRDEK:{" "}
+                  <strong className={live.lastError ? "text-amber-400" : "text-emerald-400"}>
+                    {live.lastError ? "UYARI" : "NORMAL"}
+                  </strong>
                 </span>
                 <div className="flex items-center gap-2 text-[10px]">
-                  <span>CPU:</span>
+                  <span>RTT:</span>
                   <div className="h-1.5 w-16 rounded bg-slate-800">
-                    <div className="h-full w-[23%] rounded bg-emerald-400" />
+                    <div
+                      className="h-full rounded bg-emerald-400"
+                      style={{ width: `${Math.min(100, ((live.avgRttMs ?? 0) / 500) * 100)}%` }}
+                    />
                   </div>
-                  <span className="text-slate-200">23%</span>
+                  <span className="text-slate-200">{fmt(live.avgRttMs, " ms")}</span>
                 </div>
                 <div className="flex items-center gap-2 text-[10px]">
-                  <span>RAM:</span>
+                  <span>EŞ:</span>
                   <div className="h-1.5 w-16 rounded bg-slate-800">
-                    <div className="h-full w-[41%] rounded bg-cyan-400" />
+                    <div
+                      className="h-full rounded bg-cyan-400"
+                      style={{ width: `${Math.min(100, (live.directPeers / 5) * 100)}%` }}
+                    />
                   </div>
-                  <span className="text-slate-200">41%</span>
+                  <span className="text-slate-200">{live.directPeers}/5</span>
                 </div>
               </div>
             </div>
