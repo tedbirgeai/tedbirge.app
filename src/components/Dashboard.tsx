@@ -310,10 +310,13 @@ export default function Dashboard() {
           >
             <QrCode className="h-3.5 w-3.5" /> Interactive Node Test
           </button>
-          <div className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900 px-2.5 py-1 text-slate-200">
+          <Link
+            to="/panel"
+            className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900 px-2.5 py-1 text-slate-200"
+          >
             <CircleUser className="h-3.5 w-3.5 text-cyan-400" />
-            <span className="font-mono">node_admin</span>
-          </div>
+            <span className="font-mono">Hesabım</span>
+          </Link>
         </div>
       </header>
 
@@ -323,19 +326,6 @@ export default function Dashboard() {
             <div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Gezinme
             </div>
-            <nav className="space-y-1 font-mono">
-              <span className="flex items-center gap-2 rounded border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 font-medium text-emerald-400">
-                <FolderOpen className="h-3.5 w-3.5" /> routes/
-              </span>
-              {["kernel/", "components/", "wasm/"].map((f) => (
-                <span
-                  key={f}
-                  className="flex items-center gap-2 rounded px-2.5 py-1.5 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-                >
-                  <Folder className="h-3.5 w-3.5" /> {f}
-                </span>
-              ))}
-            </nav>
 
             <div className="mb-2 mt-5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Sistem
