@@ -4,13 +4,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/gizlilik")({
   head: () => ({
     meta: [
-      { title: "Gizlilik Bildirimi — Tedbirge Protokol" },
+      { title: "Gizlilik — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge Protokol gizlilik bildirimi: işlenen kişisel veri kategorileri, işleme amaçları, hukuki sebepler, saklama süreleri ve KVKK/GDPR hakları.",
       },
-      { property: "og:title", content: "Tedbirge Gizlilik Bildirimi" },
+      { property: "og:title", content: "Gizlilik — tedbirge.app" },
       { property: "og:description", content: "Kişisel veri işleme, paylaşım ve haklarınız." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://tedbirge-gateway.lovable.app/gizlilik" },

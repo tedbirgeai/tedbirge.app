@@ -12,13 +12,13 @@ export const Route = createFileRoute("/system")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sistem Konsolu — Tedbirge OS" },
+      { title: "Sistem Konsolu — tedbirge.app" },
       {
         name: "description",
         content:
           "Düğüm durumu, mesh telemetrisi, röle taşıma ayarları ve kurulu uygulama paketlerinin yönetildiği Tedbirge OS sistem konsolu.",
       },
-      { property: "og:title", content: "Sistem Konsolu — Tedbirge OS" },
+      { property: "og:title", content: "Sistem Konsolu — tedbirge.app" },
       {
         property: "og:description",
         content: "Düğüm, mesh, röle ve uygulama paketleri tek sistem ekranında.",

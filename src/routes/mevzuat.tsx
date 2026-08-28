@@ -16,7 +16,7 @@ import {
   PRIVACY_NOTICE,
 } from "@/lib/regulation";
 
-const TITLE = "Regülasyon Merkezi — Spektrum, Sertifikasyon, Mevzuat ve İhracat";
+const TITLE = "Regülasyon Merkezi — tedbirge.app";
 const DESC =
   "Tedbirge Protokol'in tüm uyum çerçevesi tek sayfada: altı regülasyon sütunu, ülke bazlı spektrum matrisi, test standartları, Türkiye mevzuatı, ihracat kontrolü ve indirilebilir uyum beyanı.";
 const URL = "https://tedbirge-gateway.lovable.app/mevzuat";

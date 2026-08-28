@@ -52,13 +52,13 @@ import { PanelEnergy } from "@/components/site/PanelEnergy";
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
     meta: [
-      { title: "Müşteri Paneli — Tedbirge Protokol" },
+      { title: "Hesabım — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge lisans anahtarlarınızı, düğümlerinizi ve sistem sağlığınızı tek ekrandan yönetin.",
       },
-      { property: "og:title", content: "Tedbirge Müşteri Paneli" },
+      { property: "og:title", content: "Hesabım — tedbirge.app" },
       {
         property: "og:description",
         content: "Lisans, düğüm, canlı akış ve sistem sağlığı yönetimi.",

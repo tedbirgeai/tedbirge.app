@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
-const TITLE = "Tedbirge vs goTenna, Meshtastic, Reticulum — Karşılaştırma";
+const TITLE = "Karşılaştırma — tedbirge.app";
 const DESC =
   "Tedbirge Protokol'ü goTenna Pro, Meshtastic, Reticulum ve Briar ile yan yana karşılaştırın: taşıyıcı bağımsızlığı, donanım kilidi, şifreleme, kullanım bazlı faturalama ve kurum içi konuşlanma.";
 const URL = "https://tedbirge-gateway.lovable.app/karsilastirma";

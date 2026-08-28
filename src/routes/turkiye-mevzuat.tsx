@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
-const TITLE = "Türkiye Mevzuat Uyumu — BTK, KVKK, TSE ve Kamu Kuralları";
+const TITLE = "Türkiye Mevzuatı — tedbirge.app";
 const DESC =
   "Tedbirge Protokol'in Türkiye'deki yasal çerçeveye tam uyumu: 5809 sayılı Elektronik Haberleşme Kanunu, BTK telsiz ve KEGY kuralları, TDDY/EMC/LVD işaretlemesi, KVKK 6698, 5651, 6563 ve kamu alım gereklilikleri.";
 const URL = "https://tedbirge-gateway.lovable.app/turkiye-mevzuat";

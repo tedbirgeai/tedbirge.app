@@ -5,13 +5,13 @@ import { PROTOCOL_LAYERS } from "@/lib/protocol-layers";
 export const Route = createFileRoute("/kurumsal")({
   head: () => ({
     meta: [
-      { title: "Tedbirge Protocol — Kurumsal Bağlantı Sürekliliği Platformu" },
+      { title: "Kurumsal — tedbirge.app" },
       {
         name: "description",
         content:
           "İnternet kesildiğinde de çalışan kurumsal ağ altyapısı. Uçtan uca şifreli, kurulum gerektirmeyen, 7 katmanlı Tedbirge Protocol ve Resilience-as-a-Service abonelik modeli.",
       },
-      { property: "og:title", content: "Tedbirge Protocol — Bağlantı Sürekliliği Platformu" },
+      { property: "og:title", content: "Kurumsal — tedbirge.app" },
       {
         property: "og:description",
         content:

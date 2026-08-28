@@ -5,13 +5,13 @@ export const Route = createFileRoute("/chat")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sohbet ve Görüşme — Tedbirge Protocol" },
+      { title: "Sohbet — tedbirge.app" },
       {
         name: "description",
         content:
           "İnternet varken bulut, kesildiğinde yakındaki cihazlar üzerinden çalışan uçtan uca şifreli mesajlaşma, sesli ve görüntülü görüşme.",
       },
-      { property: "og:title", content: "Sohbet ve Görüşme — Tedbirge Protocol" },
+      { property: "og:title", content: "Sohbet — tedbirge.app" },
       {
         property: "og:description",
         content:

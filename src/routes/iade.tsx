@@ -4,13 +4,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/iade")({
   head: () => ({
     meta: [
-      { title: "İade Politikası — Tedbirge Protokol" },
+      { title: "İade Politikası — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge abonelikleri için 30 gün koşulsuz iade garantisi; iade talebi nasıl açılır, ne kadar sürede sonuçlanır ve hangi durumlar kapsam dışıdır.",
       },
-      { property: "og:title", content: "Tedbirge İade Politikası" },
+      { property: "og:title", content: "İade Politikası — tedbirge.app" },
       { property: "og:description", content: "30 günlük para iade garantisi ve iade süreci." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://tedbirge-gateway.lovable.app/iade" },

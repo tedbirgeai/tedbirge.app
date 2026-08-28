@@ -4,13 +4,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/kosullar")({
   head: () => ({
     meta: [
-      { title: "Kullanım Koşulları — Tedbirge Protokol" },
+      { title: "Kullanım Koşulları — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge Protokol hizmet ve lisans kullanım koşulları: kabul, uygun kullanım, fikri mülkiyet, ödeme, askıya alma ve sorumluluk sınırları.",
       },
-      { property: "og:title", content: "Tedbirge Kullanım Koşulları" },
+      { property: "og:title", content: "Kullanım Koşulları — tedbirge.app" },
       { property: "og:description", content: "Hizmet ve lisans kullanım koşulları." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://tedbirge-gateway.lovable.app/kosullar" },

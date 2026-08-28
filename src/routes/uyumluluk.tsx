@@ -9,7 +9,7 @@ import {
   REGION_PROFILE_SNIPPET,
 } from "@/lib/regulation";
 
-const TITLE = "Spektrum & Uyum Matrisi — Ülke Bazlı Taşıyıcı Kuralları";
+const TITLE = "Spektrum & Uyum — tedbirge.app";
 const DESC =
   "Tedbirge Protokol taşıyıcılarının bölge bazlı spektrum, güç ve görev döngüsü sınırları: AB/TR, ABD/Kanada, Birleşik Krallık, Körfez, APAC ve Afrika profilleri.";
 const URL = "https://tedbirge-gateway.lovable.app/uyumluluk";

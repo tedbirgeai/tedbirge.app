@@ -90,21 +90,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { httpEquiv: "Content-Security-Policy", content: "upgrade-insecure-requests" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "Tedbirge® WebOS — Otonom P2P Ağ İşletim Sistemi (tedbirge.app)" },
+      { title: "Tedbirge® WebOS — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge® WebOS: taşıyıcı-bağımsız, sıfır-bilgi P2P ağ işletim sistemi. İnternet kesilse de çalışan mesh haberleşme ve veri taşıma katmanı.",
       },
       { name: "author", content: "Tedbirge" },
-      { property: "og:title", content: "Tedbirge® WebOS — Otonom P2P Ağ İşletim Sistemi" },
+      { property: "og:title", content: "Tedbirge® WebOS — tedbirge.app" },
       {
         property: "og:description",
         content: "İnternet kesilse de çalışan, sıfır-bilgi P2P ağ işletim sistemi.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Tedbirge® WebOS — Otonom P2P Ağ İşletim Sistemi" },
+      { name: "twitter:title", content: "Tedbirge® WebOS — tedbirge.app" },
       {
         name: "twitter:description",
         content: "İnternet kesilse de çalışan, sıfır-bilgi P2P ağ işletim sistemi.",

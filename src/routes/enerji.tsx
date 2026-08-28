@@ -4,13 +4,13 @@ import { PanelEnergy } from "@/components/site/PanelEnergy";
 export const Route = createFileRoute("/enerji")({
   head: () => ({
     meta: [
-      { title: "Saha Enerji Katmanı — Tedbirge Protocol" },
+      { title: "Enerji — tedbirge.app" },
       {
         name: "description",
         content:
           "Güneş şarj kontrolcüsü, hibrit invertör ve GNSS alıcısını tarayıcıdan salt-okunur bağlayın; enerji bütçesi ve güneşsiz gün otonomisini hesaplayın.",
       },
-      { property: "og:title", content: "Saha Enerji Katmanı — Tedbirge Protocol" },
+      { property: "og:title", content: "Enerji — tedbirge.app" },
       {
         property: "og:description",
         content:

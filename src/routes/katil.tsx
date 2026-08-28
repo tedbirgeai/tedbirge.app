@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { describeNode, startNode, useNodeRuntime } from "@/lib/node-runtime";
 
-const TITLE = "Ağa Hoş Geldiniz — Tedbirge Güvenli Mesh Düğümü";
+const TITLE = "Ağa Katıl — tedbirge.app";
 const DESC =
   "Yakınınızdaki Tedbirge güvenli haberleşme ağına tek dokunuşla katılın. Kurulum, kayıt veya ödeme gerekmez; bağlantı uçtan uca şifrelidir.";
 const CANONICAL = "https://tedbirge-gateway.lovable.app/katil";

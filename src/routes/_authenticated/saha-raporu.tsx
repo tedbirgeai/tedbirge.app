@@ -7,13 +7,13 @@ import { useAuth } from "@/hooks/useAuth";
 export const Route = createFileRoute("/_authenticated/saha-raporu")({
   head: () => ({
     meta: [
-      { title: "Saha Test Raporu — Tedbirge Protokol Ölçümleri" },
+      { title: "Saha Raporu — tedbirge.app" },
       {
         name: "description",
         content:
           "Sahadaki Tedbirge Protokol düğümlerinden gelen RTT, throughput ve paket kaybı ölçümlerini görün, yazdırılabilir saha test raporu üretin.",
       },
-      { property: "og:title", content: "Tedbirge Saha Test Raporu" },
+      { property: "og:title", content: "Saha Raporu — tedbirge.app" },
       { property: "og:description", content: "Düğüm bazlı gecikme, hız ve paket kaybı ölçümleri." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

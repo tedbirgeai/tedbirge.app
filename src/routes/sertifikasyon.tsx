@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
-const TITLE = "Sertifikasyon & Test Matrisi — Taşıyıcı Bazlı Uygunluk";
+const TITLE = "Sertifikasyon — tedbirge.app";
 const DESC =
   "Tedbirge Protokol taşıyıcılarının geçmesi gereken radyo, EMC, güvenlik ve kripto testleri; ülke bazlı onay rejimleri ve henüz kapsanmayan taşıyıcı boşlukları.";
 const URL = "https://tedbirge-gateway.lovable.app/sertifikasyon";

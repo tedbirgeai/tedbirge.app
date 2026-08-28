@@ -6,13 +6,13 @@ import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 export const Route = createFileRoute("/tasiyicilar")({
   head: () => ({
     meta: [
-      { title: "10 Taşıyıcı — Tedbirge Off-Grid Fiziksel Katmanlar" },
+      { title: "Taşıyıcılar — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge Protokol'ün desteklediği on taşıyıcı: OpenWrt WSS yerel geçit, Ethernet, Wi-Fi, hücresel, uydu, WiGig 60GHz, FSO lazer, Wi-Fi HaLow, TVWS ve LoRa ISM.",
       },
-      { property: "og:title", content: "Tedbirge Taşıyıcı Matrisi" },
+      { property: "og:title", content: "Taşıyıcılar — tedbirge.app" },
       {
         property: "og:description",
         content: "Menzil, bant genişliği, gecikme ve yasal statüsüyle on fiziksel taşıyıcı.",

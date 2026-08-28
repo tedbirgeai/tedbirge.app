@@ -5,13 +5,13 @@ export const Route = createFileRoute("/dashboard")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "P2P Kontrol Paneli — Tedbirge Protocol" },
+      { title: "Kontrol Paneli — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge Protocol canlı P2P kontrol paneli: mesh ağ topolojisi, bant genişliği, Wasm kum havuzu ve düğüm terminali tek ekranda.",
       },
-      { property: "og:title", content: "P2P Kontrol Paneli — Tedbirge Protocol" },
+      { property: "og:title", content: "Kontrol Paneli — tedbirge.app" },
       {
         property: "og:description",
         content:

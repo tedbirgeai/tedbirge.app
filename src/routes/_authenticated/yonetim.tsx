@@ -13,13 +13,13 @@ import { AdminInterop } from "@/components/site/AdminInterop";
 export const Route = createFileRoute("/_authenticated/yonetim")({
   head: () => ({
     meta: [
-      { title: "Yönetim — Pilot Başvuruları | Tedbirge" },
+      { title: "Yönetim — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge yönetim ekranı: pilot başvurularını inceleyin, durum güncelleyin ve lisansları takip edin.",
       },
-      { property: "og:title", content: "Tedbirge Yönetim Ekranı" },
+      { property: "og:title", content: "Yönetim — tedbirge.app" },
       { property: "og:description", content: "Pilot başvuruları ve lisans yönetimi." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

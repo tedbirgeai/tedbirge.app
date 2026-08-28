@@ -4,13 +4,13 @@ import { BatteryCharging, Sun, Zap, Radio, Smartphone, ShieldCheck } from "lucid
 export const Route = createFileRoute("/kablosuz-sarj")({
   head: () => ({
     meta: [
-      { title: "Kablosuz Şarj Çözümleri — Tedbirge Protocol" },
+      { title: "Kablosuz Şarj — tedbirge.app" },
       {
         name: "description",
         content:
           "Saha düğümleri, telefon ve tabletler için kablosuz şarj seçenekleri: Qi2 mıknatıslı şarj, güneş + LiFePO4 otonomi, NFC ve RF hasat sınırları.",
       },
-      { property: "og:title", content: "Kablosuz Şarj Çözümleri — Tedbirge Protocol" },
+      { property: "og:title", content: "Kablosuz Şarj — tedbirge.app" },
       {
         property: "og:description",
         content:

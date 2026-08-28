@@ -10,7 +10,9 @@ export const Route = createFileRoute("/rehber/$slug")({
   },
   head: ({ loaderData }) => {
     const url = `https://tedbirge-gateway.lovable.app/rehber/${loaderData?.slug ?? ""}`;
-    const title = loaderData ? `${loaderData.title} — Tedbirge Rehber` : "Tedbirge Rehber";
+    const title = loaderData
+      ? `${loaderData.title} — tedbirge.app`
+      : "Rehber — tedbirge.app";
     const desc = loaderData?.description ?? "Tedbirge mühendislik rehberi.";
     return {
       meta: [

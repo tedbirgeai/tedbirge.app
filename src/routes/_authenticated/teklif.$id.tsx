@@ -8,13 +8,13 @@ import type { LeadPlan } from "@/lib/lead-plan";
 export const Route = createFileRoute("/_authenticated/teklif/$id")({
   head: () => ({
     meta: [
-      { title: "Teklif / Başvuru Paketi — Tedbirge Protokol" },
+      { title: "Teklif Paketi — tedbirge.app" },
       {
         name: "description",
         content:
           "AI Danışman görüşmesinden üretilen pilot teklif ve başvuru paketi: takvim, belge kontrol listesi ve kanıt taşıma yönlendirmesi.",
       },
-      { property: "og:title", content: "Teklif / Başvuru Paketi" },
+      { property: "og:title", content: "Teklif Paketi — tedbirge.app" },
       { property: "og:description", content: "Pilot takvimi ve belge kontrol listesi." },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex, nofollow" },

@@ -5,13 +5,13 @@ import { NextStep } from "@/components/site/NextStep";
 export const Route = createFileRoute("/urun")({
   head: () => ({
     meta: [
-      { title: "Ürün ve Mimari — Tedbirge Protokol" },
+      { title: "Ürün — tedbirge.app" },
       {
         name: "description",
         content:
           "Tedbirge mimarisi: mesh router, zero-knowledge tünel, Ed25519 güvenlik kalkanı, off-grid defter, WAL ve gömülü yönetim paneli.",
       },
-      { property: "og:title", content: "Tedbirge Ürün ve Mimari" },
+      { property: "og:title", content: "Ürün — tedbirge.app" },
       {
         property: "og:description",
         content: "Tek statik binary içinde tünel, mesh, güvenlik, defter ve panel katmanları.",
