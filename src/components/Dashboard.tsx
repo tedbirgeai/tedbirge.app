@@ -11,8 +11,6 @@ import {
   Clock,
   Cpu,
   Expand,
-  Folder,
-  FolderOpen,
   FolderTree,
   Gauge,
   Globe,
@@ -271,9 +269,6 @@ export default function Dashboard() {
           <div className="flex items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
             <Box className="h-4 w-4 text-cyan-400" />
             <span>Tedbirge® WebOS</span>
-            <span className="rounded border border-emerald-500/30 bg-emerald-950/80 px-1.5 py-0.5 font-mono text-[10px] text-emerald-400">
-              v2.7.1
-            </span>
           </div>
           <span className="hidden text-slate-600 sm:inline">|</span>
           <span className="hidden font-mono text-slate-400 md:inline">
@@ -283,14 +278,16 @@ export default function Dashboard() {
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900/80 px-2.5 py-1">
-            <span className="text-[11px] text-slate-400">SİSTEM DURUMU:</span>
+            <span className="text-[11px] text-slate-400">AĞ DURUMU:</span>
             <span className="inline-flex items-center gap-1.5 font-medium text-emerald-400">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> start.ts
-              ÇEVRİMİÇİ
-            </span>
-            <span className="ml-2 inline-flex items-center gap-1.5 font-medium text-emerald-400">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> server.ts
-              ÇEVRİMİÇİ
+              <span
+                className={`h-2 w-2 rounded-full ${live.directPeers > 0 ? "bg-emerald-500" : "bg-slate-600"}`}
+              />
+              {live.directPeers > 0
+                ? `${live.directPeers} eş bağlı`
+                : live.running
+                  ? "Yerel Mod (1 düğüm)"
+                  : "Düğüm kapalı"}
             </span>
           </div>
           <div className="flex items-center gap-1.5 rounded border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-1 font-mono text-emerald-400">
@@ -311,10 +308,13 @@ export default function Dashboard() {
           >
             <QrCode className="h-3.5 w-3.5" /> Interactive Node Test
           </button>
-          <div className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900 px-2.5 py-1 text-slate-200">
+          <Link
+            to="/panel"
+            className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900 px-2.5 py-1 text-slate-200"
+          >
             <CircleUser className="h-3.5 w-3.5 text-cyan-400" />
-            <span className="font-mono">node_admin</span>
-          </div>
+            <span className="font-mono">Hesabım</span>
+          </Link>
         </div>
       </header>
 
@@ -324,19 +324,6 @@ export default function Dashboard() {
             <div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Gezinme
             </div>
-            <nav className="space-y-1 font-mono">
-              <span className="flex items-center gap-2 rounded border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 font-medium text-emerald-400">
-                <FolderOpen className="h-3.5 w-3.5" /> routes/
-              </span>
-              {["kernel/", "components/", "wasm/"].map((f) => (
-                <span
-                  key={f}
-                  className="flex items-center gap-2 rounded px-2.5 py-1.5 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-                >
-                  <Folder className="h-3.5 w-3.5" /> {f}
-                </span>
-              ))}
-            </nav>
 
             <div className="mb-2 mt-5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Sistem
@@ -385,17 +372,20 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <span className="text-slate-400">P2P AĞ DURUMU</span>
               <span className="flex items-center gap-1 font-bold text-emerald-400">
-                <span className="h-1.5 w-1.5 animate-ping rounded-full bg-emerald-400" /> BAĞLI
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${live.directPeers > 0 ? "bg-emerald-400" : "bg-slate-600"}`}
+                />
+                {live.directPeers > 0 ? "BAĞLI" : live.running ? "YEREL MOD" : "KAPALI"}
               </span>
             </div>
-            <div className="text-[10px] text-slate-400">
-              DÜĞÜM KİMLİĞİ: <span className="text-slate-200">THIS_NODE</span>
+            <div className="truncate text-[10px] text-slate-400">
+              DÜĞÜM KİMLİĞİ: <span className="text-slate-200">{live.nodeId || "—"}</span>
             </div>
             <div className="text-[10px] text-slate-400">
-              ROL: <span className="font-bold text-cyan-400">SÜPER EŞ</span>
-            </div>
-            <div className="text-[10px] text-slate-400">
-              SÜRÜM: <span className="text-slate-200">v2.7.1</span>
+              DÜĞÜM SAYISI:{" "}
+              <span className="text-slate-200">
+                {live.peers.length === 0 ? "1 (bu cihaz)" : live.peers.length + 1}
+              </span>
             </div>
           </div>
         </aside>
