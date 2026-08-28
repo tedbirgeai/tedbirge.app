@@ -813,16 +813,16 @@ body {
   --tb-emerald-500: #10b981;
   --tb-emerald-600: #059669;
   --tb-emerald-950: #022c22;
-  --tb-cyan-200: #a5f3fc;
-  --tb-cyan-300: #67e8f9;
-  --tb-cyan-400: #22d3ee;
-  --tb-cyan-500: #06b6d4;
-  --tb-amber-100: #fef3c7;
-  --tb-amber-200: #fde68a;
-  --tb-amber-400: #fbbf24;
-  --tb-amber-500: #f59e0b;
-  --tb-rose-300: #fda4af;
-  --tb-rose-400: #fb7185;
-  --tb-rose-500: #f43f5e;
-  --tb-rose-600: #e11d48;
+  --tb-cyan-200: #a7f3d0;
+  --tb-cyan-300: #6ee7b7;
+  --tb-cyan-400: #34d399;
+  --tb-cyan-500: #10b981;
+  --tb-amber-100: #f0a29a;
+  --tb-amber-200: #f0a29a;
+  --tb-amber-400: #e2867c;
+  --tb-amber-500: #d1726a;
+  --tb-rose-300: #f0a29a;
+  --tb-rose-400: #e2867c;
+  --tb-rose-500: #d1726a;
+  --tb-rose-600: #b85f58;
 }
