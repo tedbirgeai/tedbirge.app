@@ -374,17 +374,20 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <span className="text-slate-400">P2P AĞ DURUMU</span>
               <span className="flex items-center gap-1 font-bold text-emerald-400">
-                <span className="h-1.5 w-1.5 animate-ping rounded-full bg-emerald-400" /> BAĞLI
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${live.directPeers > 0 ? "bg-emerald-400" : "bg-slate-600"}`}
+                />
+                {live.directPeers > 0 ? "BAĞLI" : live.running ? "YEREL MOD" : "KAPALI"}
               </span>
             </div>
-            <div className="text-[10px] text-slate-400">
-              DÜĞÜM KİMLİĞİ: <span className="text-slate-200">THIS_NODE</span>
+            <div className="truncate text-[10px] text-slate-400">
+              DÜĞÜM KİMLİĞİ: <span className="text-slate-200">{live.nodeId || "—"}</span>
             </div>
             <div className="text-[10px] text-slate-400">
-              ROL: <span className="font-bold text-cyan-400">SÜPER EŞ</span>
-            </div>
-            <div className="text-[10px] text-slate-400">
-              SÜRÜM: <span className="text-slate-200">v2.7.1</span>
+              DÜĞÜM SAYISI:{" "}
+              <span className="text-slate-200">
+                {live.peers.length === 0 ? "1 (bu cihaz)" : live.peers.length + 1}
+              </span>
             </div>
           </div>
         </aside>
