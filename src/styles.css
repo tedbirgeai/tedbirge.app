@@ -147,6 +147,13 @@
     border-color: var(--color-border);
   }
 
+  /* Rota geçişlerinde renk sıçramasını (FOUC) önlemek için zemin
+     html üzerinde de sabitlenir. */
+  html {
+    background-color: var(--tb-bg);
+    color: var(--tb-text);
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -165,8 +172,8 @@
 
 @utility grid-bg {
   background-image:
-    linear-gradient(to right, oklch(1 0 0 / 5%) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(1 0 0 / 5%) 1px, transparent 1px);
+    linear-gradient(to right, var(--tb-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--tb-grid) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 
