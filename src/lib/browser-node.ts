@@ -34,8 +34,8 @@ import {
   encodeEnvelope,
   forwardEnvelope,
   openEnvelope,
-  verifyEnvelope,
   witnessClock,
+
   TTL_EXHAUSTED_NOTICE,
   type EnvelopeKind,
   type MeshEnvelopeV2,
