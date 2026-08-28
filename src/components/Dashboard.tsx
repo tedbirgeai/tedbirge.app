@@ -298,7 +298,9 @@ export default function Dashboard() {
           <div className="hidden items-center gap-2 text-slate-400 lg:flex">
             <Clock className="h-3.5 w-3.5 text-cyan-400" />
             <span>
-              ÇALIŞMA SÜRESİ: <strong className="font-mono text-slate-200">12g 6sa 24dk</strong>
+              OTURUM SÜRESİ:{" "}
+              <strong className="font-mono text-slate-200">{formatUptime(live.uptimeMs)}</strong>
+
             </span>
           </div>
           <button
