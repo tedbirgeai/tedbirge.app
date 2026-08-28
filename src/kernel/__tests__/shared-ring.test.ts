@@ -37,7 +37,9 @@ describe.skipIf(!hasSab)("SharedRing", () => {
     const frame = encodeFrame(OP.DIGEST, 42, new Uint8Array([9, 9]).buffer);
     expect(ring.push(new Uint8Array(frame))).toBe(true);
     const raw = ring.pop()!;
-    const decoded = decodeFrame(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength));
+    const decoded = decodeFrame(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength) as ArrayBuffer,
+    );
     expect(decoded?.op).toBe(OP.DIGEST);
     expect(decoded?.corrId).toBe(42);
     expect(new Uint8Array(decoded!.payload)).toEqual(new Uint8Array([9, 9]));
