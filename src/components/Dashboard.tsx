@@ -226,7 +226,11 @@ export default function Dashboard() {
       ]);
     };
     flush();
-    return onKernelTelemetry(flush);
+    const off = onKernelTelemetry(flush);
+    return () => {
+      off();
+    };
+
   }, []);
 
 
