@@ -5,11 +5,14 @@
  * durumunu Dark Cyber temada gösterir. Tüm veriler cihazda üretilir.
  */
 
-import { useEffect, useState } from "react";
-import { Fingerprint, Lock, ShieldCheck, Users } from "lucide-react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { Fingerprint, Lock, ShieldAlert, ShieldCheck, Users } from "lucide-react";
 
 import { useNodeRuntime } from "@/lib/node-runtime";
+import { guardStats, onGuardStats } from "@/lib/mesh/guard";
+import { edgeHealthSnapshot } from "@/lib/mesh/edge-health";
 import { listEvents, type EventRecord } from "@/lib/store/idb";
+
 
 function Section({
   icon,
