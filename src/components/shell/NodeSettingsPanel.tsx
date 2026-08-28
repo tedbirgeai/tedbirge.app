@@ -7,9 +7,21 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { Bell, Cpu, HardDrive, KeyRound, Palette, RefreshCw, Trash2 } from "lucide-react";
+import {
+  Bell,
+  Cpu,
+  HardDrive,
+  KeyRound,
+  Palette,
+  Pencil,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 
 import { THEMES, getTheme, setTheme, type ThemeId } from "@/lib/ui/theme";
+import { composeIdentityLabel, getDeviceName, setDeviceName } from "@/lib/identity/device";
+import { getAlias, setAlias } from "@/lib/chat/profile";
+import { announceName } from "@/lib/chat/name-exchange";
 
 import { useNodeRuntime, pingNodePeers } from "@/lib/node-runtime";
 import { activeKernelProvider } from "@/kernel/boot";
@@ -143,6 +155,14 @@ export function NodeSettingsPanel() {
   const [notice, setNotice] = useState<string | null>(null);
   const [theme, setThemeState] = useState<ThemeId>(() => getTheme());
   const [perm, setPerm] = useState<string>("default");
+  const [editing, setEditing] = useState(false);
+  const [identity, setIdentity] = useState("Bu cihaz");
+  const [aliasDraft, setAliasDraft] = useState("");
+  const [deviceDraft, setDeviceDraft] = useState("");
+
+  useEffect(() => {
+    setIdentity(composeIdentityLabel(getAlias(), getDeviceName()) || "Bu cihaz");
+  }, []);
 
   useEffect(() => {
     const off = onKernelTelemetry(() => force((n) => n + 1));
