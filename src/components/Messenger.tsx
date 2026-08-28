@@ -637,7 +637,7 @@ export default function Messenger() {
                   </div>
                 </Card>
                 <Card title="Oturum">
-                  <Row k="Düğüm" value-placeholder="" v={nodeCountLabel} />
+                  <Row k="Düğüm" v={nodeCountLabel} />
                   <Row k="Ağ durumu" v={networkLabel} />
                   <Row k="Kuyruk" v={String(node.queued)} />
                   <Row k="Gecikme" v={node.rttMs != null ? `${node.rttMs} ms` : "—"} />
