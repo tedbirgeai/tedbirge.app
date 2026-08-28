@@ -767,18 +767,18 @@ body {
   --tb-emerald-500: #2563eb;
   --tb-emerald-600: #1d4ed8;
   --tb-emerald-950: #eff6ff;
-  --tb-cyan-200: #334155;
-  --tb-cyan-300: #475569;
-  --tb-cyan-400: #475569;
-  --tb-cyan-500: #334155;
-  --tb-amber-100: #78350f;
-  --tb-amber-200: #92400e;
-  --tb-amber-400: #b45309;
-  --tb-amber-500: #92400e;
-  --tb-rose-300: #be123c;
-  --tb-rose-400: #e11d48;
-  --tb-rose-500: #be123c;
-  --tb-rose-600: #9f1239;
+  --tb-cyan-200: #1e40af;
+  --tb-cyan-300: #1d4ed8;
+  --tb-cyan-400: #2563eb;
+  --tb-cyan-500: #1d4ed8;
+  --tb-amber-100: #b3453a;
+  --tb-amber-200: #b3453a;
+  --tb-amber-400: #b3453a;
+  --tb-amber-500: #9c3a31;
+  --tb-rose-300: #b3453a;
+  --tb-rose-400: #b3453a;
+  --tb-rose-500: #9c3a31;
+  --tb-rose-600: #9c3a31;
 }
 
 :root[data-theme="night"] {
