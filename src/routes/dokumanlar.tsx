@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { HCL, HCL_DISCLAIMER, HCL_STATUS_LABEL, HCL_VERSION } from "@/lib/hcl";
