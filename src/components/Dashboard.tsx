@@ -271,9 +271,6 @@ export default function Dashboard() {
           <div className="flex items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
             <Box className="h-4 w-4 text-cyan-400" />
             <span>Tedbirge® WebOS</span>
-            <span className="rounded border border-emerald-500/30 bg-emerald-950/80 px-1.5 py-0.5 font-mono text-[10px] text-emerald-400">
-              v2.7.1
-            </span>
           </div>
           <span className="hidden text-slate-600 sm:inline">|</span>
           <span className="hidden font-mono text-slate-400 md:inline">
@@ -283,14 +280,16 @@ export default function Dashboard() {
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900/80 px-2.5 py-1">
-            <span className="text-[11px] text-slate-400">SİSTEM DURUMU:</span>
+            <span className="text-[11px] text-slate-400">AĞ DURUMU:</span>
             <span className="inline-flex items-center gap-1.5 font-medium text-emerald-400">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> start.ts
-              ÇEVRİMİÇİ
-            </span>
-            <span className="ml-2 inline-flex items-center gap-1.5 font-medium text-emerald-400">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> server.ts
-              ÇEVRİMİÇİ
+              <span
+                className={`h-2 w-2 rounded-full ${live.directPeers > 0 ? "bg-emerald-500" : "bg-slate-600"}`}
+              />
+              {live.directPeers > 0
+                ? `${live.directPeers} eş bağlı`
+                : live.running
+                  ? "Yerel Mod (1 düğüm)"
+                  : "Düğüm kapalı"}
             </span>
           </div>
           <div className="flex items-center gap-1.5 rounded border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-1 font-mono text-emerald-400">
