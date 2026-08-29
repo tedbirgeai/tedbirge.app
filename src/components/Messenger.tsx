@@ -362,9 +362,11 @@ export default function Messenger() {
         name: peerDisplayLabel(p.id),
         badge: shortBadge(p.id),
         kind: getPeerIdentity(p.id).kind ?? "browser",
-        handle: p.direct ? "Doğrudan bağlı" : "Güvenli röle aktarımı",
+        handle: p.direct ? "Doğrudan Bağlı" : "Röle",
         hint: p.direct ? LINK_HINTS.direct : LINK_HINTS.relay,
         direct: p.direct,
+        relay: !p.direct,
+        named: isNamedPeer(p.id),
       })),
       ...signalPeers
         .filter((id) => !livePeers.some((p) => p.id === id))
@@ -373,12 +375,40 @@ export default function Messenger() {
           name: peerDisplayLabel(id),
           badge: shortBadge(id),
           kind: getPeerIdentity(id).kind ?? ("browser" as DeviceKind),
-          handle: "Güvenli röle aktarımı · çevrimiçi",
+          handle: "Röle · çevrimiçi",
           hint: LINK_HINTS.relay,
           direct: false,
+          relay: true,
+          named: isNamedPeer(id),
         })),
     ];
   }, [hydrated, identityTick, livePeers, media, node.nodeId, selfLabel, signalPeers]);
+
+  const knownPeers = useMemo(
+    () => participants.filter((p) => !p.self && p.named),
+    [participants],
+  );
+  const nearbyPeers = useMemo(
+    () => participants.filter((p) => !p.self && !p.named),
+    [participants],
+  );
+  const selfParticipant = participants[0]!;
+
+  const openChatWith = (id: string) => {
+    setTab("chat");
+    setActivePeer(id);
+    window.setTimeout(() => draftRef.current?.focus(), 0);
+  };
+
+  const startCallWith = (id: string) => {
+    setTab("chat");
+    setActivePeer(id);
+    void requestMedia("av").then((ok) => {
+      setInCall(true);
+      setCamOn(ok);
+      setMicOn(ok);
+    });
+  };
 
   const peerCount = participants.length - 1;
   const localMode = peerCount === 0;
