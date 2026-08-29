@@ -32,9 +32,8 @@ export type PeerRowData = {
   relay?: boolean;
 };
 
-function DeviceGlyph({ kind, relay }: { kind: DeviceKind; relay?: boolean }) {
+function DeviceGlyph({ kind }: { kind: DeviceKind }) {
   const cls = "h-4 w-4";
-  if (relay) return <Radio className={cls} aria-hidden />;
   if (kind === "mobile") return <Smartphone className={cls} aria-hidden />;
   if (kind === "tablet") return <Tablet className={cls} aria-hidden />;
   if (kind === "desktop") return <Monitor className={cls} aria-hidden />;
