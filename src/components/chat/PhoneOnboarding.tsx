@@ -303,6 +303,22 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
       style={{ background: "var(--wa-panel-soft)" }}
     >
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-sm sm:p-8">
+        <Link
+          to="/"
+          className="mb-5 flex items-center gap-2 text-[13px] font-medium"
+          style={{ color: "var(--wa-muted)" }}
+          title="Tedbirge® WebOS Ana Sayfası"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          <span
+            className="grid h-6 w-6 place-items-center rounded-md text-[10px] font-black text-white"
+            style={{ background: "var(--wa-accent)" }}
+            aria-hidden
+          >
+            TB
+          </span>
+          Tedbirge® WebOS Ana Sayfası
+        </Link>
         {step === "phone" && (
           <>
             <h2 className="text-xl font-semibold" style={{ color: "var(--wa-text)" }}>
