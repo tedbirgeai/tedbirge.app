@@ -500,6 +500,28 @@ export default function Messenger() {
             <span style={{ color: "var(--tb-muted)" }}>Ağ durumu:</span>
             <strong style={{ color: "var(--tb-text)" }}>{networkLabel}</strong>
           </span>
+          {p2pActive ? (
+            <span
+              className="inline-flex animate-fade-in items-center gap-2 rounded-full px-3 py-1 transition-all duration-300 ease-in-out"
+              style={{
+                background: "var(--tb-panel-soft)",
+                border: "1px solid var(--tb-border)",
+                color: "var(--tb-text)",
+              }}
+            >
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span
+                  className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60"
+                  style={{ background: "var(--tb-accent)" }}
+                />
+                <span
+                  className="relative inline-flex h-2 w-2 rounded-full"
+                  style={{ background: "var(--tb-accent)" }}
+                />
+              </span>
+              Güvenli P2P Bağlantısı Aktif
+            </span>
+          ) : null}
           <span
             className="hidden items-center gap-1.5 rounded-full px-3 py-1 sm:inline-flex"
             style={{
