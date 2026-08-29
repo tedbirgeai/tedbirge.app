@@ -314,8 +314,12 @@ export default function Messenger() {
   const [signalPeers, setSignalPeers] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [identityTick, setIdentityTick] = useState(0);
+  const [activePeer, setActivePeer] = useState<string | null>(null);
+  const draftRef = useRef<HTMLInputElement | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
   useEffect(() => setHydrated(true), []);
   useEffect(() => onPeerIdentity(() => setIdentityTick((n) => n + 1)), []);
+  useEffect(() => onNickname(() => setIdentityTick((n) => n + 1)), []);
 
   useEffect(() => subscribeLivePeers(setSignalPeers), []);
 
