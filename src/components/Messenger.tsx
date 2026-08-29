@@ -5,7 +5,7 @@
  * Ekip · Ağ & Sistem Durumu. Tüm renkler `--tb-*` token'larından okunur.
  *
  * VERİ DÜRÜSTLÜĞÜ: Bu ekranda hiçbir sayı uydurulmaz. Gerçek bir eş
- * bağlanmadıkça durum "1 Düğüm (Bu Cihaz) · Yerel Mod" olarak gösterilir,
+ * bağlanmadıkça durum "1 Cihaz (bu cihaz) · Özel Ağ" olarak gösterilir,
  * ölçülmemiş metrikler "—" basar.
  */
 
@@ -646,8 +646,8 @@ export default function Messenger() {
                       {activePeerName
                         ? `${activePeerName} ile görüşme`
                         : localMode
-                          ? "Yerel Mod · eş bekleniyor"
-                          : `${peerCount} eş${route ? ` · ${route.hops} adım` : ""}`}
+                          ? "Özel Ağ · Cihaz Bağlantısı Bekleniyor"
+                          : `${peerCount} Aktif Cihaz Bağlı${route ? ` · ${route.hops} adım` : ""}`}
                     </div>
                   </div>
                   <button
@@ -983,7 +983,7 @@ export default function Messenger() {
               <Card title="Ekip">
                 {participants.length === 1 ? (
                   <p className="text-[13px]" style={{ color: "var(--tb-muted)" }}>
-                    Şu an yalnızca bu cihaz bağlı (Yerel Mod). Bir eş katıldığında burada
+                    Şu an yalnızca bu cihaz bağlı (Özel Ağ). Yeni bir cihaz katıldığında burada
                     listelenir.
                   </p>
                 ) : null}
@@ -1079,8 +1079,8 @@ export default function Messenger() {
                       </div>
                       {localMode ? (
                         <p className="pt-3 text-[12px]" style={{ color: "var(--tb-muted)" }}>
-                          Yerel Mod: henüz eş bağlanmadı, bu yüzden topolojide yalnızca bu cihaz
-                          var.
+                          Özel Ağ: henüz başka bir cihaz bağlanmadı, bu yüzden haritada yalnızca
+                          bu cihaz var.
                         </p>
                       ) : null}
                     </Card>
