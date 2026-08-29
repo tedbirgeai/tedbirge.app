@@ -73,14 +73,6 @@ const LINK_HINTS = {
   relay: "Şifreli paketler bir ara düğüm üzerinden taşınıyor; içerik açılamaz",
 } as const;
 
-function DeviceIcon({ kind }: { kind: DeviceKind }) {
-  const cls = "h-4 w-4 shrink-0";
-  const style = { color: "var(--tb-muted)" };
-  if (kind === "mobile") return <Smartphone className={cls} style={style} aria-hidden />;
-  if (kind === "tablet") return <Tablet className={cls} style={style} aria-hidden />;
-  if (kind === "desktop") return <Monitor className={cls} style={style} aria-hidden />;
-  return <Globe className={cls} style={style} aria-hidden />;
-}
 
 type Participant = {
   id: string;
