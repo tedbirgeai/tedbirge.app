@@ -414,10 +414,20 @@ export default function Messenger() {
     });
   };
 
+  const activePeerName = activePeer
+    ? (participants.find((p) => p.id === activePeer)?.name ?? null)
+    : null;
+
   const peerCount = participants.length - 1;
   const localMode = peerCount === 0;
   const nodeCountLabel = localMode ? "1 düğüm (bu cihaz)" : `${participants.length} düğüm`;
   const networkLabel = localMode ? "Yerel Mod" : status.text;
+
+  useEffect(() => {
+    const el = localVideoRef.current;
+    if (!el) return;
+    el.srcObject = camOn ? localStream : null;
+  }, [camOn, localStream, inCall]);
 
   const stamp = () =>
     new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
@@ -587,9 +597,11 @@ export default function Messenger() {
                   <div className="min-w-0">
                     <div className="truncate text-[15px] font-semibold">Mesh Yayını</div>
                     <div className="truncate text-[12px]" style={{ color: "var(--tb-muted)" }}>
-                      {localMode
-                        ? "Yerel Mod · eş bekleniyor"
-                        : `${peerCount} eş${route ? ` · ${route.hops} adım` : ""}`}
+                      {activePeerName
+                        ? `${activePeerName} ile görüşme`
+                        : localMode
+                          ? "Yerel Mod · eş bekleniyor"
+                          : `${peerCount} eş${route ? ` · ${route.hops} adım` : ""}`}
                     </div>
                   </div>
                   <button
@@ -688,6 +700,57 @@ export default function Messenger() {
                   </div>
                 ) : null}
 
+                <div
+                  className="overflow-hidden px-4 transition-all duration-300 ease-out"
+                  style={{
+                    maxHeight: inCall ? 340 : 0,
+                    opacity: inCall ? 1 : 0,
+                    paddingTop: inCall ? 12 : 0,
+                  }}
+                  aria-hidden={!inCall}
+                >
+                  <div
+                    className="grid gap-2 rounded-xl p-2 sm:grid-cols-2"
+                    style={{
+                      background: "var(--tb-panel-soft)",
+                      border: "1px solid var(--tb-border)",
+                    }}
+                  >
+                    <div
+                      className="relative grid aspect-video place-items-center overflow-hidden rounded-lg"
+                      style={{ background: "var(--tb-bg)" }}
+                    >
+                      <video
+                        ref={localVideoRef}
+                        muted
+                        playsInline
+                        autoPlay
+                        className="h-full w-full object-cover"
+                        style={{ display: camOn ? "block" : "none" }}
+                      />
+                      {!camOn ? (
+                        <span className="text-[12px]" style={{ color: "var(--tb-muted)" }}>
+                          {micOn ? "Ses görüşmesi sürüyor" : "Kamera kapalı"}
+                        </span>
+                      ) : null}
+                      <span
+                        className="absolute bottom-1.5 left-2 text-[11px]"
+                        style={{ color: "var(--tb-muted)" }}
+                      >
+                        Siz
+                      </span>
+                    </div>
+                    <div
+                      className="grid aspect-video place-items-center rounded-lg text-center text-[12px]"
+                      style={{ background: "var(--tb-bg)", color: "var(--tb-muted)" }}
+                    >
+                      {activePeerName
+                        ? `${activePeerName} bağlanıyor…`
+                        : "Karşı taraf bağlandığında görüntü burada belirir"}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
                   {feed.length === 0 ? (
                     <p
@@ -739,6 +802,7 @@ export default function Messenger() {
                     <Paperclip className="h-4 w-4" />
                   </button>
                   <input
+                    ref={draftRef}
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     placeholder="Mesaj yazın…"
@@ -860,34 +924,15 @@ export default function Messenger() {
                     listelenir.
                   </p>
                 ) : null}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {participants.map((p) => (
-                    <div
+                    <PeerRow
                       key={p.id}
-                      className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-[13px]"
-                      style={{ background: "var(--tb-panel-soft)" }}
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <DeviceIcon kind={p.kind} />
-                        <span className="truncate font-medium">
-                          {p.self ? `${p.name} (siz)` : p.name}
-                        </span>
-                        <span
-                          className="shrink-0 text-[10px] tabular-nums"
-                          style={{ color: "var(--tb-muted)", opacity: 0.65 }}
-                          title="Teknik düğüm kimliği"
-                        >
-                          {p.badge}
-                        </span>
-                      </span>
-                      <span
-                        className="shrink-0 text-[12px]"
-                        style={{ color: "var(--tb-muted)" }}
-                        title={p.hint}
-                      >
-                        {p.handle}
-                      </span>
-                    </div>
+                      peer={p as PeerRowData}
+                      onMessage={openChatWith}
+                      onCall={startCallWith}
+                      onRenamed={() => setIdentityTick((n) => n + 1)}
+                    />
                   ))}
                 </div>
               </Card>
