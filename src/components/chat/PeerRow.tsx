@@ -66,7 +66,7 @@ type Props = {
   onRenamed?: () => void;
 };
 
-export function PeerRow({ peer, onMessage, onCall, onRenamed }: Props) {
+function PeerRowBase({ peer, onMessage, onCall, onRenamed }: Props) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
 
@@ -80,7 +80,7 @@ export function PeerRow({ peer, onMessage, onCall, onRenamed }: Props) {
   const level: 1 | 2 | 3 = peer.self ? 3 : peer.direct ? 3 : 2;
 
   return (
-    <div className="group flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition-colors hover:bg-black/[0.03]">
+    <div className="group flex animate-fade-in items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition-all duration-300 ease-in-out hover:bg-black/[0.03]">
       <span className="relative shrink-0">
         <span
           className="grid h-8 w-8 place-items-center rounded-full"
