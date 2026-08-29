@@ -38,30 +38,6 @@ export function fileToDataUrl(file: Blob): Promise<string> {
   });
 }
 
-export function splitMedia(input: {
-  mid: string;
-  convId: string;
-  name: string;
-  mime: string;
-  size: number;
-  dataUrl: string;
-}): MediaChunk[] {
-  const total = Math.max(1, Math.ceil(input.dataUrl.length / CHUNK_SIZE));
-  const ts = Date.now();
-  return Array.from({ length: total }, (_, idx) => ({
-    t: "media-chunk" as const,
-    mid: input.mid,
-    convId: input.convId,
-    name: input.name,
-    mime: input.mime,
-    size: input.size,
-    idx,
-    total,
-    data: input.dataUrl.slice(idx * CHUNK_SIZE, (idx + 1) * CHUNK_SIZE),
-    ts,
-  }));
-}
-
 /** Ana iş parçacığına nefes aldırır: arayüz donmaz. */
 const breathe = () => new Promise<void>((r) => setTimeout(r, 0));
 
@@ -146,6 +122,16 @@ export function collectChunk(chunk: MediaChunk):
     size: entry.meta.size,
     dataUrl,
   };
+}
+
+/** Parçaları turlar hâlinde birleştirir; büyük dosyada arayüz donmaz. */
+export async function joinChunks(entryTotal: number, get: (i: number) => string): Promise<string> {
+  const parts: string[] = [];
+  for (let i = 0; i < entryTotal; i += 1) {
+    parts.push(get(i));
+    if ((i + 1) % BATCH === 0 && i + 1 < entryTotal) await breathe();
+  }
+  return parts.join("");
 }
 
 export function humanSize(bytes: number): string {
