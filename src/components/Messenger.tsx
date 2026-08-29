@@ -707,7 +707,7 @@ export default function Messenger() {
                 </form>
               </div>
 
-              <div className="hidden min-h-0 flex-col gap-3 overflow-y-auto xl:flex">
+              <div className="flex min-h-0 flex-col gap-3 overflow-y-auto">
                 <Card title="Katılımcılar">
                   <div className="space-y-2">
                     {participants.map((p) => (
