@@ -115,11 +115,13 @@ function metric(value: number | null | undefined, unit = "", digits = 0): string
  */
 function useLocalMedia() {
   const [mode, setMode] = useState<"av" | "audio" | "data">("data");
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const stop = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    setStream(null);
     setMode("data");
   };
 
@@ -130,11 +132,12 @@ function useLocalMedia() {
       return false;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(
+      const next = await navigator.mediaDevices.getUserMedia(
         kind === "av" ? { audio: true, video: true } : { audio: true },
       );
       streamRef.current?.getTracks().forEach((t) => t.stop());
-      streamRef.current = stream;
+      streamRef.current = next;
+      setStream(next);
       setMode(kind);
       return true;
     } catch {
@@ -150,7 +153,7 @@ function useLocalMedia() {
 
   useEffect(() => () => stop(), []);
 
-  return { mode, request, stop };
+  return { mode, stream, request, stop };
 }
 
 /**
@@ -292,7 +295,12 @@ export default function Messenger() {
   const node = useNodeRuntime();
   const tele = useLiveTelemetry();
   const status = describeNode(node);
-  const { mode: media, request: requestMedia, stop: stopMedia } = useLocalMedia();
+  const {
+    mode: media,
+    stream: localStream,
+    request: requestMedia,
+    stop: stopMedia,
+  } = useLocalMedia();
 
   const [tab, setTab] = useState<TabId>("chat");
   const [systemView, setSystemView] = useState<"network" | "security" | "settings">("network");
