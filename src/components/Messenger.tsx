@@ -700,7 +700,7 @@ export default function Messenger() {
                     }}
                   >
                     <div
-                      className="relative grid aspect-video place-items-center overflow-hidden rounded-lg"
+                      className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-lg sm:aspect-video"
                       style={{ background: "var(--tb-bg)" }}
                     >
                       <video
@@ -708,8 +708,8 @@ export default function Messenger() {
                         muted
                         playsInline
                         autoPlay
-                        className="h-full w-full object-cover"
-                        style={{ display: camOn ? "block" : "none" }}
+                        className="absolute inset-0 h-full w-full object-contain"
+                        style={{ display: camOn ? "block" : "none", filter: "none" }}
                       />
                       {!camOn ? (
                         <span className="text-[12px]" style={{ color: "var(--tb-muted)" }}>
@@ -724,9 +724,10 @@ export default function Messenger() {
                       </span>
                     </div>
                     <div
-                      className="grid aspect-video place-items-center rounded-lg text-center text-[12px]"
+                      className="grid aspect-[4/3] place-items-center rounded-lg text-center text-[12px] sm:aspect-video"
                       style={{ background: "var(--tb-bg)", color: "var(--tb-muted)" }}
                     >
+
                       {activePeerName
                         ? `${activePeerName} bağlanıyor…`
                         : "Karşı taraf bağlandığında görüntü burada belirir"}
