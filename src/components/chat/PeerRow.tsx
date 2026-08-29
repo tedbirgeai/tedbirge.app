@@ -3,7 +3,7 @@
  * Solda cihaz ikonu, ortada insan dostu ad + silik kimlik rozeti,
  * sağda sinyal göstergesi ve tek tıkla mesaj/arama/yeniden adlandırma.
  */
-import { useState } from "react";
+import { memo, useState } from "react";
 import {
   Globe,
   MessageSquare,
