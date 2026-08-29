@@ -3,7 +3,7 @@
  * Solda cihaz ikonu, ortada insan dostu ad + silik kimlik rozeti,
  * sağda sinyal göstergesi ve tek tıkla mesaj/arama/yeniden adlandırma.
  */
-import { useState } from "react";
+import { memo, useState } from "react";
 import {
   Globe,
   MessageSquare,
@@ -66,7 +66,7 @@ type Props = {
   onRenamed?: () => void;
 };
 
-export function PeerRow({ peer, onMessage, onCall, onRenamed }: Props) {
+function PeerRowBase({ peer, onMessage, onCall, onRenamed }: Props) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
 
@@ -80,7 +80,7 @@ export function PeerRow({ peer, onMessage, onCall, onRenamed }: Props) {
   const level: 1 | 2 | 3 = peer.self ? 3 : peer.direct ? 3 : 2;
 
   return (
-    <div className="group flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition-colors hover:bg-black/[0.03]">
+    <div className="group flex animate-fade-in items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition-all duration-300 ease-in-out hover:bg-black/[0.03]">
       <span className="relative shrink-0">
         <span
           className="grid h-8 w-8 place-items-center rounded-full"
@@ -95,8 +95,8 @@ export function PeerRow({ peer, onMessage, onCall, onRenamed }: Props) {
           <span
             className="absolute -right-0.5 -bottom-0.5 grid h-3.5 w-3.5 place-items-center rounded-full"
             style={{ background: "var(--tb-panel)", color: "var(--tb-muted)" }}
-            title="Röle üzerinden bağlı"
-            aria-label="Röle üzerinden bağlı"
+            title="Güvenli Aktarıcı üzerinden bağlı"
+            aria-label="Güvenli Aktarıcı üzerinden bağlı"
           >
             <Radio className="h-2.5 w-2.5" aria-hidden />
           </span>
@@ -129,6 +129,7 @@ export function PeerRow({ peer, onMessage, onCall, onRenamed }: Props) {
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="truncate">{peer.self ? `${peer.name} (siz)` : peer.name}</span>
             <span
+              suppressHydrationWarning
               className="shrink-0 text-[10px] tabular-nums"
               style={{ color: "var(--tb-muted)", opacity: 0.6 }}
               title="Cihaz kimliği rozeti"
@@ -190,3 +191,27 @@ export function PeerRow({ peer, onMessage, onCall, onRenamed }: Props) {
     </div>
   );
 }
+
+/**
+ * Presence kalp atışında liste yeniden çizildiğinde titremeyi önlemek için
+ * satır yalnızca kendi verisi değiştiğinde render edilir.
+ */
+export const PeerRow = memo(PeerRowBase, (a, b) => {
+  const x = a.peer;
+  const y = b.peer;
+  return (
+    x.id === y.id &&
+    x.name === y.name &&
+    x.badge === y.badge &&
+    x.kind === y.kind &&
+    x.handle === y.handle &&
+    x.hint === y.hint &&
+    x.self === y.self &&
+    x.direct === y.direct &&
+    x.named === y.named &&
+    x.relay === y.relay &&
+    a.onMessage === b.onMessage &&
+    a.onCall === b.onCall &&
+    a.onRenamed === b.onRenamed
+  );
+});

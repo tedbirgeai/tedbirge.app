@@ -5,11 +5,11 @@
  * Ekip · Ağ & Sistem Durumu. Tüm renkler `--tb-*` token'larından okunur.
  *
  * VERİ DÜRÜSTLÜĞÜ: Bu ekranda hiçbir sayı uydurulmaz. Gerçek bir eş
- * bağlanmadıkça durum "1 Düğüm (Bu Cihaz) · Yerel Mod" olarak gösterilir,
+ * bağlanmadıkça durum "1 Cihaz (bu cihaz) · Özel Ağ" olarak gösterilir,
  * ölçülmemiş metrikler "—" basar.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   FolderOpen,
@@ -55,6 +55,7 @@ import {
   type DeviceKind,
 } from "@/lib/identity/device";
 import { getAlias } from "@/lib/chat/profile";
+import { guard } from "@/lib/chat/errors";
 import {
   getPeerIdentity,
   isNamedPeer,
@@ -320,18 +321,35 @@ export default function Messenger() {
   useEffect(() => onPeerIdentity(() => setIdentityTick((n) => n + 1)), []);
   useEffect(() => onNickname(() => setIdentityTick((n) => n + 1)), []);
 
-  useEffect(() => subscribeLivePeers(setSignalPeers), []);
+  // Presence kalp atışı saniyede birkaç kez gelebilir; arayüzün titrememesi
+  // için güncellemeler 300 ms geciktirilerek tek seferde uygulanır.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = subscribeLivePeers((ids) => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        setSignalPeers((prev) => (prev.join("|") === ids.join("|") ? prev : ids));
+      }, 300);
+    });
+    return () => {
+      if (timer) clearTimeout(timer);
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
-    void ensureLiveNode();
+    void guard("messenger.ensureLiveNode", ensureLiveNode());
     return onLiveMessage((msg) => setFeed((prev) => [...prev.slice(-80), msg]));
   }, []);
 
   useEffect(() => {
     let alive = true;
-    void measureRoute(node.nodeId, node.peers, node.rttMs).then((r) => {
-      if (alive) setRoute(r);
-    });
+    void guard("messenger.measureRoute", measureRoute(node.nodeId, node.peers, node.rttMs)).then(
+      (r) => {
+        if (alive) setRoute(r);
+      },
+    );
     return () => {
       alive = false;
     };
@@ -349,7 +367,9 @@ export default function Messenger() {
       {
         id: node.nodeId || "self",
         name: selfName,
-        badge: shortBadge(node.nodeId),
+        // Sunucuda kimlik yoktur; hidrasyon uyuşmazlığı olmasın diye rozet
+        // yalnızca istemci tarafında çözülür.
+        badge: hydrated ? shortBadge(node.nodeId) : shortBadge(""),
         kind: hydrated ? getDeviceKind() : "browser",
         handle:
           media === "data"
@@ -360,25 +380,27 @@ export default function Messenger() {
         hint: "Şu an kullandığınız cihaz",
         self: true,
       },
-      ...livePeers.map((p) => ({
+      // Eş listesi yalnızca istemcide anlamlıdır; sunucu çıktısıyla
+      // uyuşmazlık olmaması için hidrasyon tamamlanmadan render edilmez.
+      ...(hydrated ? livePeers : []).map((p) => ({
         id: p.id,
         name: peerDisplayLabel(p.id),
         badge: shortBadge(p.id),
         kind: getPeerIdentity(p.id).kind ?? "browser",
-        handle: p.direct ? "Doğrudan Bağlı" : "Röle",
+        handle: p.direct ? "Doğrudan Güvenli Bağlantı" : "Güvenli Aktarıcı",
         hint: p.direct ? LINK_HINTS.direct : LINK_HINTS.relay,
         direct: p.direct,
         relay: !p.direct,
         named: isNamedPeer(p.id),
       })),
-      ...signalPeers
+      ...(hydrated ? signalPeers : [])
         .filter((id) => !livePeers.some((p) => p.id === id))
         .map((id) => ({
           id,
           name: peerDisplayLabel(id),
           badge: shortBadge(id),
           kind: getPeerIdentity(id).kind ?? ("browser" as DeviceKind),
-          handle: "Eş bulundu · bağlanıyor…",
+          handle: "Cihaz bulundu · bağlanıyor…",
           hint: "Cihaz ağda görünüyor; doğrudan hat kurulmaya çalışılıyor. Kurulamazsa şifreli röle üzerinden bağlanılır.",
 
           direct: false,
@@ -395,21 +417,24 @@ export default function Messenger() {
   );
   const selfParticipant = participants[0]!;
 
-  const openChatWith = (id: string) => {
+  const openChatWith = useCallback((id: string) => {
     setTab("chat");
     setActivePeer(id);
     window.setTimeout(() => draftRef.current?.focus(), 0);
-  };
+  }, []);
 
-  const startCallWith = (id: string) => {
-    setTab("chat");
-    setActivePeer(id);
-    void requestMedia("av").then((ok) => {
-      setInCall(true);
-      setCamOn(ok);
-      setMicOn(ok);
-    });
-  };
+  const startCallWith = useCallback(
+    (id: string) => {
+      setTab("chat");
+      setActivePeer(id);
+      void guard("messenger.startCall", requestMedia("av")).then((ok) => {
+        setInCall(true);
+        setCamOn(Boolean(ok));
+        setMicOn(Boolean(ok));
+      });
+    },
+    [requestMedia],
+  );
 
   const activePeerName = activePeer
     ? (participants.find((p) => p.id === activePeer)?.name ?? null)
@@ -417,8 +442,12 @@ export default function Messenger() {
 
   const peerCount = participants.length - 1;
   const localMode = peerCount === 0;
-  const nodeCountLabel = localMode ? "1 düğüm (bu cihaz)" : `${participants.length} düğüm`;
-  const networkLabel = localMode ? "Yerel Mod" : status.text;
+  const bumpIdentity = useCallback(() => setIdentityTick((n) => n + 1), []);
+  const nodeCountLabel = localMode
+    ? "1 Cihaz (bu cihaz)"
+    : `${participants.length} Aktif Cihaz Bağlı`;
+  const networkLabel = localMode ? "Özel Ağ · Cihaz Bağlantısı Bekleniyor" : status.text;
+  const p2pActive = !localMode && status.directPeers > 0;
 
   useEffect(() => {
     const el = localVideoRef.current;
@@ -437,7 +466,7 @@ export default function Messenger() {
       ...prev,
       { id: `self-${Date.now()}`, from: selfLabel, at: stamp(), text, self: true },
     ]);
-    await broadcastText(text);
+    await guard("messenger.broadcastText", broadcastText(text), "Mesaj gönderilemedi.");
   };
 
   const navItems: { id: TabId; label: string; icon: typeof MessageSquare }[] = [
@@ -481,6 +510,28 @@ export default function Messenger() {
             <span style={{ color: "var(--tb-muted)" }}>Ağ durumu:</span>
             <strong style={{ color: "var(--tb-text)" }}>{networkLabel}</strong>
           </span>
+          {p2pActive ? (
+            <span
+              className="inline-flex animate-fade-in items-center gap-2 rounded-full px-3 py-1 transition-all duration-300 ease-in-out"
+              style={{
+                background: "var(--tb-panel-soft)",
+                border: "1px solid var(--tb-border)",
+                color: "var(--tb-text)",
+              }}
+            >
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span
+                  className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60"
+                  style={{ background: "var(--tb-accent)" }}
+                />
+                <span
+                  className="relative inline-flex h-2 w-2 rounded-full"
+                  style={{ background: "var(--tb-accent)" }}
+                />
+              </span>
+              Güvenli P2P Bağlantısı Aktif
+            </span>
+          ) : null}
           <span
             className="hidden items-center gap-1.5 rounded-full px-3 py-1 sm:inline-flex"
             style={{
@@ -601,8 +652,8 @@ export default function Messenger() {
                       {activePeerName
                         ? `${activePeerName} ile görüşme`
                         : localMode
-                          ? "Yerel Mod · eş bekleniyor"
-                          : `${peerCount} eş${route ? ` · ${route.hops} adım` : ""}`}
+                          ? "Özel Ağ · Cihaz Bağlantısı Bekleniyor"
+                          : `${peerCount} Aktif Cihaz Bağlı${route ? ` · ${route.hops} adım` : ""}`}
                     </div>
                   </div>
                   <button
@@ -616,10 +667,10 @@ export default function Messenger() {
                         stopMedia();
                         return;
                       }
-                      void requestMedia("av").then((ok) => {
+                      void guard("messenger.callToggle", requestMedia("av")).then((ok) => {
                         setInCall(true);
-                        setCamOn(ok);
-                        setMicOn(ok);
+                        setCamOn(Boolean(ok));
+                        setMicOn(Boolean(ok));
                       });
                     }}
                     className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-medium"
@@ -654,7 +705,9 @@ export default function Messenger() {
                             if (!micOn) stopMedia();
                             return;
                           }
-                          void requestMedia("av").then((ok) => setCamOn(ok));
+                          void guard("messenger.camera", requestMedia("av")).then((ok) =>
+                            setCamOn(Boolean(ok)),
+                          );
                         },
                       },
                       {
@@ -667,7 +720,9 @@ export default function Messenger() {
                             if (!camOn) stopMedia();
                             return;
                           }
-                          void requestMedia(camOn ? "av" : "audio").then((ok) => setMicOn(ok));
+                          void guard("messenger.mic", requestMedia(camOn ? "av" : "audio")).then(
+                            (ok) => setMicOn(Boolean(ok)),
+                          );
                         },
                       },
                       {
@@ -716,7 +771,16 @@ export default function Messenger() {
                   >
                     <div
                       className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-lg sm:aspect-video"
-                      style={{ background: "var(--tb-bg)" }}
+                      style={{
+                        background: "var(--tb-bg)",
+                        // Cam efekti (backdrop-filter) üst katmanlardan sızıp
+                        // kamera akışında renk kaymasına yol açmasın diye
+                        // video kutusu ayrı bir kompozit katmana alınır.
+                        isolation: "isolate",
+                        backdropFilter: "none",
+                        WebkitBackdropFilter: "none",
+                        mixBlendMode: "normal",
+                      }}
                     >
                       <video
                         ref={localVideoRef}
@@ -724,7 +788,14 @@ export default function Messenger() {
                         playsInline
                         autoPlay
                         className="absolute inset-0 h-full w-full object-contain"
-                        style={{ display: camOn ? "block" : "none", filter: "none" }}
+                        style={{
+                          display: camOn ? "block" : "none",
+                          // Ham RGB: hiçbir renk dönüşümü / karışım uygulanmaz.
+                          filter: "none",
+                          backdropFilter: "none",
+                          mixBlendMode: "normal",
+                          opacity: 1,
+                        }}
                       />
                       {!camOn ? (
                         <span className="text-[12px]" style={{ color: "var(--tb-muted)" }}>
@@ -840,7 +911,7 @@ export default function Messenger() {
                         peer={p as PeerRowData}
                         onMessage={openChatWith}
                         onCall={startCallWith}
-                        onRenamed={() => setIdentityTick((n) => n + 1)}
+                        onRenamed={bumpIdentity}
                       />
                     ))}
                   </div>
@@ -860,7 +931,7 @@ export default function Messenger() {
                             peer={p as PeerRowData}
                             onMessage={openChatWith}
                             onCall={startCallWith}
-                            onRenamed={() => setIdentityTick((n) => n + 1)}
+                            onRenamed={bumpIdentity}
                           />
                         ))}
                       </div>
@@ -918,7 +989,7 @@ export default function Messenger() {
               <Card title="Ekip">
                 {participants.length === 1 ? (
                   <p className="text-[13px]" style={{ color: "var(--tb-muted)" }}>
-                    Şu an yalnızca bu cihaz bağlı (Yerel Mod). Bir eş katıldığında burada
+                    Şu an yalnızca bu cihaz bağlı (Özel Ağ). Yeni bir cihaz katıldığında burada
                     listelenir.
                   </p>
                 ) : null}
@@ -929,7 +1000,7 @@ export default function Messenger() {
                       peer={p as PeerRowData}
                       onMessage={openChatWith}
                       onCall={startCallWith}
-                      onRenamed={() => setIdentityTick((n) => n + 1)}
+                      onRenamed={bumpIdentity}
                     />
                   ))}
                 </div>
@@ -1014,8 +1085,8 @@ export default function Messenger() {
                       </div>
                       {localMode ? (
                         <p className="pt-3 text-[12px]" style={{ color: "var(--tb-muted)" }}>
-                          Yerel Mod: henüz eş bağlanmadı, bu yüzden topolojide yalnızca bu cihaz
-                          var.
+                          Özel Ağ: henüz başka bir cihaz bağlanmadı, bu yüzden haritada yalnızca bu
+                          cihaz var.
                         </p>
                       ) : null}
                     </Card>

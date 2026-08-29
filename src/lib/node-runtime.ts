@@ -193,13 +193,14 @@ export type NodeStatus = {
 export function describeNode(s: BrowserNodeState): NodeStatus {
   const directPeers = s.peers.filter((p) => p.direct).length;
   const queued = s.queued;
-  if (!s.running) return { tone: "off", text: "Düğüm kapalı", directPeers, queued };
+  if (!s.running) return { tone: "off", text: "Ağ Kapalı", directPeers, queued };
   if (directPeers > 0)
-    return { tone: "linked", text: `Bağlı · ${directPeers} eş`, directPeers, queued };
+    return { tone: "linked", text: `${directPeers} Aktif Cihaz Bağlı`, directPeers, queued };
   if (s.discovery === "local" && !s.online)
-    return { tone: "offline", text: `Yerel keşif · kuyruk ${queued}`, directPeers, queued };
-  if (s.online) return { tone: "online", text: "Çalışıyor · eş aranıyor", directPeers, queued };
-  return { tone: "offline", text: `Çevrimdışı · kuyruk ${queued}`, directPeers, queued };
+    return { tone: "offline", text: "Özel Ağ · Cihaz Bağlantısı Bekleniyor", directPeers, queued };
+  if (s.online)
+    return { tone: "online", text: "Ağ Hazır · Çevredeki Cihazlar Aranıyor", directPeers, queued };
+  return { tone: "offline", text: "Çevrimdışı · Gönderimler Sırada Bekliyor", directPeers, queued };
 }
 
 /**
