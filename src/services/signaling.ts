@@ -140,4 +140,3 @@ export function subscribeLivePeers(onPeers: (ids: string[]) => void): () => void
   const timer = setInterval(tick, 3_000);
   return () => clearInterval(timer);
 }
-

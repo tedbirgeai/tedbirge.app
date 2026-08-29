@@ -127,7 +127,6 @@ export function presencePeerIds(): string[] {
   return node?.presenceIds() ?? [];
 }
 
-
 /** Acil durum yayını (öncelik 0 — kuyrukta asla budanmaz). */
 export function broadcastAlert(text: string) {
   return node?.sendAlert(text) ?? Promise.resolve(false);

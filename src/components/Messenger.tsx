@@ -454,7 +454,6 @@ export default function Messenger() {
         color: "var(--tb-text)",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
-
     >
       {/* ÜST BAR */}
       <header
@@ -708,7 +707,6 @@ export default function Messenger() {
                   }`}
                   aria-hidden={!inCall}
                 >
-
                   <div
                     className="grid gap-2 rounded-xl p-2 sm:grid-cols-2"
                     style={{
@@ -744,7 +742,6 @@ export default function Messenger() {
                       className="grid aspect-[4/3] place-items-center rounded-lg text-center text-[12px] sm:aspect-video"
                       style={{ background: "var(--tb-bg)", color: "var(--tb-muted)" }}
                     >
-
                       {activePeerName
                         ? `${activePeerName} bağlanıyor…`
                         : "Karşı taraf bağlandığında görüntü burada belirir"}

@@ -485,7 +485,6 @@ export class BrowserNode {
     if (this.dialTimer) clearInterval(this.dialTimer);
     this.dialTimer = setInterval(() => void this.dialNewPeers(), 5_000);
 
-
     await this.heartbeat();
     this.timer = setInterval(() => {
       void this.heartbeat();
@@ -1025,7 +1024,6 @@ export class BrowserNode {
     }
     this.emit({});
   }
-
 
   private newPeer(remote: string) {
     const pc = new RTCPeerConnection(buildMeshIce());
