@@ -1411,7 +1411,7 @@ async function onMedia(from: string, raw: unknown) {
     return;
   }
   if (!isMediaChunk(p)) return;
-  const result = collectChunk(p);
+  const result = await collectChunk(p);
   if (!result.done) {
     publish({
       transfers: {
