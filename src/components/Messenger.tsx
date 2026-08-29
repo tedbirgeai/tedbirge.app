@@ -14,18 +14,14 @@ import { Link } from "@tanstack/react-router";
 import {
   FolderOpen,
   Lock,
-  Globe,
   MessageSquare,
   Mic,
-  Monitor,
   MonitorUp,
   Paperclip,
   PhoneOff,
   Send,
   Settings2,
   ShieldCheck,
-  Smartphone,
-  Tablet,
   Users,
   Video,
 } from "lucide-react";
@@ -59,21 +55,19 @@ import {
   type DeviceKind,
 } from "@/lib/identity/device";
 import { getAlias } from "@/lib/chat/profile";
-import { getPeerIdentity, onPeerIdentity, peerDisplayLabel } from "@/lib/identity/peer-identity";
+import {
+  getPeerIdentity,
+  isNamedPeer,
+  onPeerIdentity,
+  peerDisplayLabel,
+} from "@/lib/identity/peer-identity";
+import { onNickname } from "@/lib/identity/peer-nickname";
+import { PeerRow, type PeerRowData } from "@/components/chat/PeerRow";
 
 const LINK_HINTS = {
   direct: "Aynı yerel ağda aracı olmadan doğrudan bağlı",
   relay: "Şifreli paketler bir ara düğüm üzerinden taşınıyor; içerik açılamaz",
 } as const;
-
-function DeviceIcon({ kind }: { kind: DeviceKind }) {
-  const cls = "h-4 w-4 shrink-0";
-  const style = { color: "var(--tb-muted)" };
-  if (kind === "mobile") return <Smartphone className={cls} style={style} aria-hidden />;
-  if (kind === "tablet") return <Tablet className={cls} style={style} aria-hidden />;
-  if (kind === "desktop") return <Monitor className={cls} style={style} aria-hidden />;
-  return <Globe className={cls} style={style} aria-hidden />;
-}
 
 type Participant = {
   id: string;
@@ -87,6 +81,10 @@ type Participant = {
   kind: DeviceKind;
   self?: boolean;
   direct?: boolean;
+  /** İnsan tarafından adlandırılmış (rehberde) eş mi? */
+  named?: boolean;
+  /** Röle üzerinden görünen düğüm. */
+  relay?: boolean;
 };
 
 type TabId = "chat" | "files" | "team" | "system";
@@ -104,11 +102,13 @@ function metric(value: number | null | undefined, unit = "", digits = 0): string
  */
 function useLocalMedia() {
   const [mode, setMode] = useState<"av" | "audio" | "data">("data");
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const stop = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    setStream(null);
     setMode("data");
   };
 
@@ -119,11 +119,12 @@ function useLocalMedia() {
       return false;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(
+      const next = await navigator.mediaDevices.getUserMedia(
         kind === "av" ? { audio: true, video: true } : { audio: true },
       );
       streamRef.current?.getTracks().forEach((t) => t.stop());
-      streamRef.current = stream;
+      streamRef.current = next;
+      setStream(next);
       setMode(kind);
       return true;
     } catch {
@@ -139,7 +140,7 @@ function useLocalMedia() {
 
   useEffect(() => () => stop(), []);
 
-  return { mode, request, stop };
+  return { mode, stream, request, stop };
 }
 
 /**
@@ -281,7 +282,12 @@ export default function Messenger() {
   const node = useNodeRuntime();
   const tele = useLiveTelemetry();
   const status = describeNode(node);
-  const { mode: media, request: requestMedia, stop: stopMedia } = useLocalMedia();
+  const {
+    mode: media,
+    stream: localStream,
+    request: requestMedia,
+    stop: stopMedia,
+  } = useLocalMedia();
 
   const [tab, setTab] = useState<TabId>("chat");
   const [systemView, setSystemView] = useState<"network" | "security" | "settings">("network");
@@ -295,8 +301,12 @@ export default function Messenger() {
   const [signalPeers, setSignalPeers] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [identityTick, setIdentityTick] = useState(0);
+  const [activePeer, setActivePeer] = useState<string | null>(null);
+  const draftRef = useRef<HTMLInputElement | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
   useEffect(() => setHydrated(true), []);
   useEffect(() => onPeerIdentity(() => setIdentityTick((n) => n + 1)), []);
+  useEffect(() => onNickname(() => setIdentityTick((n) => n + 1)), []);
 
   useEffect(() => subscribeLivePeers(setSignalPeers), []);
 
@@ -343,9 +353,11 @@ export default function Messenger() {
         name: peerDisplayLabel(p.id),
         badge: shortBadge(p.id),
         kind: getPeerIdentity(p.id).kind ?? "browser",
-        handle: p.direct ? "Doğrudan bağlı" : "Güvenli röle aktarımı",
+        handle: p.direct ? "Doğrudan Bağlı" : "Röle",
         hint: p.direct ? LINK_HINTS.direct : LINK_HINTS.relay,
         direct: p.direct,
+        relay: !p.direct,
+        named: isNamedPeer(p.id),
       })),
       ...signalPeers
         .filter((id) => !livePeers.some((p) => p.id === id))
@@ -354,17 +366,52 @@ export default function Messenger() {
           name: peerDisplayLabel(id),
           badge: shortBadge(id),
           kind: getPeerIdentity(id).kind ?? ("browser" as DeviceKind),
-          handle: "Güvenli röle aktarımı · çevrimiçi",
+          handle: "Röle · çevrimiçi",
           hint: LINK_HINTS.relay,
           direct: false,
+          relay: true,
+          named: isNamedPeer(id),
         })),
     ];
   }, [hydrated, identityTick, livePeers, media, node.nodeId, selfLabel, signalPeers]);
+
+  const knownPeers = useMemo(() => participants.filter((p) => !p.self && p.named), [participants]);
+  const nearbyPeers = useMemo(
+    () => participants.filter((p) => !p.self && !p.named),
+    [participants],
+  );
+  const selfParticipant = participants[0]!;
+
+  const openChatWith = (id: string) => {
+    setTab("chat");
+    setActivePeer(id);
+    window.setTimeout(() => draftRef.current?.focus(), 0);
+  };
+
+  const startCallWith = (id: string) => {
+    setTab("chat");
+    setActivePeer(id);
+    void requestMedia("av").then((ok) => {
+      setInCall(true);
+      setCamOn(ok);
+      setMicOn(ok);
+    });
+  };
+
+  const activePeerName = activePeer
+    ? (participants.find((p) => p.id === activePeer)?.name ?? null)
+    : null;
 
   const peerCount = participants.length - 1;
   const localMode = peerCount === 0;
   const nodeCountLabel = localMode ? "1 düğüm (bu cihaz)" : `${participants.length} düğüm`;
   const networkLabel = localMode ? "Yerel Mod" : status.text;
+
+  useEffect(() => {
+    const el = localVideoRef.current;
+    if (!el) return;
+    el.srcObject = camOn ? localStream : null;
+  }, [camOn, localStream, inCall]);
 
   const stamp = () =>
     new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
@@ -534,9 +581,11 @@ export default function Messenger() {
                   <div className="min-w-0">
                     <div className="truncate text-[15px] font-semibold">Mesh Yayını</div>
                     <div className="truncate text-[12px]" style={{ color: "var(--tb-muted)" }}>
-                      {localMode
-                        ? "Yerel Mod · eş bekleniyor"
-                        : `${peerCount} eş${route ? ` · ${route.hops} adım` : ""}`}
+                      {activePeerName
+                        ? `${activePeerName} ile görüşme`
+                        : localMode
+                          ? "Yerel Mod · eş bekleniyor"
+                          : `${peerCount} eş${route ? ` · ${route.hops} adım` : ""}`}
                     </div>
                   </div>
                   <button
@@ -635,6 +684,57 @@ export default function Messenger() {
                   </div>
                 ) : null}
 
+                <div
+                  className="overflow-hidden px-4 transition-all duration-300 ease-out"
+                  style={{
+                    maxHeight: inCall ? 340 : 0,
+                    opacity: inCall ? 1 : 0,
+                    paddingTop: inCall ? 12 : 0,
+                  }}
+                  aria-hidden={!inCall}
+                >
+                  <div
+                    className="grid gap-2 rounded-xl p-2 sm:grid-cols-2"
+                    style={{
+                      background: "var(--tb-panel-soft)",
+                      border: "1px solid var(--tb-border)",
+                    }}
+                  >
+                    <div
+                      className="relative grid aspect-video place-items-center overflow-hidden rounded-lg"
+                      style={{ background: "var(--tb-bg)" }}
+                    >
+                      <video
+                        ref={localVideoRef}
+                        muted
+                        playsInline
+                        autoPlay
+                        className="h-full w-full object-cover"
+                        style={{ display: camOn ? "block" : "none" }}
+                      />
+                      {!camOn ? (
+                        <span className="text-[12px]" style={{ color: "var(--tb-muted)" }}>
+                          {micOn ? "Ses görüşmesi sürüyor" : "Kamera kapalı"}
+                        </span>
+                      ) : null}
+                      <span
+                        className="absolute bottom-1.5 left-2 text-[11px]"
+                        style={{ color: "var(--tb-muted)" }}
+                      >
+                        Siz
+                      </span>
+                    </div>
+                    <div
+                      className="grid aspect-video place-items-center rounded-lg text-center text-[12px]"
+                      style={{ background: "var(--tb-bg)", color: "var(--tb-muted)" }}
+                    >
+                      {activePeerName
+                        ? `${activePeerName} bağlanıyor…`
+                        : "Karşı taraf bağlandığında görüntü burada belirir"}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
                   {feed.length === 0 ? (
                     <p
@@ -686,6 +786,7 @@ export default function Messenger() {
                     <Paperclip className="h-4 w-4" />
                   </button>
                   <input
+                    ref={draftRef}
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     placeholder="Mesaj yazın…"
@@ -709,33 +810,49 @@ export default function Messenger() {
 
               <div className="flex min-h-0 flex-col gap-3 overflow-y-auto">
                 <Card title="Katılımcılar">
-                  <div className="space-y-2">
-                    {participants.map((p) => (
-                      <div
+                  {knownPeers.length + nearbyPeers.length > 0 ? (
+                    <p
+                      className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wide"
+                      style={{ color: "var(--tb-muted)" }}
+                    >
+                      Rehberiniz
+                    </p>
+                  ) : null}
+                  <div className="space-y-1">
+                    <PeerRow peer={selfParticipant as PeerRowData} />
+                    {knownPeers.map((p) => (
+                      <PeerRow
                         key={p.id}
-                        className="flex items-center justify-between gap-2 text-[13px]"
-                      >
-                        <span className="flex min-w-0 items-center gap-2">
-                          <DeviceIcon kind={p.kind} />
-                          <span className="truncate">{p.self ? `${p.name} (siz)` : p.name}</span>
-                          <span
-                            className="shrink-0 text-[10px] tabular-nums"
-                            style={{ color: "var(--tb-muted)", opacity: 0.65 }}
-                            title="Teknik düğüm kimliği"
-                          >
-                            {p.badge}
-                          </span>
-                        </span>
-                        <span
-                          className="shrink-0 text-[11px]"
-                          style={{ color: "var(--tb-muted)" }}
-                          title={p.hint}
-                        >
-                          {p.handle}
-                        </span>
-                      </div>
+                        peer={p as PeerRowData}
+                        onMessage={openChatWith}
+                        onCall={startCallWith}
+                        onRenamed={() => setIdentityTick((n) => n + 1)}
+                      />
                     ))}
                   </div>
+
+                  {nearbyPeers.length > 0 ? (
+                    <>
+                      <p
+                        className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wide"
+                        style={{ color: "var(--tb-muted)" }}
+                      >
+                        Çevredeki ağ cihazları
+                      </p>
+                      <div className="space-y-1">
+                        {nearbyPeers.map((p) => (
+                          <PeerRow
+                            key={p.id}
+                            peer={p as PeerRowData}
+                            onMessage={openChatWith}
+                            onCall={startCallWith}
+                            onRenamed={() => setIdentityTick((n) => n + 1)}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+
                   {participants.length <= 1 ? (
                     <div
                       className="mt-2 flex items-center gap-2 rounded-lg px-2.5 py-2 text-[12px]"
@@ -756,7 +873,7 @@ export default function Messenger() {
                         />
                       </span>
                       <span className="min-w-0">
-                        İkinci bir cihaz ağa girdiğinde otomatik listelenecek
+                        Ağ taranıyor, yeni cihazlar otomatik eklenecek
                       </span>
                     </div>
                   ) : null}
@@ -791,34 +908,15 @@ export default function Messenger() {
                     listelenir.
                   </p>
                 ) : null}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {participants.map((p) => (
-                    <div
+                    <PeerRow
                       key={p.id}
-                      className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-[13px]"
-                      style={{ background: "var(--tb-panel-soft)" }}
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <DeviceIcon kind={p.kind} />
-                        <span className="truncate font-medium">
-                          {p.self ? `${p.name} (siz)` : p.name}
-                        </span>
-                        <span
-                          className="shrink-0 text-[10px] tabular-nums"
-                          style={{ color: "var(--tb-muted)", opacity: 0.65 }}
-                          title="Teknik düğüm kimliği"
-                        >
-                          {p.badge}
-                        </span>
-                      </span>
-                      <span
-                        className="shrink-0 text-[12px]"
-                        style={{ color: "var(--tb-muted)" }}
-                        title={p.hint}
-                      >
-                        {p.handle}
-                      </span>
-                    </div>
+                      peer={p as PeerRowData}
+                      onMessage={openChatWith}
+                      onCall={startCallWith}
+                      onRenamed={() => setIdentityTick((n) => n + 1)}
+                    />
                   ))}
                 </div>
               </Card>
