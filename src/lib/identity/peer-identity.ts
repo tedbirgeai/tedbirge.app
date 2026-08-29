@@ -74,6 +74,8 @@ export function getPeerKind(nodeId: string): DeviceKind {
  * Hiçbir bilgi yoksa "Ağ Cihazı (#B32)".
  */
 export function peerDisplayLabel(nodeId: string): string {
+  const nickname = getNickname(nodeId);
+  if (nickname) return nickname;
   const id = getPeerIdentity(nodeId);
   let alias = id.alias ?? "";
   if (!alias) {
@@ -86,4 +88,17 @@ export function peerDisplayLabel(nodeId: string): string {
   }
   const label = composeIdentityLabel(alias, id.device ?? "");
   return label || `Ağ Cihazı (${shortBadge(nodeId)})`;
+}
+
+/** Eşin insan tarafından tanımlanmış (rehberlik eden) bir adı var mı? */
+export function isNamedPeer(nodeId: string): boolean {
+  if (getNickname(nodeId)) return true;
+  const id = getPeerIdentity(nodeId);
+  if (id.alias?.trim()) return true;
+  try {
+    const resolved = resolveDisplayName(nodeId);
+    return Boolean(resolved && !/^NODE_/i.test(resolved));
+  } catch {
+    return false;
+  }
 }
