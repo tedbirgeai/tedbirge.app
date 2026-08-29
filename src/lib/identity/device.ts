@@ -32,6 +32,10 @@ export function detectDevice(): DeviceInfo {
   if (/CrOS/i.test(ua)) return { kind: "desktop", label: "Chromebook" };
   if (/Linux/i.test(ua)) return { kind: "desktop", label: "Linux PC" };
 
+  // Bilinmeyen ama dokunmatik cihazlar: tarayıcı yerine mobil sayılır.
+  if (/Mobi|Mobile|Phone/i.test(ua) || (navigator.maxTouchPoints ?? 0) > 1)
+    return { kind: "mobile", label: "Mobil Cihaz" };
+
   if (/Firefox/i.test(ua)) return { kind: "browser", label: "Firefox Tarayıcı" };
   if (/Edg\//i.test(ua)) return { kind: "browser", label: "Edge Tarayıcı" };
   if (/Chrome/i.test(ua)) return { kind: "browser", label: "Chrome Tarayıcı" };
