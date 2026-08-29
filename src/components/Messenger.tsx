@@ -9,7 +9,7 @@
  * ölçülmemiş metrikler "—" basar.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   FolderOpen,
@@ -320,7 +320,22 @@ export default function Messenger() {
   useEffect(() => onPeerIdentity(() => setIdentityTick((n) => n + 1)), []);
   useEffect(() => onNickname(() => setIdentityTick((n) => n + 1)), []);
 
-  useEffect(() => subscribeLivePeers(setSignalPeers), []);
+  // Presence kalp atışı saniyede birkaç kez gelebilir; arayüzün titrememesi
+  // için güncellemeler 300 ms geciktirilerek tek seferde uygulanır.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = subscribeLivePeers((ids) => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        setSignalPeers((prev) => (prev.join("|") === ids.join("|") ? prev : ids));
+      }, 300);
+    });
+    return () => {
+      if (timer) clearTimeout(timer);
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     void ensureLiveNode();
@@ -365,7 +380,7 @@ export default function Messenger() {
         name: peerDisplayLabel(p.id),
         badge: shortBadge(p.id),
         kind: getPeerIdentity(p.id).kind ?? "browser",
-        handle: p.direct ? "Doğrudan Bağlı" : "Röle",
+        handle: p.direct ? "Doğrudan Güvenli Bağlantı" : "Güvenli Aktarıcı",
         hint: p.direct ? LINK_HINTS.direct : LINK_HINTS.relay,
         direct: p.direct,
         relay: !p.direct,
@@ -378,7 +393,7 @@ export default function Messenger() {
           name: peerDisplayLabel(id),
           badge: shortBadge(id),
           kind: getPeerIdentity(id).kind ?? ("browser" as DeviceKind),
-          handle: "Eş bulundu · bağlanıyor…",
+          handle: "Cihaz bulundu · bağlanıyor…",
           hint: "Cihaz ağda görünüyor; doğrudan hat kurulmaya çalışılıyor. Kurulamazsa şifreli röle üzerinden bağlanılır.",
 
           direct: false,
@@ -395,13 +410,13 @@ export default function Messenger() {
   );
   const selfParticipant = participants[0]!;
 
-  const openChatWith = (id: string) => {
+  const openChatWith = useCallback((id: string) => {
     setTab("chat");
     setActivePeer(id);
     window.setTimeout(() => draftRef.current?.focus(), 0);
-  };
+  }, []);
 
-  const startCallWith = (id: string) => {
+  const startCallWith = useCallback((id: string) => {
     setTab("chat");
     setActivePeer(id);
     void requestMedia("av").then((ok) => {
@@ -409,7 +424,7 @@ export default function Messenger() {
       setCamOn(ok);
       setMicOn(ok);
     });
-  };
+  }, [requestMedia]);
 
   const activePeerName = activePeer
     ? (participants.find((p) => p.id === activePeer)?.name ?? null)
@@ -417,8 +432,12 @@ export default function Messenger() {
 
   const peerCount = participants.length - 1;
   const localMode = peerCount === 0;
-  const nodeCountLabel = localMode ? "1 düğüm (bu cihaz)" : `${participants.length} düğüm`;
-  const networkLabel = localMode ? "Yerel Mod" : status.text;
+  const bumpIdentity = useCallback(() => setIdentityTick((n) => n + 1), []);
+  const nodeCountLabel = localMode
+    ? "1 Cihaz (bu cihaz)"
+    : `${participants.length} Aktif Cihaz Bağlı`;
+  const networkLabel = localMode ? "Özel Ağ · Cihaz Bağlantısı Bekleniyor" : status.text;
+  const p2pActive = !localMode && status.directPeers > 0;
 
   useEffect(() => {
     const el = localVideoRef.current;
@@ -840,7 +859,7 @@ export default function Messenger() {
                         peer={p as PeerRowData}
                         onMessage={openChatWith}
                         onCall={startCallWith}
-                        onRenamed={() => setIdentityTick((n) => n + 1)}
+                        onRenamed={bumpIdentity}
                       />
                     ))}
                   </div>
@@ -860,7 +879,7 @@ export default function Messenger() {
                             peer={p as PeerRowData}
                             onMessage={openChatWith}
                             onCall={startCallWith}
-                            onRenamed={() => setIdentityTick((n) => n + 1)}
+                            onRenamed={bumpIdentity}
                           />
                         ))}
                       </div>
@@ -929,7 +948,7 @@ export default function Messenger() {
                       peer={p as PeerRowData}
                       onMessage={openChatWith}
                       onCall={startCallWith}
-                      onRenamed={() => setIdentityTick((n) => n + 1)}
+                      onRenamed={bumpIdentity}
                     />
                   ))}
                 </div>
