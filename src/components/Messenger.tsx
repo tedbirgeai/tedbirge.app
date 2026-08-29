@@ -686,14 +686,12 @@ export default function Messenger() {
                 ) : null}
 
                 <div
-                  className="overflow-hidden px-4 transition-all duration-300 ease-out"
-                  style={{
-                    maxHeight: inCall ? 340 : 0,
-                    opacity: inCall ? 1 : 0,
-                    paddingTop: inCall ? 12 : 0,
-                  }}
+                  className={`shrink-0 overflow-hidden px-4 transition-all duration-300 ease-out ${
+                    inCall ? "max-h-[70vh] pt-3 opacity-100" : "max-h-0 pt-0 opacity-0"
+                  }`}
                   aria-hidden={!inCall}
                 >
+
                   <div
                     className="grid gap-2 rounded-xl p-2 sm:grid-cols-2"
                     style={{
