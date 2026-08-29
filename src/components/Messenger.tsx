@@ -14,18 +14,14 @@ import { Link } from "@tanstack/react-router";
 import {
   FolderOpen,
   Lock,
-  Globe,
   MessageSquare,
   Mic,
-  Monitor,
   MonitorUp,
   Paperclip,
   PhoneOff,
   Send,
   Settings2,
   ShieldCheck,
-  Smartphone,
-  Tablet,
   Users,
   Video,
 } from "lucide-react";
