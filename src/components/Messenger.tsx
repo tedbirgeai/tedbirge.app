@@ -55,6 +55,7 @@ import {
   type DeviceKind,
 } from "@/lib/identity/device";
 import { getAlias } from "@/lib/chat/profile";
+import { guard } from "@/lib/chat/errors";
 import {
   getPeerIdentity,
   isNamedPeer,
@@ -338,13 +339,16 @@ export default function Messenger() {
   }, []);
 
   useEffect(() => {
-    void ensureLiveNode();
+    void guard("messenger.ensureLiveNode", ensureLiveNode());
     return onLiveMessage((msg) => setFeed((prev) => [...prev.slice(-80), msg]));
   }, []);
 
   useEffect(() => {
     let alive = true;
-    void measureRoute(node.nodeId, node.peers, node.rttMs).then((r) => {
+    void guard(
+      "messenger.measureRoute",
+      measureRoute(node.nodeId, node.peers, node.rttMs),
+    ).then((r) => {
       if (alive) setRoute(r);
     });
     return () => {
@@ -419,10 +423,10 @@ export default function Messenger() {
   const startCallWith = useCallback((id: string) => {
     setTab("chat");
     setActivePeer(id);
-    void requestMedia("av").then((ok) => {
+    void guard("messenger.startCall", requestMedia("av")).then((ok) => {
       setInCall(true);
-      setCamOn(ok);
-      setMicOn(ok);
+      setCamOn(Boolean(ok));
+      setMicOn(Boolean(ok));
     });
   }, [requestMedia]);
 
@@ -456,7 +460,7 @@ export default function Messenger() {
       ...prev,
       { id: `self-${Date.now()}`, from: selfLabel, at: stamp(), text, self: true },
     ]);
-    await broadcastText(text);
+    await guard("messenger.broadcastText", broadcastText(text), "Mesaj gönderilemedi.");
   };
 
   const navItems: { id: TabId; label: string; icon: typeof MessageSquare }[] = [
@@ -657,7 +661,7 @@ export default function Messenger() {
                         stopMedia();
                         return;
                       }
-                      void requestMedia("av").then((ok) => {
+                      void guard("messenger.callToggle", requestMedia("av")).then((ok) => {
                         setInCall(true);
                         setCamOn(ok);
                         setMicOn(ok);
@@ -695,7 +699,9 @@ export default function Messenger() {
                             if (!micOn) stopMedia();
                             return;
                           }
-                          void requestMedia("av").then((ok) => setCamOn(ok));
+                          void guard("messenger.camera", requestMedia("av")).then((ok) =>
+                            setCamOn(Boolean(ok)),
+                          );
                         },
                       },
                       {
@@ -708,7 +714,9 @@ export default function Messenger() {
                             if (!camOn) stopMedia();
                             return;
                           }
-                          void requestMedia(camOn ? "av" : "audio").then((ok) => setMicOn(ok));
+                          void guard("messenger.mic", requestMedia(camOn ? "av" : "audio")).then(
+                            (ok) => setMicOn(Boolean(ok)),
+                          );
                         },
                       },
                       {
