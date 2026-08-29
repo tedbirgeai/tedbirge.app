@@ -388,10 +388,7 @@ export default function Messenger() {
     ];
   }, [hydrated, identityTick, livePeers, media, node.nodeId, selfLabel, signalPeers]);
 
-  const knownPeers = useMemo(
-    () => participants.filter((p) => !p.self && p.named),
-    [participants],
-  );
+  const knownPeers = useMemo(() => participants.filter((p) => !p.self && p.named), [participants]);
   const nearbyPeers = useMemo(
     () => participants.filter((p) => !p.self && !p.named),
     [participants],

@@ -81,9 +81,7 @@ export function PeerRow({ peer, onMessage, onCall, onRenamed }: Props) {
   const level: 1 | 2 | 3 = peer.self ? 3 : peer.direct ? 3 : 2;
 
   return (
-    <div
-      className="group flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition-colors hover:bg-black/[0.03]"
-    >
+    <div className="group flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition-colors hover:bg-black/[0.03]">
       <span
         className="grid h-8 w-8 shrink-0 place-items-center rounded-full"
         style={{
