@@ -366,8 +366,9 @@ export default function Messenger() {
           name: peerDisplayLabel(id),
           badge: shortBadge(id),
           kind: getPeerIdentity(id).kind ?? ("browser" as DeviceKind),
-          handle: "Röle · çevrimiçi",
-          hint: LINK_HINTS.relay,
+          handle: "Eş bulundu · bağlanıyor…",
+          hint: "Cihaz ağda görünüyor; doğrudan hat kurulmaya çalışılıyor. Kurulamazsa şifreli röle üzerinden bağlanılır.",
+
           direct: false,
           relay: true,
           named: isNamedPeer(id),
