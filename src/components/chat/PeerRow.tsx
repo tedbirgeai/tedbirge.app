@@ -32,9 +32,8 @@ export type PeerRowData = {
   relay?: boolean;
 };
 
-function DeviceGlyph({ kind, relay }: { kind: DeviceKind; relay?: boolean }) {
+function DeviceGlyph({ kind }: { kind: DeviceKind }) {
   const cls = "h-4 w-4";
-  if (relay) return <Radio className={cls} aria-hidden />;
   if (kind === "mobile") return <Smartphone className={cls} aria-hidden />;
   if (kind === "tablet") return <Tablet className={cls} aria-hidden />;
   if (kind === "desktop") return <Monitor className={cls} aria-hidden />;
@@ -82,14 +81,26 @@ export function PeerRow({ peer, onMessage, onCall, onRenamed }: Props) {
 
   return (
     <div className="group flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition-colors hover:bg-black/[0.03]">
-      <span
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-full"
-        style={{
-          background: "var(--tb-panel-soft)",
-          color: peer.self || peer.direct ? "var(--tb-accent)" : "var(--tb-muted)",
-        }}
-      >
-        <DeviceGlyph kind={peer.kind} relay={peer.relay} />
+      <span className="relative shrink-0">
+        <span
+          className="grid h-8 w-8 place-items-center rounded-full"
+          style={{
+            background: "var(--tb-panel-soft)",
+            color: peer.self || peer.direct ? "var(--tb-accent)" : "var(--tb-muted)",
+          }}
+        >
+          <DeviceGlyph kind={peer.kind} />
+        </span>
+        {peer.relay ? (
+          <span
+            className="absolute -right-0.5 -bottom-0.5 grid h-3.5 w-3.5 place-items-center rounded-full"
+            style={{ background: "var(--tb-panel)", color: "var(--tb-muted)" }}
+            title="Röle üzerinden bağlı"
+            aria-label="Röle üzerinden bağlı"
+          >
+            <Radio className="h-2.5 w-2.5" aria-hidden />
+          </span>
+        ) : null}
       </span>
 
       {editing ? (

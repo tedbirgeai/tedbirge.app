@@ -2,7 +2,7 @@
   "name": "Tedbirge® WebOS",
   "short_name": "Tedbirge",
   "description": "Tedbirge® WebOS: taşıyıcı-bağımsız, sıfır-bilgi P2P ağ işletim sistemi. Uçtan uca şifreli sohbet, görüşme ve veri taşıma.",
-  "start_url": "/chat",
+  "start_url": "/",
   "id": "/",
   "scope": "/",
   "display": "standalone",
