@@ -59,7 +59,14 @@ import {
   type DeviceKind,
 } from "@/lib/identity/device";
 import { getAlias } from "@/lib/chat/profile";
-import { getPeerIdentity, onPeerIdentity, peerDisplayLabel } from "@/lib/identity/peer-identity";
+import {
+  getPeerIdentity,
+  isNamedPeer,
+  onPeerIdentity,
+  peerDisplayLabel,
+} from "@/lib/identity/peer-identity";
+import { onNickname } from "@/lib/identity/peer-nickname";
+import { PeerRow, type PeerRowData } from "@/components/chat/PeerRow";
 
 const LINK_HINTS = {
   direct: "Aynı yerel ağda aracı olmadan doğrudan bağlı",
