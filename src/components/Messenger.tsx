@@ -120,8 +120,20 @@ function useLocalMedia() {
     }
     try {
       const next = await navigator.mediaDevices.getUserMedia(
-        kind === "av" ? { audio: true, video: true } : { audio: true },
+        kind === "av"
+          ? {
+              audio: { echoCancellation: true, noiseSuppression: true },
+              // Ham RGB akış: renk dönüşümü veya filtre uygulanmaz.
+              video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                frameRate: { ideal: 30 },
+                facingMode: "user",
+              },
+            }
+          : { audio: { echoCancellation: true, noiseSuppression: true } },
       );
+
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = next;
       setStream(next);
