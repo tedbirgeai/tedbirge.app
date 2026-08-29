@@ -69,7 +69,6 @@ const LINK_HINTS = {
   relay: "Şifreli paketler bir ara düğüm üzerinden taşınıyor; içerik açılamaz",
 } as const;
 
-
 type Participant = {
   id: string;
   /** İnsan dostu ad: "Ahmet — Windows PC" */
