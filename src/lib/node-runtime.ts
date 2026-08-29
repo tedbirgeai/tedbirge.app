@@ -119,6 +119,14 @@ export function knownPeerIds(): string[] {
   return node?.knownPeerIds() ?? [];
 }
 
+/**
+ * Sinyal havuzunda görünen eş kimlikleri (hattı henüz kurulmamış olanlar
+ * dahil). Arayüz "eş bulundu · bağlanıyor" durumunu bu listeden gösterir.
+ */
+export function presencePeerIds(): string[] {
+  return node?.presenceIds() ?? [];
+}
+
 /** Acil durum yayını (öncelik 0 — kuyrukta asla budanmaz). */
 export function broadcastAlert(text: string) {
   return node?.sendAlert(text) ?? Promise.resolve(false);

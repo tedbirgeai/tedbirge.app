@@ -345,7 +345,15 @@ export class BrowserNode {
   private onState: (s: BrowserNodeState) => void;
   private channel: ReturnType<typeof supabase.channel> | null = null;
   private cloudUp = false;
+  /** Sinyal kanalı yeniden abone olma sayacı ve zamanlayıcısı. */
+  private cloudRetries = 0;
+  private cloudRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Presence'te eşin ilk görüldüğü an — teklif kilitlenmesini çözer. */
+  private firstSeenPresence = new Map<string, number>();
+  /** Bağlantısı kurulmamış eşleri düzenli yeniden arama zamanlayıcısı. */
+  private dialTimer: ReturnType<typeof setInterval> | null = null;
   private cloudReady: Promise<void> | null = null;
+
   private resolveCloudReady: (() => void) | null = null;
   private localBus: BroadcastChannel | null = null;
   private localSeen = new Map<string, number>();
@@ -470,47 +478,12 @@ export class BrowserNode {
     this.cloudReady = new Promise<void>((resolve) => {
       this.resolveCloudReady = resolve;
     });
-    // Aynı konuya ait eski kanal (sıcak yeniden yükleme, ikinci başlatma)
-    // kalmışsa kaldırılır: abone olunmuş kanala dinleyici eklenemez.
-    try {
-      for (const ch of supabase.getChannels()) {
-        if (ch.topic === `realtime:${CHANNEL}` || ch.topic === CHANNEL) {
-          await supabase.removeChannel(ch);
-        }
-      }
-    } catch {
-      /* kanal listesi alınamadı: yeni kanal yine de kurulur */
-    }
-    this.channel = supabase.channel(CHANNEL, {
-      config: { broadcast: { self: false }, presence: { key: this.nodeId } },
-    });
-
-    this.channel
-      .on("presence", { event: "sync" }, () => void this.dialNewPeers())
-      .on("broadcast", { event: "signal" }, ({ payload }) => void this.onSignal(payload))
-      .on("broadcast", { event: "mesh" }, ({ payload }) => {
-        const raw = (payload as { envelope?: unknown } | null)?.envelope;
-        if (typeof raw === "string") void this.onMeshMessage(raw, "cloud-realtime");
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          this.cloudUp = true;
-          this.resolveCloudReady?.();
-          this.resolveCloudReady = null;
-          await this.channel?.track({
-            nodeId: this.nodeId,
-            personId: getPersonId() || this.nodeId,
-            at: Date.now(),
-          });
-          void this.dialNewPeers();
-          this.emit({});
-        } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
-          this.cloudUp = false;
-          this.resolveCloudReady?.();
-          this.resolveCloudReady = null;
-          this.emit({});
-        }
-      });
+    await this.connectCloud();
+    // Kalp atışı: presence'te görünen ama hattı kurulmamış eşler her 5 sn
+    // yeniden aranır. Telefon uyandığında veya ağ değiştiğinde eşleşme
+    // kendiliğinden geri gelir.
+    if (this.dialTimer) clearInterval(this.dialTimer);
+    this.dialTimer = setInterval(() => void this.dialNewPeers(), 5_000);
 
     await this.heartbeat();
     this.timer = setInterval(() => {
@@ -919,6 +892,13 @@ export class BrowserNode {
     }
     this.localBus = null;
     this.localSeen.clear();
+    if (this.dialTimer) clearInterval(this.dialTimer);
+    this.dialTimer = null;
+    if (this.cloudRetryTimer) clearTimeout(this.cloudRetryTimer);
+    this.cloudRetryTimer = null;
+    this.cloudRetries = 0;
+    this.firstSeenPresence.clear();
+
     this.cloudUp = false;
     this.resolveCloudReady?.();
     this.resolveCloudReady = null;
@@ -945,13 +925,102 @@ export class BrowserNode {
     void appendEvent("uplink", "İnternet koptu — yerel kuyruk devrede.");
   };
 
-  private async dialNewPeers() {
+  /**
+   * Bulut sinyal kanalını kurar. Kanal düşerse (telefon uykuya girdi, ağ
+   * değişti) üstel geri çekilmeyle yeniden abone olunur; düğüm kalıcı olarak
+   * "Yerel Mod"da takılı kalmaz.
+   */
+  private async connectCloud(): Promise<void> {
+    // Aynı konuya ait eski kanal (sıcak yeniden yükleme, ikinci başlatma)
+    // kalmışsa kaldırılır: abone olunmuş kanala dinleyici eklenemez.
+    try {
+      for (const ch of supabase.getChannels()) {
+        if (ch.topic === `realtime:${CHANNEL}` || ch.topic === CHANNEL) {
+          await supabase.removeChannel(ch);
+        }
+      }
+    } catch {
+      /* kanal listesi alınamadı: yeni kanal yine de kurulur */
+    }
+    if (!this.state.running && this.cloudRetries > 0) return;
+
+    this.channel = supabase.channel(CHANNEL, {
+      config: { broadcast: { self: false }, presence: { key: this.nodeId } },
+    });
+
+    this.channel
+      .on("presence", { event: "sync" }, () => void this.dialNewPeers())
+      .on("presence", { event: "join" }, () => void this.dialNewPeers())
+      .on("broadcast", { event: "signal" }, ({ payload }) => void this.onSignal(payload))
+      .on("broadcast", { event: "mesh" }, ({ payload }) => {
+        const raw = (payload as { envelope?: unknown } | null)?.envelope;
+        if (typeof raw === "string") void this.onMeshMessage(raw, "cloud-realtime");
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          this.cloudUp = true;
+          this.cloudRetries = 0;
+          this.resolveCloudReady?.();
+          this.resolveCloudReady = null;
+          await this.channel?.track({
+            nodeId: this.nodeId,
+            personId: getPersonId() || this.nodeId,
+            at: Date.now(),
+          });
+          void this.dialNewPeers();
+          this.emit({});
+        } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
+          this.cloudUp = false;
+          this.resolveCloudReady?.();
+          this.resolveCloudReady = null;
+          this.emit({});
+          this.scheduleCloudRetry();
+        }
+      });
+  }
+
+  private scheduleCloudRetry() {
+    if (!this.state.running || this.cloudRetryTimer) return;
+    const delay = Math.min(2_000 * 2 ** this.cloudRetries, 30_000);
+    this.cloudRetries = Math.min(this.cloudRetries + 1, 5);
+    this.cloudRetryTimer = setTimeout(() => {
+      this.cloudRetryTimer = null;
+      if (this.state.running) void this.connectCloud();
+    }, delay);
+  }
+
+  /** Sinyal havuzunda görünen (henüz hattı kurulmamış olabilir) eş kimlikleri. */
+  presenceIds(): string[] {
     const presence = this.channel?.presenceState() ?? {};
-    const ids = Object.keys(presence).filter((id) => id && id !== this.nodeId);
+    return Object.keys(presence).filter((id) => id && id !== this.nodeId);
+  }
+
+  private async dialNewPeers() {
+    const ids = this.presenceIds();
+    const now = Date.now();
     for (const id of ids) {
-      if (this.peers.has(id)) continue;
-      if (this.nodeId > id) continue;
+      if (!this.firstSeenPresence.has(id)) this.firstSeenPresence.set(id, now);
+      const entry = this.peers.get(id);
+      if (entry) {
+        const state = entry.pc.connectionState;
+        if (!["failed", "closed", "disconnected"].includes(state)) continue;
+        // Kopan hat temizlenip yeniden kurulur.
+        try {
+          entry.pc.close();
+        } catch {
+          /* zaten kapalı */
+        }
+        this.peers.delete(id);
+      }
+      // Çift teklif çakışmasını önlemek için normalde küçük kimlik arar.
+      // Karşı taraf 12 saniye içinde aramadıysa (kaçan presence olayı,
+      // arka plandaki sekme) bu taraf da teklif eder — kilitlenme olmaz.
+      const seen = this.firstSeenPresence.get(id) ?? now;
+      if (this.nodeId > id && now - seen < 12_000) continue;
       await this.createOffer(id);
+    }
+    for (const id of this.firstSeenPresence.keys()) {
+      if (!ids.includes(id)) this.firstSeenPresence.delete(id);
     }
     this.emit({});
   }

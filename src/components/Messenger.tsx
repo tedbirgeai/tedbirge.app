@@ -120,8 +120,20 @@ function useLocalMedia() {
     }
     try {
       const next = await navigator.mediaDevices.getUserMedia(
-        kind === "av" ? { audio: true, video: true } : { audio: true },
+        kind === "av"
+          ? {
+              audio: { echoCancellation: true, noiseSuppression: true },
+              // Ham RGB akış: renk dönüşümü veya filtre uygulanmaz.
+              video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                frameRate: { ideal: 30 },
+                facingMode: "user",
+              },
+            }
+          : { audio: { echoCancellation: true, noiseSuppression: true } },
       );
+
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = next;
       setStream(next);
@@ -366,8 +378,9 @@ export default function Messenger() {
           name: peerDisplayLabel(id),
           badge: shortBadge(id),
           kind: getPeerIdentity(id).kind ?? ("browser" as DeviceKind),
-          handle: "Röle · çevrimiçi",
-          hint: LINK_HINTS.relay,
+          handle: "Eş bulundu · bağlanıyor…",
+          hint: "Cihaz ağda görünüyor; doğrudan hat kurulmaya çalışılıyor. Kurulamazsa şifreli röle üzerinden bağlanılır.",
+
           direct: false,
           relay: true,
           named: isNamedPeer(id),
@@ -436,7 +449,11 @@ export default function Messenger() {
   return (
     <div
       className="flex h-[100dvh] w-full flex-col overflow-hidden font-osui"
-      style={{ background: "var(--tb-bg)", color: "var(--tb-text)" }}
+      style={{
+        background: "var(--tb-bg)",
+        color: "var(--tb-text)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
     >
       {/* ÜST BAR */}
       <header
@@ -569,9 +586,9 @@ export default function Messenger() {
           </div>
 
           {tab === "chat" ? (
-            <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden xl:grid-cols-3">
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto xl:grid-cols-3 xl:overflow-hidden">
               <div
-                className="flex min-h-0 flex-col overflow-hidden rounded-xl backdrop-blur-sm xl:col-span-2"
+                className="flex min-h-[60vh] flex-col overflow-hidden rounded-xl backdrop-blur-sm xl:col-span-2 xl:min-h-0"
                 style={{ background: "var(--tb-panel)", border: "1px solid var(--tb-border)" }}
               >
                 <div
@@ -685,12 +702,9 @@ export default function Messenger() {
                 ) : null}
 
                 <div
-                  className="overflow-hidden px-4 transition-all duration-300 ease-out"
-                  style={{
-                    maxHeight: inCall ? 340 : 0,
-                    opacity: inCall ? 1 : 0,
-                    paddingTop: inCall ? 12 : 0,
-                  }}
+                  className={`shrink-0 overflow-hidden px-4 transition-all duration-300 ease-out ${
+                    inCall ? "max-h-[70vh] pt-3 opacity-100" : "max-h-0 pt-0 opacity-0"
+                  }`}
                   aria-hidden={!inCall}
                 >
                   <div
@@ -701,7 +715,7 @@ export default function Messenger() {
                     }}
                   >
                     <div
-                      className="relative grid aspect-video place-items-center overflow-hidden rounded-lg"
+                      className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-lg sm:aspect-video"
                       style={{ background: "var(--tb-bg)" }}
                     >
                       <video
@@ -709,8 +723,8 @@ export default function Messenger() {
                         muted
                         playsInline
                         autoPlay
-                        className="h-full w-full object-cover"
-                        style={{ display: camOn ? "block" : "none" }}
+                        className="absolute inset-0 h-full w-full object-contain"
+                        style={{ display: camOn ? "block" : "none", filter: "none" }}
                       />
                       {!camOn ? (
                         <span className="text-[12px]" style={{ color: "var(--tb-muted)" }}>
@@ -725,7 +739,7 @@ export default function Messenger() {
                       </span>
                     </div>
                     <div
-                      className="grid aspect-video place-items-center rounded-lg text-center text-[12px]"
+                      className="grid aspect-[4/3] place-items-center rounded-lg text-center text-[12px] sm:aspect-video"
                       style={{ background: "var(--tb-bg)", color: "var(--tb-muted)" }}
                     >
                       {activePeerName
@@ -808,7 +822,7 @@ export default function Messenger() {
                 </form>
               </div>
 
-              <div className="flex min-h-0 flex-col gap-3 overflow-y-auto">
+              <div className="flex min-h-0 flex-col gap-3 xl:overflow-y-auto">
                 <Card title="Katılımcılar">
                   {knownPeers.length + nearbyPeers.length > 0 ? (
                     <p
