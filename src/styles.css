@@ -98,7 +98,6 @@
   --color-rose-600: var(--tb-rose-600);
 }
 
-
 /* ------------------------------------------------------------------
  * TEK TEMA KAYNAĞI
  * shadcn tokenları doğrudan Açık Kristal (`--tb-*`) setine bağlıdır.
@@ -165,7 +164,9 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  .font-mono, code, pre {
+  .font-mono,
+  code,
+  pre {
     font-family: var(--font-mono);
   }
 }
@@ -310,7 +311,6 @@
   color: var(--wa-text, #0d1b22);
 }
 
-
 /* Kabuk kapsayıcısı: viewport ölçüsünü SAHİPLENEN dış katman (rota veya
    ileride WebOS penceresi). Böylece sohbet modülü tam ekranda da,
    pencere içinde de aynı bileşenle çalışır. */
@@ -352,7 +352,6 @@
   min-height: var(--wa-row-h);
 }
 
-
 .wa .wa-chat-bg {
   background-color: var(--wa-chat-bg);
   background-image:
@@ -380,9 +379,10 @@
   background-image:
     radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.035) 1px, transparent 1.6px),
     radial-gradient(circle at 70% 60%, rgba(0, 0, 0, 0.03) 1px, transparent 1.6px);
-  background-size: 28px 28px, 44px 44px;
+  background-size:
+    28px 28px,
+    44px 44px;
 }
-
 
 /* ------------------------------------------------------------------
  * Sohbet arayüzü canlılık katmanı — basma geri bildirimi, balon
@@ -547,8 +547,12 @@ body {
 
 /* Açılış ekranı ilerleme çubuğu (WhatsApp benzeri belirsiz yükleme). */
 @keyframes tb-splash {
-  0% { transform: translateX(-110%); }
-  100% { transform: translateX(320%); }
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
 }
 .tb-splash-bar {
   animation: tb-splash 1.1s ease-in-out infinite;
@@ -624,7 +628,10 @@ body {
     linear-gradient(to right, var(--tb-grid) 1px, transparent 1px),
     linear-gradient(to bottom, var(--tb-grid) 1px, transparent 1px),
     radial-gradient(1000px 500px at 20% -10%, var(--tb-glow), transparent 65%);
-  background-size: 44px 44px, 44px 44px, auto;
+  background-size:
+    44px 44px,
+    44px 44px,
+    auto;
 }
 
 /* Web-OS pencere açılış animasyonu */
@@ -645,7 +652,6 @@ body {
   backdrop-filter: blur(18px) saturate(140%);
   box-shadow: var(--tb-shadow);
 }
-
 
 @media (prefers-reduced-motion: reduce) {
   .tbos-window {

@@ -117,8 +117,7 @@ export function openDb(): Promise<IDBDatabase> {
         db.createObjectStore("licenses", { keyPath: "id" });
       if (!db.objectStoreNames.contains("conversations"))
         db.createObjectStore("conversations", { keyPath: "id" });
-      if (!db.objectStoreNames.contains("prefs"))
-        db.createObjectStore("prefs", { keyPath: "key" });
+      if (!db.objectStoreNames.contains("prefs")) db.createObjectStore("prefs", { keyPath: "key" });
       if (!db.objectStoreNames.contains("messages")) {
         const s = db.createObjectStore("messages", { keyPath: "id" });
         s.createIndex("convId_ts", ["convId", "ts"]);
@@ -730,8 +729,10 @@ export type PrefRecord = { key: string; value: unknown };
 
 export function putPref(key: string, value: unknown) {
   return safe(
-    tx<IDBValidKey>("prefs", "readwrite", (s) =>
-      s.put({ key, value }) as IDBRequest<IDBValidKey>,
+    tx<IDBValidKey>(
+      "prefs",
+      "readwrite",
+      (s) => s.put({ key, value }) as IDBRequest<IDBValidKey>,
     ).then(() => true),
     false,
   );
@@ -739,7 +740,11 @@ export function putPref(key: string, value: unknown) {
 
 export async function getPref<T>(key: string, fallback: T): Promise<T> {
   const rec = await safe(
-    tx<PrefRecord | undefined>("prefs", "readonly", (s) => s.get(key) as IDBRequest<PrefRecord>),
+    tx<PrefRecord | undefined>(
+      "prefs",
+      "readonly",
+      (s) => s.get(key) as IDBRequest<PrefRecord | undefined>,
+    ),
     undefined,
   );
   return (rec?.value as T) ?? fallback;
