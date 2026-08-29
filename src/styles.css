@@ -311,10 +311,18 @@
 }
 
 
-/* Tam ekran kilidi: telefonda kabuk viewport'a sabitlenir, yatay kayma yok. */
-.wa-shell {
+/* Kabuk kapsayıcısı: viewport ölçüsünü SAHİPLENEN dış katman (rota veya
+   ileride WebOS penceresi). Böylece sohbet modülü tam ekranda da,
+   pencere içinde de aynı bileşenle çalışır. */
+.wa-viewport {
   height: var(--wa-vh, 100dvh);
   max-height: var(--wa-vh, 100dvh);
+}
+
+/* Sohbet kabuğu kapsayıcısını doldurur; kendi viewport ölçüsünü dayatmaz. */
+.wa-shell {
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
 }
