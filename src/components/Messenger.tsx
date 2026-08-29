@@ -663,8 +663,8 @@ export default function Messenger() {
                       }
                       void guard("messenger.callToggle", requestMedia("av")).then((ok) => {
                         setInCall(true);
-                        setCamOn(ok);
-                        setMicOn(ok);
+                        setCamOn(Boolean(ok));
+                        setMicOn(Boolean(ok));
                       });
                     }}
                     className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-medium"
