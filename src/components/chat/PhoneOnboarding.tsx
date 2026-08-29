@@ -9,6 +9,8 @@
  * Dış SMS/GSM servisi kullanılmaz; internet kesintisinde de çalışır.
  */
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
