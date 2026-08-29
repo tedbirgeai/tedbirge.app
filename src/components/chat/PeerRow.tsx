@@ -129,6 +129,7 @@ function PeerRowBase({ peer, onMessage, onCall, onRenamed }: Props) {
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="truncate">{peer.self ? `${peer.name} (siz)` : peer.name}</span>
             <span
+              suppressHydrationWarning
               className="shrink-0 text-[10px] tabular-nums"
               style={{ color: "var(--tb-muted)", opacity: 0.6 }}
               title="Cihaz kimliği rozeti"
