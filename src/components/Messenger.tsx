@@ -449,7 +449,12 @@ export default function Messenger() {
   return (
     <div
       className="flex h-[100dvh] w-full flex-col overflow-hidden font-osui"
-      style={{ background: "var(--tb-bg)", color: "var(--tb-text)" }}
+      style={{
+        background: "var(--tb-bg)",
+        color: "var(--tb-text)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+
     >
       {/* ÜST BAR */}
       <header
