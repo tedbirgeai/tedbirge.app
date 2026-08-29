@@ -195,4 +195,22 @@ function PeerRowBase({ peer, onMessage, onCall, onRenamed }: Props) {
  * Presence kalp atışında liste yeniden çizildiğinde titremeyi önlemek için
  * satır yalnızca kendi verisi değiştiğinde render edilir.
  */
-export const PeerRow = memo(PeerRowBase);
+export const PeerRow = memo(PeerRowBase, (a, b) => {
+  const x = a.peer;
+  const y = b.peer;
+  return (
+    x.id === y.id &&
+    x.name === y.name &&
+    x.badge === y.badge &&
+    x.kind === y.kind &&
+    x.handle === y.handle &&
+    x.hint === y.hint &&
+    x.self === y.self &&
+    x.direct === y.direct &&
+    x.named === y.named &&
+    x.relay === y.relay &&
+    a.onMessage === b.onMessage &&
+    a.onCall === b.onCall &&
+    a.onRenamed === b.onRenamed
+  );
+});
