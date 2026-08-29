@@ -95,8 +95,8 @@ function PeerRowBase({ peer, onMessage, onCall, onRenamed }: Props) {
           <span
             className="absolute -right-0.5 -bottom-0.5 grid h-3.5 w-3.5 place-items-center rounded-full"
             style={{ background: "var(--tb-panel)", color: "var(--tb-muted)" }}
-            title="Röle üzerinden bağlı"
-            aria-label="Röle üzerinden bağlı"
+            title="Güvenli Aktarıcı üzerinden bağlı"
+            aria-label="Güvenli Aktarıcı üzerinden bağlı"
           >
             <Radio className="h-2.5 w-2.5" aria-hidden />
           </span>
