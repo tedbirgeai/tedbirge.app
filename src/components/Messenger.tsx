@@ -94,6 +94,10 @@ type Participant = {
   kind: DeviceKind;
   self?: boolean;
   direct?: boolean;
+  /** İnsan tarafından adlandırılmış (rehberde) eş mi? */
+  named?: boolean;
+  /** Röle üzerinden görünen düğüm. */
+  relay?: boolean;
 };
 
 type TabId = "chat" | "files" | "team" | "system";
