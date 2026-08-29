@@ -757,7 +757,16 @@ export default function Messenger() {
                   >
                     <div
                       className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-lg sm:aspect-video"
-                      style={{ background: "var(--tb-bg)" }}
+                      style={{
+                        background: "var(--tb-bg)",
+                        // Cam efekti (backdrop-filter) üst katmanlardan sızıp
+                        // kamera akışında renk kaymasına yol açmasın diye
+                        // video kutusu ayrı bir kompozit katmana alınır.
+                        isolation: "isolate",
+                        backdropFilter: "none",
+                        WebkitBackdropFilter: "none",
+                        mixBlendMode: "normal",
+                      }}
                     >
                       <video
                         ref={localVideoRef}
@@ -765,7 +774,14 @@ export default function Messenger() {
                         playsInline
                         autoPlay
                         className="absolute inset-0 h-full w-full object-contain"
-                        style={{ display: camOn ? "block" : "none", filter: "none" }}
+                        style={{
+                          display: camOn ? "block" : "none",
+                          // Ham RGB: hiçbir renk dönüşümü / karışım uygulanmaz.
+                          filter: "none",
+                          backdropFilter: "none",
+                          mixBlendMode: "normal",
+                          opacity: 1,
+                        }}
                       />
                       {!camOn ? (
                         <span className="text-[12px]" style={{ color: "var(--tb-muted)" }}>
