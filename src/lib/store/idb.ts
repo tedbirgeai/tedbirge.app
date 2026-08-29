@@ -17,7 +17,7 @@
  */
 
 export const DB_NAME = "tedbirge";
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;
 
 /** 0 = acil/güvenlik, 1 = kontrol, 2 = kullanıcı mesajı, 3 = telemetri. */
 export type Priority = 0 | 1 | 2 | 3;
@@ -117,6 +117,8 @@ export function openDb(): Promise<IDBDatabase> {
         db.createObjectStore("licenses", { keyPath: "id" });
       if (!db.objectStoreNames.contains("conversations"))
         db.createObjectStore("conversations", { keyPath: "id" });
+      if (!db.objectStoreNames.contains("prefs"))
+        db.createObjectStore("prefs", { keyPath: "key" });
       if (!db.objectStoreNames.contains("messages")) {
         const s = db.createObjectStore("messages", { keyPath: "id" });
         s.createIndex("convId_ts", ["convId", "ts"]);
@@ -719,4 +721,26 @@ export function deleteMessageRecord(id: string) {
     ),
     false,
   );
+}
+
+/* ------------------------------ prefs ------------------------------ */
+
+/** Basit anahtar/değer tercih kaydı (takma adlar, yerel ayarlar). */
+export type PrefRecord = { key: string; value: unknown };
+
+export function putPref(key: string, value: unknown) {
+  return safe(
+    tx<IDBValidKey>("prefs", "readwrite", (s) =>
+      s.put({ key, value }) as IDBRequest<IDBValidKey>,
+    ).then(() => true),
+    false,
+  );
+}
+
+export async function getPref<T>(key: string, fallback: T): Promise<T> {
+  const rec = await safe(
+    tx<PrefRecord | undefined>("prefs", "readonly", (s) => s.get(key) as IDBRequest<PrefRecord>),
+    undefined,
+  );
+  return (rec?.value as T) ?? fallback;
 }
