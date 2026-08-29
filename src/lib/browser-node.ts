@@ -470,47 +470,13 @@ export class BrowserNode {
     this.cloudReady = new Promise<void>((resolve) => {
       this.resolveCloudReady = resolve;
     });
-    // Aynı konuya ait eski kanal (sıcak yeniden yükleme, ikinci başlatma)
-    // kalmışsa kaldırılır: abone olunmuş kanala dinleyici eklenemez.
-    try {
-      for (const ch of supabase.getChannels()) {
-        if (ch.topic === `realtime:${CHANNEL}` || ch.topic === CHANNEL) {
-          await supabase.removeChannel(ch);
-        }
-      }
-    } catch {
-      /* kanal listesi alınamadı: yeni kanal yine de kurulur */
-    }
-    this.channel = supabase.channel(CHANNEL, {
-      config: { broadcast: { self: false }, presence: { key: this.nodeId } },
-    });
+    await this.connectCloud();
+    // Kalp atışı: presence'te görünen ama hattı kurulmamış eşler her 5 sn
+    // yeniden aranır. Telefon uyandığında veya ağ değiştiğinde eşleşme
+    // kendiliğinden geri gelir.
+    if (this.dialTimer) clearInterval(this.dialTimer);
+    this.dialTimer = setInterval(() => void this.dialNewPeers(), 5_000);
 
-    this.channel
-      .on("presence", { event: "sync" }, () => void this.dialNewPeers())
-      .on("broadcast", { event: "signal" }, ({ payload }) => void this.onSignal(payload))
-      .on("broadcast", { event: "mesh" }, ({ payload }) => {
-        const raw = (payload as { envelope?: unknown } | null)?.envelope;
-        if (typeof raw === "string") void this.onMeshMessage(raw, "cloud-realtime");
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          this.cloudUp = true;
-          this.resolveCloudReady?.();
-          this.resolveCloudReady = null;
-          await this.channel?.track({
-            nodeId: this.nodeId,
-            personId: getPersonId() || this.nodeId,
-            at: Date.now(),
-          });
-          void this.dialNewPeers();
-          this.emit({});
-        } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
-          this.cloudUp = false;
-          this.resolveCloudReady?.();
-          this.resolveCloudReady = null;
-          this.emit({});
-        }
-      });
 
     await this.heartbeat();
     this.timer = setInterval(() => {
