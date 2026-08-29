@@ -831,6 +831,15 @@ function ChatAppInner() {
               paddingTop: "calc(0.75rem + env(safe-area-inset-top))",
             }}
           >
+            <Link
+              to="/"
+              className="wa-press mr-1 flex h-10 w-10 items-center justify-center rounded-full"
+              style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
+              aria-label="Ana sayfaya dön"
+              title="Ana sayfaya dön"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
             <button
               type="button"
               onClick={() => {
