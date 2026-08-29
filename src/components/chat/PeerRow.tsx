@@ -190,3 +190,9 @@ function PeerRowBase({ peer, onMessage, onCall, onRenamed }: Props) {
     </div>
   );
 }
+
+/**
+ * Presence kalp atışında liste yeniden çizildiğinde titremeyi önlemek için
+ * satır yalnızca kendi verisi değiştiğinde render edilir.
+ */
+export const PeerRow = memo(PeerRowBase);
