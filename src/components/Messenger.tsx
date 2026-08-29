@@ -345,12 +345,11 @@ export default function Messenger() {
 
   useEffect(() => {
     let alive = true;
-    void guard(
-      "messenger.measureRoute",
-      measureRoute(node.nodeId, node.peers, node.rttMs),
-    ).then((r) => {
-      if (alive) setRoute(r);
-    });
+    void guard("messenger.measureRoute", measureRoute(node.nodeId, node.peers, node.rttMs)).then(
+      (r) => {
+        if (alive) setRoute(r);
+      },
+    );
     return () => {
       alive = false;
     };
@@ -420,15 +419,18 @@ export default function Messenger() {
     window.setTimeout(() => draftRef.current?.focus(), 0);
   }, []);
 
-  const startCallWith = useCallback((id: string) => {
-    setTab("chat");
-    setActivePeer(id);
-    void guard("messenger.startCall", requestMedia("av")).then((ok) => {
-      setInCall(true);
-      setCamOn(Boolean(ok));
-      setMicOn(Boolean(ok));
-    });
-  }, [requestMedia]);
+  const startCallWith = useCallback(
+    (id: string) => {
+      setTab("chat");
+      setActivePeer(id);
+      void guard("messenger.startCall", requestMedia("av")).then((ok) => {
+        setInCall(true);
+        setCamOn(Boolean(ok));
+        setMicOn(Boolean(ok));
+      });
+    },
+    [requestMedia],
+  );
 
   const activePeerName = activePeer
     ? (participants.find((p) => p.id === activePeer)?.name ?? null)
@@ -1079,8 +1081,8 @@ export default function Messenger() {
                       </div>
                       {localMode ? (
                         <p className="pt-3 text-[12px]" style={{ color: "var(--tb-muted)" }}>
-                          Özel Ağ: henüz başka bir cihaz bağlanmadı, bu yüzden haritada yalnızca
-                          bu cihaz var.
+                          Özel Ağ: henüz başka bir cihaz bağlanmadı, bu yüzden haritada yalnızca bu
+                          cihaz var.
                         </p>
                       ) : null}
                     </Card>
