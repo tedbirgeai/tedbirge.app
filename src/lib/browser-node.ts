@@ -345,7 +345,15 @@ export class BrowserNode {
   private onState: (s: BrowserNodeState) => void;
   private channel: ReturnType<typeof supabase.channel> | null = null;
   private cloudUp = false;
+  /** Sinyal kanalı yeniden abone olma sayacı ve zamanlayıcısı. */
+  private cloudRetries = 0;
+  private cloudRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Presence'te eşin ilk görüldüğü an — teklif kilitlenmesini çözer. */
+  private firstSeenPresence = new Map<string, number>();
+  /** Bağlantısı kurulmamış eşleri düzenli yeniden arama zamanlayıcısı. */
+  private dialTimer: ReturnType<typeof setInterval> | null = null;
   private cloudReady: Promise<void> | null = null;
+
   private resolveCloudReady: (() => void) | null = null;
   private localBus: BroadcastChannel | null = null;
   private localSeen = new Map<string, number>();
