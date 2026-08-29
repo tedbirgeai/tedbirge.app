@@ -88,8 +88,11 @@ type Pending = { chunks: Map<number, string>; total: number; meta: MediaChunk };
 
 const pending = new Map<string, Pending>();
 
-/** Parçayı biriktirir; tamamlandıysa birleşmiş medyayı döndürür. */
-export function collectChunk(chunk: MediaChunk):
+/**
+ * Parçayı biriktirir; tamamlandıysa birleşmiş medyayı döndürür.
+ * Birleştirme de turlar hâlinde yapılır: büyük dosyada arayüz donmaz.
+ */
+export async function collectChunk(chunk: MediaChunk): Promise<
   | {
       done: true;
       name: string;
@@ -99,7 +102,8 @@ export function collectChunk(chunk: MediaChunk):
       mid: string;
       convId: string;
     }
-  | { done: false; received: number; total: number } {
+  | { done: false; received: number; total: number }
+> {
   let entry = pending.get(chunk.mid);
   if (!entry) {
     entry = { chunks: new Map(), total: chunk.total, meta: chunk };
@@ -109,10 +113,12 @@ export function collectChunk(chunk: MediaChunk):
   if (entry.chunks.size < entry.total) {
     return { done: false, received: entry.chunks.size, total: entry.total };
   }
-  const dataUrl = Array.from({ length: entry.total }, (_, i) => entry!.chunks.get(i) ?? "").join(
-    "",
-  );
   pending.delete(chunk.mid);
+  const parts: string[] = [];
+  for (let i = 0; i < entry.total; i += 1) {
+    parts.push(entry.chunks.get(i) ?? "");
+    if ((i + 1) % BATCH === 0 && i + 1 < entry.total) await breathe();
+  }
   return {
     done: true,
     mid: chunk.mid,
@@ -120,18 +126,8 @@ export function collectChunk(chunk: MediaChunk):
     name: entry.meta.name,
     mime: entry.meta.mime,
     size: entry.meta.size,
-    dataUrl,
+    dataUrl: parts.join(""),
   };
-}
-
-/** Parçaları turlar hâlinde birleştirir; büyük dosyada arayüz donmaz. */
-export async function joinChunks(entryTotal: number, get: (i: number) => string): Promise<string> {
-  const parts: string[] = [];
-  for (let i = 0; i < entryTotal; i += 1) {
-    parts.push(get(i));
-    if ((i + 1) % BATCH === 0 && i + 1 < entryTotal) await breathe();
-  }
-  return parts.join("");
 }
 
 export function humanSize(bytes: number): string {
