@@ -762,33 +762,49 @@ export default function Messenger() {
 
               <div className="flex min-h-0 flex-col gap-3 overflow-y-auto">
                 <Card title="Katılımcılar">
-                  <div className="space-y-2">
-                    {participants.map((p) => (
-                      <div
+                  {knownPeers.length + nearbyPeers.length > 0 ? (
+                    <p
+                      className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wide"
+                      style={{ color: "var(--tb-muted)" }}
+                    >
+                      Rehberiniz
+                    </p>
+                  ) : null}
+                  <div className="space-y-1">
+                    <PeerRow peer={selfParticipant as PeerRowData} />
+                    {knownPeers.map((p) => (
+                      <PeerRow
                         key={p.id}
-                        className="flex items-center justify-between gap-2 text-[13px]"
-                      >
-                        <span className="flex min-w-0 items-center gap-2">
-                          <DeviceIcon kind={p.kind} />
-                          <span className="truncate">{p.self ? `${p.name} (siz)` : p.name}</span>
-                          <span
-                            className="shrink-0 text-[10px] tabular-nums"
-                            style={{ color: "var(--tb-muted)", opacity: 0.65 }}
-                            title="Teknik düğüm kimliği"
-                          >
-                            {p.badge}
-                          </span>
-                        </span>
-                        <span
-                          className="shrink-0 text-[11px]"
-                          style={{ color: "var(--tb-muted)" }}
-                          title={p.hint}
-                        >
-                          {p.handle}
-                        </span>
-                      </div>
+                        peer={p as PeerRowData}
+                        onMessage={openChatWith}
+                        onCall={startCallWith}
+                        onRenamed={() => setIdentityTick((n) => n + 1)}
+                      />
                     ))}
                   </div>
+
+                  {nearbyPeers.length > 0 ? (
+                    <>
+                      <p
+                        className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wide"
+                        style={{ color: "var(--tb-muted)" }}
+                      >
+                        Çevredeki ağ cihazları
+                      </p>
+                      <div className="space-y-1">
+                        {nearbyPeers.map((p) => (
+                          <PeerRow
+                            key={p.id}
+                            peer={p as PeerRowData}
+                            onMessage={openChatWith}
+                            onCall={startCallWith}
+                            onRenamed={() => setIdentityTick((n) => n + 1)}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+
                   {participants.length <= 1 ? (
                     <div
                       className="mt-2 flex items-center gap-2 rounded-lg px-2.5 py-2 text-[12px]"
@@ -809,7 +825,7 @@ export default function Messenger() {
                         />
                       </span>
                       <span className="min-w-0">
-                        İkinci bir cihaz ağa girdiğinde otomatik listelenecek
+                        Ağ taranıyor, yeni cihazlar otomatik eklenecek
                       </span>
                     </div>
                   ) : null}
