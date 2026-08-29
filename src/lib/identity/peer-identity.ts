@@ -7,6 +7,7 @@
  */
 
 import { composeIdentityLabel, shortBadge, type DeviceKind } from "@/lib/identity/device";
+import { getNickname } from "@/lib/identity/peer-nickname";
 import { resolveDisplayName } from "@/lib/chat/name-resolver";
 
 export type PeerIdentity = { alias?: string; device?: string; kind?: DeviceKind };
