@@ -38,36 +38,61 @@ export function fileToDataUrl(file: Blob): Promise<string> {
   });
 }
 
-export function splitMedia(input: {
-  mid: string;
-  convId: string;
-  name: string;
-  mime: string;
-  size: number;
-  dataUrl: string;
-}): MediaChunk[] {
+/** Ana iş parçacığına nefes aldırır: arayüz donmaz. */
+const breathe = () => new Promise<void>((r) => setTimeout(r, 0));
+
+/** Kaç parçada bir ana döngüye dönüleceği. */
+const BATCH = 8;
+
+/**
+ * Bloklamayan parçalama: büyük dosyalar tek makro-görevde değil, sekizerli
+ * turlar hâlinde bölünür. Her turda arayüz nefes alır, ilerleme bildirilir.
+ */
+export async function splitMediaAsync(
+  input: {
+    mid: string;
+    convId: string;
+    name: string;
+    mime: string;
+    size: number;
+    dataUrl: string;
+  },
+  onProgress?: (percent: number) => void,
+): Promise<MediaChunk[]> {
   const total = Math.max(1, Math.ceil(input.dataUrl.length / CHUNK_SIZE));
   const ts = Date.now();
-  return Array.from({ length: total }, (_, idx) => ({
-    t: "media-chunk" as const,
-    mid: input.mid,
-    convId: input.convId,
-    name: input.name,
-    mime: input.mime,
-    size: input.size,
-    idx,
-    total,
-    data: input.dataUrl.slice(idx * CHUNK_SIZE, (idx + 1) * CHUNK_SIZE),
-    ts,
-  }));
+  const out: MediaChunk[] = [];
+  for (let idx = 0; idx < total; idx += 1) {
+    out.push({
+      t: "media-chunk",
+      mid: input.mid,
+      convId: input.convId,
+      name: input.name,
+      mime: input.mime,
+      size: input.size,
+      idx,
+      total,
+      data: input.dataUrl.slice(idx * CHUNK_SIZE, (idx + 1) * CHUNK_SIZE),
+      ts,
+    });
+    if ((idx + 1) % BATCH === 0 && idx + 1 < total) {
+      onProgress?.(Math.round(((idx + 1) / total) * 100));
+      await breathe();
+    }
+  }
+  onProgress?.(100);
+  return out;
 }
 
 type Pending = { chunks: Map<number, string>; total: number; meta: MediaChunk };
 
 const pending = new Map<string, Pending>();
 
-/** Parçayı biriktirir; tamamlandıysa birleşmiş medyayı döndürür. */
-export function collectChunk(chunk: MediaChunk):
+/**
+ * Parçayı biriktirir; tamamlandıysa birleşmiş medyayı döndürür.
+ * Birleştirme de turlar hâlinde yapılır: büyük dosyada arayüz donmaz.
+ */
+export async function collectChunk(chunk: MediaChunk): Promise<
   | {
       done: true;
       name: string;
@@ -77,7 +102,8 @@ export function collectChunk(chunk: MediaChunk):
       mid: string;
       convId: string;
     }
-  | { done: false; received: number; total: number } {
+  | { done: false; received: number; total: number }
+> {
   let entry = pending.get(chunk.mid);
   if (!entry) {
     entry = { chunks: new Map(), total: chunk.total, meta: chunk };
@@ -87,10 +113,12 @@ export function collectChunk(chunk: MediaChunk):
   if (entry.chunks.size < entry.total) {
     return { done: false, received: entry.chunks.size, total: entry.total };
   }
-  const dataUrl = Array.from({ length: entry.total }, (_, i) => entry!.chunks.get(i) ?? "").join(
-    "",
-  );
   pending.delete(chunk.mid);
+  const parts: string[] = [];
+  for (let i = 0; i < entry.total; i += 1) {
+    parts.push(entry.chunks.get(i) ?? "");
+    if ((i + 1) % BATCH === 0 && i + 1 < entry.total) await breathe();
+  }
   return {
     done: true,
     mid: chunk.mid,
@@ -98,7 +126,7 @@ export function collectChunk(chunk: MediaChunk):
     name: entry.meta.name,
     mime: entry.meta.mime,
     size: entry.meta.size,
-    dataUrl,
+    dataUrl: parts.join(""),
   };
 }
 

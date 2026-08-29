@@ -23,6 +23,9 @@ export function CallHost() {
         // Arama motoru her koşulda kurulur; ağ başlatma başarısız olsa bile
         // arama ekranı çalışır.
         bootCalls();
+        // Yerel takma adlar kalıcı depodan (IndexedDB) yüklenir; eski
+        // localStorage kaydı ilk açılışta bir kez içeri taşınır.
+        void import("@/lib/identity/peer-nickname").then((m) => m.hydrateNicknames());
         await startNode();
         await chat.bootChat();
         // Tek seferlik ama idempotent göç: kopya/hayalet kişi kayıtları

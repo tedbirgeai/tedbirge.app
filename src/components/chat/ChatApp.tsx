@@ -748,7 +748,7 @@ function ChatAppInner() {
 
   return (
     <div
-      className="wa wa-shell flex w-full flex-col"
+      className="wa wa-shell flex h-full w-full flex-col"
       style={{ background: "var(--wa-panel-soft)" }}
     >
       <PairingDialog nameOf={nameOf} />

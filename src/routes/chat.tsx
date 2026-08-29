@@ -27,7 +27,7 @@ export const Route = createFileRoute("/chat")({
 
 function ChatRoute() {
   return (
-    <main className="fixed inset-0 z-40 bg-background">
+    <main className="wa-viewport fixed inset-0 z-40 bg-background">
       <h1 className="sr-only">Tedbirge Sohbet ve Görüşme</h1>
       <ChatApp />
     </main>

@@ -31,7 +31,7 @@ import {
   collectChunk,
   fileToDataUrl,
   isMediaChunk,
-  splitMedia,
+  splitMediaAsync,
   MAX_MEDIA_BYTES,
 } from "@/lib/chat/media";
 import { digestsOf, isSyncMessage, merkleRoot, type SyncMessage } from "@/lib/chat/merkle";
@@ -587,7 +587,7 @@ export async function sendMedia(convId: string, file: File, transcript?: string)
   };
   await appendLocal(conv, msg);
 
-  const chunks = splitMedia({
+  const chunks = await splitMediaAsync({
     mid,
     convId,
     name: file.name,
@@ -964,7 +964,7 @@ export async function retryMessage(messageId: string): Promise<boolean> {
 
     if (msg.kind === "media" && msg.media?.dataUrl) {
       // Medya mesajı boş metin olarak değil, kendi parçalarıyla gönderilir.
-      const chunks = splitMedia({
+      const chunks = await splitMediaAsync({
         mid: msg.id,
         convId: conv.id,
         name: msg.media.name,
@@ -1411,7 +1411,7 @@ async function onMedia(from: string, raw: unknown) {
     return;
   }
   if (!isMediaChunk(p)) return;
-  const result = collectChunk(p);
+  const result = await collectChunk(p);
   if (!result.done) {
     publish({
       transfers: {
