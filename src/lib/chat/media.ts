@@ -62,6 +62,52 @@ export function splitMedia(input: {
   }));
 }
 
+/** Ana iş parçacığına nefes aldırır: arayüz donmaz. */
+const breathe = () => new Promise<void>((r) => setTimeout(r, 0));
+
+/** Kaç parçada bir ana döngüye dönüleceği. */
+const BATCH = 8;
+
+/**
+ * Bloklamayan parçalama: büyük dosyalar tek makro-görevde değil, sekizerli
+ * turlar hâlinde bölünür. Her turda arayüz nefes alır, ilerleme bildirilir.
+ */
+export async function splitMediaAsync(
+  input: {
+    mid: string;
+    convId: string;
+    name: string;
+    mime: string;
+    size: number;
+    dataUrl: string;
+  },
+  onProgress?: (percent: number) => void,
+): Promise<MediaChunk[]> {
+  const total = Math.max(1, Math.ceil(input.dataUrl.length / CHUNK_SIZE));
+  const ts = Date.now();
+  const out: MediaChunk[] = [];
+  for (let idx = 0; idx < total; idx += 1) {
+    out.push({
+      t: "media-chunk",
+      mid: input.mid,
+      convId: input.convId,
+      name: input.name,
+      mime: input.mime,
+      size: input.size,
+      idx,
+      total,
+      data: input.dataUrl.slice(idx * CHUNK_SIZE, (idx + 1) * CHUNK_SIZE),
+      ts,
+    });
+    if ((idx + 1) % BATCH === 0 && idx + 1 < total) {
+      onProgress?.(Math.round(((idx + 1) / total) * 100));
+      await breathe();
+    }
+  }
+  onProgress?.(100);
+  return out;
+}
+
 type Pending = { chunks: Map<number, string>; total: number; meta: MediaChunk };
 
 const pending = new Map<string, Pending>();
