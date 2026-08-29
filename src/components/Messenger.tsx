@@ -380,7 +380,9 @@ export default function Messenger() {
         hint: "Şu an kullandığınız cihaz",
         self: true,
       },
-      ...livePeers.map((p) => ({
+      // Eş listesi yalnızca istemcide anlamlıdır; sunucu çıktısıyla
+      // uyuşmazlık olmaması için hidrasyon tamamlanmadan render edilmez.
+      ...(hydrated ? livePeers : []).map((p) => ({
         id: p.id,
         name: peerDisplayLabel(p.id),
         badge: shortBadge(p.id),
@@ -391,7 +393,7 @@ export default function Messenger() {
         relay: !p.direct,
         named: isNamedPeer(p.id),
       })),
-      ...signalPeers
+      ...(hydrated ? signalPeers : [])
         .filter((id) => !livePeers.some((p) => p.id === id))
         .map((id) => ({
           id,
