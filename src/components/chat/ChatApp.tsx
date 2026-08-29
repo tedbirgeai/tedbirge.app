@@ -831,6 +831,15 @@ function ChatAppInner() {
               paddingTop: "calc(0.75rem + env(safe-area-inset-top))",
             }}
           >
+            <Link
+              to="/"
+              className="wa-press mr-1 flex h-10 w-10 items-center justify-center rounded-full"
+              style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
+              aria-label="Ana sayfaya dön"
+              title="Ana sayfaya dön"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
             <button
               type="button"
               onClick={() => {
@@ -881,6 +890,15 @@ function ChatAppInner() {
               paddingTop: "calc(0.625rem + env(safe-area-inset-top))",
             }}
           >
+            <Link
+              to="/"
+              className="wa-press flex h-9 w-9 shrink-0 items-center justify-center rounded-full hover:bg-black/5"
+              style={{ color: "var(--wa-muted)" }}
+              aria-label="Ana sayfaya dön"
+              title="Ana sayfaya dön"
+            >
+              <ArrowLeft className="h-[18px] w-[18px]" />
+            </Link>
             <button
               type="button"
               onClick={() => myAvatarInput.current?.click()}

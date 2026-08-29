@@ -707,7 +707,7 @@ export default function Messenger() {
                 </form>
               </div>
 
-              <div className="hidden min-h-0 flex-col gap-3 overflow-y-auto xl:flex">
+              <div className="flex min-h-0 flex-col gap-3 overflow-y-auto">
                 <Card title="Katılımcılar">
                   <div className="space-y-2">
                     {participants.map((p) => (
@@ -736,6 +736,30 @@ export default function Messenger() {
                       </div>
                     ))}
                   </div>
+                  {participants.length <= 1 ? (
+                    <div
+                      className="mt-2 flex items-center gap-2 rounded-lg px-2.5 py-2 text-[12px]"
+                      style={{
+                        background: "var(--tb-panel-soft)",
+                        border: "1px solid var(--tb-border)",
+                        color: "var(--tb-muted)",
+                      }}
+                    >
+                      <span className="relative flex h-2 w-2 shrink-0">
+                        <span
+                          className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60"
+                          style={{ background: "var(--tb-accent)" }}
+                        />
+                        <span
+                          className="relative inline-flex h-2 w-2 rounded-full"
+                          style={{ background: "var(--tb-accent)" }}
+                        />
+                      </span>
+                      <span className="min-w-0">
+                        İkinci bir cihaz ağa girdiğinde otomatik listelenecek
+                      </span>
+                    </div>
+                  ) : null}
                 </Card>
                 <Card title="Oturum">
                   <Row k="Düğüm" v={nodeCountLabel} />
