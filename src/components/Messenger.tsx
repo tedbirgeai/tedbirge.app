@@ -367,7 +367,9 @@ export default function Messenger() {
       {
         id: node.nodeId || "self",
         name: selfName,
-        badge: shortBadge(node.nodeId),
+        // Sunucuda kimlik yoktur; hidrasyon uyuşmazlığı olmasın diye rozet
+        // yalnızca istemci tarafında çözülür.
+        badge: hydrated ? shortBadge(node.nodeId) : shortBadge(""),
         kind: hydrated ? getDeviceKind() : "browser",
         handle:
           media === "data"
