@@ -893,6 +893,13 @@ export class BrowserNode {
     }
     this.localBus = null;
     this.localSeen.clear();
+    if (this.dialTimer) clearInterval(this.dialTimer);
+    this.dialTimer = null;
+    if (this.cloudRetryTimer) clearTimeout(this.cloudRetryTimer);
+    this.cloudRetryTimer = null;
+    this.cloudRetries = 0;
+    this.firstSeenPresence.clear();
+
     this.cloudUp = false;
     this.resolveCloudReady?.();
     this.resolveCloudReady = null;
