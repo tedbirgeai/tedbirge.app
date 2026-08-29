@@ -582,9 +582,9 @@ export default function Messenger() {
           </div>
 
           {tab === "chat" ? (
-            <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden xl:grid-cols-3">
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto xl:grid-cols-3 xl:overflow-hidden">
               <div
-                className="flex min-h-0 flex-col overflow-hidden rounded-xl backdrop-blur-sm xl:col-span-2"
+                className="flex min-h-[60vh] flex-col overflow-hidden rounded-xl backdrop-blur-sm xl:col-span-2 xl:min-h-0"
                 style={{ background: "var(--tb-panel)", border: "1px solid var(--tb-border)" }}
               >
                 <div
@@ -820,7 +820,7 @@ export default function Messenger() {
                 </form>
               </div>
 
-              <div className="flex min-h-0 flex-col gap-3 overflow-y-auto">
+              <div className="flex min-h-0 flex-col gap-3 xl:overflow-y-auto">
                 <Card title="Katılımcılar">
                   {knownPeers.length + nearbyPeers.length > 0 ? (
                     <p
