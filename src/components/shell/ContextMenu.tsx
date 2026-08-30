@@ -65,7 +65,7 @@ export function ContextMenu({
       ref={ref}
       role="menu"
       aria-label={ariaLabel}
-      className="tbos-window tbos-ctx absolute z-[120] w-60 rounded-xl p-1 shadow-2xl backdrop-blur-xl"
+      className="tbos-window tbos-ctx pointer-events-auto absolute z-[120] w-60 rounded-xl p-1 shadow-2xl backdrop-blur-xl"
       style={{ left: pos.x, top: pos.y }}
       onPointerDown={(e) => e.stopPropagation()}
       onContextMenu={(e) => e.preventDefault()}
