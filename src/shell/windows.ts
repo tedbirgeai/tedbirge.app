@@ -114,6 +114,24 @@ export function resizeWindow(id: string, w: number, h: number) {
   emit();
 }
 
+/** Kenar/köşe tutamakları: konum ve boyut birlikte güncellenir. */
+export function setWindowBox(id: string, x: number, y: number, w: number, h: number) {
+  windows = windows.map((win) => {
+    if (win.id !== id) return win;
+    const nw = Math.max(320, w);
+    const nh = Math.max(220, h);
+    return {
+      ...win,
+      w: nw,
+      h: nh,
+      x: Math.max(0, x - (nw - w)),
+      y: Math.max(0, y - (nh - h)),
+    };
+  });
+  emit();
+}
+
+
 export function toggleMaximize(id: string) {
   windows = windows.map((w) => (w.id === id ? { ...w, maximized: !w.maximized } : w));
   emit();

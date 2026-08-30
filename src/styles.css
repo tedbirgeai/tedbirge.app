@@ -817,3 +817,81 @@ body {
   --tb-rose-500: #d1726a;
   --tb-rose-600: #b85f58;
 }
+
+/* ------------------------------------------------------------------
+ * TEDBİRGE® WebOS — MASAÜSTÜ YÜZEYİ, İKONLAR, SİSTEM ÇUBUĞU, DOCK
+ * Tüm renkler `--tb-*` tema değişkenlerinden okunur.
+ * ---------------------------------------------------------------- */
+.tbos-wallpaper {
+  background-color: var(--tb-bg);
+  background-image:
+    radial-gradient(
+      900px 480px at 12% -8%,
+      color-mix(in srgb, var(--tb-accent) 16%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      760px 420px at 92% 108%,
+      color-mix(in srgb, var(--tb-accent-2) 18%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      600px 600px at 65% 25%,
+      color-mix(in srgb, var(--tb-text) 5%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(160deg, var(--tb-bg) 0%, var(--tb-bg-soft) 100%);
+}
+
+.tbos-desk-icon {
+  background: transparent;
+  border: 1px solid transparent;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+.tbos-desk-icon:hover {
+  background: color-mix(in srgb, var(--tb-text) 5%, transparent);
+}
+.tbos-desk-icon--on {
+  background: color-mix(in srgb, var(--tb-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--tb-accent) 40%, transparent);
+}
+.tbos-desk-glyph {
+  color: var(--tb-accent);
+  background: var(--tb-panel);
+  border: 1px solid var(--tb-border);
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: var(--tb-shadow);
+}
+
+.tbos-sysbar {
+  background: var(--tb-panel);
+  border-bottom: 1px solid var(--tb-border);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+
+.tbos-dock {
+  background: var(--tb-panel);
+  border: 1px solid var(--tb-border);
+  border-radius: 1rem;
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: var(--tb-shadow);
+}
+.tbos-dock-item {
+  color: var(--tb-muted);
+  transition:
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 140ms ease,
+    color 140ms ease;
+}
+.tbos-dock-item:hover {
+  color: var(--tb-accent);
+  background: color-mix(in srgb, var(--tb-accent) 12%, transparent);
+  transform: translateY(-3px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tbos-dock-item:hover {
+    transform: none;
+  }
+}
