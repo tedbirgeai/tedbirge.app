@@ -8,13 +8,15 @@
  * zengin **Tedbirge Web Kabuğu** kartına düşer.
  */
 
-import { useCallback, useState } from "react";
-import { ExternalLink, Globe, Layers, RotateCw, Search, Waypoints } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ExternalLink, Globe, Layers, RotateCw, Search, ShieldOff, Waypoints } from "lucide-react";
 
 import { BrandIcon, domainOf } from "@/components/shell/BrandIcon";
 import { GenericAppContainer } from "@/components/shell/GenericAppContainer";
 import { gatewayAllowed, gatewayUrl } from "@/lib/shell/embed-strategy";
+import { useNetworkMode } from "@/lib/shell/network-mode";
 import type { EmbedPolicy } from "@/shell/web-apps";
+
 
 const SEARCH = (q: string) => `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(q)}`;
 
