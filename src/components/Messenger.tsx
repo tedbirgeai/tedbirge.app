@@ -47,7 +47,12 @@ import {
   type LiveMessage,
   type LivePeer,
 } from "@/services/signaling";
-import { startCall as startPeerCall, endCall as endPeerCall, useCall } from "@/lib/call/engine";
+import {
+  startCall as startPeerCall,
+  endCall as endPeerCall,
+  getPeerStream,
+  useCall,
+} from "@/lib/call/engine";
 
 import {
   composeIdentityLabel,
@@ -319,6 +324,8 @@ export default function Messenger() {
   const [activePeer, setActivePeer] = useState<string | null>(null);
   const draftRef = useRef<HTMLInputElement | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const call = useCall();
   useEffect(() => setHydrated(true), []);
   useEffect(() => onPeerIdentity(() => setIdentityTick((n) => n + 1)), []);
   useEffect(() => onNickname(() => setIdentityTick((n) => n + 1)), []);
