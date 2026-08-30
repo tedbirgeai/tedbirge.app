@@ -53,7 +53,9 @@ export default defineConfig({
           // `wasm` şart: çekirdek modülü de ön belleğe alınmazsa tam
           // çevrimdışı açılışta yönlendirme motoru yüklenemez.
           globPatterns: ["**/*.{js,css,html,woff,woff2,ttf,svg,png,ico,webmanifest,json,txt,wasm}"],
-          navigateFallback: "/cevrimdisi",
+          // Çevrimdışı gezinmelerde masaüstü kabuğu açılır; "/cevrimdisi"
+          // yalnız bilinçli açılan bilgi sayfası olarak kalır.
+          navigateFallback: "/",
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
           navigateFallbackDenylist: [/^\/api\//, /^\/~oauth/],
           cleanupOutdatedCaches: true,
