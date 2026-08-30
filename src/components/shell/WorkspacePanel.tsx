@@ -28,6 +28,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { webApp } from "@/shell/web-apps";
 import { catalogApp } from "@/shell/installed";
 import { getApp } from "@/apps/registry";
+import { getFontScale } from "@/lib/ui/font-scale";
 
 import { closeWindow, openWindow, useWindows, type WindowRecord } from "@/shell/windows";
 
