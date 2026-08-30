@@ -70,7 +70,7 @@ export function WorkspacePanel() {
     return () => ro.disconnect();
   }, []);
 
-  const launch = useCallback((id: string) => {
+  const launch = useCallback((id: string, fresh = false) => {
     pressFeedback();
     if (id === "relay") return setRelay(true);
     if (id === "mesh") return setMesh(true);
@@ -81,9 +81,12 @@ export function WorkspacePanel() {
     if (!getApp(id) && !web && import.meta.env.DEV) {
       console.warn(`[tbos] "${id}" AppRegistry'de kayıtlı değil.`);
     }
-    openWindow(id, web ? web.label : (WINDOW_TITLES[id] ?? catalogApp(id)?.label ?? id));
+    openWindow(id, web ? web.label : (WINDOW_TITLES[id] ?? catalogApp(id)?.label ?? id), fresh);
 
   }, []);
+
+  /** Sağ tık menüsündeki "Yeni Pencerede Aç": var olan pencere yeniden kullanılmaz. */
+  const launchNew = useCallback((id: string) => launch(id, true), [launch]);
 
   const visible = windows.filter((w) => !w.minimized);
   const top = visible.length ? visible.reduce((a, b) => (a.z > b.z ? a : b)) : null;
@@ -101,7 +104,7 @@ export function WorkspacePanel() {
 
       {/* Masaüstü yüzeyi: duvar kâğıdı, kısayollar ve pencereler. */}
       <div ref={surfaceRef} className="relative min-h-0 flex-1 overflow-hidden">
-        <Desktop onOpen={launch} draggable={!isMobile} columnsHeight={surfaceH} />
+        <Desktop onOpen={launch} onOpenNew={launchNew} draggable={!isMobile} columnsHeight={surfaceH} />
 
         {!isMobile && windows.length > 0 ? (
           <div className="pointer-events-none absolute inset-0">
@@ -139,7 +142,12 @@ export function WorkspacePanel() {
         </div>
       ) : null}
 
-      <Dock windows={windows} onLaunch={launch} onStore={() => launch("store")} />
+      <Dock
+        windows={windows}
+        onLaunch={launch}
+        onLaunchNew={launchNew}
+        onStore={() => launch("store")}
+      />
 
       <AppsDialog open={packages} onClose={() => setPackages(false)} />
       <RelaySettingsDialog open={relay} onClose={() => setRelay(false)} />
