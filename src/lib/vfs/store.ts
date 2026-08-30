@@ -128,3 +128,42 @@ export function releaseUrls(): void {
   for (const url of urls.values()) URL.revokeObjectURL(url);
   urls.clear();
 }
+
+export type StorageUsage = { files: number; bytes: number; quota: number | null };
+
+/** Masaüstü depolama kartı için yerel kullanım özeti. */
+export async function storageUsage(): Promise<StorageUsage> {
+  let files = 0;
+  let bytes = 0;
+  try {
+    const list = await listFiles();
+    files = list.length;
+    bytes = list.reduce((sum, f) => sum + f.size, 0);
+  } catch {
+    /* depo kapalı olabilir */
+  }
+  let quota: number | null = null;
+  try {
+    if (typeof navigator !== "undefined" && navigator.storage?.estimate) {
+      const est = await navigator.storage.estimate();
+      quota = est.quota ?? null;
+    }
+  } catch {
+    /* kota okunamayabilir */
+  }
+  return { files, bytes, quota };
+}
+
+/**
+ * Tarayıcıdan kalıcı depolama izni ister; verilirse dosyalar yer
+ * baskısı altında bile silinmez (çevrimdışı güvence).
+ */
+export async function requestPersistentStorage(): Promise<boolean> {
+  try {
+    if (typeof navigator === "undefined" || !navigator.storage?.persist) return false;
+    if (await navigator.storage.persisted()) return true;
+    return await navigator.storage.persist();
+  } catch {
+    return false;
+  }
+}
