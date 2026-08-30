@@ -3,29 +3,41 @@
  * ------------------------------------------------------------------
  * Alt kısımda cam yüzeyli şerit: kurulu uygulamalar sabit simge olarak
  * durur, açık pencereler simgenin altında nokta ile işaretlenir.
- * Küçültülmüş pencere kendi simgesine tıklanınca geri gelir.
+ * Küçültülmüş pencere kendi simgesine tıklanınca geri gelir. Simgeye
+ * sağ tıklandığında tarayıcı menüsü değil, işletim sistemi menüsü açılır.
  */
 
+import { useState } from "react";
+
 import { AppIcon } from "@/components/shell/app-icons";
+import { ContextMenu } from "@/components/shell/ContextMenu";
+import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
 import { catalogApp, useDesktopState } from "@/shell/installed";
 import { focusWindow, restoreWindow, type WindowRecord } from "@/shell/windows";
 
 export function Dock({
   windows,
   onLaunch,
+  onLaunchNew,
   onStore,
 }: {
   windows: WindowRecord[];
   onLaunch: (id: string) => void;
+  onLaunchNew: (id: string) => void;
   onStore: () => void;
 }) {
   const { installed } = useDesktopState();
+  const [menu, setMenu] = useState<{ x: number; y: number; appId: string } | null>(null);
+  const [properties, setProperties] = useState<string | null>(null);
   const extra = windows.filter((w) => !installed.includes(w.appId)).map((w) => w.appId);
   // Mağaza sağdaki sabit düğmede duruyor; şeritte ikinci kez gösterilmez.
   const ids = Array.from(new Set([...installed, ...extra])).filter((id) => id !== "store");
 
   return (
-    <div className="pointer-events-none relative z-[95] flex shrink-0 justify-center px-2 pb-2">
+    <div
+      className="pointer-events-none relative z-[95] flex shrink-0 justify-center px-2 pb-2"
+      onContextMenu={(e) => e.preventDefault()}
+    >
       <div className="tbos-dock pointer-events-auto flex max-w-full items-end gap-1 overflow-x-auto px-2 py-1.5">
         {ids.map((id) => {
           const app = catalogApp(id);
@@ -41,6 +53,11 @@ export function Dock({
                 if (!win) return onLaunch(id);
                 if (win.minimized) return restoreWindow(win.id);
                 focusWindow(win.id);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setMenu({ x: e.clientX, y: e.clientY - 8, appId: id });
               }}
               className="tbos-dock-item group relative grid shrink-0 place-items-center rounded-xl px-2 py-1.5"
             >
@@ -71,6 +88,29 @@ export function Dock({
           <span className="mt-0.5 block h-1 w-1" aria-hidden />
         </button>
       </div>
+
+      {menu ? (
+        <div className="pointer-events-none fixed inset-0 z-[120]">
+          <ContextMenu
+            x={menu.x}
+            y={menu.y}
+            items={appMenuItems({
+              id: menu.appId,
+              onOpen: onLaunch,
+              onOpenNew: onLaunchNew,
+              onProperties: (id) => setProperties(id),
+            })}
+            ariaLabel="Uygulama menüsü"
+            onClose={() => setMenu(null)}
+          />
+        </div>
+      ) : null}
+
+      {properties ? (
+        <div className="pointer-events-auto fixed inset-0 z-[130]">
+          <AppPropertiesDialog id={properties} onClose={() => setProperties(null)} />
+        </div>
+      ) : null}
     </div>
   );
 }
