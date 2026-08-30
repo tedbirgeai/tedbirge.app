@@ -10,7 +10,9 @@ import { AppsDialog } from "@/components/shell/AppsDialog";
 import { RelaySettingsDialog } from "@/components/shell/RelaySettingsDialog";
 import { MeshStatusDialog } from "@/components/shell/MeshStatusDialog";
 import { FileTransferDialog } from "@/components/shell/FileTransferDialog";
-import { GenericAppContainer } from "@/components/shell/GenericAppContainer";
+import { TedbirgeWebView } from "@/components/shell/TedbirgeWebView";
+import { WallpaperSettingsApp } from "@/components/shell/apps/WallpaperSettingsApp";
+
 import { WindowFrame } from "@/components/shell/WindowFrame";
 import { Dock } from "@/components/shell/Dock";
 import { SystemBar } from "@/components/shell/SystemBar";
@@ -156,16 +158,17 @@ function AppSurface({
   const web = webApp(win.appId);
   if (web) {
     return (
-      <GenericAppContainer
+      <TedbirgeWebView
         url={web.url}
         label={web.label}
         embed={web.embed}
-        embedUrl={web.embedUrl}
-        proxy={web.proxy}
+        {...(web.embedUrl ? { embedUrl: web.embedUrl } : {})}
+        {...(web.proxy ? { proxy: web.proxy } : {})}
       />
     );
-
   }
+  if (win.appId === "wallpaper") return <WallpaperSettingsApp />;
+
   if (win.appId === "messenger") {
     return (
       <Suspense
