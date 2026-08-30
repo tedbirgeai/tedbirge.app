@@ -210,6 +210,7 @@ export function bootFileTransfer() {
         size,
         percent: 0,
         status: "aliniyor",
+        speed: 0,
         at: Date.now(),
       });
       return;
@@ -220,17 +221,21 @@ export function bootFileTransfer() {
       const buf = parts.get(id);
       const t = transfers.get(id);
       if (!buf || !t) return;
+      if (cancelled.has(id)) return;
       const i = Number(b["i"] ?? -1);
       if (i < 0 || i >= buf.length) return;
       buf[i] = String(b["data"] ?? "");
       const done = buf.filter((x) => x.length > 0).length;
       const percent = Math.round((done / buf.length) * 100);
+      const elapsed = Math.max(0.001, (Date.now() - t.at) / 1000);
+      const speed = Math.round((t.size * (done / buf.length)) / elapsed);
       if (done === buf.length) {
-        put({ ...t, percent: 100, status: "tamam", dataUrl: buf.join("") });
+        put({ ...t, percent: 100, status: "tamam", speed: 0, dataUrl: buf.join("") });
         parts.delete(id);
       } else {
-        put({ ...t, percent });
+        put({ ...t, percent, speed });
       }
     }
+
   });
 }
