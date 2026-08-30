@@ -871,6 +871,8 @@ export class BrowserNode {
     this.lanSocket = null;
     window.removeEventListener("online", this.handleOnline);
     window.removeEventListener("offline", this.handleOffline);
+    document.removeEventListener("visibilitychange", this.handleWake);
+    window.removeEventListener("pageshow", this.handleWake);
     this.peers.forEach((p) => p.pc.close());
     this.peers.clear();
     this.peerSeen.clear();
