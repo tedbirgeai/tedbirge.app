@@ -14,32 +14,28 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 
-const ALLOWED_HOSTS = [
-  "duckduckgo.com",
-  "html.duckduckgo.com",
-  "lite.duckduckgo.com",
-  "wikipedia.org",
-  "m.wikipedia.org",
-  "openstreetmap.org",
-  "blockscout.com",
-  "ipfs.io",
-  "coingecko.com",
-  "nitter.net",
-  "search.marcia.cc",
-  "www.bing.com",
-  "startpage.com",
-  "www.ecosia.org",
-  "hnrss.org",
-  "news.ycombinator.com",
-];
+import { isGatewayHostAllowed } from "@/lib/shell/gateway-hosts";
 
 const MAX_BYTES = 4 * 1024 * 1024;
 const TIMEOUT_MS = 12_000;
 
-function hostAllowed(host: string): boolean {
-  const h = host.toLowerCase();
-  return ALLOWED_HOSTS.some((a) => h === a || h.endsWith(`.${a}`));
+/** Alan adı başına basit hız sınırı: hedef sitelere yük bindirilmez. */
+const RATE_WINDOW_MS = 10_000;
+const RATE_MAX = 20;
+const hits = new Map<string, number[]>();
+
+function rateLimited(host: string): boolean {
+  const now = Date.now();
+  const list = (hits.get(host) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  list.push(now);
+  hits.set(host, list);
+  return list.length > RATE_MAX;
 }
+
+function hostAllowed(host: string): boolean {
+  return isGatewayHostAllowed(host);
+}
+
 
 /** Aktarılan HTML içinde bağlantıların geçitten geçmesini sağlar. */
 function rewriteHtml(html: string, target: URL): string {
