@@ -37,6 +37,7 @@ import { FilesApp } from "@/components/shell/apps/FilesApp";
 
 import {
   broadcastText,
+  sendTextTo,
   ensureLiveNode,
   measureRoute,
   nodeLabel,
@@ -46,6 +47,7 @@ import {
   type LiveMessage,
   type LivePeer,
 } from "@/services/signaling";
+import { startCall as startPeerCall, endCall as endPeerCall, useCall } from "@/lib/call/engine";
 
 import {
   composeIdentityLabel,
