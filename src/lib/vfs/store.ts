@@ -13,6 +13,13 @@ const DB_NAME = "tedbirge-vfs";
 const DB_VERSION = 2;
 const STORE = "files";
 
+/**
+ * Şema kilidi: depo sürümü tek kaynaktan okunur. Bir üst sürüme geçiş
+ * yalnız `openDb` içindeki `onupgradeneeded` yolundan yapılır; eski
+ * kayıtlar `normalizeEntry` ile ileri uyumlu hâle getirilir.
+ */
+export const VFS_SCHEMA_VERSION = DB_VERSION;
+
 /** Kullanıcıya görünen sabit klasörler. */
 export const VFS_FOLDERS = ["Belgeler", "Görseller", "Medya", "İndirilenler"] as const;
 export type VfsFolder = (typeof VFS_FOLDERS)[number];
@@ -24,6 +31,13 @@ export function folderForMime(mime: string): VfsFolder {
   if (mime.startsWith("image/")) return "Görseller";
   if (mime.startsWith("video/") || mime.startsWith("audio/")) return "Medya";
   return "Belgeler";
+}
+
+/** Şema dışı klasör adını reddeder; MIME'e göre geçerli klasöre düşer. */
+export function normalizeFolder(folder: unknown, mime = ""): VfsFolder {
+  return (VFS_FOLDERS as readonly string[]).includes(folder as string)
+    ? (folder as VfsFolder)
+    : folderForMime(mime);
 }
 
 export type VfsEntry = {
