@@ -124,7 +124,7 @@ export async function saveFiles(files: File[], folder?: VfsFolder): Promise<VfsE
       mime,
       size: f.size,
       at: Date.now(),
-      folder: folder ?? folderForMime(mime),
+      folder: normalizeFolder(folder, mime),
       blob: f,
     };
     await tx("readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>);
