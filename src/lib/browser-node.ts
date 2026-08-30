@@ -912,6 +912,26 @@ export class BrowserNode {
     void this.pollRelay();
   };
 
+  /**
+   * Cihaz uyandı / sekme öne geldi: sinyal kanalı sağlığı denetlenir,
+   * gerekiyorsa yeniden abone olunur ve kopan hatlar hemen yeniden aranır.
+   * Mobilde WiFi ↔ hücresel geçişinde en kritik toparlanma noktasıdır.
+   */
+  private handleWake = () => {
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+    if (!this.state.running) return;
+    const state = (this.channel as { state?: string } | null)?.state;
+    if (!this.channel || (state && state !== "joined")) {
+      void this.connectCloud();
+    }
+    void this.heartbeat();
+    void this.dialNewPeers();
+    void this.flushQueue();
+    void this.pollRelay();
+  };
+
+
+
   private handleOffline = () => {
     this.emit({ online: false });
     void appendEvent("uplink", "İnternet koptu — yerel kuyruk devrede.");
