@@ -187,7 +187,66 @@ export const WEB_APPS: WebAppEntry[] = [
     embed: "popup",
     iconDomain: "whatsapp.com",
   },
+
+  // --- Geçit üzerinden pencere içi çalışan kamusal servisler ---
+  {
+    id: "web.mdn",
+    category: "uretkenlik",
+    label: "Geliştirici Kılavuzu",
+    hint: "Web teknolojileri belgeleri",
+    url: "https://developer.mozilla.org/tr/",
+    iconDomain: "mozilla.org",
+    embed: "auto",
+    proxy: true,
+  },
+  {
+    id: "web.news.hn",
+    category: "sosyal",
+    label: "Teknoloji Haberleri",
+    hint: "Topluluk haber akışı",
+    url: "https://news.ycombinator.com/",
+    embed: "auto",
+    proxy: true,
+  },
+  {
+    id: "web.topo",
+    category: "araclar",
+    label: "Topoğrafya",
+    hint: "Yükselti ve arazi haritası",
+    url: "https://opentopomap.org/",
+    embed: "auto",
+    proxy: true,
+  },
+  {
+    id: "web.library",
+    category: "uretkenlik",
+    label: "Kütüphane",
+    hint: "Açık kitap arşivi",
+    url: "https://openlibrary.org/",
+    embed: "auto",
+    proxy: true,
+  },
+  {
+    id: "web.papers",
+    category: "uretkenlik",
+    label: "Makaleler",
+    hint: "Açık erişim bilimsel arşiv",
+    url: "https://arxiv.org/",
+    embed: "auto",
+    proxy: true,
+  },
+  {
+    id: "web.dict",
+    category: "uretkenlik",
+    label: "Sözlük",
+    hint: "Açık sözlük",
+    url: "https://tr.wiktionary.org/",
+    iconDomain: "wiktionary.org",
+    embed: "auto",
+    proxy: true,
+  },
 ];
+
 
 
 export function webApp(id: string): WebAppEntry | undefined {
