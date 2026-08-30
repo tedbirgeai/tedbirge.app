@@ -32,6 +32,9 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 
+import { BrandIcon, domainOf } from "@/components/shell/BrandIcon";
+import { webApp } from "@/shell/web-apps";
+
 const MAP: Record<string, ComponentType<{ className?: string }>> = {
   messenger: MessageCircle,
   files: FolderOpen,
