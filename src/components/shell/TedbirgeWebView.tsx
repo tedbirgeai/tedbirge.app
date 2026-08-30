@@ -2,18 +2,18 @@
  * TEDBİRGE DAHİLİ WEB GÖRÜNÜMÜ
  * ------------------------------------------------------------------
  * Harici hedefler her zaman bu kabuk içinde açılır: üstte gezinme
- * çubuğu (yenile, adres, geçit, harici sekme), altta çok aşamalı gömme
- * konteynırı. Hedef `X-Frame-Options`/CSP ile gömmeyi reddediyorsa
- * beyaz/kırmızı hata ekranı gösterilmez: pencere doğrudan **Tedbirge
- * Web Kabuğu** ile açılır; kullanıcı arama yapabilir ya da tek tıkla
- * geçit üzerinden gömmeyi deneyebilir.
+ * çubuğu (yenile, adres, harici sekme), altta gömme konteynırı.
+ * Hedef `X-Frame-Options`/CSP ile gömmeyi reddediyorsa tarayıcının
+ * gri/kırmızı "bağlanmayı reddetti" ekranı ASLA gösterilmez: pencere
+ * zengin **Tedbirge Web Kabuğu** kartına düşer.
  */
 
 import { useCallback, useState } from "react";
-import { ExternalLink, Globe, RotateCw, Search, ShieldCheck, Waypoints } from "lucide-react";
+import { ExternalLink, Globe, Layers, RotateCw, Search, Waypoints } from "lucide-react";
 
+import { BrandIcon, domainOf } from "@/components/shell/BrandIcon";
 import { GenericAppContainer } from "@/components/shell/GenericAppContainer";
-import { gatewayUrl } from "@/lib/shell/embed-strategy";
+import { gatewayAllowed, gatewayUrl } from "@/lib/shell/embed-strategy";
 import type { EmbedPolicy } from "@/shell/web-apps";
 
 const SEARCH = (q: string) => `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(q)}`;
@@ -39,31 +39,46 @@ export function TedbirgeWebView({
   const [query, setQuery] = useState("");
 
   const active = forced ?? url;
+  const proxyTarget = typeof proxy === "string" ? proxy : url;
+  const canGateway = gatewayAllowed(proxyTarget);
 
   const runSearch = useCallback(() => {
     const q = query.trim();
     if (!q) return;
-    setForced(gatewayUrl(SEARCH(q)));
+    setForced(SEARCH(q));
     setShell(false);
     setReload((r) => r + 1);
   }, [query]);
 
   const runGateway = useCallback(() => {
-    setForced(gatewayUrl(url));
+    setForced(gatewayUrl(proxyTarget));
     setShell(false);
     setReload((r) => r + 1);
-  }, [url]);
+  }, [proxyTarget]);
+
+  const reset = useCallback(() => {
+    setForced(null);
+    setShell(embed === "popup");
+    setReload((r) => r + 1);
+  }, [embed]);
+
+  const shellCard = (
+    <WebShell
+      label={label}
+      url={url}
+      query={query}
+      onQuery={setQuery}
+      onSearch={runSearch}
+      {...(canGateway ? { onGateway: runGateway } : {})}
+    />
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 items-center gap-2 border-b border-[var(--tb-border)] bg-[var(--tb-bg-soft)] px-2 py-1.5">
         <button
           type="button"
-          onClick={() => {
-            setForced(null);
-            setShell(embed === "popup");
-            setReload((r) => r + 1);
-          }}
+          onClick={reset}
           aria-label="Yenile"
           title="Yenile"
           className="wa-press grid h-7 w-7 place-items-center rounded-lg text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
@@ -76,15 +91,17 @@ export function TedbirgeWebView({
             {shell ? `Tedbirge Web Kabuğu · ${url}` : active}
           </span>
         </span>
-        <button
-          type="button"
-          onClick={runGateway}
-          title="Geçit Üzerinden Çalıştır"
-          className="wa-press inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--tb-accent)]/40 px-2 py-1 font-osmono text-[11px] text-[var(--tb-accent)]"
-        >
-          <Waypoints className="h-3.5 w-3.5" aria-hidden />
-          <span className="hidden sm:inline">Geçit Üzerinden Çalıştır</span>
-        </button>
+        {canGateway ? (
+          <button
+            type="button"
+            onClick={runGateway}
+            title="Geçit Üzerinden Çalıştır"
+            className="wa-press inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--tb-accent)]/40 px-2 py-1 font-osmono text-[11px] text-[var(--tb-accent)]"
+          >
+            <Waypoints className="h-3.5 w-3.5" aria-hidden />
+            <span className="hidden sm:inline">Geçit Üzerinden Çalıştır</span>
+          </button>
+        ) : null}
         <a
           href={url}
           target="_blank"
@@ -98,14 +115,7 @@ export function TedbirgeWebView({
       </div>
 
       {shell ? (
-        <WebShell
-          label={label}
-          url={url}
-          query={query}
-          onQuery={setQuery}
-          onSearch={runSearch}
-          onGateway={runGateway}
-        />
+        shellCard
       ) : (
         <GenericAppContainer
           key={`${reload}:${active}`}
@@ -113,17 +123,7 @@ export function TedbirgeWebView({
           label={label}
           embed={forced ? "iframe" : embed}
           {...(forced ? {} : embedUrl ? { embedUrl } : {})}
-          {...(forced ? {} : proxy ? { proxy } : {})}
-          renderFailed={() => (
-            <WebShell
-              label={label}
-              url={url}
-              query={query}
-              onQuery={setQuery}
-              onSearch={runSearch}
-              onGateway={runGateway}
-            />
-          )}
+          renderFailed={() => shellCard}
         />
       )}
     </div>
@@ -144,20 +144,37 @@ function WebShell({
   query: string;
   onQuery: (v: string) => void;
   onSearch: () => void;
-  onGateway: () => void;
+  onGateway?: () => void;
 }) {
+  const domain = domainOf(url);
   return (
-    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-      <span className="grid h-12 w-12 place-items-center rounded-full bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] text-[var(--tb-accent)]">
-        <ShieldCheck className="h-6 w-6" aria-hidden />
-      </span>
-      <p className="text-[15px] font-semibold text-[var(--tb-text)]">Tedbirge Web Kabuğu</p>
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-y-auto p-6 text-center">
+      <BrandIcon
+        domain={domain}
+        label={label}
+        className="h-12 w-12"
+        fallback={
+          <span className="grid h-12 w-12 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] text-[var(--tb-accent)]">
+            <Layers className="h-6 w-6" aria-hidden />
+          </span>
+        }
+      />
+      <p className="text-[17px] font-semibold text-[var(--tb-text)]">{label}</p>
       <p className="max-w-md font-osmono text-[12px] text-[var(--tb-muted)]">
-        {label} kendi sunucusunda pencere içinde gösterilmeyi kapatmış. Aramanızı burada
-        yapabilir, hedefi geçit üzerinden çalıştırabilir ya da harici sekmede açabilirsiniz.
+        Bu servis pencere içi gömmeyi kısıtlıyor. Aramanızı burada yapabilir ya da servisi
+        harici sekmede açabilirsiniz.
       </p>
 
-      <div className="flex w-full max-w-md items-center gap-2">
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="wa-press inline-flex items-center gap-2 rounded-xl bg-[var(--tb-accent)] px-4 py-2 text-[13px] font-semibold text-[var(--tb-on-accent,var(--tb-bg))]"
+      >
+        <ExternalLink className="h-4 w-4" aria-hidden /> Harici Sekmede Aç
+      </a>
+
+      <div className="flex w-full max-w-md items-center gap-2 pt-1">
         <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] px-3 py-2">
           <Search className="h-4 w-4 shrink-0 text-[var(--tb-muted)]" aria-hidden />
           <input
@@ -180,23 +197,15 @@ function WebShell({
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+      {onGateway ? (
         <button
           type="button"
           onClick={onGateway}
-          className="wa-press inline-flex items-center gap-2 rounded-lg border border-[var(--tb-accent)]/40 px-3 py-2 font-osmono text-[12px] text-[var(--tb-accent)]"
+          className="wa-press inline-flex items-center gap-2 rounded-lg border border-[var(--tb-border)] px-3 py-2 font-osmono text-[12px] text-[var(--tb-muted)]"
         >
           <Waypoints className="h-4 w-4" aria-hidden /> Geçit Üzerinden Çalıştır
         </button>
-        <a
-          href={url}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="wa-press inline-flex items-center gap-2 rounded-lg border border-[var(--tb-border)] px-3 py-2 font-osmono text-[12px] text-[var(--tb-muted)]"
-        >
-          <ExternalLink className="h-4 w-4" aria-hidden /> Harici Sekmede Aç
-        </a>
-      </div>
+      ) : null}
     </div>
   );
 }
