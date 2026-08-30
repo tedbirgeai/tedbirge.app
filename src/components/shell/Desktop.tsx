@@ -50,7 +50,10 @@ export function Desktop({
   const newFolder = async () => {
     const name = `Yeni klasör ${new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
     try {
-      await saveFile(new File([""], `${name}.klasor`, { type: "application/x-tedbirge-folder" }));
+      await saveFiles([
+        new File([""], `${name}.klasor`, { type: "application/x-tedbirge-folder" }),
+      ]);
+
       notifyOk("Yeni klasör oluşturuldu", `${name} · Dosyalar penceresinde`);
     } catch {
       notifyError("Klasör oluşturulamadı", "Yerel depolama kullanılamıyor.");
