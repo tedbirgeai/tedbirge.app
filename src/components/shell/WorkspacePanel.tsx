@@ -82,6 +82,7 @@ export function WorkspacePanel() {
       <SystemBar
         status={status.text}
         peers={status.directPeers}
+        rttMs={node.rttMs}
         onSettings={() => launch("computer")}
       />
 

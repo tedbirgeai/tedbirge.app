@@ -197,7 +197,10 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
               aria-label="Küçült"
               onClick={() => {
                 haptic();
-                minimizeWindow(win.id);
+                const el = root.current;
+                if (!el) return minimizeWindow(win.id);
+                el.classList.add("tbos-minimizing");
+                window.setTimeout(() => minimizeWindow(win.id), 130);
               }}
               className="tbos-winbtn wa-press grid h-8 w-8 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
             >

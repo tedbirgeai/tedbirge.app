@@ -21,7 +21,8 @@ export function Dock({
 }) {
   const { installed } = useDesktopState();
   const extra = windows.filter((w) => !installed.includes(w.appId)).map((w) => w.appId);
-  const ids = Array.from(new Set([...installed, ...extra]));
+  // Mağaza sağdaki sabit düğmede duruyor; şeritte ikinci kez gösterilmez.
+  const ids = Array.from(new Set([...installed, ...extra])).filter((id) => id !== "store");
 
   return (
     <div className="pointer-events-none relative z-[95] flex shrink-0 justify-center px-2 pb-2">

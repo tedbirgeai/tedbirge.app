@@ -300,7 +300,7 @@ export function NodeSettingsPanel() {
           k="KEŞİF:"
           v={
             node.discovery === "local"
-              ? "yerel ağ"
+              ? "aynı cihazdaki pencereler"
               : node.discovery === "none"
                 ? "kapalı"
                 : node.discovery
