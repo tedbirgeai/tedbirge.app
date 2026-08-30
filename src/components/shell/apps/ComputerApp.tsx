@@ -506,6 +506,27 @@ function SettingsTab() {
           hint={`${Math.round(volume * 100)}%`}
         />
       </div>
+
+      <div className={card}>
+        <h3 className="text-[15px] font-semibold text-[var(--tb-text)]">Yazı tipi boyutu</h3>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {FONT_SCALES.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              aria-pressed={fontScale === s.id}
+              onClick={() => setFontScale(s.id)}
+              className={`wa-press rounded-xl border px-3 py-2 text-[13px] ${
+                fontScale === s.id
+                  ? "border-[var(--tb-accent)] text-[var(--tb-accent)]"
+                  : "border-[var(--tb-border)] text-[var(--tb-text)]"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
