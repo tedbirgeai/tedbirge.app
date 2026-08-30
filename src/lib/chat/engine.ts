@@ -34,6 +34,7 @@ import {
   splitMediaAsync,
   MAX_MEDIA_BYTES,
 } from "@/lib/chat/media";
+import { prepareMedia } from "@/lib/chat/media-worker-client";
 import { digestsOf, isSyncMessage, merkleRoot, type SyncMessage } from "@/lib/chat/merkle";
 import { getBrowserNodeId } from "@/lib/browser-node";
 import { bootPairing, isTrusted } from "@/lib/chat/pairing";
