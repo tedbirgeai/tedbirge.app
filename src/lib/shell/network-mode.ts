@@ -22,7 +22,7 @@ export type NetworkMode = {
 
 export const NETWORK_MODES: ReadonlyArray<NetworkMode> = [
   { id: "global", label: "Küresel İnternet", hint: "Bulut buluşma + yerel keşif birlikte" },
-  { id: "mesh", label: "Yerel Wi-Fi Mesh", hint: "Yalnız aynı ağdaki cihazlar (Daelog P2P)" },
+  { id: "mesh", label: "Yerel Wi-Fi Mesh", hint: "Yalnız aynı ağdaki cihazlar (Tedbirge P2P)" },
   { id: "cellular", label: "Hücresel Veri Köprüsü", hint: "Mobil bağlantı üzerinden taşıma" },
   { id: "offgrid", label: "Tam Gizlilik (Off-Grid)", hint: "Dış bağlantı yok, cihaz yalıtılır" },
 ];
