@@ -455,6 +455,10 @@ export class BrowserNode {
 
     window.addEventListener("online", this.handleOnline);
     window.addEventListener("offline", this.handleOffline);
+    // Ekran kilidi açıldığında / sekme öne geldiğinde hat sağlığı denetlenir:
+    // arka planda kısılan zamanlayıcılar yüzünden düğüm izole kalmaz.
+    document.addEventListener("visibilitychange", this.handleWake);
+    window.addEventListener("pageshow", this.handleWake);
     // Bildirim (Web Push) geldiğinde bekleyen zarfları anında çek.
     window.addEventListener("tedbirge:relay-poll-now", () => void this.pollRelay());
 
