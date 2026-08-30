@@ -54,6 +54,7 @@ import {
   type Priority,
 } from "@/lib/store/idb";
 import { pruneOutbox } from "@/lib/store/pruning";
+import { iceServers } from "@/lib/webrtc/ice";
 import { observePeerKey, trustStatusOf, type TrustStatus } from "@/lib/peer-trust";
 import { getPeer } from "@/lib/store/idb";
 import {
@@ -299,26 +300,11 @@ export async function syncPersonIdentity(): Promise<string> {
 
 /**
  * ICE yapılandırması. Mobil operatörlerde CGNAT arkasındaki iki cihaz
- * yalnız STUN ile buluşamaz; TURN tanımlıysa aktarmalı hat kurulur.
- * TURN bilgileri ortam değişkeninden gelir, koda gömülmez.
+ * yalnız STUN ile buluşamaz; aktarma (TURN) yedeği devreye girer.
+ * Havuz arama motoruyla ortaktır: `src/lib/webrtc/ice.ts`.
  */
 export function buildMeshIce(): RTCConfiguration {
-  const servers: RTCIceServer[] = [
-    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
-  ];
-  const env = import.meta.env as Record<string, string | undefined>;
-  const turnUrl = env["VITE_TURN_URL"];
-  if (turnUrl) {
-    servers.push({
-      urls: turnUrl
-        .split(",")
-        .map((u) => u.trim())
-        .filter(Boolean),
-      username: env["VITE_TURN_USERNAME"],
-      credential: env["VITE_TURN_CREDENTIAL"],
-    });
-  }
-  return { iceServers: servers, iceCandidatePoolSize: 4, iceTransportPolicy: "all" };
+  return { iceServers: iceServers(), iceCandidatePoolSize: 4, iceTransportPolicy: "all" };
 }
 
 /**
@@ -469,6 +455,10 @@ export class BrowserNode {
 
     window.addEventListener("online", this.handleOnline);
     window.addEventListener("offline", this.handleOffline);
+    // Ekran kilidi açıldığında / sekme öne geldiğinde hat sağlığı denetlenir:
+    // arka planda kısılan zamanlayıcılar yüzünden düğüm izole kalmaz.
+    document.addEventListener("visibilitychange", this.handleWake);
+    window.addEventListener("pageshow", this.handleWake);
     // Bildirim (Web Push) geldiğinde bekleyen zarfları anında çek.
     window.addEventListener("tedbirge:relay-poll-now", () => void this.pollRelay());
 
@@ -881,6 +871,8 @@ export class BrowserNode {
     this.lanSocket = null;
     window.removeEventListener("online", this.handleOnline);
     window.removeEventListener("offline", this.handleOffline);
+    document.removeEventListener("visibilitychange", this.handleWake);
+    window.removeEventListener("pageshow", this.handleWake);
     this.peers.forEach((p) => p.pc.close());
     this.peers.clear();
     this.peerSeen.clear();
@@ -917,6 +909,24 @@ export class BrowserNode {
 
     void this.heartbeat();
     void this.publishDirectory();
+    void this.pollRelay();
+  };
+
+  /**
+   * Cihaz uyandı / sekme öne geldi: sinyal kanalı sağlığı denetlenir,
+   * gerekiyorsa yeniden abone olunur ve kopan hatlar hemen yeniden aranır.
+   * Mobilde WiFi ↔ hücresel geçişinde en kritik toparlanma noktasıdır.
+   */
+  private handleWake = () => {
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+    if (!this.state.running) return;
+    const state = (this.channel as { state?: string } | null)?.state;
+    if (!this.channel || (state && state !== "joined")) {
+      void this.connectCloud();
+    }
+    void this.heartbeat();
+    void this.dialNewPeers();
+    void this.flushQueue();
     void this.pollRelay();
   };
 

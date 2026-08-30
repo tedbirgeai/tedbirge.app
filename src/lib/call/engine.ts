@@ -20,6 +20,7 @@ import { sendMesh } from "@/lib/node-runtime";
 import { getAlias } from "@/lib/chat/profile";
 import { showChatNotification } from "@/lib/chat/push";
 import { getBrowserNodeId } from "@/lib/browser-node";
+import { iceServers } from "@/lib/webrtc/ice";
 
 export type CallPhase = "idle" | "ringing" | "outgoing" | "active" | "reconnecting" | "ended";
 
@@ -71,26 +72,9 @@ export type CallState = {
 };
 
 const ICE: RTCConfiguration = {
-  iceServers: [
-    {
-      urls: [
-        "stun:stun.l.google.com:19302",
-        "stun:stun1.l.google.com:19302",
-        "stun:stun1.l.google.com:19302",
-      ],
-    },
-    // Simetrik NAT / mobil operatör ağlarında doğrudan yol kurulamazsa
-    // aktarma sunucusu devreye girer. İçerik uçtan uca şifreli kalır (DTLS-SRTP).
-    {
-      urls: [
-        "turn:openrelay.metered.ca:80",
-        "turn:openrelay.metered.ca:443",
-        "turns:openrelay.metered.ca:443?transport=tcp",
-      ],
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-  ],
+  // Havuz mesh düğümüyle ortaktır (src/lib/webrtc/ice.ts): STUN + aktarma
+  // yedeği. İçerik uçtan uca şifreli kalır (DTLS-SRTP).
+  iceServers: iceServers(),
   iceCandidatePoolSize: 4,
   bundlePolicy: "max-bundle",
   rtcpMuxPolicy: "require",
