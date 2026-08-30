@@ -76,6 +76,10 @@ export const Route = createFileRoute("/api/public/gecit")({
         if (target.protocol !== "https:" || !hostAllowed(target.hostname)) {
           return new Response("bu hedef geçitten geçemez", { status: 403 });
         }
+        if (rateLimited(target.hostname.toLowerCase())) {
+          return new Response("çok fazla istek", { status: 429 });
+        }
+
 
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
