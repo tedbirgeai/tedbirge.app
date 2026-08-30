@@ -9,8 +9,9 @@
 
 import { SHELL_APPS, type ShellApp, type ShellAppId } from "@/shell/apps";
 import type { Capability } from "@/kernel/capabilities";
+import { WEB_APPS, type EmbedPolicy } from "@/shell/web-apps";
 
-export type AppKind = "builtin" | "wasm";
+export type AppKind = "builtin" | "wasm" | "web";
 
 export type AppManifest = Omit<ShellApp, "id"> & {
   /** Yerleşiklerde `ShellAppId`, .tbapp paketlerinde paket kimliği. */
@@ -20,6 +21,12 @@ export type AppManifest = Omit<ShellApp, "id"> & {
   capabilities: Capability[];
   /** Wasm uygulamaları için modül adresi (yerleşiklerde yoktur). */
   moduleUrl?: string;
+  /** Harici web uygulamaları için hedef adres. */
+  url?: string;
+  /** Gömme politikası (iframe / popup / auto). */
+  embed?: EmbedPolicy;
+  /** Kısa açıklama (ızgara kartında görünür). */
+  hint?: string;
 };
 
 const CAPS: Record<ShellAppId, Capability[]> = {
@@ -30,9 +37,30 @@ const CAPS: Record<ShellAppId, Capability[]> = {
   me: ["identity.read", "status.read"],
 };
 
-const registry = new Map<string, AppManifest>(
-  SHELL_APPS.map((a) => [a.id, { ...a, kind: "builtin" as const, capabilities: CAPS[a.id] }]),
-);
+const registry = new Map<string, AppManifest>([
+  ...SHELL_APPS.map(
+    (a) => [a.id, { ...a, kind: "builtin" as const, capabilities: CAPS[a.id] }] as const,
+  ),
+  // Harici web hedefleri: hiçbir marka adı kabuk koduna gömülmez,
+  // tamamı veri kataloğundan gelir (src/shell/web-apps.ts).
+  ...WEB_APPS.map(
+    (a) =>
+      [
+        a.id,
+        {
+          id: a.id,
+          label: a.label,
+          hint: a.hint,
+          url: a.url,
+          embed: a.embed,
+          kind: "web" as const,
+          capabilities: [] as Capability[],
+          mobileOrder: 99,
+          railOrder: null,
+        },
+      ] as const,
+  ),
+]);
 
 export function listApps(): AppManifest[] {
   return [...registry.values()];
