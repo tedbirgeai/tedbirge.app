@@ -3,47 +3,39 @@
  * ------------------------------------------------------------------
  * Duvar kâğıdı + serbest sürüklenebilir kısayol ikonları. Kayıtlı konumu
  * olmayan ikonlar otomatik ızgaraya dizilir; dar ekranlarda sürükleme
- * kapatılır ve tek dokunuş uygulamayı açar. Boş alana sağ tıklandığında
- * işletim sistemi bağlam menüsü açılır.
+ * kapatılır ve tek dokunuş uygulamayı açar. Boş alana ya da bir ikona
+ * sağ tıklandığında tarayıcı menüsü engellenir ve işletim sistemi
+ * bağlam menüsü açılır.
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { DesktopIcon, ICON_H, ICON_W } from "@/components/shell/DesktopIcon";
+import { ContextMenu, type MenuItem } from "@/components/shell/ContextMenu";
+import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
 import { notifyError, notifyOk } from "@/lib/shell/notify";
 import { useWallpaper } from "@/lib/ui/wallpaper";
 import { saveFiles } from "@/lib/vfs/store";
 import { catalogApp, useDesktopState } from "@/shell/installed";
 
-type Menu = { x: number; y: number };
+type Menu = { x: number; y: number; appId?: string };
 
 export function Desktop({
   onOpen,
+  onOpenNew,
   draggable,
   columnsHeight,
 }: {
   onOpen: (id: string) => void;
+  onOpenNew: (id: string) => void;
   draggable: boolean;
   columnsHeight: number;
 }) {
   const { installed, icons } = useDesktopState();
   const [selected, setSelected] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
+  const [properties, setProperties] = useState<string | null>(null);
   const wallpaper = useWallpaper();
-
-  useEffect(() => {
-    if (!menu) return;
-    const close = () => setMenu(null);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenu(null);
-    };
-    window.addEventListener("pointerdown", close);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("pointerdown", close);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [menu]);
 
   const perColumn = Math.max(1, Math.floor((columnsHeight - 24) / ICON_H));
 
@@ -60,6 +52,23 @@ export function Desktop({
     }
   };
 
+  const desktopItems: MenuItem[] = [
+    { label: "Yeni Klasör", onSelect: () => void newFolder() },
+    { label: "Duvar Kâğıdını Değiştir", onSelect: () => onOpen("wallpaper") },
+    { kind: "sep" },
+    { label: "Yenile", onSelect: () => notifyOk("Masaüstü yenilendi") },
+    { label: "Sistem Ayarları", onSelect: () => onOpen("computer") },
+  ];
+
+  const items: MenuItem[] = menu?.appId
+    ? appMenuItems({
+        id: menu.appId,
+        onOpen,
+        onOpenNew,
+        onProperties: (id) => setProperties(id),
+      })
+    : desktopItems;
+
   return (
     <div
       className="tbos-wallpaper absolute inset-0 overflow-hidden"
@@ -68,8 +77,9 @@ export function Desktop({
         if (e.target === e.currentTarget) setSelected(null);
       }}
       onContextMenu={(e) => {
-        if (e.target !== e.currentTarget) return;
+        // Tarayıcının yerel "İncele / Geri / Yenile" menüsü her koşulda engellenir.
         e.preventDefault();
+        if (e.target !== e.currentTarget) return;
         const r = e.currentTarget.getBoundingClientRect();
         setMenu({ x: e.clientX - r.left, y: e.clientY - r.top });
       }}
@@ -91,54 +101,27 @@ export function Desktop({
             draggable={draggable}
             onSelect={() => setSelected(id)}
             onOpen={() => onOpen(id)}
+            onMenu={(pt) => {
+              setSelected(id);
+              setMenu({ x: pt.x, y: pt.y, appId: id });
+            }}
           />
         );
       })}
 
       {menu ? (
-        <div
-          role="menu"
-          aria-label="Masaüstü menüsü"
-          className="tbos-window absolute z-[60] w-56 rounded-xl p-1 shadow-2xl"
-          style={{ left: menu.x, top: menu.y }}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <MenuItem
-            label="Duvar Kâğıdını Değiştir"
-            onClick={() => {
-              setMenu(null);
-              onOpen("wallpaper");
-            }}
-          />
-          <MenuItem
-            label="Yeni Klasör"
-            onClick={() => {
-              setMenu(null);
-              void newFolder();
-            }}
-          />
-          <MenuItem
-            label="Yenile"
-            onClick={() => {
-              setMenu(null);
-              notifyOk("Masaüstü yenilendi");
-            }}
-          />
-        </div>
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          items={items}
+          ariaLabel={menu.appId ? "Uygulama menüsü" : "Masaüstü menüsü"}
+          onClose={() => setMenu(null)}
+        />
+      ) : null}
+
+      {properties ? (
+        <AppPropertiesDialog id={properties} onClose={() => setProperties(null)} />
       ) : null}
     </div>
-  );
-}
-
-function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      role="menuitem"
-      onClick={onClick}
-      className="wa-press block w-full rounded-lg px-3 py-2 text-left text-[13px] text-[var(--tb-text)] hover:bg-[color-mix(in_srgb,var(--tb-accent)_12%,transparent)]"
-    >
-      {label}
-    </button>
   );
 }
