@@ -275,8 +275,10 @@ function AppSurface({
     );
   }
   if (win.appId === "store") return <StoreApp onOpen={onLaunch} />;
+  if (win.appId === "transfer") return <TransfersApp />;
   if (win.appId === "computer")
     return <ComputerApp onMesh={() => onLaunch("mesh")} onLaunch={onLaunch} />;
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
       {win.appId === "music" && <MusicApp />}
