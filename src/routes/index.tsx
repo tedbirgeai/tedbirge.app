@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import Messenger from "@/components/Messenger";
+
+import { ShellProvider } from "@/shell/ShellProvider";
+import { WorkspacePanel } from "@/components/shell/WorkspacePanel";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Tedbirge® WebOS — tedbirge.app" },
@@ -25,5 +28,11 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  return <Messenger />;
+  return (
+    <main className="fixed inset-0 z-40 flex flex-col bg-[var(--tb-bg)]">
+      <ShellProvider initialApp="chats">
+        <WorkspacePanel />
+      </ShellProvider>
+    </main>
+  );
 }
