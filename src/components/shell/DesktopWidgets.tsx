@@ -49,7 +49,11 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
   useEffect(() => {
     setPos(readPos());
     setHidden(window.localStorage.getItem(HIDE_KEY) === "1");
+    const show = () => setHidden(false);
+    window.addEventListener("tedbirge:widgets-show", show);
+    return () => window.removeEventListener("tedbirge:widgets-show", show);
   }, []);
+
 
   useEffect(() => {
     const read = () => {
