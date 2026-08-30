@@ -7,7 +7,7 @@
  * tükenirse pencere içinde sade bir "tekrar dene" durumu gösterilir.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { RefreshCw, ShieldAlert } from "lucide-react";
 
 import { buildStages } from "@/lib/shell/embed-strategy";
@@ -21,12 +21,15 @@ export function GenericAppContainer({
   embed = "auto",
   embedUrl,
   proxy,
+  renderFailed,
 }: {
   url: string;
   label: string;
   embed?: EmbedPolicy;
   embedUrl?: string;
   proxy?: string | true;
+  /** Tüm aşamalar tükendiğinde gösterilecek özel görünüm. */
+  renderFailed?: (retry: () => void) => ReactNode;
 }) {
   const stages = useMemo(() => buildStages({ url, embed, embedUrl, proxy }), [url, embed, embedUrl, proxy]);
   const [stage, setStage] = useState(0);
@@ -35,6 +38,7 @@ export function GenericAppContainer({
   const [attempt, setAttempt] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
+
 
 
   const current = stages[Math.min(stage, stages.length - 1)];
