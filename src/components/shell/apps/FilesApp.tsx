@@ -167,7 +167,16 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
         {files.map((f) => (
           <li
             key={f.id}
-            className="flex min-h-14 items-center gap-3 border-b border-[var(--tb-border)] px-1"
+            draggable
+            onDragStart={(e) => {
+              // Uygulamalar arası aktarım: Sohbet veya Medya penceresine bırakılabilir.
+              e.dataTransfer.setData(
+                "application/x-tedbirge-file",
+                JSON.stringify({ id: f.id, name: f.name, mime: f.mime }),
+              );
+              e.dataTransfer.effectAllowed = "copy";
+            }}
+            className="flex min-h-14 cursor-grab items-center gap-3 border-b border-[var(--tb-border)] px-1 active:cursor-grabbing"
           >
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[14px] text-[var(--tb-text)]">{f.name}</span>
@@ -203,7 +212,7 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
         ))}
         {files.length === 0 ? (
           <li className="px-2 py-8 text-center font-osmono text-[12px] text-[var(--tb-muted)]">
-            Liste boş. Dosyaları bu pencereye sürükleyin; veriler cihazda kalır.
+            Liste boş. Dosyaları bu pencereye sürükleyin; veriler cihazda kalır. Kayıtlı bir dosyayı Sohbet veya Medya penceresine sürükleyerek gönderebilirsiniz.
           </li>
         ) : null}
       </ul>
