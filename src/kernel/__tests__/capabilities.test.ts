@@ -31,6 +31,7 @@ describe("yetenek kapısı", () => {
   it("tüm yerleşik uygulamalar kayıtlıdır", () => {
     const builtins = listApps().filter((a) => a.kind === "builtin");
     expect(builtins.map((a) => a.id).sort()).toEqual([
+      "apps",
       "calls",
       "chats",
       "communities",
