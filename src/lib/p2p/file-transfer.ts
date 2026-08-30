@@ -122,6 +122,7 @@ export async function sendFileToPeer(peer: string, file: File): Promise<void> {
     size: file.size,
     percent: 0,
     status: "gonderiliyor",
+    speed: 0,
     at: Date.now(),
   };
   put(t);
@@ -135,7 +136,20 @@ export async function sendFileToPeer(peer: string, file: File): Promise<void> {
       size: t.size,
       total,
     });
+    const started = performance.now();
     for (let i = 0; i < total; i += 1) {
+      if (cancelled.has(id)) {
+        put({ ...t, status: "iptal", speed: 0 });
+        return;
+      }
+      // Duraklatma: kullanıcı devam edene ya da iptal edene kadar bekle.
+      while (paused.has(id) && !cancelled.has(id)) {
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      if (cancelled.has(id)) {
+        put({ ...t, status: "iptal", speed: 0 });
+        return;
+      }
       await k.send("app", peer, {
         kind: "file.part",
         id,
@@ -143,14 +157,26 @@ export async function sendFileToPeer(peer: string, file: File): Promise<void> {
         total,
         data: dataUrl.slice(i * CHUNK, (i + 1) * CHUNK),
       });
-      put({ ...t, percent: Math.round(((i + 1) / total) * 100) });
+      const elapsed = Math.max(0.001, (performance.now() - started) / 1000);
+      const sentBytes = ((i + 1) / total) * file.size;
+      put({
+        ...t,
+        percent: Math.round(((i + 1) / total) * 100),
+        speed: Math.round(sentBytes / elapsed),
+      });
     }
-    put({ ...t, percent: 100, status: "tamam" });
+    put({ ...t, percent: 100, status: "tamam", speed: 0 });
   } catch (e) {
-    put({ ...t, status: "hata", error: e instanceof Error ? e.message : "Aktarım kesildi." });
+    put({
+      ...t,
+      status: "hata",
+      speed: 0,
+      error: e instanceof Error ? e.message : "Aktarım kesildi.",
+    });
     throw e;
   }
 }
+
 
 let booted = false;
 
