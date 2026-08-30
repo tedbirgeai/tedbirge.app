@@ -78,6 +78,17 @@ export async function broadcastText(text: string): Promise<boolean> {
 }
 
 /**
+ * Tek bir cihaza şifreli metin gönderir. Katılımcı listesinden bir cihaz
+ * seçildiğinde mesaj yalnız o cihaza gider; herkese yayın yapılmaz.
+ */
+export async function sendTextTo(peerId: string, text: string): Promise<boolean> {
+  const clean = text.trim();
+  if (!clean) return false;
+  if (!peerId || peerId === "*") return broadcastText(clean);
+  return sendMesh("text", peerId, { text: clean });
+}
+
+/**
  * Canlı rota ölçümü: eş grafiği gerçek gecikmeye göre kurulur ve
  * Dijkstra motoru arka plan işçisinde çalıştırılır.
  */

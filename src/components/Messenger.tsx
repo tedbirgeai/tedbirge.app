@@ -37,6 +37,7 @@ import { FilesApp } from "@/components/shell/apps/FilesApp";
 
 import {
   broadcastText,
+  sendTextTo,
   ensureLiveNode,
   measureRoute,
   nodeLabel,
@@ -46,6 +47,12 @@ import {
   type LiveMessage,
   type LivePeer,
 } from "@/services/signaling";
+import {
+  startCall as startPeerCall,
+  endCall as endPeerCall,
+  getPeerStream,
+  useCall,
+} from "@/lib/call/engine";
 
 import {
   composeIdentityLabel,
@@ -317,6 +324,8 @@ export default function Messenger() {
   const [activePeer, setActivePeer] = useState<string | null>(null);
   const draftRef = useRef<HTMLInputElement | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const call = useCall();
   useEffect(() => setHydrated(true), []);
   useEffect(() => onPeerIdentity(() => setIdentityTick((n) => n + 1)), []);
   useEffect(() => onNickname(() => setIdentityTick((n) => n + 1)), []);
@@ -423,22 +432,30 @@ export default function Messenger() {
     window.setTimeout(() => draftRef.current?.focus(), 0);
   }, []);
 
+  const activePeerName = activePeer
+    ? (participants.find((p) => p.id === activePeer)?.name ?? null)
+    : null;
+
+  // Arama artık yalnız yerel kamerayı açmıyor: seçilen cihaza gerçek
+  // teklif (offer) gönderilir, karşı taraf açtığında hat kurulur.
   const startCallWith = useCallback(
     (id: string) => {
       setTab("chat");
       setActivePeer(id);
+      const alias = participants.find((p) => p.id === id)?.name;
       void guard("messenger.startCall", requestMedia("av")).then((ok) => {
         setInCall(true);
         setCamOn(Boolean(ok));
         setMicOn(Boolean(ok));
+        void guard(
+          "messenger.startPeerCall",
+          startPeerCall(id, true, alias),
+          "Arama başlatılamadı.",
+        );
       });
     },
-    [requestMedia],
+    [participants, requestMedia],
   );
-
-  const activePeerName = activePeer
-    ? (participants.find((p) => p.id === activePeer)?.name ?? null)
-    : null;
 
   const peerCount = participants.length - 1;
   const localMode = peerCount === 0;
@@ -455,6 +472,23 @@ export default function Messenger() {
     el.srcObject = camOn ? localStream : null;
   }, [camOn, localStream, inCall]);
 
+  // Seçilen cihazdan gelen canlı görüntü.
+  const remoteStream = activePeer ? getPeerStream(activePeer) : null;
+  useEffect(() => {
+    const el = remoteVideoRef.current;
+    if (!el) return;
+    el.srcObject = remoteStream ?? null;
+  }, [remoteStream, call.streamVersion]);
+
+  const remoteStatusText =
+    call.phase === "active"
+      ? "bağlandı"
+      : call.phase === "reconnecting"
+        ? "yeniden bağlanıyor…"
+        : call.phase === "ringing" || call.phase === "outgoing" || call.remoteRinging
+          ? "çalıyor…"
+          : "bağlanıyor…";
+
   const stamp = () =>
     new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 
@@ -466,7 +500,13 @@ export default function Messenger() {
       ...prev,
       { id: `self-${Date.now()}`, from: selfLabel, at: stamp(), text, self: true },
     ]);
-    await guard("messenger.broadcastText", broadcastText(text), "Mesaj gönderilemedi.");
+    // Bir cihaz seçiliyse mesaj yalnız o cihaza gider; seçim yoksa
+    // ağdaki tüm cihazlara yayınlanır.
+    await guard(
+      "messenger.sendText",
+      activePeer ? sendTextTo(activePeer, text) : broadcastText(text),
+      "Mesaj gönderilemedi.",
+    );
   };
 
   const navItems: { id: TabId; label: string; icon: typeof MessageSquare }[] = [
@@ -664,7 +704,12 @@ export default function Messenger() {
                         setCamOn(false);
                         setMicOn(false);
                         setScreenOn(false);
+                        endPeerCall("kapatıldı");
                         stopMedia();
+                        return;
+                      }
+                      if (activePeer) {
+                        startCallWith(activePeer);
                         return;
                       }
                       void guard("messenger.callToggle", requestMedia("av")).then((ok) => {
@@ -810,12 +855,20 @@ export default function Messenger() {
                       </span>
                     </div>
                     <div
-                      className="grid aspect-[4/3] place-items-center rounded-lg text-center text-[12px] sm:aspect-video"
+                      className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-lg text-center text-[12px] sm:aspect-video"
                       style={{ background: "var(--tb-bg)", color: "var(--tb-muted)" }}
                     >
-                      {activePeerName
-                        ? `${activePeerName} bağlanıyor…`
-                        : "Karşı taraf bağlandığında görüntü burada belirir"}
+                      <video
+                        ref={remoteVideoRef}
+                        autoPlay
+                        playsInline
+                        className={remoteStream ? "h-full w-full object-cover" : "hidden"}
+                      />
+                      {remoteStream ? null : activePeerName ? (
+                        <span>{`${activePeerName} · ${remoteStatusText}`}</span>
+                      ) : (
+                        <span>Karşı taraf bağlandığında görüntü burada belirir</span>
+                      )}
                     </div>
                   </div>
                 </div>
