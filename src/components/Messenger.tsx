@@ -680,7 +680,12 @@ export default function Messenger() {
                         setCamOn(false);
                         setMicOn(false);
                         setScreenOn(false);
+                        endPeerCall("kapatıldı");
                         stopMedia();
+                        return;
+                      }
+                      if (activePeer) {
+                        startCallWith(activePeer);
                         return;
                       }
                       void guard("messenger.callToggle", requestMedia("av")).then((ok) => {
