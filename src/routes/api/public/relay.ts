@@ -151,139 +151,142 @@ export const Route = createFileRoute("/api/public/relay")({
         }
 
         try {
-        const storeSignal = AbortSignal.timeout(3_000);
-        if (parsed.action === "publish") {
-          const { error } = await supabaseAdmin.from("relay_directory").upsert(
-            {
-              node_id: parsed.nodeId,
-              person_id: parsed.personId ?? null,
-              sign_public: parsed.signPublic,
-              box_public: parsed.boxPublic,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "node_id" },
-          ).abortSignal(storeSignal);
-          if (error) return storageUnavailable("dizin kaydı", error);
-          return json({ ok: true });
-        }
+          const storeSignal = AbortSignal.timeout(3_000);
+          if (parsed.action === "publish") {
+            const { error } = await supabaseAdmin
+              .from("relay_directory")
+              .upsert(
+                {
+                  node_id: parsed.nodeId,
+                  person_id: parsed.personId ?? null,
+                  sign_public: parsed.signPublic,
+                  box_public: parsed.boxPublic,
+                  updated_at: new Date().toISOString(),
+                },
+                { onConflict: "node_id" },
+              )
+              .abortSignal(storeSignal);
+            if (error) return storageUnavailable("dizin kaydı", error);
+            return json({ ok: true });
+          }
 
-        if (parsed.action === "lookup") {
-          // Kimlik hem cihaz düğümü (mob-…) hem kişi kimliği (TBG-…) olabilir.
-          // Kişinin TÜM bağlı cihazları döndürülür; gönderen her cihaz için
-          // ayrı şifreli zarf üretir (WhatsApp çoklu cihaz modeli).
-          const { data: self, error: selfError } = await supabaseAdmin
-            .from("relay_directory")
-            .select("node_id, person_id, sign_public, box_public")
-            .eq("node_id", parsed.nodeId)
-            .abortSignal(storeSignal)
-            .maybeSingle();
-          if (selfError) return storageUnavailable("düğüm araması", selfError);
+          if (parsed.action === "lookup") {
+            // Kimlik hem cihaz düğümü (mob-…) hem kişi kimliği (TBG-…) olabilir.
+            // Kişinin TÜM bağlı cihazları döndürülür; gönderen her cihaz için
+            // ayrı şifreli zarf üretir (WhatsApp çoklu cihaz modeli).
+            const { data: self, error: selfError } = await supabaseAdmin
+              .from("relay_directory")
+              .select("node_id, person_id, sign_public, box_public")
+              .eq("node_id", parsed.nodeId)
+              .abortSignal(storeSignal)
+              .maybeSingle();
+            if (selfError) return storageUnavailable("düğüm araması", selfError);
 
-          const person = self?.person_id ?? parsed.nodeId;
-          const { data: fanout, error: fanoutError } = await supabaseAdmin
-            .from("relay_directory")
-            .select("node_id, person_id, sign_public, box_public")
-            .eq("person_id", person)
-            .limit(20)
-            .abortSignal(storeSignal);
-          if (fanoutError) return storageUnavailable("bağlı cihaz araması", fanoutError);
+            const person = self?.person_id ?? parsed.nodeId;
+            const { data: fanout, error: fanoutError } = await supabaseAdmin
+              .from("relay_directory")
+              .select("node_id, person_id, sign_public, box_public")
+              .eq("person_id", person)
+              .limit(20)
+              .abortSignal(storeSignal);
+            if (fanoutError) return storageUnavailable("bağlı cihaz araması", fanoutError);
 
-          const map = new Map<
-            string,
-            { node_id: string; sign_public: string; box_public: string }
-          >();
-          for (const row of [...(fanout ?? []), ...(self ? [self] : [])]) {
-            map.set(row.node_id, {
-              node_id: row.node_id,
-              sign_public: row.sign_public,
-              box_public: row.box_public,
+            const map = new Map<
+              string,
+              { node_id: string; sign_public: string; box_public: string }
+            >();
+            for (const row of [...(fanout ?? []), ...(self ? [self] : [])]) {
+              map.set(row.node_id, {
+                node_id: row.node_id,
+                sign_public: row.sign_public,
+                box_public: row.box_public,
+              });
+            }
+            const devices = Array.from(map.values());
+            if (devices.length === 0) return json({ ok: true, found: false, devices: [] });
+            const primary = self ?? devices[0];
+            if (!primary) return json({ ok: true, found: false, devices: [] });
+            return json({
+              ok: true,
+              found: true,
+              nodeId: primary.node_id,
+              signPublic: primary.sign_public,
+              boxPublic: primary.box_public,
+              devices: devices.map((d) => ({
+                nodeId: d.node_id,
+                signPublic: d.sign_public,
+                boxPublic: d.box_public,
+              })),
             });
           }
-          const devices = Array.from(map.values());
-          if (devices.length === 0) return json({ ok: true, found: false, devices: [] });
-          const primary = self ?? devices[0];
-          if (!primary) return json({ ok: true, found: false, devices: [] });
+
+          if (parsed.action === "push") {
+            const rows = parsed.items.map((i) => ({
+              pkt_id: i.pktId,
+              target_node: i.to,
+              origin_node: i.from,
+              envelope: i.envelope,
+              priority: i.priority,
+            }));
+            const { error } = await supabaseAdmin
+              .from("relay_envelopes")
+              .upsert(rows, { onConflict: "pkt_id", ignoreDuplicates: true })
+              .abortSignal(storeSignal);
+            if (error) return storageUnavailable("zarf kuyruğu", error);
+            // Alıcı kapalıysa cihazını uyandır: yalnızca "yeni şifreli mesaj var"
+            // sinyali gider; içerik sunucudan geçmez.
+            try {
+              const { notifyNode } = await import("@/lib/push-dispatch.server");
+              const targets = Array.from(new Set(parsed.items.map((i) => i.to))).slice(0, 20);
+              await Promise.all(
+                targets.map((to) =>
+                  notifyNode(to, {
+                    kind: "message",
+                    title: "Yeni mesaj",
+                    body: "Şifreli yeni mesajınız var.",
+                    tag: "tedbirge-chat",
+                    url: "/chat",
+                  }),
+                ),
+              );
+            } catch {
+              /* bildirim gönderilemese de mesaj kuyrukta durur */
+            }
+            return json({ ok: true, stored: rows.length });
+          }
+
+          // pull
+          const mailboxes = Array.from(
+            new Set([parsed.nodeId, ...(parsed.personId ? [parsed.personId] : [])]),
+          );
+          if (parsed.ack.length) {
+            const { error: ackError } = await supabaseAdmin
+              .from("relay_envelopes")
+              .delete()
+              .in("target_node", mailboxes)
+              .in("pkt_id", parsed.ack)
+              .abortSignal(storeSignal);
+            if (ackError) return storageUnavailable("teslim onayı", ackError);
+          }
+          // Süresi dolan zarfların silinmesi artık istek yolunda değil,
+          // zamanlanmış `relay_prune_expired` işindedir. Teslimatın büyük
+          // bir silme sorgusuna takılmaması için burada yalnızca süresi
+          // geçmemiş zarflar okunur.
+          const { data, error: pullError } = await supabaseAdmin
+            .from("relay_envelopes")
+            .select("pkt_id, envelope")
+            .in("target_node", mailboxes)
+            .gt("expires_at", new Date().toISOString())
+            .order("priority", { ascending: true })
+            .order("created_at", { ascending: true })
+            .limit(MAX_PULL)
+            .abortSignal(storeSignal);
+          if (pullError) return storageUnavailable("zarf teslimi", pullError);
+
           return json({
             ok: true,
-            found: true,
-            nodeId: primary.node_id,
-            signPublic: primary.sign_public,
-            boxPublic: primary.box_public,
-            devices: devices.map((d) => ({
-              nodeId: d.node_id,
-              signPublic: d.sign_public,
-              boxPublic: d.box_public,
-            })),
+            items: (data ?? []).map((r) => ({ pktId: r.pkt_id, envelope: r.envelope })),
           });
-        }
-
-        if (parsed.action === "push") {
-          const rows = parsed.items.map((i) => ({
-            pkt_id: i.pktId,
-            target_node: i.to,
-            origin_node: i.from,
-            envelope: i.envelope,
-            priority: i.priority,
-          }));
-          const { error } = await supabaseAdmin
-            .from("relay_envelopes")
-            .upsert(rows, { onConflict: "pkt_id", ignoreDuplicates: true })
-            .abortSignal(storeSignal);
-          if (error) return storageUnavailable("zarf kuyruğu", error);
-          // Alıcı kapalıysa cihazını uyandır: yalnızca "yeni şifreli mesaj var"
-          // sinyali gider; içerik sunucudan geçmez.
-          try {
-            const { notifyNode } = await import("@/lib/push-dispatch.server");
-            const targets = Array.from(new Set(parsed.items.map((i) => i.to))).slice(0, 20);
-            await Promise.all(
-              targets.map((to) =>
-                notifyNode(to, {
-                  kind: "message",
-                  title: "Yeni mesaj",
-                  body: "Şifreli yeni mesajınız var.",
-                  tag: "tedbirge-chat",
-                  url: "/chat",
-                }),
-              ),
-            );
-          } catch {
-            /* bildirim gönderilemese de mesaj kuyrukta durur */
-          }
-          return json({ ok: true, stored: rows.length });
-        }
-
-        // pull
-        const mailboxes = Array.from(
-          new Set([parsed.nodeId, ...(parsed.personId ? [parsed.personId] : [])]),
-        );
-        if (parsed.ack.length) {
-          const { error: ackError } = await supabaseAdmin
-            .from("relay_envelopes")
-            .delete()
-            .in("target_node", mailboxes)
-            .in("pkt_id", parsed.ack)
-            .abortSignal(storeSignal);
-          if (ackError) return storageUnavailable("teslim onayı", ackError);
-        }
-        // Süresi dolan zarfların silinmesi artık istek yolunda değil,
-        // zamanlanmış `relay_prune_expired` işindedir. Teslimatın büyük
-        // bir silme sorgusuna takılmaması için burada yalnızca süresi
-        // geçmemiş zarflar okunur.
-        const { data, error: pullError } = await supabaseAdmin
-          .from("relay_envelopes")
-          .select("pkt_id, envelope")
-          .in("target_node", mailboxes)
-          .gt("expires_at", new Date().toISOString())
-          .order("priority", { ascending: true })
-          .order("created_at", { ascending: true })
-          .limit(MAX_PULL)
-          .abortSignal(storeSignal);
-        if (pullError) return storageUnavailable("zarf teslimi", pullError);
-
-        return json({
-          ok: true,
-          items: (data ?? []).map((r) => ({ pktId: r.pkt_id, envelope: r.envelope })),
-        });
         } catch (error) {
           console.error("[relay] depo erişilemedi", error);
           return json({ ok: false, error: "depo_kapali", degraded: true, retryAfter: 30 });
