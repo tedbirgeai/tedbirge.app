@@ -54,6 +54,7 @@ import {
   type Priority,
 } from "@/lib/store/idb";
 import { pruneOutbox } from "@/lib/store/pruning";
+import { iceServers } from "@/lib/webrtc/ice";
 import { observePeerKey, trustStatusOf, type TrustStatus } from "@/lib/peer-trust";
 import { getPeer } from "@/lib/store/idb";
 import {
