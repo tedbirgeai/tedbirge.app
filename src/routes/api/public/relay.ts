@@ -265,18 +265,15 @@ export const Route = createFileRoute("/api/public/relay")({
             .abortSignal(storeSignal);
           if (ackError) return storageUnavailable("teslim onayı", ackError);
         }
-        // Süresi dolmuş zarfları temizle (ucuz, indeksli).
-        const { error: cleanupError } = await supabaseAdmin
-          .from("relay_envelopes")
-          .delete()
-          .lt("expires_at", new Date().toISOString())
-          .abortSignal(storeSignal);
-        if (cleanupError) return storageUnavailable("süre temizliği", cleanupError);
-
+        // Süresi dolan zarfların silinmesi artık istek yolunda değil,
+        // zamanlanmış `relay_prune_expired` işindedir. Teslimatın büyük
+        // bir silme sorgusuna takılmaması için burada yalnızca süresi
+        // geçmemiş zarflar okunur.
         const { data, error: pullError } = await supabaseAdmin
           .from("relay_envelopes")
           .select("pkt_id, envelope")
           .in("target_node", mailboxes)
+          .gt("expires_at", new Date().toISOString())
           .order("priority", { ascending: true })
           .order("created_at", { ascending: true })
           .limit(MAX_PULL)
