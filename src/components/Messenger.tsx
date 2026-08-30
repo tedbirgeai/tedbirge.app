@@ -425,22 +425,30 @@ export default function Messenger() {
     window.setTimeout(() => draftRef.current?.focus(), 0);
   }, []);
 
+  const activePeerName = activePeer
+    ? (participants.find((p) => p.id === activePeer)?.name ?? null)
+    : null;
+
+  // Arama artık yalnız yerel kamerayı açmıyor: seçilen cihaza gerçek
+  // teklif (offer) gönderilir, karşı taraf açtığında hat kurulur.
   const startCallWith = useCallback(
     (id: string) => {
       setTab("chat");
       setActivePeer(id);
+      const alias = participants.find((p) => p.id === id)?.name;
       void guard("messenger.startCall", requestMedia("av")).then((ok) => {
         setInCall(true);
         setCamOn(Boolean(ok));
         setMicOn(Boolean(ok));
+        void guard(
+          "messenger.startPeerCall",
+          startPeerCall(id, true, alias),
+          "Arama başlatılamadı.",
+        );
       });
     },
-    [requestMedia],
+    [participants, requestMedia],
   );
-
-  const activePeerName = activePeer
-    ? (participants.find((p) => p.id === activePeer)?.name ?? null)
-    : null;
 
   const peerCount = participants.length - 1;
   const localMode = peerCount === 0;
