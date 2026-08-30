@@ -95,10 +95,17 @@ export function GenericAppContainer({
         </div>
       ) : null}
       <iframe
+        ref={frameRef}
         key={`${attempt}:${stage}`}
         title={label}
         src={current?.src}
         onLoad={() => {
+          // Gömmeyi reddeden hedefler de `load` tetikler; çerçeve about:blank
+          // kalırsa içerik gelmemiştir ve bir sonraki aşamaya geçilir.
+          if (isBlankFrame(frameRef.current)) {
+            advance();
+            return;
+          }
           setLoaded(true);
           if (timer.current) clearTimeout(timer.current);
         }}
@@ -110,3 +117,15 @@ export function GenericAppContainer({
     </div>
   );
 }
+
+/** Çapraz kaynak içerik yüklendiyse erişim hata verir; boş çerçeve okunur. */
+function isBlankFrame(frame: HTMLIFrameElement | null): boolean {
+  if (!frame) return false;
+  try {
+    const href = frame.contentWindow?.location?.href;
+    return !href || href === "about:blank";
+  } catch {
+    return false;
+  }
+}
+
