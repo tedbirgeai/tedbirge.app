@@ -13,6 +13,13 @@ const DB_NAME = "tedbirge-vfs";
 const DB_VERSION = 2;
 const STORE = "files";
 
+/**
+ * Şema kilidi: depo sürümü tek kaynaktan okunur. Bir üst sürüme geçiş
+ * yalnız `openDb` içindeki `onupgradeneeded` yolundan yapılır; eski
+ * kayıtlar `normalizeEntry` ile ileri uyumlu hâle getirilir.
+ */
+export const VFS_SCHEMA_VERSION = DB_VERSION;
+
 /** Kullanıcıya görünen sabit klasörler. */
 export const VFS_FOLDERS = ["Belgeler", "Görseller", "Medya", "İndirilenler"] as const;
 export type VfsFolder = (typeof VFS_FOLDERS)[number];
@@ -24,6 +31,13 @@ export function folderForMime(mime: string): VfsFolder {
   if (mime.startsWith("image/")) return "Görseller";
   if (mime.startsWith("video/") || mime.startsWith("audio/")) return "Medya";
   return "Belgeler";
+}
+
+/** Şema dışı klasör adını reddeder; MIME'e göre geçerli klasöre düşer. */
+export function normalizeFolder(folder: unknown, mime = ""): VfsFolder {
+  return (VFS_FOLDERS as readonly string[]).includes(folder as string)
+    ? (folder as VfsFolder)
+    : folderForMime(mime);
 }
 
 export type VfsEntry = {
@@ -94,9 +108,7 @@ export async function listFiles(): Promise<VfsEntry[]> {
     .map(({ blob: _blob, ...meta }) => ({
       ...meta,
       // v1 kayıtlarında klasör yoktur: türüne göre yerleştirilir.
-      folder: (VFS_FOLDERS as readonly string[]).includes(meta.folder)
-        ? meta.folder
-        : folderForMime(meta.mime),
+      folder: normalizeFolder(meta.folder, meta.mime),
     }))
     .sort((a, b) => b.at - a.at);
 }
@@ -112,7 +124,7 @@ export async function saveFiles(files: File[], folder?: VfsFolder): Promise<VfsE
       mime,
       size: f.size,
       at: Date.now(),
-      folder: folder ?? folderForMime(mime),
+      folder: normalizeFolder(folder, mime),
       blob: f,
     };
     await tx("readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>);
@@ -159,7 +171,7 @@ export function renameFile(id: string, name: string): Promise<void> {
 
 /** Dosyayı başka bir klasöre taşır. */
 export function moveFile(id: string, folder: VfsFolder): Promise<void> {
-  return patch(id, { folder });
+  return patch(id, { folder: normalizeFolder(folder) });
 }
 
 export async function deleteFile(id: string): Promise<void> {

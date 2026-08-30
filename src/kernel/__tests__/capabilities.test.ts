@@ -31,11 +31,22 @@ describe("yetenek kapısı", () => {
   it("tüm yerleşik uygulamalar kayıtlıdır", () => {
     const builtins = listApps().filter((a) => a.kind === "builtin");
     expect(builtins.map((a) => a.id).sort()).toEqual([
+      "apps",
       "calls",
       "chats",
       "communities",
+      "computer",
       "feed",
+      "files",
       "me",
+      "media",
+      "mesh",
+      "messenger",
+      "music",
+      "relay",
+      "store",
+      "transfer",
+      "wallpaper",
     ]);
     // Harici web hedefleri hiçbir yetenek istemez (çekirdeğe erişemez).
     expect(listApps().filter((a) => a.kind === "web").every((a) => a.capabilities.length === 0)).toBe(

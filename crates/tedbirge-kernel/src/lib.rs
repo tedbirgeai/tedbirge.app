@@ -23,6 +23,7 @@ use alloc::vec::Vec;
 
 #[cfg(not(feature = "std"))]
 mod heap;
+pub mod hal;
 mod route;
 
 #[cfg(not(feature = "std"))]
