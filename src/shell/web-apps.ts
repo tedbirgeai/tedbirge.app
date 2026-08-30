@@ -27,6 +27,8 @@ export type WebAppEntry = {
   embedUrl?: string;
   /** Tedbirge Geçidi üzerinden aktarılacak adres (true → `url` kullanılır). */
   proxy?: string | true;
+  /** Marka logosunun çekileceği alan adı (adres farklıysa gerekir). */
+  iconDomain?: string;
 };
 
 export const WEB_APPS: WebAppEntry[] = [
