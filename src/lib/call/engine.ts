@@ -71,26 +71,9 @@ export type CallState = {
 };
 
 const ICE: RTCConfiguration = {
-  iceServers: [
-    {
-      urls: [
-        "stun:stun.l.google.com:19302",
-        "stun:stun1.l.google.com:19302",
-        "stun:stun1.l.google.com:19302",
-      ],
-    },
-    // Simetrik NAT / mobil operatör ağlarında doğrudan yol kurulamazsa
-    // aktarma sunucusu devreye girer. İçerik uçtan uca şifreli kalır (DTLS-SRTP).
-    {
-      urls: [
-        "turn:openrelay.metered.ca:80",
-        "turn:openrelay.metered.ca:443",
-        "turns:openrelay.metered.ca:443?transport=tcp",
-      ],
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-  ],
+  // Havuz mesh düğümüyle ortaktır (src/lib/webrtc/ice.ts): STUN + aktarma
+  // yedeği. İçerik uçtan uca şifreli kalır (DTLS-SRTP).
+  iceServers: iceServers(),
   iceCandidatePoolSize: 4,
   bundlePolicy: "max-bundle",
   rtcpMuxPolicy: "require",
