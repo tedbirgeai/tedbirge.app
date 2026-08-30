@@ -233,14 +233,14 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
                 haptic(12);
                 closeWindow(win.id);
               }}
-              className="tbos-winbtn wa-press grid h-8 w-8 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-destructive,#e11d48)]"
+              className="tbos-winbtn wa-press grid h-8 w-8 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-rose-500)]"
             >
               <X className="h-4 w-4" aria-hidden />
             </button>
           </span>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
+        <div className="tbos-scale flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
 
         {!win.maximized
           ? HANDLES.map((h) => (
