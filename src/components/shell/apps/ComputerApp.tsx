@@ -19,6 +19,7 @@ import {
   useNetworkMode,
 } from "@/lib/shell/network-mode";
 import { setVolume, useVolume } from "@/lib/ui/audio-gain";
+import { FONT_SCALES, setFontScale, useFontScale } from "@/lib/ui/font-scale";
 import { setTheme, THEMES, type ThemeId, getTheme } from "@/lib/ui/theme";
 import { setBrightness, setNightLight, useWallpaper } from "@/lib/ui/wallpaper";
 import {
@@ -448,6 +449,7 @@ function AppsTab({ onLaunch }: { onLaunch: (id: string) => void }) {
 function SettingsTab() {
   const wp = useWallpaper();
   const volume = useVolume();
+  const fontScale = useFontScale();
   const [theme, setThemeState] = useState<ThemeId>(() => getTheme());
 
   return (
