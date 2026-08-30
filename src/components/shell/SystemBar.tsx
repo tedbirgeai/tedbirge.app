@@ -48,6 +48,7 @@ export function SystemBar({
   const [memMb, setMemMb] = useState<number | null>(null);
   const [control, setControl] = useState(false);
   const [network, setNetwork] = useState(false);
+  const online = useOnline();
 
   useEffect(() => {
     const tick = () => {
