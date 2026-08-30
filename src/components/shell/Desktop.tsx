@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 import { DesktopIcon, ICON_H, ICON_W } from "@/components/shell/DesktopIcon";
 import { notifyError, notifyOk } from "@/lib/shell/notify";
 import { useWallpaper } from "@/lib/ui/wallpaper";
-import { saveFile } from "@/lib/vfs/store";
+import { saveFiles } from "@/lib/vfs/store";
 import { catalogApp, useDesktopState } from "@/shell/installed";
 
 type Menu = { x: number; y: number };
