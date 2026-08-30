@@ -101,8 +101,13 @@ export const Route = createFileRoute("/api/public/gecit")({
             "Content-Type": type,
             "Cache-Control": "public, max-age=60",
             "Cross-Origin-Resource-Policy": "same-origin",
+            // Kabuk sayfası çapraz kaynak yalıtımlı olduğundan gömülen
+            // belgenin de aynı politikayı bildirmesi gerekir; aksi hâlde
+            // çerçeve boş kalır.
+            "Cross-Origin-Embedder-Policy": "credentialless",
             "Referrer-Policy": "no-referrer",
           });
+
 
           if (type.includes("text/html")) {
             const text = await upstream.text();
