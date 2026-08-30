@@ -42,6 +42,8 @@ const WINDOW_TITLES: Record<string, string> = {
   store: "Tedbirge Mağaza",
   computer: "Bilgisayarım",
   wallpaper: "Görünüm — Duvar Kâğıdı ve Tema",
+  transfer: "Aktarım Merkezi",
+
 };
 
 
