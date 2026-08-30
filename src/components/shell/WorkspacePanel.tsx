@@ -5,6 +5,7 @@ import {
   Boxes,
   FileUp,
   FolderOpen,
+  Globe,
   MessageCircle,
   Music,
   PlayCircle,
@@ -19,28 +20,31 @@ import { AppsDialog } from "@/components/shell/AppsDialog";
 import { RelaySettingsDialog } from "@/components/shell/RelaySettingsDialog";
 import { MeshStatusDialog } from "@/components/shell/MeshStatusDialog";
 import { FileTransferDialog } from "@/components/shell/FileTransferDialog";
+import { GenericAppContainer } from "@/components/shell/GenericAppContainer";
+import { WindowFrame } from "@/components/shell/WindowFrame";
+import { Taskbar } from "@/components/shell/Taskbar";
 import { pressFeedback } from "@/lib/chat/sounds";
 import { describeNode } from "@/lib/node-runtime";
 import { useShell } from "@/shell/ShellProvider";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { WEB_APPS, webApp } from "@/shell/web-apps";
+import { closeWindow, openWindow, useWindows, type WindowRecord } from "@/shell/windows";
 
 /** Messenger ağır bir uygulamadır: yalnız penceresi açıldığında yüklenir. */
 const MessengerApp = lazy(() => import("@/components/Messenger"));
 
-type WindowId = "messenger" | "music" | "media" | "files";
+type LocalAppId = "messenger" | "music" | "media" | "files";
 
-const WINDOW_TITLES: Record<WindowId, string> = {
+const WINDOW_TITLES: Record<LocalAppId, string> = {
   messenger: "Messenger — P2P Ses / Görüntü",
   music: "Müzik",
   media: "Medya — Wasm Kum Havuzu Oynatıcı",
   files: "Dosyalar",
 };
 
-const TILES: {
-  id: WindowId | "apps" | "relay" | "mesh" | "transfer";
-  label: string;
-  hint: string;
-  icon: ReactNode;
-}[] = [
+type Tile = { id: string; label: string; hint: string; icon: ReactNode };
+
+const LOCAL_TILES: Tile[] = [
   {
     id: "messenger",
     label: "Messenger",
@@ -76,21 +80,44 @@ const TILES: {
   { id: "relay", label: "Röle", hint: "Taşıma ayarları", icon: <Radio className="h-6 w-6" /> },
 ];
 
+/** Harici hedefler kabuk koduna gömülmez: katalogdan üretilir. */
+const WEB_TILES: Tile[] = WEB_APPS.map((a) => ({
+  id: a.id,
+  label: a.label,
+  hint: a.hint,
+  icon: <Globe className="h-6 w-6" />,
+}));
+
 /**
  * tOS ÇALIŞMA ALANI (Web-OS Kabuğu)
  * ------------------------------------------------------------------
- * Uygulama ızgarası masaüstü işletim sistemi mantığıyla çalışır:
- * her simge rota değiştirmeden ekran ortasında bir pencere açar.
- * Renkler kilitli koyu siber (var(--tb-bg) / var(--tb-panel-solid)) paletinden gelir.
+ * Masaüstünde çoklu pencere: her simge sürüklenebilir, boyutlandırılabilir
+ * ve z-index öncelikli bir pencere açar; açık pencereler alt görev
+ * çubuğunda listelenir. Mobilde (<768px) pencere yöneticisi devre dışıdır:
+ * son açılan uygulama tam ekran PWA kılıfında gösterilir.
  */
 export function WorkspacePanel() {
-  const [win, setWin] = useState<WindowId | null>(null);
   const [apps, setApps] = useState(false);
   const [relay, setRelay] = useState(false);
   const [mesh, setMesh] = useState(false);
   const [transfer, setTransfer] = useState(false);
   const { node } = useShell();
   const status = describeNode(node);
+  const isMobile = useIsMobile();
+  const windows = useWindows();
+
+  const launch = (id: string) => {
+    pressFeedback();
+    if (id === "apps") return setApps(true);
+    if (id === "relay") return setRelay(true);
+    if (id === "mesh") return setMesh(true);
+    if (id === "transfer") return setTransfer(true);
+    const web = webApp(id);
+    openWindow(id, web ? web.label : WINDOW_TITLES[id as LocalAppId]);
+  };
+
+  const visible = windows.filter((w) => !w.minimized);
+  const top = visible.length ? visible.reduce((a, b) => (a.z > b.z ? a : b)) : null;
 
   return (
     <div className="tbos cyber-grid flex min-h-0 flex-1 flex-col">
@@ -114,82 +141,74 @@ export function WorkspacePanel() {
         </Link>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div className="relative min-h-0 flex-1 overflow-y-auto p-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {TILES.map((t) => (
+          {LOCAL_TILES.map((t) => (
             <button
               key={t.id}
               type="button"
-              onClick={() => {
-                pressFeedback();
-                if (t.id === "apps") setApps(true);
-                else if (t.id === "relay") setRelay(true);
-                else if (t.id === "mesh") setMesh(true);
-                else if (t.id === "transfer") setTransfer(true);
-                else setWin(t.id);
-              }}
+              onClick={() => launch(t.id)}
               className="wa-press flex min-h-24 flex-col justify-between rounded-2xl border border-emerald-500/15 bg-[var(--tb-panel-solid)] p-3 text-left transition-colors hover:border-emerald-500/40"
             >
-              <Tile icon={t.icon} label={t.label} hint={t.hint} />
+              <TileView icon={t.icon} label={t.label} hint={t.hint} />
             </button>
           ))}
         </div>
-      </div>
 
-      {win && (
-        <div className="tbos fixed inset-0 z-[70] flex items-stretch justify-center bg-black/60 p-0 sm:items-center sm:p-6">
-          <div
-            className={`tbos-window flex min-h-0 w-full flex-col rounded-none sm:rounded-2xl ${
-              win === "messenger" ? "max-w-[1400px] sm:h-[92vh]" : "max-w-[820px] sm:h-[80vh]"
-            }`}
-          >
-            <div
-              className="flex shrink-0 items-center justify-between gap-3 px-4 py-2.5"
-              style={{ borderBottom: "1px solid var(--border)" }}
+        <h2 className="mt-6 mb-3 font-osmono text-[12px] tracking-wide text-slate-500 uppercase">
+          Web uygulamaları
+        </h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {WEB_TILES.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => launch(t.id)}
+              className="wa-press flex min-h-24 flex-col justify-between rounded-2xl border border-emerald-500/15 bg-[var(--tb-panel-solid)] p-3 text-left transition-colors hover:border-emerald-500/40"
             >
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="flex shrink-0 gap-1.5">
-                  <i className="block h-2.5 w-2.5 rounded-full bg-rose-500/70" />
-                  <i className="block h-2.5 w-2.5 rounded-full bg-amber-400/70" />
-                  <i className="block h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
-                </span>
-                <h2 className="truncate font-osmono text-[13px] text-slate-300">
-                  {WINDOW_TITLES[win]}
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setWin(null)}
-                aria-label="Kapat"
-                className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-slate-400 hover:text-slate-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {win === "messenger" ? (
-                <Suspense
-                  fallback={
-                    <div className="flex flex-1 items-center justify-center font-osmono text-[12px] text-slate-500">
-                      Messenger yükleniyor…
-                    </div>
-                  }
-                >
-                  <div className="min-h-0 flex-1 overflow-auto [&>div]:h-full">
-                    <MessengerApp />
-                  </div>
-                </Suspense>
-              ) : (
-                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
-                  {win === "music" && <MusicApp />}
-                  {win === "media" && <MediaApp />}
-                  {win === "files" && <FilesApp onTransfer={() => setTransfer(true)} />}
-                </div>
-              )}
+              <TileView icon={t.icon} label={t.label} hint={t.hint} />
+            </button>
+          ))}
+        </div>
+
+        {/* Masaüstü: çoklu pencere katmanı. */}
+        {!isMobile ? (
+          <div className="pointer-events-none fixed inset-0 z-[70]">
+            <div className="pointer-events-auto absolute inset-0">
+              {windows.map((w) => (
+                <WindowFrame key={w.id} win={w}>
+                  <AppSurface win={w} onTransfer={() => setTransfer(true)} />
+                </WindowFrame>
+              ))}
             </div>
           </div>
+        ) : null}
+      </div>
+
+      {/* Mobil: tek uygulama tam ekran PWA kılıfı. */}
+      {isMobile && top ? (
+        <div className="tbos fixed inset-0 z-[70] flex flex-col bg-[var(--tb-bg)]">
+          <div
+            className="flex shrink-0 items-center justify-between gap-3 px-4 py-2.5"
+            style={{ borderBottom: "1px solid var(--border)" }}
+          >
+            <h2 className="truncate font-osmono text-[13px] text-slate-300">{top.title}</h2>
+            <button
+              type="button"
+              onClick={() => closeWindow(top.id)}
+              aria-label="Kapat"
+              className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-slate-400 hover:text-slate-100"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <AppSurface win={top} onTransfer={() => setTransfer(true)} />
+          </div>
         </div>
-      )}
+      ) : null}
+
+      {!isMobile ? <Taskbar windows={windows} /> : null}
 
       <AppsDialog open={apps} onClose={() => setApps(false)} />
       <RelaySettingsDialog open={relay} onClose={() => setRelay(false)} />
@@ -199,7 +218,37 @@ export function WorkspacePanel() {
   );
 }
 
-function Tile({ icon, label, hint }: { icon: ReactNode; label: string; hint: string }) {
+/** Pencere gövdesi: yerleşik panel ya da harici web konteynırı. */
+function AppSurface({ win, onTransfer }: { win: WindowRecord; onTransfer: () => void }) {
+  const web = webApp(win.appId);
+  if (web) {
+    return <GenericAppContainer url={web.url} label={web.label} embed={web.embed} />;
+  }
+  if (win.appId === "messenger") {
+    return (
+      <Suspense
+        fallback={
+          <div className="flex flex-1 items-center justify-center font-osmono text-[12px] text-slate-500">
+            Messenger yükleniyor…
+          </div>
+        }
+      >
+        <div className="min-h-0 flex-1 overflow-auto [&>div]:h-full">
+          <MessengerApp />
+        </div>
+      </Suspense>
+    );
+  }
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
+      {win.appId === "music" && <MusicApp />}
+      {win.appId === "media" && <MediaApp />}
+      {win.appId === "files" && <FilesApp onTransfer={onTransfer} />}
+    </div>
+  );
+}
+
+function TileView({ icon, label, hint }: { icon: ReactNode; label: string; hint: string }) {
   return (
     <>
       <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
