@@ -132,7 +132,7 @@ export function ControlCenter({
                 : "border-[var(--tb-border)] text-[var(--tb-muted)]"
             }`}
           >
-            {t.label.split(" ")[0]}
+            {t.label.replace("Açık ", "")}
           </button>
         ))}
       </div>
