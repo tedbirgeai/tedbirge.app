@@ -21,6 +21,8 @@ import { useShell } from "@/shell/ShellProvider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { webApp } from "@/shell/web-apps";
 import { catalogApp } from "@/shell/installed";
+import { getApp } from "@/apps/registry";
+
 import { closeWindow, openWindow, useWindows, type WindowRecord } from "@/shell/windows";
 
 /** Messenger ağır bir uygulamadır: yalnız penceresi açıldığında yüklenir. */
@@ -71,7 +73,12 @@ export function WorkspacePanel() {
     if (id === "transfer") return setTransfer(true);
     if (id === "apps") return setPackages(true);
     const web = webApp(id);
+    // Kayıt kontrolü: kayıtsız kimlik sessizce yutulmaz, pencere yine açılır.
+    if (!getApp(id) && !web && import.meta.env.DEV) {
+      console.warn(`[tbos] "${id}" AppRegistry'de kayıtlı değil.`);
+    }
     openWindow(id, web ? web.label : (WINDOW_TITLES[id] ?? catalogApp(id)?.label ?? id));
+
   }, []);
 
   const visible = windows.filter((w) => !w.minimized);
