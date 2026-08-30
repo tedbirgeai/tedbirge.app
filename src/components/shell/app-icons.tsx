@@ -28,6 +28,7 @@ import {
   Video,
   Wallet,
   BookOpen,
+  Palette,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -38,6 +39,7 @@ const MAP: Record<string, ComponentType<{ className?: string }>> = {
   music: Music,
   store: Store,
   computer: MonitorSmartphone,
+  wallpaper: Palette,
   transfer: FileUp,
   apps: Boxes,
   mesh: Activity,

@@ -10,6 +10,8 @@ import { Link } from "@tanstack/react-router";
 import { Settings, UserRound, Wifi } from "lucide-react";
 
 import { InstallSystemButton } from "@/components/shell/InstallSystemButton";
+import { ControlCenter } from "@/components/shell/ControlCenter";
+
 
 
 /** Bazı tarayıcılarda bulunan bellek ölçümü (standart dışı). */
@@ -27,15 +29,19 @@ export function SystemBar({
   peers,
   rttMs = null,
   onSettings,
+  onPersonalize,
 }: {
   status: string;
   peers: number;
   /** Son ölçülen gidiş-dönüş gecikmesi (ms); yoksa gizlenir. */
   rttMs?: number | null;
   onSettings: () => void;
+  /** Kontrol merkezinden görünüm ayarlarını açar. */
+  onPersonalize: () => void;
 }) {
   const [clock, setClock] = useState("");
   const [memMb, setMemMb] = useState<number | null>(null);
+  const [control, setControl] = useState(false);
 
   useEffect(() => {
     const tick = () => {
@@ -52,20 +58,36 @@ export function SystemBar({
   }, []);
 
   return (
-    <header className="tbos-sysbar grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-1.5">
+    <header className="tbos-sysbar relative z-[80] grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-1.5">
       <div className="flex min-w-0 items-center gap-3">
         <span className="shrink-0 font-osmono text-[12px] font-bold tracking-tight text-[var(--tb-text)]">
           TEDBİRGE<span className="text-[var(--tb-accent)]"> OS</span>
         </span>
-        <span className="hidden min-w-0 items-center gap-1.5 sm:flex">
+        <button
+          type="button"
+          onClick={() => setControl((v) => !v)}
+          aria-label="Kontrol merkezi"
+          aria-expanded={control}
+          className="wa-press hidden min-w-0 items-center gap-1.5 rounded-lg px-1.5 py-0.5 sm:flex"
+        >
           <Wifi className="h-3.5 w-3.5 shrink-0 text-[var(--tb-accent)]" aria-hidden />
           <span className="truncate font-osmono text-[11px] text-[var(--tb-muted)]">
             {status} · {peers} cihaz
             {rttMs != null ? ` · ${rttMs} ms` : ""}
             {memMb != null ? ` · ${memMb} MB` : ""}
           </span>
-        </span>
+        </button>
       </div>
+
+      <ControlCenter
+        open={control}
+        onClose={() => setControl(false)}
+        status={status}
+        peers={peers}
+        rttMs={rttMs}
+        onPersonalize={onPersonalize}
+      />
+
 
       <div className="flex shrink-0 items-center gap-1.5">
         <InstallSystemButton />

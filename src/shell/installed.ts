@@ -46,6 +46,14 @@ export const LOCAL_APPS: CatalogApp[] = [
     builtin: true,
   },
   {
+    id: "wallpaper",
+    label: "Görünüm",
+    hint: "Duvar kâğıdı ve tema",
+    category: "sistem",
+    builtin: true,
+  },
+
+  {
     id: "transfer",
     label: "Aktarım",
     hint: "Eşler arası dosya gönderimi",

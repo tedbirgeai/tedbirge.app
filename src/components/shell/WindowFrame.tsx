@@ -191,7 +191,12 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
           }}
         >
           <h2 className="truncate font-osmono text-[13px] text-[var(--tb-muted)]">{win.title}</h2>
-          <span className="flex shrink-0 items-center gap-1">
+          <span
+            className="flex shrink-0 items-center gap-1"
+            onPointerDown={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => e.stopPropagation()}
+          >
+
             <button
               type="button"
               aria-label="Küçült"
