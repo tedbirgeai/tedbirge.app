@@ -6,14 +6,17 @@
  * internet gerektirmez. Kartlar gizlenebilir.
  */
 
-import { useEffect, useState } from "react";
-import { ChevronRight, Focus, HardDrive, Radio } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronRight, Focus, GripVertical, HardDrive, Radio, X } from "lucide-react";
 
 import { useFocusMode, setFocusMode } from "@/lib/shell/focus-mode";
 import { useNetworkMode, NETWORK_MODES } from "@/lib/shell/network-mode";
 import { notifyOk } from "@/lib/shell/notify";
 import { onVfsChange, storageUsage, type StorageUsage } from "@/lib/vfs/store";
 import { useShell } from "@/shell/ShellProvider";
+
+const POS_KEY = "tedbirge:widgets:pos";
+const HIDE_KEY = "tedbirge:widgets:hidden";
 
 function human(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -22,11 +25,35 @@ function human(bytes: number) {
   return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
+function readPos(): { x: number; y: number } | null {
+  try {
+    const raw = window.localStorage.getItem(POS_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as { x: number; y: number };
+    return typeof p?.x === "number" && typeof p?.y === "number" ? p : null;
+  } catch {
+    return null;
+  }
+}
+
 export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
   const { node } = useShell();
   const mode = useNetworkMode();
   const focus = useFocusMode();
   const [usage, setUsage] = useState<StorageUsage>({ files: 0, bytes: 0, quota: null });
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [hidden, setHidden] = useState(false);
+  const drag = useRef<{ dx: number; dy: number } | null>(null);
+  const box = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    setPos(readPos());
+    setHidden(window.localStorage.getItem(HIDE_KEY) === "1");
+    const show = () => setHidden(false);
+    window.addEventListener("tedbirge:widgets-show", show);
+    return () => window.removeEventListener("tedbirge:widgets-show", show);
+  }, []);
+
 
   useEffect(() => {
     const read = () => {
@@ -45,12 +72,68 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
   const modeLabel = NETWORK_MODES.find((m) => m.id === mode)?.label ?? "Küresel İnternet";
   const ratio = usage.quota ? Math.min(1, usage.bytes / usage.quota) : 0;
 
+  const onPointerDown = (e: React.PointerEvent) => {
+    const rect = box.current?.getBoundingClientRect();
+    if (!rect) return;
+    drag.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    const w = box.current?.offsetWidth ?? 256;
+    const h = box.current?.offsetHeight ?? 300;
+    const x = Math.min(Math.max(4, e.clientX - d.dx), window.innerWidth - w - 4);
+    const y = Math.min(Math.max(32, e.clientY - d.dy), window.innerHeight - h - 4);
+    setPos({ x, y });
+  };
+
+  const onPointerUp = () => {
+    if (!drag.current) return;
+    drag.current = null;
+    if (pos) window.localStorage.setItem(POS_KEY, JSON.stringify(pos));
+  };
+
+  const hide = () => {
+    setHidden(true);
+    window.localStorage.setItem(HIDE_KEY, "1");
+    notifyOk("Kartlar gizlendi", "Masaüstü sağ tık menüsünden geri getirebilirsiniz.");
+  };
+
+  if (hidden) return null;
+
   return (
     <aside
+      ref={box}
       aria-label="Masaüstü kartları"
       data-focus-hide="true"
+      style={pos ? { top: pos.y, left: pos.x, right: "auto" } : undefined}
       className="pointer-events-none absolute top-4 right-4 z-[5] hidden w-64 flex-col gap-2.5 md:flex"
     >
+      <div className="pointer-events-auto flex items-center gap-1 self-end">
+        <button
+          type="button"
+          aria-label="Kartları taşı"
+          title="Kartları taşı"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          className="grid h-6 w-6 cursor-grab place-items-center rounded-md text-[var(--tb-muted)] active:cursor-grabbing"
+        >
+          <GripVertical className="h-3.5 w-3.5" aria-hidden />
+        </button>
+        <button
+          type="button"
+          aria-label="Kartları gizle"
+          title="Kartları gizle"
+          onClick={hide}
+          className="wa-press grid h-6 w-6 place-items-center rounded-md text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+        >
+          <X className="h-3.5 w-3.5" aria-hidden />
+        </button>
+      </div>
+
       <button
         type="button"
         onClick={() => onOpen("mesh")}

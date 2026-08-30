@@ -53,7 +53,9 @@ export function Spotlight({
 
   const items = useMemo<Item[]>(() => {
     const q = query.trim().toLocaleLowerCase("tr");
-    const appIds = installed.length ? installed : CATALOG.map((a) => a.id);
+    // Kurulu uygulamalar önce; katalogdaki diğer hedefler de aranabilir.
+    const appIds = [...new Set([...installed, ...CATALOG.map((a) => a.id)])];
+
     const apps: Item[] = appIds
       .map((id) => catalogApp(id))
       .filter((a): a is NonNullable<typeof a> => !!a)
