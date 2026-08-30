@@ -57,8 +57,17 @@ export function Desktop({
     { label: "Yeni Klasör", onSelect: () => void newFolder() },
     { label: "Duvar Kâğıdını Değiştir", onSelect: () => onOpen("wallpaper") },
     { kind: "sep" },
+    {
+      label: "Kartları Göster",
+      onSelect: () => {
+        window.localStorage.removeItem("tedbirge:widgets:hidden");
+        window.dispatchEvent(new Event("tedbirge:widgets-show"));
+        notifyOk("Masaüstü kartları geri geldi");
+      },
+    },
     { label: "Yenile", onSelect: () => { window.dispatchEvent(new Event("tedbirge:vfs-refresh")); notifyOk("Masaüstü yenilendi"); } },
     { label: "Ayarlar", onSelect: () => onOpen("computer") },
+
   ];
 
   const items: MenuItem[] = menu?.appId
