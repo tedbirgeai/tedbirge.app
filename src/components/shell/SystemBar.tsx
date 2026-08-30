@@ -88,6 +88,14 @@ export function SystemBar({
         >
           <Wifi className="h-4 w-4" aria-hidden />
         </button>
+        {!online ? (
+          <span
+            role="status"
+            className="shrink-0 truncate rounded-full border border-[var(--tb-accent)] px-2 py-0.5 font-osmono text-[11px] text-[var(--tb-accent)]"
+          >
+            Off-Grid Modu Aktif · Yerel VFS &amp; Wasm Hazır
+          </span>
+        ) : null}
         <button
           type="button"
           onClick={() => {
