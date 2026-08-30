@@ -12,26 +12,42 @@ import { Settings, UserRound, Wifi } from "lucide-react";
 import { InstallSystemButton } from "@/components/shell/InstallSystemButton";
 
 
+/** Bazı tarayıcılarda bulunan bellek ölçümü (standart dışı). */
+type MemoryInfo = { usedJSHeapSize: number; jsHeapSizeLimit: number };
+
+function readMemory(): number | null {
+  const perf = performance as Performance & { memory?: MemoryInfo };
+  const m = perf.memory;
+  if (!m || !m.jsHeapSizeLimit) return null;
+  return Math.round((m.usedJSHeapSize / 1024 / 1024) * 10) / 10;
+}
+
 export function SystemBar({
   status,
   peers,
+  rttMs = null,
   onSettings,
 }: {
   status: string;
   peers: number;
+  /** Son ölçülen gidiş-dönüş gecikmesi (ms); yoksa gizlenir. */
+  rttMs?: number | null;
   onSettings: () => void;
 }) {
   const [clock, setClock] = useState("");
+  const [memMb, setMemMb] = useState<number | null>(null);
 
   useEffect(() => {
-    const tick = () =>
+    const tick = () => {
       setClock(
         new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) +
           " · " +
           new Date().toLocaleDateString("tr-TR", { day: "2-digit", month: "short" }),
       );
+      setMemMb(readMemory());
+    };
     tick();
-    const t = window.setInterval(tick, 15000);
+    const t = window.setInterval(tick, 5000);
     return () => window.clearInterval(t);
   }, []);
 
@@ -45,6 +61,8 @@ export function SystemBar({
           <Wifi className="h-3.5 w-3.5 shrink-0 text-[var(--tb-accent)]" aria-hidden />
           <span className="truncate font-osmono text-[11px] text-[var(--tb-muted)]">
             {status} · {peers} cihaz
+            {rttMs != null ? ` · ${rttMs} ms` : ""}
+            {memMb != null ? ` · ${memMb} MB` : ""}
           </span>
         </span>
       </div>
