@@ -339,9 +339,9 @@ function NetworkTab() {
         ) : (
           <ul className="mt-2 grid gap-1">
             {node.peers.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-3">
+              <li key={p.nodeId} className="flex items-center justify-between gap-3">
                 <span className="truncate font-osmono text-[12px] text-[var(--tb-text)]">
-                  {p.id}
+                  {p.nodeId}
                 </span>
                 <span className="shrink-0 text-[12px] text-[var(--tb-muted)]">
                   {p.direct ? "doğrudan" : "aktarıcı üzerinden"}
