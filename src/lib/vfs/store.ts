@@ -67,6 +67,11 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
+// Masaüstü sağ tık menüsündeki "Yenile" komutu depoyu tazeler.
+if (typeof window !== "undefined") {
+  window.addEventListener("tedbirge:vfs-refresh", () => emit());
+}
+
 /** Kayıtlı dosyaların üstverisi (Blob içermez; liste hafif kalır). */
 export async function listFiles(): Promise<VfsEntry[]> {
   const all = await tx<VfsRecord[]>("readonly", (s) => s.getAll() as IDBRequest<VfsRecord[]>);
