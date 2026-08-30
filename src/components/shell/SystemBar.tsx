@@ -62,6 +62,14 @@ export function SystemBar({
     return () => window.clearInterval(t);
   }, []);
 
+  // Pencere içi "Ağ modunu değiştir" kısayolu ağ panelini açar.
+  useEffect(() => {
+    const open = () => setNetwork(true);
+    window.addEventListener("tedbirge:open-network", open);
+    return () => window.removeEventListener("tedbirge:open-network", open);
+  }, []);
+
+
   return (
     <header className="tbos-sysbar relative z-[80] grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-1.5">
       <div className="flex min-w-0 items-center gap-3">

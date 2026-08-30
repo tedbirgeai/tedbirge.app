@@ -8,13 +8,15 @@
  * zengin **Tedbirge Web Kabuğu** kartına düşer.
  */
 
-import { useCallback, useState } from "react";
-import { ExternalLink, Globe, Layers, RotateCw, Search, Waypoints } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ExternalLink, Globe, Layers, RotateCw, Search, ShieldOff, Waypoints } from "lucide-react";
 
 import { BrandIcon, domainOf } from "@/components/shell/BrandIcon";
 import { GenericAppContainer } from "@/components/shell/GenericAppContainer";
 import { gatewayAllowed, gatewayUrl } from "@/lib/shell/embed-strategy";
+import { useNetworkMode } from "@/lib/shell/network-mode";
 import type { EmbedPolicy } from "@/shell/web-apps";
+
 
 const SEARCH = (q: string) => `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(q)}`;
 
@@ -37,10 +39,15 @@ export function TedbirgeWebView({
   /** Geçit ya da arama sonucu geçici hedefi geçersiz kılar. */
   const [forced, setForced] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const netMode = useNetworkMode();
+  const offgrid = netMode === "offgrid";
 
   const active = forced ?? url;
   const proxyTarget = typeof proxy === "string" ? proxy : url;
-  const canGateway = gatewayAllowed(proxyTarget);
+  const canGateway = gatewayAllowed(proxyTarget) && !offgrid;
+  /** Kullanıcı yalnız temiz alan adını görür; dahili geçit yolu gizlidir. */
+  const viaGateway = Boolean(forced?.startsWith("/api/public/gecit"));
+  const shownHost = domainOf(forced && !viaGateway ? forced : url);
 
   const runSearch = useCallback(() => {
     const q = query.trim();
@@ -61,6 +68,11 @@ export function TedbirgeWebView({
     setShell(embed === "popup");
     setReload((r) => r + 1);
   }, [embed]);
+
+  // Tam Gizlilik kapanınca pencere kendi kendine tazelenir.
+  useEffect(() => {
+    if (!offgrid) reset();
+  }, [offgrid, reset]);
 
   const shellCard = (
     <WebShell
@@ -88,8 +100,17 @@ export function TedbirgeWebView({
         <span className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel)] px-2 py-1">
           <Globe className="h-3.5 w-3.5 shrink-0 text-[var(--tb-accent)]" aria-hidden />
           <span className="truncate font-osmono text-[11px] text-[var(--tb-muted)]">
-            {shell ? `Tedbirge Web Kabuğu · ${url}` : active}
+            {offgrid
+              ? "Tam Gizlilik · dış çıkış kapalı"
+              : shell
+                ? `Tedbirge Web Kabuğu · ${shownHost}`
+                : shownHost}
           </span>
+          {viaGateway && !offgrid ? (
+            <span className="shrink-0 rounded-md border border-[var(--tb-accent)]/40 px-1.5 py-0.5 font-osmono text-[10px] text-[var(--tb-accent)]">
+              Geçit
+            </span>
+          ) : null}
         </span>
         {canGateway ? (
           <button
@@ -102,19 +123,23 @@ export function TedbirgeWebView({
             <span className="hidden sm:inline">Geçit Üzerinden Çalıştır</span>
           </button>
         ) : null}
-        <a
-          href={url}
-          target="_blank"
-          rel="noreferrer noopener"
-          title="Harici sekmede aç"
-          className="wa-press inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--tb-border)] px-2 py-1 font-osmono text-[11px] text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
-        >
-          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-          <span className="hidden sm:inline">Harici Sekmede Aç</span>
-        </a>
+        {offgrid ? null : (
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer noopener"
+            title="Harici sekmede aç"
+            className="wa-press inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--tb-border)] px-2 py-1 font-osmono text-[11px] text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+          >
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+            <span className="hidden sm:inline">Harici Sekmede Aç</span>
+          </a>
+        )}
       </div>
 
-      {shell ? (
+      {offgrid ? (
+        <OffgridCard label={label} url={url} />
+      ) : shell ? (
         shellCard
       ) : (
         <GenericAppContainer
@@ -126,9 +151,42 @@ export function TedbirgeWebView({
           renderFailed={() => shellCard}
         />
       )}
+
     </div>
   );
 }
+
+/** Tam Gizlilik modunda dış çıkış kapalıyken gösterilen kart. */
+function OffgridCard({ label, url }: { label: string; url: string }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+      <BrandIcon
+        domain={domainOf(url)}
+        label={label}
+        className="h-12 w-12 opacity-60"
+        fallback={
+          <span className="grid h-12 w-12 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] text-[var(--tb-accent)]">
+            <ShieldOff className="h-6 w-6" aria-hidden />
+          </span>
+        }
+      />
+      <p className="text-[16px] font-semibold text-[var(--tb-text)]">Tam Gizlilik açık</p>
+      <p className="max-w-sm font-osmono text-[12px] text-[var(--tb-muted)]">
+        Cihaz dış ağdan yalıtıldı; {label} bu modda açılmaz. Yakındaki cihazlarla eşler arası
+        bağlantı çalışmaya devam eder.
+      </p>
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new Event("tedbirge:open-network"))}
+        className="wa-press inline-flex items-center gap-2 rounded-xl border border-[var(--tb-accent)]/40 px-3 py-2 font-osmono text-[12px] text-[var(--tb-accent)]"
+      >
+        <ShieldOff className="h-4 w-4" aria-hidden /> Ağ modunu değiştir
+      </button>
+    </div>
+  );
+}
+
+
 
 /** Gömülemeyen hedeflerde pencere içinde çalışan yerel gezgin. */
 function WebShell({
