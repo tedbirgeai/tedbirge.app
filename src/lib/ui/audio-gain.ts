@@ -17,7 +17,9 @@ function hydrate() {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
   try {
-    const v = Number(localStorage.getItem(KEY));
+    // Kayıt yoksa Number("") = 0 tuzağına düşmemek için önce varlık denetimi.
+    const raw = localStorage.getItem(KEY);
+    const v = raw == null ? NaN : Number(raw);
     if (Number.isFinite(v) && v >= 0 && v <= 1) volume = v;
   } catch {
     volume = 1;
