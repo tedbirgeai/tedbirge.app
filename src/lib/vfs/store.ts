@@ -108,9 +108,7 @@ export async function listFiles(): Promise<VfsEntry[]> {
     .map(({ blob: _blob, ...meta }) => ({
       ...meta,
       // v1 kayıtlarında klasör yoktur: türüne göre yerleştirilir.
-      folder: (VFS_FOLDERS as readonly string[]).includes(meta.folder)
-        ? meta.folder
-        : folderForMime(meta.mime),
+      folder: normalizeFolder(meta.folder, meta.mime),
     }))
     .sort((a, b) => b.at - a.at);
 }
