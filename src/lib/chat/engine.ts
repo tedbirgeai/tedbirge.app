@@ -27,13 +27,7 @@ import { knownPeerIds, sendMesh, startNode } from "@/lib/node-runtime";
 import { bootMeshBus, onMesh } from "@/lib/mesh-bus";
 import { getAlias } from "@/lib/chat/profile";
 import { getStoredPersonId } from "@/lib/chat/anchor";
-import {
-  collectChunk,
-  
-  isMediaChunk,
-  splitMediaAsync,
-  MAX_MEDIA_BYTES,
-} from "@/lib/chat/media";
+import { collectChunk, isMediaChunk, splitMediaAsync, MAX_MEDIA_BYTES } from "@/lib/chat/media";
 import { prepareMedia } from "@/lib/chat/media-worker-client";
 import { digestsOf, isSyncMessage, merkleRoot, type SyncMessage } from "@/lib/chat/merkle";
 import { getBrowserNodeId } from "@/lib/browser-node";

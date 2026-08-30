@@ -930,8 +930,6 @@ export class BrowserNode {
     void this.pollRelay();
   };
 
-
-
   private handleOffline = () => {
     this.emit({ online: false });
     void appendEvent("uplink", "İnternet koptu — yerel kuyruk devrede.");
