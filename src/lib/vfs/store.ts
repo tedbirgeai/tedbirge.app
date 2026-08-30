@@ -91,20 +91,28 @@ if (typeof window !== "undefined") {
 export async function listFiles(): Promise<VfsEntry[]> {
   const all = await tx<VfsRecord[]>("readonly", (s) => s.getAll() as IDBRequest<VfsRecord[]>);
   return all
-    .map(({ blob: _blob, ...meta }) => meta)
+    .map(({ blob: _blob, ...meta }) => ({
+      ...meta,
+      // v1 kayıtlarında klasör yoktur: türüne göre yerleştirilir.
+      folder: (VFS_FOLDERS as readonly string[]).includes(meta.folder)
+        ? meta.folder
+        : folderForMime(meta.mime),
+    }))
     .sort((a, b) => b.at - a.at);
 }
 
 /** Cihazdan seçilen/sürüklenen dosyaları depoya yazar. */
-export async function saveFiles(files: File[]): Promise<VfsEntry[]> {
+export async function saveFiles(files: File[], folder?: VfsFolder): Promise<VfsEntry[]> {
   const saved: VfsEntry[] = [];
   for (const f of files) {
+    const mime = f.type || "application/octet-stream";
     const rec: VfsRecord = {
       id: `${f.name}_${f.size}_${f.lastModified}`,
       name: f.name,
-      mime: f.type || "application/octet-stream",
+      mime,
       size: f.size,
       at: Date.now(),
+      folder: folder ?? folderForMime(mime),
       blob: f,
     };
     await tx("readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>);
@@ -125,10 +133,45 @@ export async function readFile(id: string): Promise<File | null> {
   return new File([rec.blob], rec.name, { type: rec.mime, lastModified: rec.at });
 }
 
-export async function deleteFile(id: string): Promise<void> {
-  await tx("readwrite", (s) => s.delete(id) as IDBRequest<undefined>);
+/** Kaydın üstverisini günceller (yeniden adlandırma / klasör taşıma). */
+async function patch(id: string, next: Partial<Pick<VfsEntry, "name" | "folder">>): Promise<void> {
+  const rec = await tx<VfsRecord | undefined>(
+    "readonly",
+    (s) => s.get(id) as IDBRequest<VfsRecord | undefined>,
+  );
+  if (!rec) return;
+  const updated: VfsRecord = { ...rec, ...next };
+  await tx("readwrite", (s) => s.put(updated) as IDBRequest<IDBValidKey>);
+  const cached = urls.get(id);
+  if (cached) {
+    URL.revokeObjectURL(cached);
+    urls.delete(id);
+  }
   emit();
 }
+
+/** Dosyayı yeniden adlandırır. */
+export function renameFile(id: string, name: string): Promise<void> {
+  const clean = name.trim();
+  if (!clean) return Promise.resolve();
+  return patch(id, { name: clean });
+}
+
+/** Dosyayı başka bir klasöre taşır. */
+export function moveFile(id: string, folder: VfsFolder): Promise<void> {
+  return patch(id, { folder });
+}
+
+export async function deleteFile(id: string): Promise<void> {
+  await tx("readwrite", (s) => s.delete(id) as IDBRequest<undefined>);
+  const cached = urls.get(id);
+  if (cached) {
+    URL.revokeObjectURL(cached);
+    urls.delete(id);
+  }
+  emit();
+}
+
 
 const urls = new Map<string, string>();
 
