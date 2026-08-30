@@ -986,3 +986,12 @@ html[data-focus="on"] [data-focus-hide="true"] {
 html[data-focus="on"] .tbos-wallpaper::after {
   opacity: 0.25;
 }
+
+/* ------------------------------------------------------------------
+   YAZI TİPİ ÖLÇEĞİ — Görünüm uygulamasındaki seçim burayı besler.
+   Pencere gövdesi ölçeklenir; pencere sürükleme/boyutlandırma
+   kulpları çerçevede kaldığı için koordinat matematiği bozulmaz.
+------------------------------------------------------------------ */
+.tbos-scale {
+  zoom: var(--tb-font-scale, 1);
+}
