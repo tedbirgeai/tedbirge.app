@@ -29,7 +29,7 @@ import { getAlias } from "@/lib/chat/profile";
 import { getStoredPersonId } from "@/lib/chat/anchor";
 import {
   collectChunk,
-  fileToDataUrl,
+  
   isMediaChunk,
   splitMediaAsync,
   MAX_MEDIA_BYTES,
