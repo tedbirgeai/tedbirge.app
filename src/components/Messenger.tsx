@@ -831,12 +831,20 @@ export default function Messenger() {
                       </span>
                     </div>
                     <div
-                      className="grid aspect-[4/3] place-items-center rounded-lg text-center text-[12px] sm:aspect-video"
+                      className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-lg text-center text-[12px] sm:aspect-video"
                       style={{ background: "var(--tb-bg)", color: "var(--tb-muted)" }}
                     >
-                      {activePeerName
-                        ? `${activePeerName} bağlanıyor…`
-                        : "Karşı taraf bağlandığında görüntü burada belirir"}
+                      <video
+                        ref={remoteVideoRef}
+                        autoPlay
+                        playsInline
+                        className={remoteStream ? "h-full w-full object-cover" : "hidden"}
+                      />
+                      {remoteStream ? null : activePeerName ? (
+                        <span>{`${activePeerName} · ${remoteStatusText}`}</span>
+                      ) : (
+                        <span>Karşı taraf bağlandığında görüntü burada belirir</span>
+                      )}
                     </div>
                   </div>
                 </div>
