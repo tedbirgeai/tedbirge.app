@@ -32,6 +32,9 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 
+import { BrandIcon, domainOf } from "@/components/shell/BrandIcon";
+import { webApp } from "@/shell/web-apps";
+
 const MAP: Record<string, ComponentType<{ className?: string }>> = {
   messenger: MessageCircle,
   files: FolderOpen,
@@ -62,5 +65,11 @@ const MAP: Record<string, ComponentType<{ className?: string }>> = {
 
 export function AppIcon({ id, className }: { id: string; className?: string }) {
   const Cmp = MAP[id] ?? (id.startsWith("web3.") ? Wallet : Globe);
-  return <Cmp className={className} />;
+  const fallback = <Cmp className={className} />;
+  const web = webApp(id);
+  if (!web) return fallback;
+  // Harici hedeflerde servisin gerçek logosu kullanılır; katalogda
+  // `iconDomain` varsa (proxy/eşdeğer adresli hedefler) o tercih edilir.
+  const domain = web.iconDomain ?? domainOf(web.url);
+  return <BrandIcon domain={domain} label={web.label} className={className} fallback={fallback} />;
 }

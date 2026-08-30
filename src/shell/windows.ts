@@ -68,8 +68,8 @@ function nextGeometry(index: number) {
   };
 }
 
-export function openWindow(appId: string, title: string): string {
-  const existing = windows.find((w) => w.appId === appId);
+export function openWindow(appId: string, title: string, fresh = false): string {
+  const existing = fresh ? undefined : windows.find((w) => w.appId === appId);
   if (existing) {
     focusWindow(existing.id);
     if (existing.minimized) {

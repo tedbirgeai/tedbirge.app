@@ -21,6 +21,7 @@ export function Taskbar({
   return (
     <div
       className="relative z-[95] flex shrink-0 items-center gap-2 overflow-x-auto px-3 py-2"
+      onContextMenu={(e) => e.preventDefault()}
       style={{ borderTop: "1px solid var(--border)", background: "var(--tb-panel-solid)" }}
     >
       <button

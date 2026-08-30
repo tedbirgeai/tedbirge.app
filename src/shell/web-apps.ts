@@ -27,6 +27,8 @@ export type WebAppEntry = {
   embedUrl?: string;
   /** Tedbirge Geçidi üzerinden aktarılacak adres (true → `url` kullanılır). */
   proxy?: string | true;
+  /** Marka logosunun çekileceği alan adı (adres farklıysa gerekir). */
+  iconDomain?: string;
 };
 
 export const WEB_APPS: WebAppEntry[] = [
@@ -64,6 +66,7 @@ export const WEB_APPS: WebAppEntry[] = [
     label: "X",
     hint: "Pencere içinde zaman tüneli",
     url: "https://x.com/",
+    iconDomain: "x.com",
     embedUrl: "https://syndication.twitter.com/srv/timeline-profile/screen-name/X",
     embed: "popup",
     proxy: "https://nitter.net/",
@@ -100,6 +103,7 @@ export const WEB_APPS: WebAppEntry[] = [
     label: "Bilgi",
     hint: "Ansiklopedi",
     url: "https://tr.wikipedia.org/",
+    iconDomain: "wikipedia.org",
     embed: "auto",
     proxy: true,
   },
@@ -108,6 +112,7 @@ export const WEB_APPS: WebAppEntry[] = [
     label: "Posta",
     hint: "Web posta istemcisi",
     url: "https://app.tuta.com/",
+    iconDomain: "tuta.com",
     embed: "auto",
     category: "uretkenlik",
   },
@@ -125,6 +130,7 @@ export const WEB_APPS: WebAppEntry[] = [
     hint: "Açık kaynak çeviri",
     url: "https://translate.mozilla.org/",
     embed: "auto",
+    iconDomain: "mozilla.org",
     category: "araclar",
   },
   {
@@ -153,6 +159,33 @@ export const WEB_APPS: WebAppEntry[] = [
     embed: "auto",
     proxy: true,
     category: "web3",
+  },
+  {
+    id: "web.code",
+    category: "uretkenlik",
+    label: "GitHub",
+    hint: "Kod depoları",
+    url: "https://github.com/",
+    embed: "popup",
+    iconDomain: "github.com",
+  },
+  {
+    id: "web.music",
+    category: "sosyal",
+    label: "Spotify",
+    hint: "Müzik akışı",
+    url: "https://open.spotify.com/",
+    embed: "popup",
+    iconDomain: "spotify.com",
+  },
+  {
+    id: "web.wa",
+    category: "sosyal",
+    label: "WhatsApp Web",
+    hint: "Tarayıcı istemcisi",
+    url: "https://web.whatsapp.com/",
+    embed: "popup",
+    iconDomain: "whatsapp.com",
   },
 ];
 
