@@ -299,26 +299,11 @@ export async function syncPersonIdentity(): Promise<string> {
 
 /**
  * ICE yapılandırması. Mobil operatörlerde CGNAT arkasındaki iki cihaz
- * yalnız STUN ile buluşamaz; TURN tanımlıysa aktarmalı hat kurulur.
- * TURN bilgileri ortam değişkeninden gelir, koda gömülmez.
+ * yalnız STUN ile buluşamaz; aktarma (TURN) yedeği devreye girer.
+ * Havuz arama motoruyla ortaktır: `src/lib/webrtc/ice.ts`.
  */
 export function buildMeshIce(): RTCConfiguration {
-  const servers: RTCIceServer[] = [
-    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
-  ];
-  const env = import.meta.env as Record<string, string | undefined>;
-  const turnUrl = env["VITE_TURN_URL"];
-  if (turnUrl) {
-    servers.push({
-      urls: turnUrl
-        .split(",")
-        .map((u) => u.trim())
-        .filter(Boolean),
-      username: env["VITE_TURN_USERNAME"],
-      credential: env["VITE_TURN_CREDENTIAL"],
-    });
-  }
-  return { iceServers: servers, iceCandidatePoolSize: 4, iceTransportPolicy: "all" };
+  return { iceServers: iceServers(), iceCandidatePoolSize: 4, iceTransportPolicy: "all" };
 }
 
 /**
