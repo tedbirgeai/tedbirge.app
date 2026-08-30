@@ -21,6 +21,8 @@ import { useShell } from "@/shell/ShellProvider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { webApp } from "@/shell/web-apps";
 import { catalogApp } from "@/shell/installed";
+import { getApp } from "@/apps/registry";
+
 import { closeWindow, openWindow, useWindows, type WindowRecord } from "@/shell/windows";
 
 /** Messenger ağır bir uygulamadır: yalnız penceresi açıldığında yüklenir. */
