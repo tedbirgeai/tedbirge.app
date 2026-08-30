@@ -17,7 +17,11 @@ import { WindowFrame } from "@/components/shell/WindowFrame";
 import { Dock } from "@/components/shell/Dock";
 import { SystemBar } from "@/components/shell/SystemBar";
 import { Desktop } from "@/components/shell/Desktop";
+import { Spotlight } from "@/components/shell/Spotlight";
 import { pressFeedback } from "@/lib/chat/sounds";
+import { notify, notifyError, notifyOk } from "@/lib/shell/notify";
+import { objectUrl, readFile, requestPersistentStorage } from "@/lib/vfs/store";
+import { sendFileToPeer } from "@/lib/p2p/file-transfer";
 import { describeNode } from "@/lib/node-runtime";
 import { useShell } from "@/shell/ShellProvider";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -60,6 +64,7 @@ export function WorkspacePanel() {
   const windows = useWindows();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [surfaceH, setSurfaceH] = useState(600);
+  const [spotlight, setSpotlight] = useState(false);
 
   useEffect(() => {
     const el = surfaceRef.current;
@@ -68,6 +73,23 @@ export function WorkspacePanel() {
     ro.observe(el);
     setSurfaceH(el.clientHeight);
     return () => ro.disconnect();
+  }, []);
+
+  // Çevrimdışı güvence: dosyalar yer baskısında bile silinmesin.
+  useEffect(() => {
+    void requestPersistentStorage();
+  }, []);
+
+  // Evrensel arama kısayolu: Ctrl/Cmd + Boşluk.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === "Space" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        setSpotlight((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   const launch = useCallback((id: string, fresh = false) => {
@@ -88,6 +110,39 @@ export function WorkspacePanel() {
   /** Sağ tık menüsündeki "Yeni Pencerede Aç": var olan pencere yeniden kullanılmaz. */
   const launchNew = useCallback((id: string) => launch(id, true), [launch]);
 
+  /** Dosyalar penceresinden sürüklenen dosyayı hedef uygulamaya iletir. */
+  const dropFile = useCallback(
+    async (appId: string, raw: string) => {
+      let meta: { id: string; name: string } | null = null;
+      try {
+        meta = JSON.parse(raw) as { id: string; name: string };
+      } catch {
+        return;
+      }
+      if (!meta?.id) return;
+      if (appId === "media") {
+        const url = await objectUrl(meta.id);
+        if (!url) return notifyError("Dosya açılamadı", meta.name);
+        window.dispatchEvent(new CustomEvent("tedbirge:open-media", { detail: { url } }));
+        notifyOk("Medyada açıldı", meta.name);
+        return;
+      }
+      if (appId === "messenger") {
+        const peer = node.peers.find((p) => p.direct);
+        if (!peer) return notify("Bağlı cihaz yok", "Önce bir cihazla eşleşin.");
+        const file = await readFile(meta.id);
+        if (!file) return notifyError("Dosya okunamadı", meta.name);
+        try {
+          await sendFileToPeer(peer.nodeId, file);
+          notifyOk("Gönderiliyor", `${meta.name} → ${peer.nodeId.slice(0, 10)}`);
+        } catch (err) {
+          notifyError("Gönderim başarısız", err instanceof Error ? err.message : undefined);
+        }
+      }
+    },
+    [node.peers],
+  );
+
   const visible = windows.filter((w) => !w.minimized);
   const top = visible.length ? visible.reduce((a, b) => (a.z > b.z ? a : b)) : null;
 
@@ -99,6 +154,7 @@ export function WorkspacePanel() {
         rttMs={node.rttMs}
         onSettings={() => launch("computer")}
         onPersonalize={() => launch("wallpaper")}
+        onSearch={() => setSpotlight(true)}
       />
 
 
@@ -109,7 +165,25 @@ export function WorkspacePanel() {
         {!isMobile && windows.length > 0 ? (
           <div className="pointer-events-none absolute inset-0">
             {windows.map((w) => (
-              <div key={w.id} className="pointer-events-auto contents">
+              <div
+                key={w.id}
+                className="pointer-events-auto contents"
+                onDragOver={(e) => {
+                  if (
+                    (w.appId === "messenger" || w.appId === "media") &&
+                    e.dataTransfer.types.includes("application/x-tedbirge-file")
+                  ) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "copy";
+                  }
+                }}
+                onDrop={(e) => {
+                  const raw = e.dataTransfer.getData("application/x-tedbirge-file");
+                  if (!raw) return;
+                  e.preventDefault();
+                  void dropFile(w.appId, raw);
+                }}
+              >
                 <WindowFrame win={w}>
                   <AppSurface win={w} onLaunch={launch} onTransfer={() => setTransfer(true)} />
                 </WindowFrame>
@@ -148,6 +222,11 @@ export function WorkspacePanel() {
         onLaunchNew={launchNew}
         onStore={() => launch("store")}
       />
+
+      <Spotlight open={spotlight} onClose={() => setSpotlight(false)} onLaunch={launch} />
+
+      {/* Parlaklık ve gece ışığı filtresi tüm arayüzün üstünde durur. */}
+      <div className="tbos-screen-filter" aria-hidden />
 
       <AppsDialog open={packages} onClose={() => setPackages(false)} />
       <RelaySettingsDialog open={relay} onClose={() => setRelay(false)} />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link2, PlayCircle } from "lucide-react";
 
 /** YouTube bağlantısını gömme adresine çevirir; değilse null döner. */
@@ -19,6 +19,16 @@ function youtubeEmbed(url: string): string | null {
 export function MediaApp() {
   const [url, setUrl] = useState("");
   const [src, setSrc] = useState<{ kind: "embed" | "file"; value: string } | null>(null);
+
+  // Dosyalar penceresinden sürüklenen medya buraya düşer.
+  useEffect(() => {
+    const onOpenMedia = (e: Event) => {
+      const detail = (e as CustomEvent<{ url: string }>).detail;
+      if (detail?.url) setSrc({ kind: "file", value: detail.url });
+    };
+    window.addEventListener("tedbirge:open-media", onOpenMedia);
+    return () => window.removeEventListener("tedbirge:open-media", onOpenMedia);
+  }, []);
 
   const open = () => {
     const trimmed = url.trim();

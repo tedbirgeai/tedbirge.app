@@ -11,6 +11,7 @@
 import { useState } from "react";
 
 import { DesktopIcon, ICON_H, ICON_W } from "@/components/shell/DesktopIcon";
+import { DesktopWidgets } from "@/components/shell/DesktopWidgets";
 import { ContextMenu, type MenuItem } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
 import { notifyError, notifyOk } from "@/lib/shell/notify";
@@ -56,8 +57,8 @@ export function Desktop({
     { label: "Yeni Klasör", onSelect: () => void newFolder() },
     { label: "Duvar Kâğıdını Değiştir", onSelect: () => onOpen("wallpaper") },
     { kind: "sep" },
-    { label: "Yenile", onSelect: () => notifyOk("Masaüstü yenilendi") },
-    { label: "Sistem Ayarları", onSelect: () => onOpen("computer") },
+    { label: "Yenile", onSelect: () => { window.dispatchEvent(new Event("tedbirge:vfs-refresh")); notifyOk("Masaüstü yenilendi"); } },
+    { label: "Ayarlar", onSelect: () => onOpen("computer") },
   ];
 
   const items: MenuItem[] = menu?.appId
@@ -108,6 +109,8 @@ export function Desktop({
           />
         );
       })}
+
+      <DesktopWidgets onOpen={onOpen} />
 
       {menu ? (
         <ContextMenu

@@ -10,6 +10,8 @@ let ctx: AudioContext | null = null;
 let ringTimer: ReturnType<typeof setInterval> | null = null;
 let muted = false;
 
+import { getVolume } from "@/lib/ui/audio-gain";
+
 const MUTE_KEY = "tedbirge.chat.sound.muted";
 
 export function isSoundMuted(): boolean {
@@ -24,6 +26,23 @@ export function setSoundMuted(next: boolean) {
     /* gizli mod */
   }
   if (next) stopRing();
+}
+
+let master: GainNode | null = null;
+
+/** Tüm arayüz sesleri buradan geçer; Kontrol Merkezi sürgüsü bunu ayarlar. */
+function masterBus(ac: AudioContext): GainNode {
+  if (!master || master.context !== ac) {
+    master = ac.createGain();
+    master.connect(ac.destination);
+  }
+  master.gain.setValueAtTime(getVolume(), ac.currentTime);
+  return master;
+}
+
+/** Sürgü değişince canlı olarak uygulanır. */
+export function applySystemVolume() {
+  if (ctx && master) master.gain.setValueAtTime(getVolume(), ctx.currentTime);
 }
 
 function audio(): AudioContext | null {
@@ -71,7 +90,7 @@ function tone({ freq, duration, delay = 0, gain = 0.14, type = "sine", sweepTo }
   amp.gain.setValueAtTime(0.0001, t0);
   amp.gain.exponentialRampToValueAtTime(gain, t0 + 0.02);
   amp.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
-  osc.connect(amp).connect(ac.destination);
+  osc.connect(amp).connect(masterBus(ac));
   osc.start(t0);
   osc.stop(t0 + duration + 0.05);
 }
@@ -114,7 +133,7 @@ function ringtoneBurst() {
   bus.gain.exponentialRampToValueAtTime(0.22, t0 + 0.05);
   bus.gain.setValueAtTime(0.22, t0 + dur - 0.1);
   bus.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  bus.connect(ac.destination);
+  bus.connect(masterBus(ac));
 
   // Tremolo (zil tokmağı titreşimi)
   const trem = ac.createOscillator();
@@ -150,7 +169,7 @@ function ringbackBurst() {
   bus.gain.exponentialRampToValueAtTime(0.12, t0 + 0.04);
   bus.gain.setValueAtTime(0.12, t0 + dur - 0.08);
   bus.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  bus.connect(ac.destination);
+  bus.connect(masterBus(ac));
   for (const f of [400, 450]) {
     const osc = ac.createOscillator();
     osc.type = "sine";

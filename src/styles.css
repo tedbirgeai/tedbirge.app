@@ -961,3 +961,28 @@ body.tbos-dragging .tbos-window {
 .tbos-webview {
   contain: paint;
 }
+
+/* ------------------------------------------------------------------
+   EKRAN FİLTRESİ — parlaklık ve gece ışığı
+   Kontrol Merkezindeki sürgüler --tb-dim / --tb-night değişkenlerine
+   yazar; bu katman tüm arayüzün üstünde durur ve tıklamayı geçirir.
+------------------------------------------------------------------ */
+.tbos-screen-filter {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  background:
+    linear-gradient(0deg, rgb(255 176 80 / calc(var(--tb-night, 0) * 1)) 0%, rgb(255 176 80 / calc(var(--tb-night, 0) * 1)) 100%),
+    rgb(0 0 0 / calc(var(--tb-dim, 0) * 0.9));
+  mix-blend-mode: multiply;
+  transition: background 160ms linear;
+}
+
+/* Odak modu: masaüstü kartları ve dekoratif katmanlar sadeleşir. */
+html[data-focus="on"] [data-focus-hide="true"] {
+  display: none !important;
+}
+html[data-focus="on"] .tbos-wallpaper::after {
+  opacity: 0.25;
+}

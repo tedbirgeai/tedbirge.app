@@ -67,6 +67,11 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
+// Masaüstü sağ tık menüsündeki "Yenile" komutu depoyu tazeler.
+if (typeof window !== "undefined") {
+  window.addEventListener("tedbirge:vfs-refresh", () => emit());
+}
+
 /** Kayıtlı dosyaların üstverisi (Blob içermez; liste hafif kalır). */
 export async function listFiles(): Promise<VfsEntry[]> {
   const all = await tx<VfsRecord[]>("readonly", (s) => s.getAll() as IDBRequest<VfsRecord[]>);
@@ -127,4 +132,43 @@ export async function objectUrl(id: string): Promise<string | null> {
 export function releaseUrls(): void {
   for (const url of urls.values()) URL.revokeObjectURL(url);
   urls.clear();
+}
+
+export type StorageUsage = { files: number; bytes: number; quota: number | null };
+
+/** Masaüstü depolama kartı için yerel kullanım özeti. */
+export async function storageUsage(): Promise<StorageUsage> {
+  let files = 0;
+  let bytes = 0;
+  try {
+    const list = await listFiles();
+    files = list.length;
+    bytes = list.reduce((sum, f) => sum + f.size, 0);
+  } catch {
+    /* depo kapalı olabilir */
+  }
+  let quota: number | null = null;
+  try {
+    if (typeof navigator !== "undefined" && navigator.storage?.estimate) {
+      const est = await navigator.storage.estimate();
+      quota = est.quota ?? null;
+    }
+  } catch {
+    /* kota okunamayabilir */
+  }
+  return { files, bytes, quota };
+}
+
+/**
+ * Tarayıcıdan kalıcı depolama izni ister; verilirse dosyalar yer
+ * baskısı altında bile silinmez (çevrimdışı güvence).
+ */
+export async function requestPersistentStorage(): Promise<boolean> {
+  try {
+    if (typeof navigator === "undefined" || !navigator.storage?.persist) return false;
+    if (await navigator.storage.persisted()) return true;
+    return await navigator.storage.persist();
+  } catch {
+    return false;
+  }
 }
