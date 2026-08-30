@@ -79,6 +79,8 @@ export function WorkspacePanel() {
   // Çevrimdışı güvence: dosyalar yer baskısında bile silinmesin.
   useEffect(() => {
     void requestPersistentStorage();
+    // Kayıtlı yazı tipi ölçeği açılışta uygulanır.
+    getFontScale();
   }, []);
 
   // Evrensel arama kısayolu: Ctrl/Cmd + Boşluk.
