@@ -147,7 +147,16 @@ function AppSurface({
 }) {
   const web = webApp(win.appId);
   if (web) {
-    return <GenericAppContainer url={web.url} label={web.label} embed={web.embed} />;
+    return (
+      <GenericAppContainer
+        url={web.url}
+        label={web.label}
+        embed={web.embed}
+        embedUrl={web.embedUrl}
+        proxy={web.proxy}
+      />
+    );
+
   }
   if (win.appId === "messenger") {
     return (

@@ -895,3 +895,40 @@ body {
     transform: none;
   }
 }
+
+/* --- Pencere fiziği: sürükleme koruması, yapışma önizlemesi, düğme tepkisi --- */
+body.tbos-dragging iframe,
+body.tbos-dragging video {
+  pointer-events: none !important;
+}
+body.tbos-dragging {
+  user-select: none;
+  cursor: grabbing;
+}
+body.tbos-dragging .tbos-window {
+  transition: none !important;
+}
+
+.tbos-snap-preview {
+  background: color-mix(in oklab, var(--tb-accent) 14%, transparent);
+  border: 1.5px solid color-mix(in oklab, var(--tb-accent) 55%, transparent);
+  backdrop-filter: blur(6px);
+  animation: tbos-window-in 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tbos-winbtn {
+  transition:
+    transform 90ms ease,
+    background-color 140ms ease,
+    color 140ms ease;
+}
+.tbos-winbtn:hover {
+  background: color-mix(in oklab, var(--tb-text) 8%, transparent);
+}
+.tbos-winbtn:active {
+  transform: scale(0.9);
+}
+
+.tbos-webview {
+  contain: paint;
+}

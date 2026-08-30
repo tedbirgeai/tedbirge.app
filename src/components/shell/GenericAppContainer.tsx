@@ -1,79 +1,86 @@
 /**
  * EVRENSEL UYGULAMA KONTEYNIRI (GenericAppContainer)
  * ------------------------------------------------------------------
- * Harici web hedeflerini isim sabitlemeden çalıştırır. Büyük platformların
- * çoğu `X-Frame-Options: SAMEORIGIN` veya `frame-ancestors` CSP başlığıyla
- * gömülmeyi reddeder; bu durumda çerçeve boş/beyaz kalır. Konteynır bunu
- * bir zaman aşımıyla tespit eder ve "yeni sekmede aç" kartına düşer.
+ * Harici web hedeflerini WebOS penceresinden çıkmadan çalıştırır.
+ * Sırayla: gömme uyumlu eşdeğer → doğrudan adres → Tedbirge Geçidi.
+ * Hiçbir aşamada kullanıcı yeni sekmeye yönlendirilmez; tüm aşamalar
+ * tükenirse pencere içinde sade bir "tekrar dene" durumu gösterilir.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ExternalLink, RefreshCw, ShieldAlert } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RefreshCw, ShieldAlert } from "lucide-react";
 
+import { buildStages } from "@/lib/shell/embed-strategy";
 import type { EmbedPolicy } from "@/shell/web-apps";
 
-const LOAD_TIMEOUT_MS = 6000;
+const LOAD_TIMEOUT_MS = 5000;
 
 export function GenericAppContainer({
   url,
   label,
   embed = "auto",
+  embedUrl,
+  proxy,
 }: {
   url: string;
   label: string;
   embed?: EmbedPolicy;
+  embedUrl?: string;
+  proxy?: string | true;
 }) {
-  const [blocked, setBlocked] = useState(embed === "popup");
+  const stages = useMemo(() => buildStages({ url, embed, embedUrl, proxy }), [url, embed, embedUrl, proxy]);
+  const [stage, setStage] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const openExternal = useCallback(() => {
-    window.open(url, "_blank", "noopener,noreferrer");
-  }, [url]);
+  const current = stages[Math.min(stage, stages.length - 1)];
+
+  const advance = useCallback(() => {
+    setStage((s) => {
+      if (s + 1 < stages.length) {
+        setLoaded(false);
+        return s + 1;
+      }
+      setFailed(true);
+      return s;
+    });
+  }, [stages.length]);
 
   useEffect(() => {
-    if (embed === "popup" || loaded) return;
-    timer.current = setTimeout(() => setBlocked(true), LOAD_TIMEOUT_MS);
+    if (loaded || failed) return;
+    timer.current = setTimeout(advance, LOAD_TIMEOUT_MS);
     return () => {
       if (timer.current) clearTimeout(timer.current);
       timer.current = null;
     };
-  }, [embed, loaded, attempt]);
+  }, [loaded, failed, stage, attempt, advance]);
 
-  if (blocked) {
+  const retry = useCallback(() => {
+    setStage(0);
+    setLoaded(false);
+    setFailed(false);
+    setAttempt((a) => a + 1);
+  }, []);
+
+  if (failed) {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-full bg-amber-500/10 text-amber-400">
+        <span className="grid h-12 w-12 place-items-center rounded-full bg-amber-500/10 text-amber-500">
           <ShieldAlert className="h-6 w-6" aria-hidden />
         </span>
-        <p className="text-[15px] font-semibold text-slate-100">{label} pencerede açılamıyor</p>
-        <p className="max-w-sm font-osmono text-[12px] text-slate-500">
-          Bu servis güvenlik politikası gereği başka bir uygulamanın içinde görüntülenmeye izin
-          vermiyor. Yeni sekmede açabilirsiniz.
+        <p className="text-[15px] font-semibold text-[var(--tb-text)]">{label} şu an yanıt vermiyor</p>
+        <p className="max-w-sm font-osmono text-[12px] text-[var(--tb-muted)]">
+          Bağlantı kurulamadı. Ağ döndüğünde içerik yine bu pencerede açılacak.
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={openExternal}
-            className="wa-press inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 px-3 py-2 font-osmono text-[12px] text-emerald-400"
-          >
-            <ExternalLink className="h-4 w-4" aria-hidden /> Yeni sekmede aç
-          </button>
-          {embed !== "popup" ? (
-            <button
-              type="button"
-              onClick={() => {
-                setBlocked(false);
-                setLoaded(false);
-                setAttempt((a) => a + 1);
-              }}
-              className="wa-press inline-flex items-center gap-2 rounded-lg border border-slate-500/30 px-3 py-2 font-osmono text-[12px] text-slate-400"
-            >
-              <RefreshCw className="h-4 w-4" aria-hidden /> Tekrar dene
-            </button>
-          ) : null}
-        </div>
+        <button
+          type="button"
+          onClick={retry}
+          className="wa-press inline-flex items-center gap-2 rounded-lg border border-[var(--tb-accent)]/40 px-3 py-2 font-osmono text-[12px] text-[var(--tb-accent)]"
+        >
+          <RefreshCw className="h-4 w-4" aria-hidden /> Tekrar dene
+        </button>
       </div>
     );
   }
@@ -81,21 +88,24 @@ export function GenericAppContainer({
   return (
     <div className="relative min-h-0 flex-1">
       {!loaded ? (
-        <div className="absolute inset-0 grid place-items-center font-osmono text-[12px] text-slate-500">
-          {label} yükleniyor…
+        <div className="absolute inset-0 grid place-items-center gap-1 text-center font-osmono text-[12px] text-[var(--tb-muted)]">
+          <span>
+            {label} yükleniyor… <span className="opacity-60">({current?.note})</span>
+          </span>
         </div>
       ) : null}
       <iframe
-        key={attempt}
+        key={`${attempt}:${stage}`}
         title={label}
-        src={url}
+        src={current?.src}
         onLoad={() => {
           setLoaded(true);
           if (timer.current) clearTimeout(timer.current);
         }}
         referrerPolicy="no-referrer"
-        sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin"
-        className="h-full w-full border-0 bg-white"
+        allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+        sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-presentation"
+        className="tbos-webview h-full w-full border-0 bg-white"
       />
     </div>
   );

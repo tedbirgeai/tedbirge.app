@@ -23,6 +23,10 @@ export type WebAppEntry = {
   url: string;
   embed: EmbedPolicy;
   category: AppCategory;
+  /** Aynı içeriği gösteren, gömmeye izin veren eşdeğer adres (önce denenir). */
+  embedUrl?: string;
+  /** Tedbirge Geçidi üzerinden aktarılacak adres (true → `url` kullanılır). */
+  proxy?: string | true;
 };
 
 export const WEB_APPS: WebAppEntry[] = [
@@ -33,36 +37,42 @@ export const WEB_APPS: WebAppEntry[] = [
     hint: "Web araması",
     url: "https://duckduckgo.com/",
     embed: "auto",
+    proxy: "https://lite.duckduckgo.com/lite/",
   },
   {
     id: "web.search.g",
     category: "araclar",
     label: "Google",
-    hint: "Gömmeye kapalı — yeni sekmede açılır",
+    hint: "Pencere içinde Google araması",
     url: "https://www.google.com/",
+    embedUrl: "https://www.google.com/search?igu=1",
     embed: "popup",
+    proxy: "https://lite.duckduckgo.com/lite/",
   },
   {
     id: "web.video",
     category: "sosyal",
     label: "Video",
-    hint: "Video platformu",
+    hint: "Pencere içinde video akışı",
     url: "https://www.youtube.com/",
+    embedUrl: "https://yewtu.be/",
     embed: "auto",
   },
   {
     id: "web.social.x",
     category: "sosyal",
     label: "X",
-    hint: "Gömmeye kapalı — yeni sekmede açılır",
+    hint: "Pencere içinde zaman tüneli",
     url: "https://x.com/",
+    embedUrl: "https://syndication.twitter.com/srv/timeline-profile/screen-name/X",
     embed: "popup",
+    proxy: "https://nitter.net/",
   },
   {
     id: "web.social.li",
     category: "sosyal",
     label: "LinkedIn",
-    hint: "Gömmeye kapalı — yeni sekmede açılır",
+    hint: "Profesyonel ağ",
     url: "https://www.linkedin.com/",
     embed: "popup",
   },
@@ -70,8 +80,9 @@ export const WEB_APPS: WebAppEntry[] = [
     id: "web.social.tt",
     category: "sosyal",
     label: "TikTok",
-    hint: "Gömmeye kapalı — yeni sekmede açılır",
+    hint: "Pencere içinde kısa video",
     url: "https://www.tiktok.com/",
+    embedUrl: "https://www.tiktok.com/embed/@tiktok",
     embed: "popup",
   },
   {
@@ -81,6 +92,7 @@ export const WEB_APPS: WebAppEntry[] = [
     hint: "Açık kaynak harita",
     url: "https://www.openstreetmap.org/",
     embed: "auto",
+    proxy: true,
   },
   {
     id: "web.docs",
@@ -89,13 +101,14 @@ export const WEB_APPS: WebAppEntry[] = [
     hint: "Ansiklopedi",
     url: "https://tr.wikipedia.org/",
     embed: "auto",
+    proxy: true,
   },
   {
     id: "web.mail",
     label: "Posta",
     hint: "Web posta istemcisi",
     url: "https://app.tuta.com/",
-    embed: "popup",
+    embed: "auto",
     category: "uretkenlik",
   },
   {
@@ -120,6 +133,7 @@ export const WEB_APPS: WebAppEntry[] = [
     hint: "Blok zinciri işlem sorgusu",
     url: "https://blockscout.com/",
     embed: "auto",
+    proxy: true,
     category: "web3",
   },
   {
@@ -128,6 +142,7 @@ export const WEB_APPS: WebAppEntry[] = [
     hint: "Dağıtık dosya ağ geçidi",
     url: "https://ipfs.io/",
     embed: "auto",
+    proxy: true,
     category: "web3",
   },
   {
@@ -135,10 +150,12 @@ export const WEB_APPS: WebAppEntry[] = [
     label: "Piyasa",
     hint: "Varlık fiyat takibi",
     url: "https://www.coingecko.com/",
-    embed: "popup",
+    embed: "auto",
+    proxy: true,
     category: "web3",
   },
 ];
+
 
 export function webApp(id: string): WebAppEntry | undefined {
   return WEB_APPS.find((a) => a.id === id);

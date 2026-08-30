@@ -9,6 +9,9 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Settings, UserRound, Wifi } from "lucide-react";
 
+import { InstallSystemButton } from "@/components/shell/InstallSystemButton";
+
+
 export function SystemBar({
   status,
   peers,
@@ -47,9 +50,11 @@ export function SystemBar({
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">
+        <InstallSystemButton />
         <span className="font-osmono text-[11px] text-[var(--tb-muted)]" aria-live="polite">
           {clock}
         </span>
+
         <button
           type="button"
           onClick={onSettings}

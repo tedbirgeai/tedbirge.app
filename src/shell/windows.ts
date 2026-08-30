@@ -153,3 +153,21 @@ export function closeAllWindows() {
   windows = [];
   emit();
 }
+
+/** Pencereyi doğrudan verilen kutuya yerleştirir (kenara yapışma için). */
+export function placeWindow(id: string, x: number, y: number, w: number, h: number) {
+  windows = windows.map((win) =>
+    win.id === id
+      ? {
+          ...win,
+          maximized: false,
+          x: Math.max(0, Math.round(x)),
+          y: Math.max(0, Math.round(y)),
+          w: Math.max(320, Math.round(w)),
+          h: Math.max(220, Math.round(h)),
+        }
+      : win,
+  );
+  emit();
+  focusWindow(id);
+}
