@@ -71,7 +71,9 @@ export function GenericAppContainer({
   }, []);
 
   if (failed) {
+    if (renderFailed) return <>{renderFailed(retry)}</>;
     return (
+
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
         <span className="grid h-12 w-12 place-items-center rounded-full bg-amber-500/10 text-amber-500">
           <ShieldAlert className="h-6 w-6" aria-hidden />
