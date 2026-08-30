@@ -34,6 +34,8 @@ export function GenericAppContainer({
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+
 
   const current = stages[Math.min(stage, stages.length - 1)];
 
