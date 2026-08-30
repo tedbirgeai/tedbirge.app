@@ -9,7 +9,6 @@ import { ComputerApp } from "@/components/shell/apps/ComputerApp";
 import { AppsDialog } from "@/components/shell/AppsDialog";
 import { RelaySettingsDialog } from "@/components/shell/RelaySettingsDialog";
 import { MeshStatusDialog } from "@/components/shell/MeshStatusDialog";
-import { FileTransferDialog } from "@/components/shell/FileTransferDialog";
 import { TedbirgeWebView } from "@/components/shell/TedbirgeWebView";
 import { WallpaperSettingsApp } from "@/components/shell/apps/WallpaperSettingsApp";
 
@@ -58,7 +57,6 @@ const WINDOW_TITLES: Record<string, string> = {
 export function WorkspacePanel() {
   const [relay, setRelay] = useState(false);
   const [mesh, setMesh] = useState(false);
-  const [transfer, setTransfer] = useState(false);
   const [packages, setPackages] = useState(false);
   const { node } = useShell();
   const status = describeNode(node);
@@ -233,7 +231,6 @@ export function WorkspacePanel() {
       <AppsDialog open={packages} onClose={() => setPackages(false)} />
       <RelaySettingsDialog open={relay} onClose={() => setRelay(false)} />
       <MeshStatusDialog open={mesh} onClose={() => setMesh(false)} />
-      <FileTransferDialog open={transfer} onClose={() => setTransfer(false)} />
     </div>
   );
 }
