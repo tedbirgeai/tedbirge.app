@@ -50,11 +50,7 @@ function snapshot() {
 const EMPTY: WindowRecord[] = [];
 
 export function useWindows(): WindowRecord[] {
-  return useSyncExternalStore(
-    subscribe,
-    snapshot,
-    () => EMPTY,
-  );
+  return useSyncExternalStore(subscribe, snapshot, () => EMPTY);
 }
 
 /** Yeni pencere için kademeli (cascade) başlangıç konumu. */
