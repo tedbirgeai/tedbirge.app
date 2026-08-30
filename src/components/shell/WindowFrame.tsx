@@ -1,9 +1,9 @@
 /**
  * PENCERE ÇERÇEVESİ (WindowFrame)
  * ------------------------------------------------------------------
- * Sürüklenebilir, boyutlandırılabilir, odaklandığında öne gelen pencere.
- * Yalnız masaüstünde kullanılır; mobilde kabuk tek pencereyi tam ekran
- * gösterir (bkz. WorkspacePanel).
+ * Sürüklenebilir, sekiz tutamaktan boyutlandırılabilir, odaklandığında
+ * öne gelen pencere. Yalnız masaüstünde kullanılır; mobilde kabuk tek
+ * pencereyi tam ekran gösterir (bkz. WorkspacePanel).
  */
 
 import { useCallback, useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
@@ -15,19 +15,41 @@ import {
   minimizeWindow,
   moveWindow,
   resizeWindow,
+  setWindowBox,
   toggleMaximize,
   type WindowRecord,
 } from "@/shell/windows";
 
+type Edge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
+
+const HANDLES: Array<{ edge: Edge; className: string; cursor: string }> = [
+  { edge: "n", className: "top-0 right-3 left-3 h-1.5", cursor: "ns-resize" },
+  { edge: "s", className: "right-3 bottom-0 left-3 h-1.5", cursor: "ns-resize" },
+  { edge: "w", className: "top-3 bottom-3 left-0 w-1.5", cursor: "ew-resize" },
+  { edge: "e", className: "top-3 right-0 bottom-3 w-1.5", cursor: "ew-resize" },
+  { edge: "nw", className: "top-0 left-0 h-3 w-3", cursor: "nwse-resize" },
+  { edge: "ne", className: "top-0 right-0 h-3 w-3", cursor: "nesw-resize" },
+  { edge: "sw", className: "bottom-0 left-0 h-3 w-3", cursor: "nesw-resize" },
+  { edge: "se", className: "right-0 bottom-0 h-3 w-3", cursor: "nwse-resize" },
+];
+
 export function WindowFrame({ win, children }: { win: WindowRecord; children: ReactNode }) {
-  const drag = useRef<{ dx: number; dy: number } | null>(null);
-  const size = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  const drag = useRef<{ dx: number; dy: number; raf: number } | null>(null);
+  const size = useRef<{
+    edge: Edge;
+    px: number;
+    py: number;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  } | null>(null);
 
   const onDragStart = useCallback(
     (e: ReactPointerEvent<HTMLDivElement>) => {
       if (win.maximized) return;
       focusWindow(win.id);
-      drag.current = { dx: e.clientX - win.x, dy: e.clientY - win.y };
+      drag.current = { dx: e.clientX - win.x, dy: e.clientY - win.y, raf: 0 };
       e.currentTarget.setPointerCapture(e.pointerId);
     },
     [win.id, win.maximized, win.x, win.y],
@@ -37,33 +59,58 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
     (e: ReactPointerEvent<HTMLDivElement>) => {
       const d = drag.current;
       if (!d) return;
-      moveWindow(win.id, e.clientX - d.dx, e.clientY - d.dy);
+      const x = e.clientX - d.dx;
+      const y = e.clientY - d.dy;
+      if (d.raf) return;
+      d.raf = requestAnimationFrame(() => {
+        d.raf = 0;
+        moveWindow(win.id, x, y);
+      });
     },
     [win.id],
   );
 
   const onDragEnd = useCallback(() => {
+    if (drag.current?.raf) cancelAnimationFrame(drag.current.raf);
     drag.current = null;
   }, []);
 
   const onResizeStart = useCallback(
-    (e: ReactPointerEvent<HTMLDivElement>) => {
+    (edge: Edge) => (e: ReactPointerEvent<HTMLDivElement>) => {
       focusWindow(win.id);
-      size.current = { x: e.clientX, y: e.clientY, w: win.w, h: win.h };
+      size.current = { edge, px: e.clientX, py: e.clientY, x: win.x, y: win.y, w: win.w, h: win.h };
       e.currentTarget.setPointerCapture(e.pointerId);
       e.stopPropagation();
     },
-    [win.id, win.w, win.h],
+    [win.id, win.x, win.y, win.w, win.h],
   );
 
   const onResizeMove = useCallback(
     (e: ReactPointerEvent<HTMLDivElement>) => {
       const s = size.current;
       if (!s) return;
-      resizeWindow(win.id, s.w + (e.clientX - s.x), s.h + (e.clientY - s.y));
+      const dx = e.clientX - s.px;
+      const dy = e.clientY - s.py;
+      let { x, y, w, h } = s;
+      if (s.edge.includes("e")) w = s.w + dx;
+      if (s.edge.includes("s")) h = s.h + dy;
+      if (s.edge.includes("w")) {
+        w = s.w - dx;
+        x = s.x + dx;
+      }
+      if (s.edge.includes("n")) {
+        h = s.h - dy;
+        y = s.y + dy;
+      }
+      if (s.edge.includes("w") || s.edge.includes("n")) setWindowBox(win.id, x, y, w, h);
+      else resizeWindow(win.id, w, h);
     },
     [win.id],
   );
+
+  const onResizeEnd = useCallback(() => {
+    size.current = null;
+  }, []);
 
   if (win.minimized) return null;
 
@@ -81,20 +128,20 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
     >
       <div
         className="flex shrink-0 cursor-grab items-center justify-between gap-3 px-3 py-2 active:cursor-grabbing"
-        style={{ borderBottom: "1px solid var(--border)" }}
+        style={{ borderBottom: "1px solid var(--border)", touchAction: "none" }}
         onPointerDown={onDragStart}
         onPointerMove={onDragMove}
         onPointerUp={onDragEnd}
         onPointerCancel={onDragEnd}
         onDoubleClick={() => toggleMaximize(win.id)}
       >
-        <h2 className="truncate font-osmono text-[13px] text-slate-300">{win.title}</h2>
+        <h2 className="truncate font-osmono text-[13px] text-[var(--tb-muted)]">{win.title}</h2>
         <span className="flex shrink-0 items-center gap-1">
           <button
             type="button"
             aria-label="Küçült"
             onClick={() => minimizeWindow(win.id)}
-            className="wa-press grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:text-slate-100"
+            className="wa-press grid h-8 w-8 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
           >
             <Minus className="h-4 w-4" aria-hidden />
           </button>
@@ -102,7 +149,7 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
             type="button"
             aria-label={win.maximized ? "Küçült pencere" : "Tam ekran"}
             onClick={() => toggleMaximize(win.id)}
-            className="wa-press grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:text-slate-100"
+            className="wa-press grid h-8 w-8 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
           >
             {win.maximized ? (
               <Minimize2 className="h-4 w-4" aria-hidden />
@@ -114,7 +161,7 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
             type="button"
             aria-label="Kapat"
             onClick={() => closeWindow(win.id)}
-            className="wa-press grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:text-rose-400"
+            className="wa-press grid h-8 w-8 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-destructive,#e11d48)]"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>
@@ -123,16 +170,20 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
 
-      {!win.maximized ? (
-        <div
-          role="presentation"
-          onPointerDown={onResizeStart}
-          onPointerMove={onResizeMove}
-          onPointerUp={() => (size.current = null)}
-          className="absolute right-0 bottom-0 h-4 w-4 cursor-se-resize"
-          style={{ background: "linear-gradient(135deg, transparent 50%, var(--border) 50%)" }}
-        />
-      ) : null}
+      {!win.maximized
+        ? HANDLES.map((h) => (
+            <div
+              key={h.edge}
+              role="presentation"
+              onPointerDown={onResizeStart(h.edge)}
+              onPointerMove={onResizeMove}
+              onPointerUp={onResizeEnd}
+              onPointerCancel={onResizeEnd}
+              className={`absolute ${h.className}`}
+              style={{ cursor: h.cursor, touchAction: "none" }}
+            />
+          ))
+        : null}
     </div>
   );
 }
