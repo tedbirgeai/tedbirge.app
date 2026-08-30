@@ -50,7 +50,9 @@ export default defineConfig({
         workbox: {
           // Uygulama kapalıyken bile bildirim gösteren push dinleyicisi.
           importScripts: ["/push-sw.js"],
-          globPatterns: ["**/*.{js,css,html,woff,woff2,ttf,svg,png,ico,webmanifest,json,txt}"],
+          // `wasm` şart: çekirdek modülü de ön belleğe alınmazsa tam
+          // çevrimdışı açılışta yönlendirme motoru yüklenemez.
+          globPatterns: ["**/*.{js,css,html,woff,woff2,ttf,svg,png,ico,webmanifest,json,txt,wasm}"],
           navigateFallback: "/cevrimdisi",
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
           navigateFallbackDenylist: [/^\/api\//, /^\/~oauth/],
