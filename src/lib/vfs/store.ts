@@ -171,7 +171,7 @@ export function renameFile(id: string, name: string): Promise<void> {
 
 /** Dosyayı başka bir klasöre taşır. */
 export function moveFile(id: string, folder: VfsFolder): Promise<void> {
-  return patch(id, { folder });
+  return patch(id, { folder: normalizeFolder(folder) });
 }
 
 export async function deleteFile(id: string): Promise<void> {
