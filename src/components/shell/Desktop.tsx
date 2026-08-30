@@ -59,7 +59,6 @@ export function Desktop({
     { kind: "sep" },
     { label: "Yenile", onSelect: () => { window.dispatchEvent(new Event("tedbirge:vfs-refresh")); notifyOk("Masaüstü yenilendi"); } },
     { label: "Ayarlar", onSelect: () => onOpen("computer") },
-    { label: "Sistem Ayarları", onSelect: () => onOpen("computer") },
   ];
 
   const items: MenuItem[] = menu?.appId
