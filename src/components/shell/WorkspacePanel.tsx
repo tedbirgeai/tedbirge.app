@@ -110,12 +110,14 @@ export function WorkspacePanel() {
         ) : null}
 
         {/* Masaüstü: çoklu pencere katmanı. */}
-        {!isMobile ? (
-          <div className="absolute inset-0">
+        {!isMobile && windows.length > 0 ? (
+          <div className="pointer-events-none absolute inset-0">
             {windows.map((w) => (
-              <WindowFrame key={w.id} win={w}>
-                <AppSurface win={w} onTransfer={() => setTransfer(true)} />
-              </WindowFrame>
+              <div key={w.id} className="pointer-events-auto contents">
+                <WindowFrame win={w}>
+                  <AppSurface win={w} onTransfer={() => setTransfer(true)} />
+                </WindowFrame>
+              </div>
             ))}
           </div>
         ) : null}
