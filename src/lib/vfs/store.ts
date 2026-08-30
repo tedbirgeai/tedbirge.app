@@ -10,8 +10,21 @@
  */
 
 const DB_NAME = "tedbirge-vfs";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = "files";
+
+/** Kullanıcıya görünen sabit klasörler. */
+export const VFS_FOLDERS = ["Belgeler", "Görseller", "Medya", "İndirilenler"] as const;
+export type VfsFolder = (typeof VFS_FOLDERS)[number];
+
+export const DEFAULT_FOLDER: VfsFolder = "Belgeler";
+
+/** MIME türünden önerilen klasör. */
+export function folderForMime(mime: string): VfsFolder {
+  if (mime.startsWith("image/")) return "Görseller";
+  if (mime.startsWith("video/") || mime.startsWith("audio/")) return "Medya";
+  return "Belgeler";
+}
 
 export type VfsEntry = {
   id: string;
@@ -19,9 +32,11 @@ export type VfsEntry = {
   mime: string;
   size: number;
   at: number;
+  folder: VfsFolder;
 };
 
 type VfsRecord = VfsEntry & { blob: Blob };
+
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
