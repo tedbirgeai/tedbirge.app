@@ -476,7 +476,13 @@ export default function Messenger() {
       ...prev,
       { id: `self-${Date.now()}`, from: selfLabel, at: stamp(), text, self: true },
     ]);
-    await guard("messenger.broadcastText", broadcastText(text), "Mesaj gönderilemedi.");
+    // Bir cihaz seçiliyse mesaj yalnız o cihaza gider; seçim yoksa
+    // ağdaki tüm cihazlara yayınlanır.
+    await guard(
+      "messenger.sendText",
+      activePeer ? sendTextTo(activePeer, text) : broadcastText(text),
+      "Mesaj gönderilemedi.",
+    );
   };
 
   const navItems: { id: TabId; label: string; icon: typeof MessageSquare }[] = [
