@@ -98,7 +98,7 @@ export function WorkspacePanel() {
     pressFeedback();
     if (id === "relay") return setRelay(true);
     if (id === "mesh") return setMesh(true);
-    if (id === "transfer") return setTransfer(true);
+    if (id === "apps") return setPackages(true);
     if (id === "apps") return setPackages(true);
     const web = webApp(id);
     // Kayıt kontrolü: kayıtsız kimlik sessizce yutulmaz, pencere yine açılır.
