@@ -116,6 +116,13 @@ export function DesktopIcon({
       onClick={() => {
         if (!draggable) onOpen();
       }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const host = e.currentTarget.offsetParent as HTMLElement | null;
+        const r = host?.getBoundingClientRect();
+        onMenu?.({ x: e.clientX - (r?.left ?? 0), y: e.clientY - (r?.top ?? 0) });
+      }}
       title={label}
       className={`tbos-desk-icon absolute flex flex-col items-center gap-1.5 rounded-xl px-2 py-2 text-center select-none ${
         selected ? "tbos-desk-icon--on" : ""
