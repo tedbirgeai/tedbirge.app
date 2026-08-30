@@ -172,3 +172,70 @@ export async function requestPersistentStorage(): Promise<boolean> {
     return false;
   }
 }
+
+/** Kalıcı depolama izni daha önce verilmiş mi? */
+export async function isPersistentStorage(): Promise<boolean> {
+  try {
+    if (typeof navigator === "undefined" || !navigator.storage?.persisted) return false;
+    return await navigator.storage.persisted();
+  } catch {
+    return false;
+  }
+}
+
+/** Depodaki tüm dosyaları siler (yerel önbellek temizliği). */
+export async function clearVfs(): Promise<void> {
+  const list = await listFiles();
+  for (const f of list) await tx("readwrite", (s) => s.delete(f.id) as IDBRequest<undefined>);
+  releaseUrls();
+  emit();
+}
+
+type VfsBackup = {
+  format: "tedbirge-vfs";
+  version: 1;
+  at: number;
+  files: Array<{ name: string; mime: string; data: string }>;
+};
+
+function toBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 1) s += String.fromCharCode(bytes[i] as number);
+  return btoa(s);
+}
+
+function fromBase64(data: string): Uint8Array {
+  const bin = atob(data);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+/** Tüm yerel dosyaları tek bir yedek nesnesine çevirir (.json). */
+export async function exportVfs(): Promise<VfsBackup> {
+  const list = await listFiles();
+  const files: VfsBackup["files"] = [];
+  for (const meta of list) {
+    const file = await readFile(meta.id);
+    if (!file) continue;
+    files.push({ name: file.name, mime: file.type, data: toBase64(await file.arrayBuffer()) });
+  }
+  return { format: "tedbirge-vfs", version: 1, at: Date.now(), files };
+}
+
+/** Yedek dosyasını geri yükler; kaç dosyanın yazıldığını döner. */
+export async function importVfs(json: unknown): Promise<number> {
+  const backup = json as Partial<VfsBackup>;
+  if (!backup || backup.format !== "tedbirge-vfs" || !Array.isArray(backup.files)) {
+    throw new Error("Bu dosya bir Tedbirge yedeği değil.");
+  }
+  const files = backup.files.map(
+    (f) =>
+      new File([fromBase64(f.data) as unknown as BlobPart], f.name, {
+        type: f.mime || "application/octet-stream",
+      }),
+  );
+  const saved = await saveFiles(files);
+  return saved.length;
+}

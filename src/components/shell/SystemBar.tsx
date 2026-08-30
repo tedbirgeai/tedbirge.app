@@ -12,6 +12,7 @@ import { Search, Settings, UserRound, Wifi } from "lucide-react";
 import { InstallSystemButton } from "@/components/shell/InstallSystemButton";
 import { ControlCenter } from "@/components/shell/ControlCenter";
 import { NetworkControl } from "@/components/shell/NetworkControl";
+import { useOnline } from "@/lib/pwa/offline-status";
 
 
 
@@ -47,6 +48,7 @@ export function SystemBar({
   const [memMb, setMemMb] = useState<number | null>(null);
   const [control, setControl] = useState(false);
   const [network, setNetwork] = useState(false);
+  const online = useOnline();
 
   useEffect(() => {
     const tick = () => {
@@ -88,6 +90,14 @@ export function SystemBar({
         >
           <Wifi className="h-4 w-4" aria-hidden />
         </button>
+        {!online ? (
+          <span
+            role="status"
+            className="shrink-0 truncate rounded-full border border-[var(--tb-accent)] px-2 py-0.5 font-osmono text-[11px] text-[var(--tb-accent)]"
+          >
+            Off-Grid Modu Aktif · Yerel VFS &amp; Wasm Hazır
+          </span>
+        ) : null}
         <button
           type="button"
           onClick={() => {
