@@ -1,0 +1,17 @@
+[package]
+name = "tedbirge-shell-native"
+version = "0.1.0"
+edition = "2021"
+description = "Tedbirge OS yerel kabuğu — çekirdeği tarayıcısız (x86_64/arm64) çalıştıran HAL sürücüleri ve yerel kabuk sunucusu"
+
+[[bin]]
+name = "tedbirge-shell"
+path = "src/main.rs"
+
+[dependencies]
+tedbirge-kernel = { path = "../tedbirge-kernel", default-features = false, features = ["std"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
