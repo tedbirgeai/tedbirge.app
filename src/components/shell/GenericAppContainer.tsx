@@ -97,10 +97,9 @@ export function GenericAppContainer({
     <div className="relative min-h-0 flex-1">
       {!loaded ? (
         <div className="absolute inset-0 grid place-items-center gap-1 text-center font-osmono text-[12px] text-[var(--tb-muted)]">
-          <span>
-            {label} yükleniyor… <span className="opacity-60">({current?.note})</span>
-          </span>
+          <span>{label} yükleniyor…</span>
         </div>
+
       ) : null}
       <iframe
         ref={frameRef}
