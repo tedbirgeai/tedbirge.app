@@ -12,7 +12,13 @@ import { kernel } from "@/kernel/contract";
 const CHUNK = 24_000;
 export const MAX_TRANSFER_BYTES = 16 * 1024 * 1024;
 
-export type TransferStatus = "gonderiliyor" | "aliniyor" | "tamam" | "hata";
+export type TransferStatus =
+  | "gonderiliyor"
+  | "aliniyor"
+  | "duraklatildi"
+  | "iptal"
+  | "tamam"
+  | "hata";
 
 export type Transfer = {
   id: string;
@@ -24,6 +30,8 @@ export type Transfer = {
   percent: number;
   status: TransferStatus;
   error?: string;
+  /** Anlık hız (bayt/sn); ölçülemiyorsa 0. */
+  speed: number;
   /** Alınan dosyanın indirilebilir içeriği (yalnız dir="in"). */
   dataUrl?: string;
   at: number;
@@ -32,6 +40,9 @@ export type Transfer = {
 const transfers = new Map<string, Transfer>();
 const parts = new Map<string, string[]>();
 const listeners = new Set<() => void>();
+/** Kullanıcı denetimi: duraklatılan ve iptal edilen gönderimler. */
+const paused = new Set<string>();
+const cancelled = new Set<string>();
 
 function emit() {
   for (const fn of listeners) fn();
@@ -49,8 +60,35 @@ export function onTransferChange(fn: () => void): () => void {
 export function clearTransfer(id: string) {
   transfers.delete(id);
   parts.delete(id);
+  paused.delete(id);
+  cancelled.delete(id);
   emit();
 }
+
+/** Gönderimi geçici olarak durdurur; parçalar bekletilir. */
+export function pauseTransfer(id: string) {
+  paused.add(id);
+  const t = transfers.get(id);
+  if (t && t.status === "gonderiliyor") put({ ...t, status: "duraklatildi", speed: 0 });
+}
+
+/** Duraklatılmış gönderime kaldığı yerden devam eder. */
+export function resumeTransfer(id: string) {
+  paused.delete(id);
+  const t = transfers.get(id);
+  if (t && t.status === "duraklatildi") put({ ...t, status: "gonderiliyor" });
+}
+
+/** Gönderimi iptal eder; kalan parçalar gönderilmez. */
+export function cancelTransfer(id: string) {
+  cancelled.add(id);
+  paused.delete(id);
+  const t = transfers.get(id);
+  if (t && (t.status === "gonderiliyor" || t.status === "duraklatildi" || t.status === "aliniyor")) {
+    put({ ...t, status: "iptal", speed: 0 });
+  }
+}
+
 
 function put(t: Transfer) {
   transfers.set(t.id, t);
