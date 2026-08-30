@@ -156,6 +156,38 @@ export function TedbirgeWebView({
   );
 }
 
+/** Tam Gizlilik modunda dış çıkış kapalıyken gösterilen kart. */
+function OffgridCard({ label, url }: { label: string; url: string }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+      <BrandIcon
+        domain={domainOf(url)}
+        label={label}
+        className="h-12 w-12 opacity-60"
+        fallback={
+          <span className="grid h-12 w-12 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] text-[var(--tb-accent)]">
+            <ShieldOff className="h-6 w-6" aria-hidden />
+          </span>
+        }
+      />
+      <p className="text-[16px] font-semibold text-[var(--tb-text)]">Tam Gizlilik açık</p>
+      <p className="max-w-sm font-osmono text-[12px] text-[var(--tb-muted)]">
+        Cihaz dış ağdan yalıtıldı; {label} bu modda açılmaz. Yakındaki cihazlarla eşler arası
+        bağlantı çalışmaya devam eder.
+      </p>
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new Event("tedbirge:open-network"))}
+        className="wa-press inline-flex items-center gap-2 rounded-xl border border-[var(--tb-accent)]/40 px-3 py-2 font-osmono text-[12px] text-[var(--tb-accent)]"
+      >
+        <ShieldOff className="h-4 w-4" aria-hidden /> Ağ modunu değiştir
+      </button>
+    </div>
+  );
+}
+
+
+
 /** Gömülemeyen hedeflerde pencere içinde çalışan yerel gezgin. */
 function WebShell({
   label,
