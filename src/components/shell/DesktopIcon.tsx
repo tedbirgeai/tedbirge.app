@@ -23,6 +23,7 @@ export function DesktopIcon({
   draggable,
   onSelect,
   onOpen,
+  onMenu,
 }: {
   id: string;
   label: string;
@@ -32,6 +33,7 @@ export function DesktopIcon({
   draggable: boolean;
   onSelect: () => void;
   onOpen: () => void;
+  onMenu?: (pt: { x: number; y: number }) => void;
 }) {
   const start = useRef<{ px: number; py: number; x: number; y: number; moved: boolean } | null>(
     null,
