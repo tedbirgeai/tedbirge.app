@@ -34,8 +34,18 @@ describe("yetenek kapısı", () => {
       "calls",
       "chats",
       "communities",
+      "computer",
       "feed",
+      "files",
       "me",
+      "media",
+      "mesh",
+      "messenger",
+      "music",
+      "relay",
+      "store",
+      "transfer",
+      "wallpaper",
     ]);
     // Harici web hedefleri hiçbir yetenek istemez (çekirdeğe erişemez).
     expect(listApps().filter((a) => a.kind === "web").every((a) => a.capabilities.length === 0)).toBe(
