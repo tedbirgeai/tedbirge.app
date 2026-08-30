@@ -564,9 +564,21 @@ export async function sendMedia(convId: string, file: File, transcript?: string)
   const conv = await getConversation(convId);
   if (!conv) return;
   if (file.size > MAX_MEDIA_BYTES) throw new Error("Dosya 8 MB sınırını aşıyor.");
-  const dataUrl = await fileToDataUrl(file);
   const me = getBrowserNodeId();
   const mid = newId("med");
+  const mime = file.type || "application/octet-stream";
+
+  // Ağır iş (base64 + parçalama) arka plan iş parçacığında yapılır:
+  // arayüz büyük dosyalarda bile akıcı kalır.
+  const { dataUrl, chunks } = await prepareMedia({
+    mid,
+    convId,
+    name: file.name,
+    mime,
+    size: file.size,
+    blob: file,
+  });
+
   const msg: ChatMessage = {
     id: mid,
     convId,
@@ -577,24 +589,10 @@ export async function sendMedia(convId: string, file: File, transcript?: string)
     ts: Date.now(),
     outgoing: true,
     status: "pending",
-    media: {
-      name: file.name,
-      mime: file.type || "application/octet-stream",
-      size: file.size,
-      dataUrl,
-    },
+    media: { name: file.name, mime, size: file.size, dataUrl },
     ...(transcript ? { transcript } : {}),
   };
   await appendLocal(conv, msg);
-
-  const chunks = await splitMediaAsync({
-    mid,
-    convId,
-    name: file.name,
-    mime: msg.media!.mime,
-    size: file.size,
-    dataUrl,
-  });
   let ok = false;
   try {
     const peers = await targetsOf(conv);
