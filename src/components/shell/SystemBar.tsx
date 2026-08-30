@@ -12,6 +12,7 @@ import { Search, Settings, UserRound, Wifi } from "lucide-react";
 import { InstallSystemButton } from "@/components/shell/InstallSystemButton";
 import { ControlCenter } from "@/components/shell/ControlCenter";
 import { NetworkControl } from "@/components/shell/NetworkControl";
+import { useOnline } from "@/lib/pwa/offline-status";
 
 
 
