@@ -29,11 +29,17 @@ describe("yetenek kapısı", () => {
   });
 
   it("tüm yerleşik uygulamalar kayıtlıdır", () => {
-    expect(
-      listApps()
-        .map((a) => a.id)
-        .sort(),
-    ).toEqual(["calls", "chats", "communities", "feed", "me"]);
-    expect(listApps().every((a) => a.kind === "builtin")).toBe(true);
+    const builtins = listApps().filter((a) => a.kind === "builtin");
+    expect(builtins.map((a) => a.id).sort()).toEqual([
+      "calls",
+      "chats",
+      "communities",
+      "feed",
+      "me",
+    ]);
+    // Harici web hedefleri hiçbir yetenek istemez (çekirdeğe erişemez).
+    expect(listApps().filter((a) => a.kind === "web").every((a) => a.capabilities.length === 0)).toBe(
+      true,
+    );
   });
 });
