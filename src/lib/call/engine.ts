@@ -20,6 +20,7 @@ import { sendMesh } from "@/lib/node-runtime";
 import { getAlias } from "@/lib/chat/profile";
 import { showChatNotification } from "@/lib/chat/push";
 import { getBrowserNodeId } from "@/lib/browser-node";
+import { iceServers } from "@/lib/webrtc/ice";
 
 export type CallPhase = "idle" | "ringing" | "outgoing" | "active" | "reconnecting" | "ended";
 
