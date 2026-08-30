@@ -37,7 +37,9 @@ const WINDOW_TITLES: Record<string, string> = {
   files: "Dosyalar",
   store: "Tedbirge Mağaza",
   computer: "Bilgisayarım",
+  wallpaper: "Görünüm — Duvar Kâğıdı ve Tema",
 };
+
 
 /**
  * tOS MASAÜSTÜ (Web-OS Kabuğu)
@@ -93,7 +95,9 @@ export function WorkspacePanel() {
         peers={status.directPeers}
         rttMs={node.rttMs}
         onSettings={() => launch("computer")}
+        onPersonalize={() => launch("wallpaper")}
       />
+
 
       {/* Masaüstü yüzeyi: duvar kâğıdı, kısayollar ve pencereler. */}
       <div ref={surfaceRef} className="relative min-h-0 flex-1 overflow-hidden">
