@@ -9,7 +9,6 @@ import { ComputerApp } from "@/components/shell/apps/ComputerApp";
 import { AppsDialog } from "@/components/shell/AppsDialog";
 import { RelaySettingsDialog } from "@/components/shell/RelaySettingsDialog";
 import { MeshStatusDialog } from "@/components/shell/MeshStatusDialog";
-import { FileTransferDialog } from "@/components/shell/FileTransferDialog";
 import { TedbirgeWebView } from "@/components/shell/TedbirgeWebView";
 import { WallpaperSettingsApp } from "@/components/shell/apps/WallpaperSettingsApp";
 
@@ -21,6 +20,7 @@ import { Spotlight } from "@/components/shell/Spotlight";
 import { pressFeedback } from "@/lib/chat/sounds";
 import { notify, notifyError, notifyOk } from "@/lib/shell/notify";
 import { objectUrl, readFile, requestPersistentStorage } from "@/lib/vfs/store";
+import { TransfersApp } from "@/components/shell/apps/TransfersApp";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
 import { describeNode } from "@/lib/node-runtime";
 import { useShell } from "@/shell/ShellProvider";
@@ -42,6 +42,8 @@ const WINDOW_TITLES: Record<string, string> = {
   store: "Tedbirge Mağaza",
   computer: "Bilgisayarım",
   wallpaper: "Görünüm — Duvar Kâğıdı ve Tema",
+  transfer: "Aktarım Merkezi",
+
 };
 
 
@@ -56,7 +58,6 @@ const WINDOW_TITLES: Record<string, string> = {
 export function WorkspacePanel() {
   const [relay, setRelay] = useState(false);
   const [mesh, setMesh] = useState(false);
-  const [transfer, setTransfer] = useState(false);
   const [packages, setPackages] = useState(false);
   const { node } = useShell();
   const status = describeNode(node);
@@ -96,8 +97,8 @@ export function WorkspacePanel() {
     pressFeedback();
     if (id === "relay") return setRelay(true);
     if (id === "mesh") return setMesh(true);
-    if (id === "transfer") return setTransfer(true);
     if (id === "apps") return setPackages(true);
+
     const web = webApp(id);
     // Kayıt kontrolü: kayıtsız kimlik sessizce yutulmaz, pencere yine açılır.
     if (!getApp(id) && !web && import.meta.env.DEV) {
@@ -185,7 +186,7 @@ export function WorkspacePanel() {
                 }}
               >
                 <WindowFrame win={w}>
-                  <AppSurface win={w} onLaunch={launch} onTransfer={() => setTransfer(true)} />
+                  <AppSurface win={w} onLaunch={launch} onTransfer={() => launch("transfer")} />
                 </WindowFrame>
               </div>
             ))}
@@ -211,7 +212,7 @@ export function WorkspacePanel() {
             </button>
           </div>
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <AppSurface win={top} onLaunch={launch} onTransfer={() => setTransfer(true)} />
+            <AppSurface win={top} onLaunch={launch} onTransfer={() => launch("transfer")} />
           </div>
         </div>
       ) : null}
@@ -231,7 +232,6 @@ export function WorkspacePanel() {
       <AppsDialog open={packages} onClose={() => setPackages(false)} />
       <RelaySettingsDialog open={relay} onClose={() => setRelay(false)} />
       <MeshStatusDialog open={mesh} onClose={() => setMesh(false)} />
-      <FileTransferDialog open={transfer} onClose={() => setTransfer(false)} />
     </div>
   );
 }
@@ -276,8 +276,10 @@ function AppSurface({
     );
   }
   if (win.appId === "store") return <StoreApp onOpen={onLaunch} />;
+  if (win.appId === "transfer") return <TransfersApp />;
   if (win.appId === "computer")
     return <ComputerApp onMesh={() => onLaunch("mesh")} onLaunch={onLaunch} />;
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
       {win.appId === "music" && <MusicApp />}

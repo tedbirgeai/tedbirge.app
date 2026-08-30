@@ -12,7 +12,13 @@ import { kernel } from "@/kernel/contract";
 const CHUNK = 24_000;
 export const MAX_TRANSFER_BYTES = 16 * 1024 * 1024;
 
-export type TransferStatus = "gonderiliyor" | "aliniyor" | "tamam" | "hata";
+export type TransferStatus =
+  | "gonderiliyor"
+  | "aliniyor"
+  | "duraklatildi"
+  | "iptal"
+  | "tamam"
+  | "hata";
 
 export type Transfer = {
   id: string;
@@ -24,6 +30,8 @@ export type Transfer = {
   percent: number;
   status: TransferStatus;
   error?: string;
+  /** Anlık hız (bayt/sn); ölçülemiyorsa 0. */
+  speed: number;
   /** Alınan dosyanın indirilebilir içeriği (yalnız dir="in"). */
   dataUrl?: string;
   at: number;
@@ -32,6 +40,9 @@ export type Transfer = {
 const transfers = new Map<string, Transfer>();
 const parts = new Map<string, string[]>();
 const listeners = new Set<() => void>();
+/** Kullanıcı denetimi: duraklatılan ve iptal edilen gönderimler. */
+const paused = new Set<string>();
+const cancelled = new Set<string>();
 
 function emit() {
   for (const fn of listeners) fn();
@@ -49,8 +60,35 @@ export function onTransferChange(fn: () => void): () => void {
 export function clearTransfer(id: string) {
   transfers.delete(id);
   parts.delete(id);
+  paused.delete(id);
+  cancelled.delete(id);
   emit();
 }
+
+/** Gönderimi geçici olarak durdurur; parçalar bekletilir. */
+export function pauseTransfer(id: string) {
+  paused.add(id);
+  const t = transfers.get(id);
+  if (t && t.status === "gonderiliyor") put({ ...t, status: "duraklatildi", speed: 0 });
+}
+
+/** Duraklatılmış gönderime kaldığı yerden devam eder. */
+export function resumeTransfer(id: string) {
+  paused.delete(id);
+  const t = transfers.get(id);
+  if (t && t.status === "duraklatildi") put({ ...t, status: "gonderiliyor" });
+}
+
+/** Gönderimi iptal eder; kalan parçalar gönderilmez. */
+export function cancelTransfer(id: string) {
+  cancelled.add(id);
+  paused.delete(id);
+  const t = transfers.get(id);
+  if (t && (t.status === "gonderiliyor" || t.status === "duraklatildi" || t.status === "aliniyor")) {
+    put({ ...t, status: "iptal", speed: 0 });
+  }
+}
+
 
 function put(t: Transfer) {
   transfers.set(t.id, t);
@@ -84,6 +122,7 @@ export async function sendFileToPeer(peer: string, file: File): Promise<void> {
     size: file.size,
     percent: 0,
     status: "gonderiliyor",
+    speed: 0,
     at: Date.now(),
   };
   put(t);
@@ -97,7 +136,20 @@ export async function sendFileToPeer(peer: string, file: File): Promise<void> {
       size: t.size,
       total,
     });
+    const started = performance.now();
     for (let i = 0; i < total; i += 1) {
+      if (cancelled.has(id)) {
+        put({ ...t, status: "iptal", speed: 0 });
+        return;
+      }
+      // Duraklatma: kullanıcı devam edene ya da iptal edene kadar bekle.
+      while (paused.has(id) && !cancelled.has(id)) {
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      if (cancelled.has(id)) {
+        put({ ...t, status: "iptal", speed: 0 });
+        return;
+      }
       await k.send("app", peer, {
         kind: "file.part",
         id,
@@ -105,14 +157,26 @@ export async function sendFileToPeer(peer: string, file: File): Promise<void> {
         total,
         data: dataUrl.slice(i * CHUNK, (i + 1) * CHUNK),
       });
-      put({ ...t, percent: Math.round(((i + 1) / total) * 100) });
+      const elapsed = Math.max(0.001, (performance.now() - started) / 1000);
+      const sentBytes = ((i + 1) / total) * file.size;
+      put({
+        ...t,
+        percent: Math.round(((i + 1) / total) * 100),
+        speed: Math.round(sentBytes / elapsed),
+      });
     }
-    put({ ...t, percent: 100, status: "tamam" });
+    put({ ...t, percent: 100, status: "tamam", speed: 0 });
   } catch (e) {
-    put({ ...t, status: "hata", error: e instanceof Error ? e.message : "Aktarım kesildi." });
+    put({
+      ...t,
+      status: "hata",
+      speed: 0,
+      error: e instanceof Error ? e.message : "Aktarım kesildi.",
+    });
     throw e;
   }
 }
+
 
 let booted = false;
 
@@ -146,6 +210,7 @@ export function bootFileTransfer() {
         size,
         percent: 0,
         status: "aliniyor",
+        speed: 0,
         at: Date.now(),
       });
       return;
@@ -156,17 +221,21 @@ export function bootFileTransfer() {
       const buf = parts.get(id);
       const t = transfers.get(id);
       if (!buf || !t) return;
+      if (cancelled.has(id)) return;
       const i = Number(b["i"] ?? -1);
       if (i < 0 || i >= buf.length) return;
       buf[i] = String(b["data"] ?? "");
       const done = buf.filter((x) => x.length > 0).length;
       const percent = Math.round((done / buf.length) * 100);
+      const elapsed = Math.max(0.001, (Date.now() - t.at) / 1000);
+      const speed = Math.round((t.size * (done / buf.length)) / elapsed);
       if (done === buf.length) {
-        put({ ...t, percent: 100, status: "tamam", dataUrl: buf.join("") });
+        put({ ...t, percent: 100, status: "tamam", speed: 0, dataUrl: buf.join("") });
         parts.delete(id);
       } else {
-        put({ ...t, percent });
+        put({ ...t, percent, speed });
       }
     }
+
   });
 }
