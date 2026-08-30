@@ -13,7 +13,7 @@ import { RefreshCw, ShieldAlert } from "lucide-react";
 import { buildStages } from "@/lib/shell/embed-strategy";
 import type { EmbedPolicy } from "@/shell/web-apps";
 
-const LOAD_TIMEOUT_MS = 5000;
+const LOAD_TIMEOUT_MS = 3500;
 
 export function GenericAppContainer({
   url,
@@ -107,6 +107,7 @@ export function GenericAppContainer({
         key={`${attempt}:${stage}`}
         title={label}
         src={current?.src}
+        onError={() => advance()}
         onLoad={() => {
           // Gömmeyi reddeden hedefler de `load` tetikler; çerçeve about:blank
           // kalırsa içerik gelmemiştir ve bir sonraki aşamaya geçilir.
