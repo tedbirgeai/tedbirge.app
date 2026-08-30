@@ -481,11 +481,13 @@ export default function Messenger() {
   }, [remoteStream, call.streamVersion]);
 
   const remoteStatusText =
-    call.phase === "connected"
+    call.phase === "active"
       ? "bağlandı"
-      : call.phase === "ringing" || call.remoteRinging
-        ? "çalıyor…"
-        : "bağlanıyor…";
+      : call.phase === "reconnecting"
+        ? "yeniden bağlanıyor…"
+        : call.phase === "ringing" || call.phase === "outgoing" || call.remoteRinging
+          ? "çalıyor…"
+          : "bağlanıyor…";
 
   const stamp = () =>
     new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
