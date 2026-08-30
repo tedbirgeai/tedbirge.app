@@ -65,6 +65,7 @@ import { Route as ApiPublicPushRouteImport } from './routes/api/public/push'
 import { Route as ApiPublicPingRouteImport } from './routes/api/public/ping'
 import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
+import { Route as ApiPublicGecitRouteImport } from './routes/api/public/gecit'
 import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
 import { Route as AuthenticatedTeklifIdRouteImport } from './routes/_authenticated/teklif.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -349,6 +350,11 @@ const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
   path: '/api/public/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicGecitRoute = ApiPublicGecitRouteImport.update({
+  id: '/api/public/gecit',
+  path: '/api/public/gecit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicEnrollRoute = ApiPublicEnrollRouteImport.update({
   id: '/api/public/enroll',
   path: '/api/public/enroll',
@@ -423,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/rehber/': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
+  '/api/public/gecit': typeof ApiPublicGecitRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
@@ -484,6 +491,7 @@ export interface FileRoutesByTo {
   '/rehber': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
+  '/api/public/gecit': typeof ApiPublicGecitRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
@@ -547,6 +555,7 @@ export interface FileRoutesById {
   '/rehber/': typeof RehberIndexRoute
   '/_authenticated/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
+  '/api/public/gecit': typeof ApiPublicGecitRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
@@ -610,6 +619,7 @@ export interface FileRouteTypes {
     | '/rehber/'
     | '/teklif/$id'
     | '/api/public/enroll'
+    | '/api/public/gecit'
     | '/api/public/health'
     | '/api/public/openapi.json'
     | '/api/public/ping'
@@ -671,6 +681,7 @@ export interface FileRouteTypes {
     | '/rehber'
     | '/teklif/$id'
     | '/api/public/enroll'
+    | '/api/public/gecit'
     | '/api/public/health'
     | '/api/public/openapi.json'
     | '/api/public/ping'
@@ -733,6 +744,7 @@ export interface FileRouteTypes {
     | '/rehber/'
     | '/_authenticated/teklif/$id'
     | '/api/public/enroll'
+    | '/api/public/gecit'
     | '/api/public/health'
     | '/api/public/openapi.json'
     | '/api/public/ping'
@@ -792,6 +804,7 @@ export interface RootRouteChildren {
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
   ApiPublicEnrollRoute: typeof ApiPublicEnrollRoute
+  ApiPublicGecitRoute: typeof ApiPublicGecitRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
   ApiPublicPingRoute: typeof ApiPublicPingRoute
@@ -1197,6 +1210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/gecit': {
+      id: '/api/public/gecit'
+      path: '/api/public/gecit'
+      fullPath: '/api/public/gecit'
+      preLoaderRoute: typeof ApiPublicGecitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/enroll': {
       id: '/api/public/enroll'
       path: '/api/public/enroll'
@@ -1293,6 +1313,7 @@ const rootRouteChildren: RootRouteChildren = {
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
   ApiPublicEnrollRoute: ApiPublicEnrollRoute,
+  ApiPublicGecitRoute: ApiPublicGecitRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
   ApiPublicPingRoute: ApiPublicPingRoute,
