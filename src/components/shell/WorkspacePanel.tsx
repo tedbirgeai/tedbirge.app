@@ -185,7 +185,7 @@ export function WorkspacePanel() {
                 }}
               >
                 <WindowFrame win={w}>
-                  <AppSurface win={w} onLaunch={launch} onTransfer={() => setTransfer(true)} />
+                  <AppSurface win={w} onLaunch={launch} onTransfer={() => launch("transfer")} />
                 </WindowFrame>
               </div>
             ))}
@@ -211,7 +211,7 @@ export function WorkspacePanel() {
             </button>
           </div>
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <AppSurface win={top} onLaunch={launch} onTransfer={() => setTransfer(true)} />
+            <AppSurface win={top} onLaunch={launch} onTransfer={() => launch("transfer")} />
           </div>
         </div>
       ) : null}
