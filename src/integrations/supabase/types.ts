@@ -1512,7 +1512,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      relay_prune_expired: { Args: { batch_size?: number }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "user"
