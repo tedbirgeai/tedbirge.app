@@ -20,6 +20,7 @@ import { Spotlight } from "@/components/shell/Spotlight";
 import { pressFeedback } from "@/lib/chat/sounds";
 import { notify, notifyError, notifyOk } from "@/lib/shell/notify";
 import { objectUrl, readFile, requestPersistentStorage } from "@/lib/vfs/store";
+import { TransfersApp } from "@/components/shell/apps/TransfersApp";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
 import { describeNode } from "@/lib/node-runtime";
 import { useShell } from "@/shell/ShellProvider";
