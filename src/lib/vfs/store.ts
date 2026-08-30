@@ -297,3 +297,9 @@ export async function importVfs(json: unknown): Promise<number> {
   const saved = await saveFiles(files);
   return saved.length;
 }
+
+/** Türüne göre (ses/video/görsel) kayıtları süzer — Medya ve Müzik kütüphaneleri. */
+export async function listByKind(prefix: "audio/" | "video/" | "image/"): Promise<VfsEntry[]> {
+  const all = await listFiles();
+  return all.filter((f) => f.mime.startsWith(prefix));
+}
