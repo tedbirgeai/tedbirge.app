@@ -465,6 +465,21 @@ export default function Messenger() {
     el.srcObject = camOn ? localStream : null;
   }, [camOn, localStream, inCall]);
 
+  // Seçilen cihazdan gelen canlı görüntü.
+  const remoteStream = activePeer ? getPeerStream(activePeer) : null;
+  useEffect(() => {
+    const el = remoteVideoRef.current;
+    if (!el) return;
+    el.srcObject = remoteStream ?? null;
+  }, [remoteStream, call.streamVersion]);
+
+  const remoteStatusText =
+    call.phase === "connected"
+      ? "bağlandı"
+      : call.phase === "ringing" || call.remoteRinging
+        ? "çalıyor…"
+        : "bağlanıyor…";
+
   const stamp = () =>
     new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 
