@@ -148,6 +148,7 @@ export function TedbirgeWebView({
           label={label}
           embed={forced ? "iframe" : embed}
           {...(forced ? {} : embedUrl ? { embedUrl } : {})}
+          {...(viaGateway ? {} : proxy ? { proxy } : {})}
           renderFailed={() => shellCard}
         />
       )}
