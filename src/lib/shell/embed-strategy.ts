@@ -32,7 +32,10 @@ export function gatewayUrl(target: string): string {
 export function gatewayTarget(
   app: Pick<WebAppEntry, "url" | "proxy">,
 ): string | null {
-  const target = app.proxy === true ? app.url : typeof app.proxy === "string" ? app.proxy : null;
+  // Açık `proxy` tanımı önceliklidir; tanım yoksa hedefin kendisi izin
+  // listesindeyse Geçit yine de otomatik denenir (kullanıcı elle
+  // "Geçit Üzerinden Çalıştır" demek zorunda kalmaz).
+  const target = typeof app.proxy === "string" ? app.proxy : app.url;
   if (!target) return null;
   return gatewayAllowed(target) ? target : null;
 }
