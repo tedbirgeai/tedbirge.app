@@ -186,22 +186,58 @@ export async function deleteFile(id: string): Promise<void> {
 
 
 const urls = new Map<string, string>();
+/**
+ * Nesne URL'leri birden çok uygulama tarafından paylaşılır (Dosyalar,
+ * Müzik, Medya). Her kullanıcı kendi sahiplik etiketiyle kaydolur; bir
+ * pencere kapandığında yalnız kendi referansları düşer. Başka bir
+ * uygulama hâlâ kullanıyorsa bağlantı iptal EDİLMEZ — böylece Dosyalar
+ * penceresi kapanınca çalan şarkı/video kesilmez.
+ */
+const owners = new Map<string, Set<string>>();
 
 /** İndirme/önizleme için nesne URL'i üretir; aynı dosyada tekrar kullanılır. */
-export async function objectUrl(id: string): Promise<string | null> {
+export async function objectUrl(id: string, owner = "shared"): Promise<string | null> {
+  const claim = () => {
+    const set = owners.get(id) ?? new Set<string>();
+    set.add(owner);
+    owners.set(id, set);
+  };
   const cached = urls.get(id);
-  if (cached) return cached;
+  if (cached) {
+    claim();
+    return cached;
+  }
   const file = await readFile(id);
   if (!file) return null;
   const url = URL.createObjectURL(file);
   urls.set(id, url);
+  claim();
   return url;
 }
 
-/** Üretilmiş tüm nesne URL'lerini serbest bırakır. */
-export function releaseUrls(): void {
-  for (const url of urls.values()) URL.revokeObjectURL(url);
-  urls.clear();
+/**
+ * Nesne URL'lerini serbest bırakır.
+ * `owner` verilirse yalnız o sahibin referansları düşer ve hiçbir başka
+ * uygulamanın kullanmadığı bağlantılar iptal edilir. `owner` verilmezse
+ * (depo temizliği) tüm bağlantılar iptal edilir.
+ */
+export function releaseUrls(owner?: string): void {
+  if (!owner) {
+    for (const url of urls.values()) URL.revokeObjectURL(url);
+    urls.clear();
+    owners.clear();
+    return;
+  }
+  for (const [id, set] of owners) {
+    if (!set.delete(owner)) continue;
+    if (set.size > 0) continue;
+    owners.delete(id);
+    const url = urls.get(id);
+    if (url) {
+      URL.revokeObjectURL(url);
+      urls.delete(id);
+    }
+  }
 }
 
 export type StorageUsage = { files: number; bytes: number; quota: number | null };

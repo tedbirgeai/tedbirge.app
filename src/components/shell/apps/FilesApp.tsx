@@ -61,7 +61,7 @@ function Preview({ entry }: { entry: VfsEntry }) {
         setText((await f.text()).slice(0, 4000));
       });
     } else {
-      void objectUrl(entry.id).then((u) => {
+      void objectUrl(entry.id, "files").then((u) => {
         if (alive) setUrl(u);
       });
     }
@@ -122,7 +122,9 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
     const off = onVfsChange(refresh);
     return () => {
       off();
-      releaseUrls();
+      // Yalnız Dosyalar penceresinin kendi önizleme bağlantıları düşer;
+      // Müzik/Medya'nın kullandığı bağlantılara dokunulmaz.
+      releaseUrls("files");
     };
   }, [refresh]);
 
