@@ -13,7 +13,8 @@ import { AppIcon } from "@/components/shell/app-icons";
 import { ContextMenu } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
 import { catalogApp, useDesktopState } from "@/shell/installed";
-import { focusWindow, restoreWindow, type WindowRecord } from "@/shell/windows";
+import { closeWindow, focusWindow, restoreWindow, type WindowRecord } from "@/shell/windows";
+import { useIsCompact } from "@/hooks/use-mobile";
 
 export function Dock({
   windows,
