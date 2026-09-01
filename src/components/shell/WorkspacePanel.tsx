@@ -197,7 +197,10 @@ export function WorkspacePanel() {
                 }}
               >
                 <WindowFrame win={w}>
-                  <AppSurface win={w} onLaunch={launch} onTransfer={() => launch("transfer")} />
+                  {/* Hata yalıtımı: uygulama çökse de kabuk ayakta kalır. */}
+                  <AppErrorBoundary title={w.title} appId={w.appId}>
+                    <AppSurface win={w} onLaunch={launch} onTransfer={() => launch("transfer")} />
+                  </AppErrorBoundary>
                 </WindowFrame>
               </div>
             ))}
@@ -209,6 +212,7 @@ export function WorkspacePanel() {
       {isMobile && top ? (
         <MobileAppShell win={top} onLaunch={launch} onTransfer={() => launch("transfer")} />
       ) : null}
+
 
       <Dock
         windows={windows}
