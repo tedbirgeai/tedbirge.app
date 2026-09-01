@@ -10,7 +10,9 @@ cd "$(dirname "$0")/../crates/tedbirge-kernel"
 cargo build --release --target wasm32-unknown-unknown
 cargo test --no-default-features --features std
 
-cp target/wasm32-unknown-unknown/release/tedbirge_kernel.wasm \
+WASM=$(ls -1 ../target/wasm32-unknown-unknown/release/tedbirge_kernel.wasm \
+            target/wasm32-unknown-unknown/release/tedbirge_kernel.wasm 2>/dev/null | head -n1)
+cp "$WASM" \ \
    ../../public/kernel/tedbirge_kernel.wasm
 
 echo "✓ public/kernel/tedbirge_kernel.wasm güncellendi"

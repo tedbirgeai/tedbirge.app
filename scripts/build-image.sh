@@ -40,8 +40,8 @@ case "$ARCH" in
   riscv64) bash scripts/build-riscv64.sh ;;
 esac
 
-BIN=$(ls -1 crates/tedbirge-shell-native/target/*/release/tedbirge-shell \
-        crates/tedbirge-shell-native/target/release/tedbirge-shell 2>/dev/null | head -n1 || true)
+source scripts/lib-paths.sh
+BIN=$(find_bin tedbirge-shell || true)
 mkdir -p "$STAGE/opt/tedbirge" "$STAGE/etc" "$STAGE/var/tedbirge" "$STAGE/usr/bin"
 cp -r dist "$STAGE/opt/tedbirge/dist"
 [ -n "$BIN" ] && cp "$BIN" "$STAGE/opt/tedbirge/tedbirge-shell"
@@ -51,7 +51,7 @@ cp -r dist "$STAGE/opt/tedbirge/dist"
 for crate_bin in "tedbirge-compositor:tedbirge-compositor" "tedbirge-installer:tedbirge-install"; do
   crate=${crate_bin%%:*}; binname=${crate_bin##*:}
   if cargo build --release --manifest-path "crates/$crate/Cargo.toml" 2>/dev/null; then
-    f=$(ls -1 "crates/$crate/target"/*/release/$binname "crates/$crate/target/release/$binname" 2>/dev/null | head -n1 || true)
+    f=$(find_bin "$binname" || true)
     [ -n "$f" ] && cp "$f" "$STAGE/usr/bin/$binname" && echo "✓ $binname imaja eklendi"
   else
     warn "$binname derlenemedi — imaj tarayıcı yedeğiyle (cog/chromium) açılır"

@@ -14,7 +14,8 @@ rm -rf "$STAGE"
 mkdir -p "$STAGE/opt/tedbirge" "$STAGE/etc" "$OUT"
 
 cp -r dist "$STAGE/opt/tedbirge/dist"
-cp crates/tedbirge-shell-native/target/release/tedbirge-shell "$STAGE/opt/tedbirge/"
+source scripts/lib-paths.sh
+cp "$(find_bin tedbirge-shell)" "$STAGE/opt/tedbirge/"
 
 # Açılış betiği: kabuk servisini başlat, kiosk görüntüleyiciyi tam ekran aç.
 cat > "$STAGE/opt/tedbirge/boot.sh" <<'BOOT'
