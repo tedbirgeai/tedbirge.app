@@ -43,7 +43,16 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
   const [usage, setUsage] = useState<StorageUsage>({ files: 0, bytes: 0, quota: null });
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [hidden, setHidden] = useState(false);
-  const drag = useRef<{ dx: number; dy: number } | null>(null);
+  const drag = useRef<{
+    dx: number;
+    dy: number;
+    w: number;
+    h: number;
+    x: number;
+    y: number;
+    raf: number;
+  } | null>(null);
+
   const box = useRef<HTMLElement>(null);
 
   useEffect(() => {
