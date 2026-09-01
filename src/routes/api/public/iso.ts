@@ -17,6 +17,7 @@ import { createZip } from "@/lib/zip";
 export const ISO_FILE_NAME = "tedbirge-webos-v1.0-x86_64.iso";
 const KIT_SH = "tedbirge-webos-iso-kurulum-kiti.sh";
 const KIT_BAT = "kur.bat";
+const KIT_PS1 = "kur-indir.ps1";
 const KIT_ZIP = "tedbirge-webos-kurulum-kiti.zip";
 
 /**
@@ -148,33 +149,89 @@ read -r -p "Kapatmak icin Enter'a basin " _ || true
 `;
 }
 
-/** Windows kiti: çift tıklanır; WSL varsa .sh kitini orada çalıştırır. */
+/**
+ * Windows yardımcı betiği: WSL olmayan makinelerde kur.bat tarafından
+ * çağrılır. Yayında gerçek .iso varsa doğrudan indirir; yoksa statik WebOS
+ * paketini indirip klasöre açar. Sahte .iso ASLA üretilmez.
+ */
+function buildKitPs1(): string {
+  return [
+    "param([string]$Origin, [string]$OutDir)",
+    "$ErrorActionPreference = 'Stop'",
+    `$isoUrl = "$Origin/${ISO_FILE_NAME}"`,
+    "$isoOut = Join-Path $OutDir 'tedbirge-webos.iso'",
+    "try {",
+    "  $head = Invoke-WebRequest -Uri $isoUrl -Method Head -UseBasicParsing -TimeoutSec 20",
+    "  $ct = $head.Headers['Content-Type']",
+    "  if ($ct -and $ct -notmatch 'text/html') {",
+    "    Invoke-WebRequest -Uri $isoUrl -OutFile $isoOut -UseBasicParsing",
+    "    Write-Host '       Basarili! tedbirge-webos.iso dosyaniz hazir.'",
+    "    Write-Host '       Rufus veya Ventoy ile USB belleginize yazdirabilirsiniz.'",
+    "    exit 0",
+    "  }",
+    "} catch { }",
+    "Write-Host '       Hazir imaj yayinda degil; kurulum paketi indiriliyor...'",
+    "$pkg = Join-Path $OutDir 'tedbirge-webos-paket'",
+    "New-Item -ItemType Directory -Force -Path $pkg | Out-Null",
+    "$bundle = Join-Path $OutDir 'dist-bundle.tar.gz'",
+    "Invoke-WebRequest -Uri \"$Origin/dist-bundle.tar.gz\" -OutFile $bundle -UseBasicParsing",
+    "try {",
+    "  Invoke-WebRequest -Uri \"$Origin/kernel/tedbirge_kernel.wasm\" -OutFile (Join-Path $OutDir 'tedbirge_kernel.wasm') -UseBasicParsing",
+    "} catch { }",
+    "$tar = Get-Command tar.exe -ErrorAction SilentlyContinue",
+    "if ($tar) {",
+    "  tar -xzf $bundle -C $pkg",
+    "  Remove-Item $bundle -Force",
+    "  Write-Host '       Paket tedbirge-webos-paket klasorune acildi.'",
+    "} else {",
+    "  Write-Host '       Paket dist-bundle.tar.gz olarak indirildi.'",
+    "}",
+    "Write-Host '       Not: Windows, ek arac olmadan onyuklenebilir .iso uretemez.'",
+    "Write-Host '       Tek tikla .iso icin Yonetici PowerShell'de: wsl --install'",
+    "Write-Host '       Yeniden baslattiktan sonra kur.bat dosyasina tekrar cift tiklayin.'",
+    "exit 0",
+    "",
+  ].join("\r\n");
+}
+
+/**
+ * Windows kiti: çift tıklanır. WSL varsa .sh kitini orada çalıştırır;
+ * yoksa yerleşik PowerShell'e düşer (harici bağımlılık yok). Pencere her
+ * senaryoda 'pause' ile açık kalır.
+ */
 function buildKitBat(origin: string): string {
   return [
     "@echo off",
     "chcp 65001 >nul",
-    "title Tedbirge(R) WebOS - Bare-Metal Kurulum Kiti",
+    "title Tedbirge(R) WebOS - Kurulum",
     "setlocal",
-    `set ORIGIN=${origin}`,
-    'echo == Tedbirge(R) WebOS bare-metal kurulum kiti ==',
+    `set "ORIGIN=${origin}"`,
+    'set "OUTDIR=%~dp0"',
+    'set "OUTDIR=%OUTDIR:~0,-1%"',
+    "echo ============================================",
+    "echo   Tedbirge(R) WebOS - Kurulum",
+    "echo ============================================",
     "echo.",
+    "echo [1/3] Bilgisayariniz hazirlaniyor...",
     "where wsl >nul 2>nul",
     "if %errorlevel%==0 (",
-    '  echo [1/1] WSL bulundu - imaj WSL icinde uretiliyor...',
+    "  echo       Guvenli ortam bulundu - imaj uretiliyor...",
     `  wsl -e bash -lc "cd \\"$(wslpath '%~dp0')\\" && ORIGIN=%ORIGIN% bash ./${KIT_SH}"`,
+    "  echo.",
+    "  echo [3/3] Islem tamamlandi.",
     "  goto son",
     ")",
-    "echo WSL bulunamadi.",
-    "echo Tek tikla .iso uretimi icin Windows'ta WSL gerekir.",
-    "echo Yonetici PowerShell'de su komutu calistirip bilgisayari yeniden baslatin:",
-    "echo     wsl --install",
-    "echo Ardindan bu dosyaya tekrar cift tiklayin.",
-    "echo.",
-    "echo Alternatif: Ventoy USB kullanip WebOS'u tarayicidan da calistirabilirsiniz:",
-    "echo     %ORIGIN%",
+    "echo [2/3] Tedbirge(R) WebOS canli paketi indiriliyor...",
+    `powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0${KIT_PS1}" "%ORIGIN%" "%OUTDIR%"`,
+    "if errorlevel 1 (",
+    "  echo       Baglanti kurulamadi. Internet baglantinizi kontrol edip yeniden cift tiklayin.",
+    "  goto son",
+    ")",
+    "echo [3/3] Islem tamamlandi.",
     ":son",
     "echo.",
-    "pause",
+    "echo Devam etmek icin bir tusa basin...",
+    "pause >nul",
   ].join("\r\n");
 }
 
@@ -187,7 +244,8 @@ function buildReadme(origin: string): string {
     "",
     "Windows:",
     `  1. ${KIT_BAT} dosyasına çift tıklayın.`,
-    "  2. İşlem bitince aynı klasörde .iso dosyanız hazır olur.",
+    "  2. WSL varsa imaj otomatik üretilir; WSL yoksa paket PowerShell ile indirilir.",
+    "  3. İşlem bitince aynı klasörde .iso dosyanız (veya paket klasörünüz) hazır olur.",
     "",
     "Linux / macOS:",
     `  1. ${KIT_SH} dosyasına çift tıklayın (ya da: bash ${KIT_SH}).`,
@@ -227,6 +285,7 @@ export const Route = createFileRoute("/api/public/iso")({
         const zip = createZip([
           { name: KIT_SH, data: buildKitSh(origin) },
           { name: KIT_BAT, data: buildKitBat(origin) },
+          { name: KIT_PS1, data: buildKitPs1() },
           { name: "OKUBENI.txt", data: buildReadme(origin) },
         ]);
 
