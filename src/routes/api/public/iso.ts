@@ -3,34 +3,42 @@
  * ------------------------------------------------------------------
  * Tek tık: tarayıcının İndirilenler klasörüne doğrudan akar.
  *
- * Önyüklenebilir imaj, kök yetkili bir Linux makinede
- * `scripts/build-iso.sh` ile üretilip yayın paketine
- * `/tedbirge-webos-v1.0-x86_64.iso` adresiyle eklenir. İmaj yüklüyse
- * bu rota onu aktarır; henüz yüklü değilse sahte/boş bir .iso ÜRETİLMEZ,
- * bunun yerine imajı yerelde üreten kurulum kiti indirilir.
+ * Önyüklenebilir imaj yayın paketine `/tedbirge-webos-v1.0-x86_64.iso`
+ * adresiyle eklendiyse doğrudan o aktarılır. Değilse sahte bir .iso
+ * ÜRETİLMEZ; bunun yerine kullanıcı hiçbir komut yazmadan çift tıklayarak
+ * çalıştırabileceği sıfır-konfigürasyon kurulum kiti (.zip) indirilir:
+ * kit, canlı üretim sunucusundan derlenmiş WebOS paketini kendisi indirir.
  */
 
 import { createFileRoute } from "@tanstack/react-router";
 
+import { createZip } from "@/lib/zip";
+
 export const ISO_FILE_NAME = "tedbirge-webos-v1.0-x86_64.iso";
-const KIT_FILE_NAME = "tedbirge-webos-iso-kurulum-kiti.sh";
+const KIT_SH = "tedbirge-webos-iso-kurulum-kiti.sh";
+const KIT_BAT = "kur.bat";
+const KIT_ZIP = "tedbirge-webos-kurulum-kiti.zip";
 
 /**
- * Kurulum kiti: harici depo klonlamaz, `bun install` istemez.
- * Yayındaki hazır (pre-built) varlıkları indirir; ağ yoksa yanı başındaki
- * yerel `dist/` ağacını kullanır. Kaynaktan derleme yalnız son çare olarak,
- * bu projenin kendi betikleriyle ve yalnız istenirse çalışır.
+ * Linux/macOS kiti: yerel `dist/` klasörü ARAMAZ; önce canlı üretim
+ * sunucusundan hazır statik paketi indirir. Kullanıcıdan derleme, kod
+ * bilgisi ya da ek komut beklenmez.
  */
-function buildKit(origin: string): string {
+function buildKitSh(origin: string): string {
   return `#!/usr/bin/env bash
-# Tedbirge® WebOS — Bare-Metal imaj kurulum kiti
-# Kullanim: bash ${KIT_FILE_NAME}
-# Gereksinim: Linux, curl veya wget, tar. (.iso icin ek olarak xorriso)
+# Tedbirge(R) WebOS — sifir-konfigurasyon bare-metal kurulum kiti
+# Cift tikla calistirin; hicbir komut yazmaniza gerek yoktur.
 set -euo pipefail
 
-ORIGIN=\${ORIGIN:-${origin}}
-WORK=\${WORK:-\$PWD/tedbirge-os-build}
+ORIGIN="\${ORIGIN:-${origin}}"
+WORK="\${WORK:-\$(cd "\$(dirname "\$0")" && pwd)/tedbirge-os-build}"
 STAGE="\$WORK/root"
+DIST="\$STAGE/opt/tedbirge/dist"
+
+echo "== Tedbirge(R) WebOS bare-metal kurulum kiti =="
+echo "   Kaynak: \$ORIGIN"
+echo "   Calisma klasoru: \$WORK"
+echo
 
 case "\$(uname -m)" in
   x86_64|amd64)   ARCH=x86_64 ;;
@@ -38,55 +46,54 @@ case "\$(uname -m)" in
   riscv64)        ARCH=riscv64 ;;
   *) echo "! Bilinmeyen mimari: \$(uname -m) — x86_64 varsayiliyor"; ARCH=x86_64 ;;
 esac
-echo "› Mimari: \$ARCH"
+echo "> Mimari: \$ARCH"
 
-fetch() { # fetch <url> <hedef> ; basarisizsa 1 doner
+fetch() { # fetch <url> <hedef>
   if command -v curl >/dev/null 2>&1; then curl -fsSL "\$1" -o "\$2"
   elif command -v wget >/dev/null 2>&1; then wget -qO "\$2" "\$1"
   else echo "! curl ya da wget gerekli"; return 1; fi
 }
 
-mkdir -p "\$STAGE/opt/tedbirge" "\$STAGE/etc"
+rm -rf "\$STAGE"; mkdir -p "\$DIST" "\$STAGE/etc"
 
-# 1) Kabuk paketi: once yayindaki hazir paket, sonra yanibasindaki yerel dist/
+# 1) WebOS statik paketi — dogrudan canli sunucudan
+echo "> WebOS paketi indiriliyor..."
 if fetch "\$ORIGIN/dist-bundle.tar.gz" "\$WORK/dist-bundle.tar.gz" 2>/dev/null; then
-  echo "› Hazir kabuk paketi indirildi"
-  mkdir -p "\$STAGE/opt/tedbirge/dist"
-  tar -xzf "\$WORK/dist-bundle.tar.gz" -C "\$STAGE/opt/tedbirge/dist"
-elif [ -d "\${DIST:-./dist}" ]; then
-  echo "› Yerel dist/ agaci kullaniliyor"
-  cp -r "\${DIST:-./dist}" "\$STAGE/opt/tedbirge/dist"
+  tar -xzf "\$WORK/dist-bundle.tar.gz" -C "\$DIST"
+  echo "  hazir paket alindi"
+elif command -v wget >/dev/null 2>&1; then
+  echo "  hazir paket yok — site aynalaniyor (wget)"
+  wget -q --mirror --convert-links --adjust-extension --page-requisites \\
+       --no-parent --no-host-directories --directory-prefix="\$DIST" "\$ORIGIN/" || true
+  [ -f "\$DIST/index.html" ] || { echo "! Paket alinamadi (internet baglantisini kontrol edin)"; exit 1; }
+elif fetch "\$ORIGIN/" "\$DIST/index.html"; then
+  echo "  yalniz kabuk sayfasi alindi (wget yoksa varliklar ilk acilista onbelleklenir)"
 else
-  echo "! Kabuk paketi bulunamadi (ag yok ve yerel dist/ yok)"
-  echo "  Bu projenin kok dizininde 'bun run build' calistirip kiti tekrar deneyin."
-  exit 1
+  echo "! Paket alinamadi (internet baglantisini kontrol edin)"; exit 1
 fi
 
-# 2) Wasm cekirdegi (paket icinde yoksa ayrica indirilir)
-if [ ! -f "\$STAGE/opt/tedbirge/dist/kernel/tedbirge_kernel.wasm" ]; then
-  mkdir -p "\$STAGE/opt/tedbirge/dist/kernel"
-  fetch "\$ORIGIN/kernel/tedbirge_kernel.wasm" \\
-        "\$STAGE/opt/tedbirge/dist/kernel/tedbirge_kernel.wasm" || true
+# 2) Wasm cekirdegi
+if [ ! -f "\$DIST/kernel/tedbirge_kernel.wasm" ]; then
+  mkdir -p "\$DIST/kernel"
+  fetch "\$ORIGIN/kernel/tedbirge_kernel.wasm" "\$DIST/kernel/tedbirge_kernel.wasm" || true
 fi
 
-# 3) Yerel kabuk ikilisi: hazir ikili -> yoksa istege bagli kaynak derlemesi
+# 3) Yerel kabuk ikilisi (varsa)
 if fetch "\$ORIGIN/native/tedbirge-shell-\$ARCH" "\$STAGE/opt/tedbirge/tedbirge-shell" 2>/dev/null; then
   chmod +x "\$STAGE/opt/tedbirge/tedbirge-shell"
-  echo "› Hazir kabuk ikilisi indirildi (\$ARCH)"
-elif [ -f crates/tedbirge-shell-native/Cargo.toml ] && command -v cargo >/dev/null 2>&1; then
-  echo "› Hazir ikili yok — kaynaktan derleniyor (cargo)"
-  cargo build --release --manifest-path crates/tedbirge-shell-native/Cargo.toml
-  cp "\$(ls -1 crates/target/release/tedbirge-shell crates/*/target/release/tedbirge-shell 2>/dev/null | head -n1)" "\$STAGE/opt/tedbirge/"
+  echo "> Yerel kabuk ikilisi alindi (\$ARCH)"
 else
-  echo "! \$ARCH icin hazir ikili yok ve cargo bulunamadi."
-  echo "  Dugum yine de baska bir makinedeki kabuktan sunulabilir; imaj ikilisiz uretilir."
+  rm -f "\$STAGE/opt/tedbirge/tedbirge-shell"
+  echo "> \$ARCH icin hazir ikili yok — imaj tarayici kiosk moduyla uretilir"
 fi
 
-# 4) Acilis betigi (kiosk ya da bassiz role)
+# 4) Acilis betigi
 cat > "\$STAGE/opt/tedbirge/boot.sh" <<'BOOT'
 #!/bin/sh
 set -e
-/opt/tedbirge/tedbirge-shell --root /opt/tedbirge/dist --port 8377 --mesh-port 7946 &
+if [ -x /opt/tedbirge/tedbirge-shell ]; then
+  /opt/tedbirge/tedbirge-shell --root /opt/tedbirge/dist --port 8377 --mesh-port 7946 &
+fi
 if command -v cog >/dev/null 2>&1; then
   exec cog --enable-developer-extras=false http://127.0.0.1:8377/
 elif command -v chromium >/dev/null 2>&1; then
@@ -99,32 +106,99 @@ BOOT
 chmod +x "\$STAGE/opt/tedbirge/boot.sh"
 
 cat > "\$STAGE/etc/tedbirge-release" <<REL
-NAME="Tedbirge® WebOS"
-VARIANT="Layer 1 · bare-metal"
+NAME="Tedbirge(R) WebOS"
+VARIANT="Layer 1 - bare-metal"
 ARCH=\$ARCH
 SHELL_PORT=8377
 MESH_PORT=7946
 BUILD=\$(date -u +%Y-%m-%dT%H:%M:%SZ)
 REL
 
-# 5) Paketleme: xorriso varsa .iso, yoksa tasinabilir kok agaci arsivi
+# 5) Paketleme: xorriso yoksa otomatik kurulmaya calisilir
+if ! command -v xorriso >/dev/null 2>&1; then
+  echo "> xorriso bulunamadi — otomatik kurulum deneniyor"
+  if command -v nix >/dev/null 2>&1; then XORRISO="nix run nixpkgs#xorriso --"
+  elif command -v apt-get >/dev/null 2>&1; then sudo apt-get update -qq && sudo apt-get install -y xorriso || true
+  elif command -v dnf >/dev/null 2>&1; then sudo dnf install -y xorriso || true
+  elif command -v pacman >/dev/null 2>&1; then sudo pacman -S --noconfirm libisoburn || true
+  elif command -v brew >/dev/null 2>&1; then brew install xorriso || true
+  fi
+fi
+
+OUT_ISO="\$WORK/tedbirge-webos-\$ARCH.iso"
 if command -v xorriso >/dev/null 2>&1; then
-  xorriso -as mkisofs -o "\$WORK/tedbirge-webos-\$ARCH.iso" -V TEDBIRGE "\$STAGE"
-  echo "✓ Hazir: \$WORK/tedbirge-webos-\$ARCH.iso"
+  xorriso -as mkisofs -o "\$OUT_ISO" -V TEDBIRGE "\$STAGE"
+  echo; echo "TAMAM: \$OUT_ISO"
+elif [ -n "\${XORRISO:-}" ]; then
+  \$XORRISO -as mkisofs -o "\$OUT_ISO" -V TEDBIRGE "\$STAGE"
+  echo; echo "TAMAM: \$OUT_ISO"
 else
   tar -czf "\$WORK/tedbirge-webos-\$ARCH-rootfs.tar.gz" -C "\$STAGE" .
-  echo "✓ Hazir: \$WORK/tedbirge-webos-\$ARCH-rootfs.tar.gz"
-  echo "  .iso icin: xorriso kurup kiti tekrar calistirin."
+  echo; echo "TAMAM (arsiv): \$WORK/tedbirge-webos-\$ARCH-rootfs.tar.gz"
+  echo "  .iso icin xorriso kurup kiti tekrar calistirin."
 fi
 
 echo
 echo "USB'ye yazdirma:"
-echo "  Windows : Rufus → imaji sec → GPT/UEFI → Baslat"
-echo "  Ventoy  : .iso dosyasini Ventoy USB'sine kopyalamaniz yeterli"
-echo "  macOS/Linux: BalenaEtcher → Flash from file → Select target → Flash"
+echo "  Windows : Rufus -> imaji sec -> GPT/UEFI -> Baslat"
+echo "  Ventoy  : .iso dosyasini Ventoy USB'sine kopyalamak yeterli"
+echo "  macOS/Linux: BalenaEtcher -> Flash from file -> Select target -> Flash"
+echo
+read -r -p "Kapatmak icin Enter'a basin " _ || true
 `;
 }
 
+/** Windows kiti: çift tıklanır; WSL varsa .sh kitini orada çalıştırır. */
+function buildKitBat(origin: string): string {
+  return [
+    "@echo off",
+    "chcp 65001 >nul",
+    "title Tedbirge(R) WebOS - Bare-Metal Kurulum Kiti",
+    "setlocal",
+    `set ORIGIN=${origin}`,
+    'echo == Tedbirge(R) WebOS bare-metal kurulum kiti ==',
+    "echo.",
+    "where wsl >nul 2>nul",
+    "if %errorlevel%==0 (",
+    '  echo [1/1] WSL bulundu - imaj WSL icinde uretiliyor...',
+    `  wsl -e bash -lc "cd \\"$(wslpath '%~dp0')\\" && ORIGIN=%ORIGIN% bash ./${KIT_SH}"`,
+    "  goto son",
+    ")",
+    "echo WSL bulunamadi.",
+    "echo Tek tikla .iso uretimi icin Windows'ta WSL gerekir.",
+    "echo Yonetici PowerShell'de su komutu calistirip bilgisayari yeniden baslatin:",
+    "echo     wsl --install",
+    "echo Ardindan bu dosyaya tekrar cift tiklayin.",
+    "echo.",
+    "echo Alternatif: Ventoy USB kullanip WebOS'u tarayicidan da calistirabilirsiniz:",
+    "echo     %ORIGIN%",
+    ":son",
+    "echo.",
+    "pause",
+  ].join("\r\n");
+}
+
+function buildReadme(origin: string): string {
+  return [
+    "TEDBİRGE® WebOS — Bare-Metal Kurulum Kiti",
+    "==========================================",
+    "",
+    "Hiçbir kod veya derleme bilgisine ihtiyacınız yok.",
+    "",
+    "Windows:",
+    `  1. ${KIT_BAT} dosyasına çift tıklayın.`,
+    "  2. İşlem bitince aynı klasörde .iso dosyanız hazır olur.",
+    "",
+    "Linux / macOS:",
+    `  1. ${KIT_SH} dosyasına çift tıklayın (ya da: bash ${KIT_SH}).`,
+    "  2. İşlem bitince tedbirge-os-build klasöründe .iso dosyanız hazır olur.",
+    "",
+    "USB'ye yazdırma: Rufus (Windows), Ventoy (hepsi) veya BalenaEtcher.",
+    "",
+    `Kurulum yapmadan denemek için: ${origin}`,
+    "",
+  ].join("\r\n");
+}
 
 export const Route = createFileRoute("/api/public/iso")({
   server: {
@@ -150,11 +224,18 @@ export const Route = createFileRoute("/api/public/iso")({
           /* imaj yayınlanmamış olabilir; kite düşülür */
         }
 
-        return new Response(buildKit(origin), {
+        const zip = createZip([
+          { name: KIT_SH, data: buildKitSh(origin) },
+          { name: KIT_BAT, data: buildKitBat(origin) },
+          { name: "OKUBENI.txt", data: buildReadme(origin) },
+        ]);
+
+        return new Response(zip.buffer as ArrayBuffer, {
           status: 200,
           headers: {
-            "Content-Type": "text/x-shellscript; charset=utf-8",
-            "Content-Disposition": `attachment; filename="${KIT_FILE_NAME}"`,
+            "Content-Type": "application/zip",
+            "Content-Disposition": `attachment; filename="${KIT_ZIP}"`,
+            "Content-Length": String(zip.byteLength),
             "X-Content-Type-Options": "nosniff",
             "Cache-Control": "no-store",
           },

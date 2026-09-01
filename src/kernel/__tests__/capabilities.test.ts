@@ -43,10 +43,14 @@ describe("yetenek kapısı", () => {
       "mesh",
       "messenger",
       "music",
+      "panel",
       "relay",
+      "settings",
       "store",
+      "sysinfo",
       "transfer",
       "wallpaper",
+
     ]);
     // Harici web hedefleri hiçbir yetenek istemez (çekirdeğe erişemez).
     expect(listApps().filter((a) => a.kind === "web").every((a) => a.capabilities.length === 0)).toBe(

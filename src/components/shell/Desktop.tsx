@@ -1,16 +1,15 @@
 /**
  * MASAÜSTÜ YÜZEYİ
  * ------------------------------------------------------------------
- * Duvar kâğıdı + serbest sürüklenebilir kısayol ikonları. Kayıtlı konumu
- * olmayan ikonlar otomatik ızgaraya dizilir; dar ekranlarda sürükleme
- * kapatılır ve tek dokunuş uygulamayı açar. Boş alana ya da bir ikona
- * sağ tıklandığında tarayıcı menüsü engellenir ve işletim sistemi
- * bağlam menüsü açılır.
+ * Duvar kâğıdı + katı CSS ızgarasına dizilen kısayol ikonları. İkonlar
+ * dikey sütunlar hâlinde akar (grid-flow-col), böylece üst üste binme
+ * kesin olarak engellenir. Boş alana ya da bir ikona sağ tıklandığında
+ * tarayıcı menüsü engellenir ve işletim sistemi bağlam menüsü açılır.
  */
 
 import { useState } from "react";
 
-import { DesktopIcon, ICON_H, ICON_W } from "@/components/shell/DesktopIcon";
+import { DesktopIcon } from "@/components/shell/DesktopIcon";
 import { DesktopWidgets } from "@/components/shell/DesktopWidgets";
 import { ContextMenu, type MenuItem } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
@@ -24,21 +23,17 @@ type Menu = { x: number; y: number; appId?: string };
 export function Desktop({
   onOpen,
   onOpenNew,
-  draggable,
-  columnsHeight,
 }: {
   onOpen: (id: string) => void;
   onOpenNew: (id: string) => void;
-  draggable: boolean;
-  columnsHeight: number;
 }) {
-  const { installed, icons } = useDesktopState();
+  const { installed } = useDesktopState();
   const [selected, setSelected] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
   const [properties, setProperties] = useState<string | null>(null);
   const wallpaper = useWallpaper();
 
-  const perColumn = Math.max(1, Math.floor((columnsHeight - 24) / ICON_H));
+
 
   const newFolder = async () => {
     const name = `Yeni klasör ${new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
@@ -94,30 +89,32 @@ export function Desktop({
         setMenu({ x: e.clientX - r.left, y: e.clientY - r.top });
       }}
     >
-      {installed.map((id, i) => {
-        const app = catalogApp(id);
-        if (!app) return null;
-        const saved = icons[id];
-        const col = Math.floor(i / perColumn);
-        const row = i % perColumn;
-        return (
-          <DesktopIcon
-            key={id}
-            id={id}
-            label={app.label}
-            x={saved ? saved.x : 16 + col * (ICON_W + 12)}
-            y={saved ? saved.y : 16 + row * ICON_H}
-            selected={selected === id}
-            draggable={draggable}
-            onSelect={() => setSelected(id)}
-            onOpen={() => onOpen(id)}
-            onMenu={(pt) => {
-              setSelected(id);
-              setMenu({ x: pt.x, y: pt.y, appId: id });
-            }}
-          />
-        );
-      })}
+      <div
+        className="grid h-full grid-flow-col grid-rows-[repeat(auto-fill,100px)] justify-start gap-6 overflow-hidden p-6"
+        onPointerDown={(e) => {
+          if (e.target === e.currentTarget) setSelected(null);
+        }}
+      >
+        {installed.map((id) => {
+          const app = catalogApp(id);
+          if (!app) return null;
+          return (
+            <DesktopIcon
+              key={id}
+              id={id}
+              label={app.label}
+              selected={selected === id}
+              onSelect={() => setSelected(id)}
+              onOpen={() => onOpen(id)}
+              onMenu={(pt) => {
+                setSelected(id);
+                setMenu({ x: pt.x, y: pt.y, appId: id });
+              }}
+            />
+          );
+        })}
+      </div>
+
 
       <DesktopWidgets onOpen={onOpen} />
 
