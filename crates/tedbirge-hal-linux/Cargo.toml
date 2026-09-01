@@ -1,0 +1,17 @@
+[package]
+name = "tedbirge-hal-linux"
+version = "0.1.0"
+edition = "2021"
+description = "Tedbirge OS — Linux native HAL sürücüleri (DRM/KMS, evdev, ALSA, netlink, blok depolama, serial taşıyıcı)"
+
+[lib]
+name = "tedbirge_hal_linux"
+path = "src/lib.rs"
+
+[dependencies]
+tedbirge-kernel = { path = "../tedbirge-kernel", default-features = false, features = ["std"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
