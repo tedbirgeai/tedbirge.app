@@ -6,7 +6,7 @@
  * Ek olarak canlı radar (aktif eş sayısı) ve PWA arka plan kurulumu.
  */
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Activity, Cloud, Cpu, Layers, Radar, Rocket, Smartphone, TrendingUp } from "lucide-react";
 
 import { FREE_PEER_LIMIT } from "@/lib/peer-limit";
