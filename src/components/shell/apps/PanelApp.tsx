@@ -499,12 +499,14 @@ export function PanelApp() {
               Düğüm {activeDeviceCount}/{nodeLimit}
             </span>
             {isAdmin && (
-              <Link
-                to="/yonetim"
-                className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+              <button
+                type="button"
+                onClick={() => setTab("yonetim")}
+                className="min-h-12 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-xs uppercase tracking-[0.15em] text-[var(--tb-text)]"
               >
                 Yönetim ekranı
-              </Link>
+              </button>
+
             )}
           </div>
         </header>
