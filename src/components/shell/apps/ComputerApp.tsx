@@ -31,6 +31,7 @@ import {
   storageUsage,
   type StorageUsage,
 } from "@/lib/vfs/store";
+import { BareMetalIsoButton } from "@/components/shell/BareMetalIso";
 import { CAPABILITY_LABELS } from "@/shell/permissions";
 import { grantedCapabilities, revokeCapabilities } from "@/shell/permissions";
 import { catalogApp, useDesktopState } from "@/shell/installed";
@@ -454,6 +455,19 @@ function SettingsTab() {
 
   return (
     <div className="grid gap-3">
+      <div className={card}>
+        <h3 className="text-[15px] font-semibold text-[var(--tb-text)]">
+          Hakkında · Cihaza kurulum
+        </h3>
+        <p className="mt-1 font-osmono text-[11.5px] leading-relaxed text-[var(--tb-muted)]">
+          Tedbirge® WebOS'i bir bilgisayara işletim sistemi olarak kurmak için
+          önyüklenebilir imajı indirin.
+        </p>
+        <div className="mt-3">
+          <BareMetalIsoButton />
+        </div>
+      </div>
+
       <div className={card}>
         <h3 className="text-[15px] font-semibold text-[var(--tb-text)]">Tema</h3>
         <div className="mt-3 grid gap-2">

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Search, Settings, UserRound, Wifi } from "lucide-react";
 
+import { BareMetalIsoButton } from "@/components/shell/BareMetalIso";
 import { InstallSystemButton } from "@/components/shell/InstallSystemButton";
 import { ControlCenter } from "@/components/shell/ControlCenter";
 import { NetworkControl } from "@/components/shell/NetworkControl";
@@ -142,6 +143,7 @@ export function SystemBar({
           </button>
         ) : null}
         <InstallSystemButton />
+        <BareMetalIsoButton compact />
         <span className="font-osmono text-[11px] text-[var(--tb-muted)]" aria-live="polite">
           {clock}
         </span>
