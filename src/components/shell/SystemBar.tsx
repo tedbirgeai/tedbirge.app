@@ -14,19 +14,9 @@ import { ControlCenter } from "@/components/shell/ControlCenter";
 import { NetworkControl } from "@/components/shell/NetworkControl";
 import { NotificationsPanel } from "@/components/shell/NotificationsPanel";
 import { useUnreadNoticeCount } from "@/lib/shell/notifications";
+import { useClock, useMemoryMb } from "@/lib/shell/telemetry-store";
 import { useOnline } from "@/lib/pwa/offline-status";
 
-
-
-/** Bazı tarayıcılarda bulunan bellek ölçümü (standart dışı). */
-type MemoryInfo = { usedJSHeapSize: number; jsHeapSizeLimit: number };
-
-function readMemory(): number | null {
-  const perf = performance as Performance & { memory?: MemoryInfo };
-  const m = perf.memory;
-  if (!m || !m.jsHeapSizeLimit) return null;
-  return Math.round((m.usedJSHeapSize / 1024 / 1024) * 10) / 10;
-}
 
 export function SystemBar({
   status,
