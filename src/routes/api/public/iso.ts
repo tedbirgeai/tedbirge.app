@@ -292,8 +292,8 @@ export const Route = createFileRoute("/api/public/iso")({
 
         const zip = createZip([
           { name: KIT_SH, data: buildKitSh(origin) },
-          { name: KIT_BAT, data: buildKitBat(origin) },
-          { name: KIT_PS1, data: buildKitPs1() },
+          { name: KIT_BAT, data: buildKitBat() },
+          { name: KIT_PS1, data: buildKitPs1(origin) },
           { name: "OKUBENI.txt", data: buildReadme(origin) },
         ]);
 
