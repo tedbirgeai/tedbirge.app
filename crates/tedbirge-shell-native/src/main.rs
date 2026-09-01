@@ -521,11 +521,13 @@ fn main() -> std::io::Result<()> {
     // Sayaç raporu + telemetri dosyası (yerel tanılama; ağa hiçbir şey gitmez).
     let state_dir = state.clone();
     thread::spawn(move || {
-        let _ = fs::create_dir_all(&state_dir);
         let start = Instant::now();
         loop {
             thread::sleep(Duration::from_secs(30));
-            let (s, r) = (sent.load(Ordering::Relaxed), recv.load(Ordering::Relaxed));
+            let (s, r) = match &counters {
+                Some((sent, recv)) => (sent.load(Ordering::Relaxed), recv.load(Ordering::Relaxed)),
+                None => (0, 0),
+            };
             println!("tasima · gonderilen {s} bayt · alinan {r} bayt");
             let _ = fs::write(
                 state_dir.join("telemetry.json"),
@@ -537,11 +539,16 @@ fn main() -> std::io::Result<()> {
     let listener = TcpListener::bind(("0.0.0.0", http_port))?;
     for stream in listener.incoming() {
         let Ok(mut stream) = stream else { continue };
-        let root = root.clone();
-        thread::spawn(move || serve(&mut stream, &root));
+        let node = Node {
+            root: root.clone(),
+            storage: storage.clone(),
+            report: report.clone(),
+        };
+        thread::spawn(move || serve(&mut stream, &node));
     }
     Ok(())
 }
+
 
 #[cfg(test)]
 mod tests {
