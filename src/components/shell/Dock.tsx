@@ -13,7 +13,8 @@ import { AppIcon } from "@/components/shell/app-icons";
 import { ContextMenu } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
 import { catalogApp, useDesktopState } from "@/shell/installed";
-import { focusWindow, restoreWindow, type WindowRecord } from "@/shell/windows";
+import { closeWindow, focusWindow, restoreWindow, type WindowRecord } from "@/shell/windows";
+import { useIsCompact } from "@/hooks/use-mobile";
 
 export function Dock({
   windows,
@@ -27,6 +28,7 @@ export function Dock({
   onStore: () => void;
 }) {
   const { installed } = useDesktopState();
+  const compact = useIsCompact();
   const [menu, setMenu] = useState<{ x: number; y: number; appId: string } | null>(null);
   const [properties, setProperties] = useState<string | null>(null);
   const extra = windows.filter((w) => !installed.includes(w.appId)).map((w) => w.appId);
@@ -52,6 +54,8 @@ export function Dock({
               onClick={() => {
                 if (!win) return onLaunch(id);
                 if (win.minimized) return restoreWindow(win.id);
+                // Mobil: önde duran uygulamaya tekrar dokunmak ana ekrana döndürür.
+                if (compact) return closeWindow(win.id);
                 focusWindow(win.id);
               }}
               onContextMenu={(e) => {

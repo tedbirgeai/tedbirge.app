@@ -36,6 +36,7 @@ import { BareMetalIsoButton } from "@/components/shell/BareMetalIso";
 import { CAPABILITY_LABELS } from "@/shell/permissions";
 import { grantedCapabilities, revokeCapabilities } from "@/shell/permissions";
 import { catalogApp, useDesktopState } from "@/shell/installed";
+import { useDeviceScopeLabel } from "@/hooks/use-device-label";
 import { useShell } from "@/shell/ShellProvider";
 import { capabilitiesOf } from "@/apps/registry";
 
@@ -577,10 +578,11 @@ export function ComputerApp({
   onLaunch?: (id: string) => void;
 }) {
   const [tab, setTab] = useState<TabId>("ozet");
+  const scopeLabel = useDeviceScopeLabel();
 
   return (
     <WindowShell
-      title="Bilgisayarım"
+      title={scopeLabel}
       subtitle="Cihaz, depolama, ağ ve sistem ayarları"
       padded={false}
       toolbar={

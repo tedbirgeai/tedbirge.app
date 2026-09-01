@@ -50,6 +50,7 @@ import {
 import {
   startCall as startPeerCall,
   endCall as endPeerCall,
+  getRemoteStream,
   getPeerStream,
   useCall,
 } from "@/lib/call/engine";
@@ -472,13 +473,23 @@ export default function Messenger() {
     el.srcObject = camOn ? localStream : null;
   }, [camOn, localStream, inCall]);
 
-  // Seçilen cihazdan gelen canlı görüntü.
-  const remoteStream = activePeer ? getPeerStream(activePeer) : null;
+  // Seçilen cihazdan gelen canlı görüntü; eş seçili değilse hattaki ilk
+  // canlı akışa bağlanılır (yeniden pazarlık sonrası kutu boş kalmasın).
+  const remoteStream =
+    (activePeer ? getPeerStream(activePeer) : null) ?? (inCall ? getRemoteStream() : null);
+  const [needsTap, setNeedsTap] = useState(false);
   useEffect(() => {
     const el = remoteVideoRef.current;
     if (!el) return;
-    el.srcObject = remoteStream ?? null;
-  }, [remoteStream, call.streamVersion]);
+    if (el.srcObject !== (remoteStream ?? null)) el.srcObject = remoteStream ?? null;
+    if (!remoteStream) return setNeedsTap(false);
+    // iOS otomatik oynatmayı reddedebilir: sessizce yutmak yerine
+    // kullanıcıya "dokunarak başlat" örtüsü gösterilir.
+    void el
+      .play()
+      .then(() => setNeedsTap(false))
+      .catch(() => setNeedsTap(true));
+  }, [remoteStream, call.streamVersion, call.phase, inCall]);
 
   const remoteStatusText =
     call.phase === "active"
@@ -677,7 +688,10 @@ export default function Messenger() {
           </div>
 
           {tab === "chat" ? (
-            <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto xl:grid-cols-3 xl:overflow-hidden">
+            <div
+              className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto pb-24 xl:grid-cols-3 xl:overflow-hidden xl:pb-0"
+              style={{ scrollPaddingBottom: "6rem" }}
+            >
               <div
                 className="flex min-h-[60vh] flex-col overflow-hidden rounded-xl backdrop-blur-sm xl:col-span-2 xl:min-h-0"
                 style={{ background: "var(--tb-panel)", border: "1px solid var(--tb-border)" }}
@@ -862,8 +876,22 @@ export default function Messenger() {
                         ref={remoteVideoRef}
                         autoPlay
                         playsInline
-                        className={remoteStream ? "h-full w-full object-cover" : "hidden"}
+                        className={
+                          remoteStream ? "absolute inset-0 h-full w-full object-contain" : "hidden"
+                        }
                       />
+                      {remoteStream && needsTap ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void remoteVideoRef.current?.play().then(() => setNeedsTap(false));
+                          }}
+                          className="absolute inset-0 z-10 grid place-items-center text-[12px] font-medium"
+                          style={{ background: "color-mix(in srgb, var(--tb-bg) 70%, transparent)" }}
+                        >
+                          Görüntüyü başlatmak için dokunun
+                        </button>
+                      ) : null}
                       {remoteStream ? null : activePeerName ? (
                         <span>{`${activePeerName} · ${remoteStatusText}`}</span>
                       ) : (
@@ -1038,7 +1066,7 @@ export default function Messenger() {
           ) : null}
 
           {tab === "team" ? (
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pb-24 xl:pb-0">
               <Card title="Ekip">
                 {participants.length === 1 ? (
                   <p className="text-[13px]" style={{ color: "var(--tb-muted)" }}>
@@ -1087,7 +1115,7 @@ export default function Messenger() {
                 ))}
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="min-h-0 flex-1 overflow-y-auto pb-24 xl:pb-0">
                 {systemView === "settings" ? (
                   <AppErrorBoundary title="Ayarlar penceresi yüklenemedi">
                     <NodeSettingsPanel />

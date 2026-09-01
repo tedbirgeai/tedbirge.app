@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 
 import { MusicApp } from "@/components/shell/apps/MusicApp";
 import { MediaApp } from "@/components/shell/apps/MediaApp";
@@ -23,6 +23,7 @@ import { objectUrl, readFile, requestPersistentStorage } from "@/lib/vfs/store";
 import { TransfersApp } from "@/components/shell/apps/TransfersApp";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
 import { describeNode } from "@/lib/node-runtime";
+import { deviceScopeLabel } from "@/lib/identity/device";
 import { useShell } from "@/shell/ShellProvider";
 import { useIsCompact } from "@/hooks/use-mobile";
 import { webApp } from "@/shell/web-apps";
@@ -41,11 +42,16 @@ const WINDOW_TITLES: Record<string, string> = {
   media: "Medya — Wasm Kum Havuzu Oynatıcı",
   files: "Dosyalar",
   store: "Tedbirge Mağaza",
-  computer: "Bilgisayarım",
   wallpaper: "Görünüm — Duvar Kâğıdı ve Tema",
   transfer: "Aktarım Merkezi",
 
 };
+
+/** Pencere başlığı: "computer" cihaz türüne göre adlandırılır. */
+function windowTitle(id: string): string | undefined {
+  if (id === "computer") return deviceScopeLabel();
+  return WINDOW_TITLES[id];
+}
 
 
 /**
@@ -108,7 +114,7 @@ export function WorkspacePanel() {
     if (!getApp(id) && !web && import.meta.env.DEV) {
       console.warn(`[tbos] "${id}" AppRegistry'de kayıtlı değil.`);
     }
-    openWindow(id, web ? web.label : (WINDOW_TITLES[id] ?? catalogApp(id)?.label ?? id), fresh);
+    openWindow(id, web ? web.label : (windowTitle(id) ?? catalogApp(id)?.label ?? id), fresh);
 
   }, []);
 
@@ -239,13 +245,33 @@ function MobileAppShell({
   const start = useRef<number | null>(null);
   const [drag, setDrag] = useState(0);
 
+  // Donanım geri tuşu / kenar jesti: uygulamayı kapatır, siteden çıkarmaz.
+  useEffect(() => {
+    const id = win.id;
+    let popped = false;
+    window.history.pushState({ tbosWindow: id }, "");
+    const onPop = () => {
+      popped = true;
+      closeWindow(id);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      // Düğmeyle kapatıldıysa bizim eklediğimiz geçmiş katmanı geri alınır.
+      if (!popped && (window.history.state as { tbosWindow?: string } | null)?.tbosWindow === id) {
+        window.history.back();
+      }
+    };
+  }, [win.id]);
+
   return (
     <div
       className="tbos tbos-mobile-app fixed inset-0 z-[70] flex flex-col bg-[var(--tb-bg)]"
       style={drag ? { transform: `translateY(${drag}px)`, transition: "none" } : undefined}
     >
       <div
-        className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--tb-border)] px-4 py-2"
+        className="sticky top-0 z-10 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--tb-border)] bg-[var(--tb-bg)] px-2 py-2"
+        style={{ paddingTop: "calc(0.5rem + env(safe-area-inset-top))" }}
         onTouchStart={(e) => {
           start.current = e.touches[0]?.clientY ?? null;
         }}
@@ -260,9 +286,19 @@ function MobileAppShell({
           setDrag(0);
         }}
       >
+        <button
+          type="button"
+          onClick={() => closeWindow(win.id)}
+          aria-label="Ana ekrana dön"
+          className="wa-press flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-[var(--tb-fg)]"
+        >
+          <ArrowLeft className="h-5 w-5" aria-hidden />
+        </button>
         <span className="flex min-w-0 flex-1 flex-col">
           <span aria-hidden className="mx-auto mb-1 h-1 w-10 rounded-full bg-[var(--tb-border)]" />
-          <h2 className="truncate font-osmono text-[13px] text-[var(--tb-muted)]">{win.title}</h2>
+          <h2 className="truncate text-center font-osmono text-[13px] text-[var(--tb-muted)]">
+            {win.title}
+          </h2>
         </span>
         <button
           type="button"
