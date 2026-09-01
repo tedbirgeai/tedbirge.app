@@ -13,22 +13,23 @@ const ISO_ROUTE = "/api/public/iso";
 
 const STEPS: ReadonlyArray<{ tool: string; text: string }> = [
   {
-    tool: "Rufus (Windows)",
-    text: "USB belleği tak → imajı seç → Bölüm düzeni GPT, hedef sistem UEFI → Başlat.",
+    tool: "1 · Dosyayı aç",
+    text: "İndirilenler klasöründeki kiti aç; içinde kur.bat (Windows) ve kurulum kiti (Linux/macOS) vardır.",
   },
   {
-    tool: "Ventoy (tüm sistemler)",
-    text: "USB'yi bir kez Ventoy ile hazırla, sonra .iso dosyasını kopyalaman yeterli.",
+    tool: "2 · Çift tıkla",
+    text: "Komut yazmana gerek yok: kit en güncel WebOS paketini kendisi indirip .iso dosyasını hazırlar.",
   },
   {
-    tool: "BalenaEtcher (macOS/Linux)",
-    text: "Flash from file → imaj → Select target → USB → Flash.",
+    tool: "3 · USB'ye yaz",
+    text: "Rufus (GPT/UEFI), Ventoy (.iso'yu kopyala) veya BalenaEtcher ile USB belleğe yaz.",
   },
   {
-    tool: "Açılış",
+    tool: "4 · Açılış",
     text: "Cihazı USB'den başlat; kabuk 127.0.0.1:8377 üzerinde kiosk modda açılır.",
   },
 ];
+
 
 /** Sessiz indirme: hiçbir arayüz katmanı açmadan imajı indirmeye başlar. */
 export function startIsoDownload() {
