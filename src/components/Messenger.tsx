@@ -1066,7 +1066,7 @@ export default function Messenger() {
           ) : null}
 
           {tab === "team" ? (
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pb-24 xl:pb-0">
               <Card title="Ekip">
                 {participants.length === 1 ? (
                   <p className="text-[13px]" style={{ color: "var(--tb-muted)" }}>
@@ -1115,7 +1115,7 @@ export default function Messenger() {
                 ))}
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="min-h-0 flex-1 overflow-y-auto pb-24 xl:pb-0">
                 {systemView === "settings" ? (
                   <AppErrorBoundary title="Ayarlar penceresi yüklenemedi">
                     <NodeSettingsPanel />
