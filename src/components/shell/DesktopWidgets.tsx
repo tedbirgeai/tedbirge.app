@@ -82,26 +82,49 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
   const ratio = usage.quota ? Math.min(1, usage.bytes / usage.quota) : 0;
 
   const onPointerDown = (e: React.PointerEvent) => {
-    const rect = box.current?.getBoundingClientRect();
-    if (!rect) return;
-    drag.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top };
+    const el = box.current;
+    const rect = el?.getBoundingClientRect();
+    if (!el || !rect) return;
+    // Ölçüler bir kez okunur; sürükleme boyunca düzen okuması yapılmaz.
+    drag.current = {
+      dx: e.clientX - rect.left,
+      dy: e.clientY - rect.top,
+      w: rect.width,
+      h: rect.height,
+      x: rect.left,
+      y: rect.top,
+      raf: 0,
+    };
+    el.style.willChange = "left, top";
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
     const d = drag.current;
     if (!d) return;
-    const w = box.current?.offsetWidth ?? 256;
-    const h = box.current?.offsetHeight ?? 300;
-    const x = Math.min(Math.max(4, e.clientX - d.dx), window.innerWidth - w - 4);
-    const y = Math.min(Math.max(32, e.clientY - d.dy), window.innerHeight - h - 4);
-    setPos({ x, y });
+    d.x = Math.min(Math.max(4, e.clientX - d.dx), window.innerWidth - d.w - 4);
+    d.y = Math.min(Math.max(32, e.clientY - d.dy), window.innerHeight - d.h - 4);
+    if (d.raf) return;
+    d.raf = requestAnimationFrame(() => {
+      d.raf = 0;
+      const el = box.current;
+      if (!el) return;
+      el.style.left = `${d.x}px`;
+      el.style.top = `${d.y}px`;
+      el.style.right = "auto";
+    });
   };
 
   const onPointerUp = () => {
-    if (!drag.current) return;
+    const d = drag.current;
+    if (!d) return;
+    if (d.raf) cancelAnimationFrame(d.raf);
     drag.current = null;
-    if (pos) window.localStorage.setItem(POS_KEY, JSON.stringify(pos));
+    const el = box.current;
+    if (el) el.style.willChange = "";
+    const next = { x: d.x, y: d.y };
+    setPos(next);
+    window.localStorage.setItem(POS_KEY, JSON.stringify(next));
   };
 
   const hide = () => {
@@ -111,6 +134,7 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
   };
 
   if (hidden) return null;
+
 
   return (
     <aside
