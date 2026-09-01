@@ -244,7 +244,8 @@ function buildReadme(origin: string): string {
     "",
     "Windows:",
     `  1. ${KIT_BAT} dosyasına çift tıklayın.`,
-    "  2. İşlem bitince aynı klasörde .iso dosyanız hazır olur.",
+    "  2. WSL varsa imaj otomatik üretilir; WSL yoksa paket PowerShell ile indirilir.",
+    "  3. İşlem bitince aynı klasörde .iso dosyanız (veya paket klasörünüz) hazır olur.",
     "",
     "Linux / macOS:",
     `  1. ${KIT_SH} dosyasına çift tıklayın (ya da: bash ${KIT_SH}).`,
@@ -284,6 +285,7 @@ export const Route = createFileRoute("/api/public/iso")({
         const zip = createZip([
           { name: KIT_SH, data: buildKitSh(origin) },
           { name: KIT_BAT, data: buildKitBat(origin) },
+          { name: KIT_PS1, data: buildKitPs1() },
           { name: "OKUBENI.txt", data: buildReadme(origin) },
         ]);
 
