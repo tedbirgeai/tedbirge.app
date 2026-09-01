@@ -95,6 +95,62 @@ fn seed_from_clock() -> u32 {
         .unwrap_or(0x2545_F491)
 }
 
+/* ------------- FAZ 6 — çift taşıyıcı (UDP + seri/LoRa) ------------- */
+
+/// Yerel ağ yoksa aynı çerçeveler seri/LoRa hattından gider. Çekirdek
+/// hangi taşıyıcının çalıştığını bilmez; yalnız `Transport` görür.
+enum Link {
+    Udp(UdpTransport),
+    Serial(SerialTransport),
+}
+
+impl Link {
+    fn open(mesh_port: u16, prefer_serial: bool) -> std::io::Result<(Link, &'static str)> {
+        if prefer_serial {
+            let serial = SerialTransport::autodetect();
+            if serial.available() {
+                return Ok((Link::Serial(serial), "serial"));
+            }
+        }
+        match UdpTransport::bind(mesh_port) {
+            Ok(udp) => Ok((Link::Udp(udp), "udp")),
+            Err(e) => {
+                let serial = SerialTransport::autodetect();
+                if serial.available() {
+                    Ok((Link::Serial(serial), "serial"))
+                } else {
+                    Err(e)
+                }
+            }
+        }
+    }
+
+    /// UDP kolunun paylaşılan sayaçları (seri kolda yoktur).
+    fn counters(&self) -> Option<(Arc<AtomicU64>, Arc<AtomicU64>)> {
+        match self {
+            Link::Udp(u) => Some((u.sent.clone(), u.recv.clone())),
+            Link::Serial(_) => None,
+        }
+    }
+}
+
+impl Transport for Link {
+    fn send(&mut self, peer: u32, frame: &[u8]) -> usize {
+        match self {
+            Link::Udp(u) => u.send(peer, frame),
+            Link::Serial(s) => s.send(peer, frame),
+        }
+    }
+
+    fn poll(&mut self, out: &mut [u8]) -> usize {
+        match self {
+            Link::Udp(u) => u.poll(out),
+            Link::Serial(s) => s.poll(out),
+        }
+    }
+}
+
+
 /* --------------------------- Kabuk sunucusu ------------------------ */
 
 fn mime_for(path: &Path) -> &'static str {
