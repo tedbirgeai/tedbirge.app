@@ -741,14 +741,14 @@ export function PanelApp() {
                                       )
                                     }
                                     disabled={busyId === d.id}
-                                    className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
+                                    className="min-h-12 rounded-xl border border-[var(--tb-border)] px-3 font-osmono text-[10px] uppercase tracking-[0.15em] text-[var(--tb-text)] disabled:opacity-50"
                                   >
                                     {d.status === "active" ? "İptal et" : "Yeniden aç"}
                                   </button>
                                   <button
                                     onClick={() => removeDevice(d.id)}
                                     disabled={busyId === d.id}
-                                    className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
+                                    className="min-h-12 rounded-xl border border-[var(--tb-border)] px-3 font-osmono text-[10px] uppercase tracking-[0.15em] text-[var(--tb-text)] disabled:opacity-50"
                                   >
                                     Sil
                                   </button>
@@ -900,7 +900,7 @@ export function PanelApp() {
                     <button
                       key={l.id}
                       onClick={() => downloadLicense(l)}
-                      className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                      className="min-h-12 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-xs uppercase tracking-[0.15em] text-[var(--tb-text)]"
                     >
                       {l.plan} .env indir
                     </button>
@@ -915,7 +915,7 @@ export function PanelApp() {
                   <a
                     href="/tedbirge-teknik-ozet.md"
                     download
-                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                    className="inline-flex min-h-12 items-center rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-xs uppercase tracking-[0.15em] text-[var(--tb-text)]"
                   >
                     Teknik özet (.md)
                   </a>
@@ -985,18 +985,24 @@ TEDBIRGE_NODE_LIMIT=${l.node_limit}
   a.download = "tedbirge.env";
   a.click();
   URL.revokeObjectURL(url);
+  notifyOk("Lisans dosyası indirildi", `${l.plan} · tedbirge.env`);
 }
 
 function CopyButton({ value, label }: { value: string; label: string }) {
   const [done, setDone] = useState(false);
   return (
     <button
+      type="button"
       onClick={async () => {
-        await navigator.clipboard.writeText(value);
-        setDone(true);
-        setTimeout(() => setDone(false), 1600);
+        try {
+          await navigator.clipboard.writeText(value);
+          setDone(true);
+          setTimeout(() => setDone(false), 1600);
+        } catch {
+          notifyError("Kopyalanamadı", "Tarayıcı pano erişimine izin vermedi.");
+        }
       }}
-      className="shrink-0 rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+      className="min-h-12 shrink-0 rounded-xl border border-[var(--tb-border)] px-3 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-text)]"
     >
       {done ? "Kopyalandı" : label}
     </button>
