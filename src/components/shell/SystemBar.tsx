@@ -35,21 +35,27 @@ export function SystemBar({
   onSettings,
   onPersonalize,
   onSearch,
+  onProfile,
 }: {
   status: string;
   peers: number;
   /** Son ölçülen gidiş-dönüş gecikmesi (ms); yoksa gizlenir. */
   rttMs?: number | null;
+  /** Sistem Ayarları uygulamasını açar. */
   onSettings: () => void;
   /** Kontrol merkezinden görünüm ayarlarını açar. */
   onPersonalize: () => void;
   /** Evrensel arama paletini açar. */
   onSearch?: () => void;
+  /** Profil ve Hesap uygulamasını açar. */
+  onProfile: () => void;
 }) {
   const [clock, setClock] = useState("");
   const [memMb, setMemMb] = useState<number | null>(null);
   const [control, setControl] = useState(false);
   const [network, setNetwork] = useState(false);
+  const [notices, setNotices] = useState(false);
+  const unread = useUnreadNoticeCount();
   const online = useOnline();
 
   useEffect(() => {
