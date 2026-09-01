@@ -83,7 +83,11 @@ export const CATALOG: CatalogApp[] = [
 ];
 
 export function catalogApp(id: string): CatalogApp | undefined {
-  return CATALOG.find((a) => a.id === id);
+  const app = CATALOG.find((a) => a.id === id);
+  if (!app) return undefined;
+  // "Bilgisayarım" etiketi cihaz türüne göre isimlendirilir.
+  if (app.id === "computer") return { ...app, label: deviceScopeLabel() };
+  return app;
 }
 
 export const CATEGORY_LABELS: Record<AppCategory, string> = {
