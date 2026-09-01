@@ -112,29 +112,19 @@ function Slider({
 function SummaryTab() {
   const { node } = useShell();
   const status = describeNode(node);
-  const [uptime, setUptime] = useState(0);
-  const [mem, setMem] = useState<number | null>(null);
+  // Tek paylaşımlı telemetri zamanlayıcısı (1 sn) — bileşene özel interval yok.
+  const uptime = useUptimeSec();
+  const mem = useMemoryMb();
   // FAZ 6/8 — bare-metal kabuk altındaysak gerçek donanım raporu gelir.
   const [hal, setHal] = useState<NativeHalReport | null>(null);
 
   useEffect(() => {
-    const tick = () => {
-      setUptime(Math.round(performance.now() / 1000));
-      const perf = performance as Performance & { memory?: { usedJSHeapSize: number } };
-      setMem(perf.memory ? Math.round(perf.memory.usedJSHeapSize / 1024 / 1024) : null);
-    };
-    tick();
-    const t = window.setInterval(tick, 2000);
     void detectNativeHal().then(setHal);
-    return () => window.clearInterval(t);
   }, []);
 
   const device =
     typeof navigator === "undefined" ? "Bu cihaz" : navigator.platform || "Bu cihaz";
   const cores = typeof navigator === "undefined" ? 0 : (navigator.hardwareConcurrency ?? 0);
-  const hh = Math.floor(uptime / 3600);
-  const mm = Math.floor((uptime % 3600) / 60);
-  const ss = uptime % 60;
 
   return (
     <div className="grid gap-3">
@@ -146,9 +136,17 @@ function SummaryTab() {
           <Row k="Çalışma biçimi" v={hal ? "Bare-metal (yerel kabuk)" : "Tarayıcı kabuğu"} />
           <Row
             k="Çalışma süresi"
-            v={`${hh > 0 ? `${hh} sa ` : ""}${mm} dk ${ss} sn`}
+            v={<span className="tabular-nums">{formatUptime(uptime)}</span>}
           />
-          <Row k="Bellek kullanımı" v={mem != null ? `${mem} MB` : "ölçülemiyor"} />
+          <Row
+            k="Bellek kullanımı"
+            v={
+              <span className="inline-block min-w-[86px] text-right tabular-nums">
+                {mem != null ? `${mem} MB` : "ölçülemiyor"}
+              </span>
+            }
+          />
+
           <Row k="İşlem hattı" v={cores ? `${cores} çekirdek` : "bilinmiyor"} />
         </dl>
       </div>
