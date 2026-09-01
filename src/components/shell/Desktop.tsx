@@ -89,30 +89,32 @@ export function Desktop({
         setMenu({ x: e.clientX - r.left, y: e.clientY - r.top });
       }}
     >
-      {installed.map((id, i) => {
-        const app = catalogApp(id);
-        if (!app) return null;
-        const saved = icons[id];
-        const col = Math.floor(i / perColumn);
-        const row = i % perColumn;
-        return (
-          <DesktopIcon
-            key={id}
-            id={id}
-            label={app.label}
-            x={saved ? saved.x : 16 + col * (ICON_W + 12)}
-            y={saved ? saved.y : 16 + row * ICON_H}
-            selected={selected === id}
-            draggable={draggable}
-            onSelect={() => setSelected(id)}
-            onOpen={() => onOpen(id)}
-            onMenu={(pt) => {
-              setSelected(id);
-              setMenu({ x: pt.x, y: pt.y, appId: id });
-            }}
-          />
-        );
-      })}
+      <div
+        className="grid h-full grid-flow-col grid-rows-[repeat(auto-fill,100px)] justify-start gap-6 overflow-hidden p-6"
+        onPointerDown={(e) => {
+          if (e.target === e.currentTarget) setSelected(null);
+        }}
+      >
+        {installed.map((id) => {
+          const app = catalogApp(id);
+          if (!app) return null;
+          return (
+            <DesktopIcon
+              key={id}
+              id={id}
+              label={app.label}
+              selected={selected === id}
+              onSelect={() => setSelected(id)}
+              onOpen={() => onOpen(id)}
+              onMenu={(pt) => {
+                setSelected(id);
+                setMenu({ x: pt.x, y: pt.y, appId: id });
+              }}
+            />
+          );
+        })}
+      </div>
+
 
       <DesktopWidgets onOpen={onOpen} />
 
