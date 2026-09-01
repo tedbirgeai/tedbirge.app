@@ -10,7 +10,7 @@ import { NewChatSheet } from "@/components/chat/NewChatSheet";
 import { SplashScreen } from "@/components/chat/SplashScreen";
 import { AiAdvisor } from "@/components/site/AiAdvisor";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/components/shell/OsLink";
 import { toast } from "sonner";
 
 import {

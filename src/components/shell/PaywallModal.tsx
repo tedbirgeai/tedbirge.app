@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/components/shell/OsLink";
 import { ShieldAlert, X } from "lucide-react";
 
 import { FREE_PEER_LIMIT, PAYWALL_EVENT } from "@/lib/peer-limit";

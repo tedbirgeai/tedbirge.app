@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/components/shell/OsLink";
 
 type CommerceLicense = {
   id: string;

@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/components/shell/OsLink";
 import { Focus, Moon, Sun, UserRound, Volume2, VolumeX, Wifi } from "lucide-react";
 
 import { applySystemVolume, isSoundMuted, setSoundMuted, tapSound } from "@/lib/chat/sounds";
