@@ -177,7 +177,7 @@ export function WorkspacePanel() {
 
       {/* Masaüstü yüzeyi: duvar kâğıdı, kısayollar ve pencereler. */}
       <div ref={surfaceRef} className="relative min-h-0 flex-1 overflow-hidden">
-        <Desktop onOpen={launch} onOpenNew={launchNew} draggable={!isMobile} columnsHeight={surfaceH} />
+        <Desktop onOpen={launch} onOpenNew={launchNew} />
 
         {!isMobile && windows.length > 0 ? (
           <div className="pointer-events-none absolute inset-0">
