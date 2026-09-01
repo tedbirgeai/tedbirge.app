@@ -8,8 +8,8 @@ describe("geri alma yığını", () => {
 
   it("son işlemi geri alır (LIFO)", () => {
     const order: string[] = [];
-    pushUndo({ label: "bir", undo: () => order.push("bir") });
-    pushUndo({ label: "iki", undo: () => order.push("iki") });
+    pushUndo({ label: "bir", undo: () => { order.push("bir"); } });
+    pushUndo({ label: "iki", undo: () => { order.push("iki"); } });
     expect(undoDepth()).toBe(2);
     popUndo()?.undo();
     expect(order).toEqual(["iki"]);
