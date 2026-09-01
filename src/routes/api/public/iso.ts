@@ -127,16 +127,26 @@ if ! command -v xorriso >/dev/null 2>&1; then
 fi
 
 OUT_ISO="\$WORK/tedbirge-webos-\$ARCH.iso"
+OUT_TAR="\$WORK/tedbirge-webos-\$ARCH-rootfs.tar.gz"
 if command -v xorriso >/dev/null 2>&1; then
-  xorriso -as mkisofs -o "\$OUT_ISO" -V TEDBIRGE "\$STAGE"
-  echo; echo "TAMAM: \$OUT_ISO"
+  xorriso -as mkisofs -o "\$OUT_ISO" -V TEDBIRGE "\$STAGE" || true
 elif [ -n "\${XORRISO:-}" ]; then
-  \$XORRISO -as mkisofs -o "\$OUT_ISO" -V TEDBIRGE "\$STAGE"
-  echo; echo "TAMAM: \$OUT_ISO"
+  \$XORRISO -as mkisofs -o "\$OUT_ISO" -V TEDBIRGE "\$STAGE" || true
 else
-  tar -czf "\$WORK/tedbirge-webos-\$ARCH-rootfs.tar.gz" -C "\$STAGE" .
-  echo; echo "TAMAM (arsiv): \$WORK/tedbirge-webos-\$ARCH-rootfs.tar.gz"
-  echo "  .iso icin xorriso kurup kiti tekrar calistirin."
+  tar -czf "\$OUT_TAR" -C "\$STAGE" . || true
+fi
+
+# 6) Dogrulama: dosya gercekten olustu mu? Olusmadan "tamam" yazilmaz.
+if [ -s "\$OUT_ISO" ]; then
+  echo; echo "TAMAM: \$OUT_ISO"
+elif [ -s "\$OUT_TAR" ]; then
+  echo; echo "TAMAM (arsiv): \$OUT_TAR"
+  echo "  Onyuklenebilir .iso icin xorriso kurup kiti tekrar calistirin."
+else
+  echo; echo "! BASARISIZ: ne .iso ne de arsiv uretilebildi."
+  echo "  Neden: paketleme araci (xorriso/tar) calismadi ya da diskte yer yok."
+  read -r -p "Kapatmak icin Enter'a basin " _ || true
+  exit 1
 fi
 
 echo
