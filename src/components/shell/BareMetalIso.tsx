@@ -106,10 +106,11 @@ export function IsoGuideDialog({ open, onClose }: { open: boolean; onClose: () =
         </ol>
 
         <p className="mt-4 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] p-3 font-osmono text-[11px] leading-relaxed text-[var(--tb-muted)]">
-          Yayın paketinde imaj yoksa indirilen dosya, imajı kendi makinenizde
-          üreten kurulum kitidir (<code>bash ...kurulum-kiti.sh</code>). Sahte bir
-          .iso asla üretilmez.
+          Yayın paketinde hazır imaj yoksa indirilen dosya, imajı kendi
+          makinenizde tek tıkla üreten kurulum kitidir. Sahte bir .iso asla
+          üretilmez.
         </p>
+
       </div>
     </div>
   );
