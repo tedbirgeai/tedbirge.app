@@ -62,7 +62,7 @@ function subscribe(fn: () => void): () => void {
   listeners.add(fn);
   if (!timer && typeof window !== "undefined") {
     tick();
-    timer = window.setInterval(tick, 1000);
+    timer = setInterval(tick, 1000);
   }
   return () => {
     listeners.delete(fn);
