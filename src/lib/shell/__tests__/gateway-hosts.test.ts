@@ -53,3 +53,20 @@ describe("Gömme zinciri", () => {
     }
   });
 });
+
+describe("Geçit otomatik devreye girer", () => {
+  it("proxy tanımı olmasa da izinli hedef geçitten geçer", () => {
+    const stages = buildStages({ url: "https://tr.wikipedia.org/wiki/Ana_Sayfa", embed: "auto" });
+    expect(stages[0]?.src.startsWith("/api/public/gecit")).toBe(true);
+  });
+
+  it("pencere içi arama (lite.duckduckgo) geçit üzerinden koşar", () => {
+    const stages = buildStages({ url: "https://lite.duckduckgo.com/lite/?q=test", embed: "iframe" });
+    expect(stages.some((s) => s.src.startsWith("/api/public/gecit"))).toBe(true);
+  });
+
+  it("www. öneki ile kök alan adı aynı kabul edilir", () => {
+    expect(gatewayAllowed("https://www.coingecko.com/")).toBe(true);
+    expect(gatewayAllowed("https://coingecko.com/")).toBe(true);
+  });
+});

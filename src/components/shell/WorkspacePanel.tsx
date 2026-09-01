@@ -24,7 +24,7 @@ import { TransfersApp } from "@/components/shell/apps/TransfersApp";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
 import { describeNode } from "@/lib/node-runtime";
 import { useShell } from "@/shell/ShellProvider";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsCompact } from "@/hooks/use-mobile";
 import { webApp } from "@/shell/web-apps";
 import { catalogApp } from "@/shell/installed";
 import { getApp } from "@/apps/registry";
@@ -62,7 +62,8 @@ export function WorkspacePanel() {
   const [packages, setPackages] = useState(false);
   const { node } = useShell();
   const status = describeNode(node);
-  const isMobile = useIsMobile();
+  // Telefon ve tablet: pencere yöneticisi yerine tam ekran kart düzeni.
+  const isMobile = useIsCompact();
   const windows = useWindows();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [surfaceH, setSurfaceH] = useState(600);
@@ -197,27 +198,9 @@ export function WorkspacePanel() {
         ) : null}
       </div>
 
-      {/* Mobil: tek uygulama tam ekran PWA kılıfı. */}
+      {/* Mobil/tablet: tek uygulama tam ekran kart olarak açılır. */}
       {isMobile && top ? (
-        <div className="tbos fixed inset-0 z-[70] flex flex-col bg-[var(--tb-bg)]">
-          <div
-            className="flex shrink-0 items-center justify-between gap-3 px-4 py-2.5"
-            style={{ borderBottom: "1px solid var(--border)" }}
-          >
-            <h2 className="truncate font-osmono text-[13px] text-[var(--tb-muted)]">{top.title}</h2>
-            <button
-              type="button"
-              onClick={() => closeWindow(top.id)}
-              aria-label="Kapat"
-              className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-[var(--tb-muted)]"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <AppSurface win={top} onLaunch={launch} onTransfer={() => launch("transfer")} />
-          </div>
-        </div>
+        <MobileAppShell win={top} onLaunch={launch} onTransfer={() => launch("transfer")} />
       ) : null}
 
       <Dock
@@ -235,6 +218,64 @@ export function WorkspacePanel() {
       <AppsDialog open={packages} onClose={() => setPackages(false)} />
       <RelaySettingsDialog open={relay} onClose={() => setRelay(false)} />
       <MeshStatusDialog open={mesh} onClose={() => setMesh(false)} />
+    </div>
+  );
+}
+
+/**
+ * MOBİL / TABLET UYGULAMA KABUĞU
+ * Tam ekran kart; başlıktan aşağı kaydırma (swipe) ile kapanır ve
+ * kapatma düğmesi 48px dokunma alanındadır.
+ */
+function MobileAppShell({
+  win,
+  onLaunch,
+  onTransfer,
+}: {
+  win: WindowRecord;
+  onLaunch: (id: string) => void;
+  onTransfer: () => void;
+}) {
+  const start = useRef<number | null>(null);
+  const [drag, setDrag] = useState(0);
+
+  return (
+    <div
+      className="tbos tbos-mobile-app fixed inset-0 z-[70] flex flex-col bg-[var(--tb-bg)]"
+      style={drag ? { transform: `translateY(${drag}px)`, transition: "none" } : undefined}
+    >
+      <div
+        className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--tb-border)] px-4 py-2"
+        onTouchStart={(e) => {
+          start.current = e.touches[0]?.clientY ?? null;
+        }}
+        onTouchMove={(e) => {
+          if (start.current == null) return;
+          const dy = (e.touches[0]?.clientY ?? 0) - start.current;
+          setDrag(Math.max(0, dy));
+        }}
+        onTouchEnd={() => {
+          if (drag > 90) closeWindow(win.id);
+          start.current = null;
+          setDrag(0);
+        }}
+      >
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span aria-hidden className="mx-auto mb-1 h-1 w-10 rounded-full bg-[var(--tb-border)]" />
+          <h2 className="truncate font-osmono text-[13px] text-[var(--tb-muted)]">{win.title}</h2>
+        </span>
+        <button
+          type="button"
+          onClick={() => closeWindow(win.id)}
+          aria-label="Kapat"
+          className="wa-press flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-[var(--tb-muted)]"
+        >
+          <X className="h-5 w-5" aria-hidden />
+        </button>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <AppSurface win={win} onLaunch={onLaunch} onTransfer={onTransfer} />
+      </div>
     </div>
   );
 }

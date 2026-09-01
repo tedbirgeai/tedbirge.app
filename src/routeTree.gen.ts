@@ -64,6 +64,7 @@ import { Route as ApiPublicQueueRouteImport } from './routes/api/public/queue'
 import { Route as ApiPublicPushRouteImport } from './routes/api/public/push'
 import { Route as ApiPublicPingRouteImport } from './routes/api/public/ping'
 import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
+import { Route as ApiPublicIsoRouteImport } from './routes/api/public/iso'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicGecitRouteImport } from './routes/api/public/gecit'
 import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
@@ -345,6 +346,11 @@ const ApiPublicOpenapiDotjsonRoute = ApiPublicOpenapiDotjsonRouteImport.update({
   path: '/api/public/openapi.json',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicIsoRoute = ApiPublicIsoRouteImport.update({
+  id: '/api/public/iso',
+  path: '/api/public/iso',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
   id: '/api/public/health',
   path: '/api/public/health',
@@ -431,6 +437,7 @@ export interface FileRoutesByFullPath {
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/gecit': typeof ApiPublicGecitRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/iso': typeof ApiPublicIsoRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
   '/api/public/push': typeof ApiPublicPushRoute
@@ -493,6 +500,7 @@ export interface FileRoutesByTo {
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/gecit': typeof ApiPublicGecitRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/iso': typeof ApiPublicIsoRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
   '/api/public/push': typeof ApiPublicPushRoute
@@ -557,6 +565,7 @@ export interface FileRoutesById {
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/gecit': typeof ApiPublicGecitRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/iso': typeof ApiPublicIsoRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
   '/api/public/push': typeof ApiPublicPushRoute
@@ -621,6 +630,7 @@ export interface FileRouteTypes {
     | '/api/public/enroll'
     | '/api/public/gecit'
     | '/api/public/health'
+    | '/api/public/iso'
     | '/api/public/openapi.json'
     | '/api/public/ping'
     | '/api/public/push'
@@ -683,6 +693,7 @@ export interface FileRouteTypes {
     | '/api/public/enroll'
     | '/api/public/gecit'
     | '/api/public/health'
+    | '/api/public/iso'
     | '/api/public/openapi.json'
     | '/api/public/ping'
     | '/api/public/push'
@@ -746,6 +757,7 @@ export interface FileRouteTypes {
     | '/api/public/enroll'
     | '/api/public/gecit'
     | '/api/public/health'
+    | '/api/public/iso'
     | '/api/public/openapi.json'
     | '/api/public/ping'
     | '/api/public/push'
@@ -806,6 +818,7 @@ export interface RootRouteChildren {
   ApiPublicEnrollRoute: typeof ApiPublicEnrollRoute
   ApiPublicGecitRoute: typeof ApiPublicGecitRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
+  ApiPublicIsoRoute: typeof ApiPublicIsoRoute
   ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
   ApiPublicPingRoute: typeof ApiPublicPingRoute
   ApiPublicPushRoute: typeof ApiPublicPushRoute
@@ -1203,6 +1216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOpenapiDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/iso': {
+      id: '/api/public/iso'
+      path: '/api/public/iso'
+      fullPath: '/api/public/iso'
+      preLoaderRoute: typeof ApiPublicIsoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/health': {
       id: '/api/public/health'
       path: '/api/public/health'
@@ -1315,6 +1335,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicEnrollRoute: ApiPublicEnrollRoute,
   ApiPublicGecitRoute: ApiPublicGecitRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
+  ApiPublicIsoRoute: ApiPublicIsoRoute,
   ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
   ApiPublicPingRoute: ApiPublicPingRoute,
   ApiPublicPushRoute: ApiPublicPushRoute,

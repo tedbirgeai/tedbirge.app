@@ -15,12 +15,22 @@ import nature from "@/assets/wallpaper-nature.jpg";
 import crystal from "@/assets/wallpaper-crystal.jpg";
 import night from "@/assets/wallpaper-night.jpg";
 import neon from "@/assets/wallpaper-neon.jpg";
+import mesh from "@/assets/wallpaper-mesh.jpg";
+import dark from "@/assets/wallpaper-dark.jpg";
 
 export const WALLPAPER_KEY = "tedbirge.wallpaper";
 export const BRIGHTNESS_KEY = "tedbirge.brightness";
 export const NIGHT_KEY = "tedbirge.nightlight";
 
-export type WallpaperId = "aurora" | "ocean" | "nature" | "crystal" | "night" | "neon";
+export type WallpaperId =
+  | "aurora"
+  | "ocean"
+  | "nature"
+  | "crystal"
+  | "night"
+  | "neon"
+  | "mesh"
+  | "dark";
 
 export type Wallpaper = {
   id: WallpaperId;
@@ -38,6 +48,8 @@ export const WALLPAPERS: Wallpaper[] = [
   { id: "crystal", label: "Kristal Açık", hint: "Buzlu cam yüzeyler", src: crystal, theme: "crystal" },
   { id: "night", label: "Gece Cam", hint: "Koyu cam, düşük ışık", src: night, theme: "night" },
   { id: "neon", label: "Siberpunk Neon", hint: "Neon şehir, gece", src: neon, theme: "night" },
+  { id: "mesh", label: "Mesh Nebula", hint: "Ağ düğümleri, derin lacivert", src: mesh, theme: "night" },
+  { id: "dark", label: "Dark Minimal", hint: "Gürültüsüz koyu yüzey", src: dark, theme: "night" },
 ];
 
 export const DEFAULT_WALLPAPER: WallpaperId = "aurora";
