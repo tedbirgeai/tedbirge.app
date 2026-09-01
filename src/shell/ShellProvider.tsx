@@ -7,37 +7,17 @@
  * tek yerdedir. Görsel davranış değişmez.
  */
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import type { ShellAppId } from "@/shell/apps";
 import type { SurfaceApi, SurfaceId } from "@/shell/surfaces";
+import { ShellContext, type ShellContextValue } from "@/shell/shell-context";
 import { bootNodeRuntime, useNodeRuntime } from "@/lib/node-runtime";
 import type { BrowserNodeState } from "@/lib/browser-node";
 import "@/kernel/boot";
 import type { Kernel } from "@/kernel/contract";
 import { grantKernel } from "@/kernel/capabilities";
 import { capabilitiesOf } from "@/apps/registry";
-
-export type ShellContextValue = {
-  /** Etkin uygulama (sekme). */
-  app: ShellAppId;
-  setApp: (id: ShellAppId) => void;
-  surfaces: SurfaceApi;
-  /** Kabuk seviyesinde yönetilen düğüm durumu. */
-  node: BrowserNodeState;
-  /** Uygulamanın yetenekleriyle sınırlanmış çekirdek vekili. */
-  kernelFor: (appId: string) => Kernel;
-};
-
-const ShellContext = createContext<ShellContextValue | null>(null);
 
 export function ShellProvider({
   children,
@@ -113,8 +93,3 @@ export function ShellProvider({
   return <ShellContext.Provider value={value}>{children}</ShellContext.Provider>;
 }
 
-export function useShell(): ShellContextValue {
-  const ctx = useContext(ShellContext);
-  if (!ctx) throw new Error("useShell yalnız <ShellProvider> içinde kullanılabilir.");
-  return ctx;
-}

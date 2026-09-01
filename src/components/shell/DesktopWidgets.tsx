@@ -13,7 +13,7 @@ import { useFocusMode, setFocusMode } from "@/lib/shell/focus-mode";
 import { useNetworkMode, NETWORK_MODES } from "@/lib/shell/network-mode";
 import { notifyOk } from "@/lib/shell/notify";
 import { onVfsChange, storageUsage, type StorageUsage } from "@/lib/vfs/store";
-import { useShell } from "@/shell/ShellProvider";
+import { useShell } from "@/shell/shell-context";
 
 const POS_KEY = "tedbirge:widgets:pos";
 const HIDE_KEY = "tedbirge:widgets:hidden";

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 import { WindowEmpty } from "@/components/shell/WindowShell";
-import { useShell } from "@/shell/ShellProvider";
+import { useShell } from "@/shell/shell-context";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
 import { notifyError, notifyOk } from "@/lib/shell/notify";
 import {

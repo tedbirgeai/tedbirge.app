@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { useShell } from "@/shell/ShellProvider";
+import { useShell } from "@/shell/shell-context";
 import { describeNode } from "@/lib/node-runtime";
 import { isRelayEnabled } from "@/shell/relay";
 import {

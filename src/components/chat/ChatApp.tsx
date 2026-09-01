@@ -148,7 +148,8 @@ import {
   unlockAudio,
   vibrate,
 } from "@/lib/chat/sounds";
-import { ShellProvider, useShell } from "@/shell/ShellProvider";
+import { ShellProvider } from "@/shell/ShellProvider";
+import { useShell } from "@/shell/shell-context";
 import { getBrowserNodeId, getPersonId, type PeerInfo } from "@/lib/browser-node";
 import { listCalls } from "@/lib/chat/call-log";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";

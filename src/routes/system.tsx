@@ -2,7 +2,8 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Activity, Boxes, Radio, ShieldCheck } from "lucide-react";
 
-import { ShellProvider, useShell } from "@/shell/ShellProvider";
+import { ShellProvider } from "@/shell/ShellProvider";
+import { useShell } from "@/shell/shell-context";
 import { AppsDialog } from "@/components/shell/AppsDialog";
 import { RelaySettingsDialog } from "@/components/shell/RelaySettingsDialog";
 import { MeshStatusDialog } from "@/components/shell/MeshStatusDialog";
