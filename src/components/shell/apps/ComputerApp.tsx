@@ -37,7 +37,7 @@ import { CAPABILITY_LABELS } from "@/shell/permissions";
 import { grantedCapabilities, revokeCapabilities } from "@/shell/permissions";
 import { catalogApp, useDesktopState } from "@/shell/installed";
 import { useDeviceScopeLabel } from "@/hooks/use-device-label";
-import { useShell } from "@/shell/ShellProvider";
+import { useShell } from "@/shell/shell-context";
 import { capabilitiesOf } from "@/apps/registry";
 
 type TabId = "ozet" | "depolama" | "ag" | "uygulamalar" | "ayarlar";

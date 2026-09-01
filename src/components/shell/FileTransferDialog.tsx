@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useShell } from "@/shell/ShellProvider";
+import { useShell } from "@/shell/shell-context";
 import {
   bootFileTransfer,
   clearTransfer,
