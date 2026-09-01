@@ -166,9 +166,9 @@ read -r -p "Kapatmak icin Enter'a basin " _ || true
  *  [3/3] sonucu bildir ve Read-Host ile pencereyi açık tut.
  * Sahte .iso ASLA üretilmez.
  */
-function buildKitPs1(origin: string): string {
+function buildKitPs1(origin: string, isoUrl: string): string {
   return [
-    `param([string]$Origin = "${origin}", [string]$OutDir = $PSScriptRoot)`,
+    `param([string]$Origin = "${origin}", [string]$IsoUrl = "${isoUrl}", [string]$OutDir = $PSScriptRoot)`,
     "$ErrorActionPreference = 'Continue'",
     "chcp 65001 > $null",
     "Write-Host ''",
@@ -193,7 +193,7 @@ function buildKitPs1(origin: string): string {
     "}",
     "",
     "$bitti = $false",
-    `$isoUrl = "$Origin/${ISO_FILE_NAME}"`,
+    `$isoUrl = if ($IsoUrl) { $IsoUrl } else { "$Origin/${ISO_FILE_NAME}" }`,
     "$isoOut = Join-Path $OutDir 'tedbirge-webos.iso'",
     "Write-Host '[1/3] Hazir kurulum imaji araniyor...'",
     "try {",
@@ -342,6 +342,12 @@ export const Route = createFileRoute("/api/public/iso")({
     handlers: {
       GET: async ({ request }) => {
         const origin = new URL(request.url).origin;
+        // Yapılandırılmış uzak yayın adresi (GitHub Release / CDN) varsa
+        // istemci doğrudan oraya yönlendirilir.
+        const remote = (process.env["VITE_ISO_DOWNLOAD_URL"] ?? "").trim();
+        if (remote) {
+          return new Response(null, { status: 302, headers: { Location: remote } });
+        }
         try {
           const image = await fetch(`${origin}/${ISO_FILE_NAME}`);
           const type = image.headers.get("content-type") ?? "";
@@ -364,7 +370,7 @@ export const Route = createFileRoute("/api/public/iso")({
         const zip = createZip([
           { name: KIT_SH, data: buildKitSh(origin) },
           { name: KIT_BAT, data: buildKitBat() },
-          { name: KIT_PS1, data: buildKitPs1(origin) },
+          { name: KIT_PS1, data: buildKitPs1(origin, remote) },
           { name: "OKUBENI.txt", data: buildReadme(origin) },
         ]);
 
