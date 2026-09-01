@@ -462,10 +462,22 @@ export function PanelApp() {
           environment: getPaddleEnvironment(),
         },
       });
-      window.open(url, "_blank");
+      window.open(url, "_blank", "noopener");
+    } catch {
+      notifyError("Ödeme portalı açılamadı", "İnternet bağlantınızı kontrol edip tekrar deneyin.");
     } finally {
       setPortalBusy(false);
     }
+  }
+
+  /** Aboneliği olan kullanıcı portala, olmayan Mağaza penceresine gider. */
+  async function managePlan() {
+    if (subscription?.paddle_customer_id) {
+      await openPortal();
+      return;
+    }
+    openWindow("store", "Uygulama Mağazası");
+    notify("Plan yükseltme", "Mağaza penceresinden paketinizi seçebilirsiniz.");
   }
 
   const active =
@@ -501,7 +513,7 @@ export function PanelApp() {
             {isAdmin && (
               <button
                 type="button"
-                onClick={() => setTab("yonetim")}
+                onClick={() => setTab(canManage ? "yonetim" : "ayarlar")}
                 className="min-h-12 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-xs uppercase tracking-[0.15em] text-[var(--tb-text)]"
               >
                 Yönetim ekranı
@@ -519,7 +531,7 @@ export function PanelApp() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 aria-current={tab === t.id ? "page" : undefined}
-                className={`shrink-0 rounded-sm px-3 py-2 font-mono text-[11px] uppercase tracking-[0.15em] transition-colors ${
+                className={`min-h-12 shrink-0 rounded-xl px-4 font-osmono text-[11px] uppercase tracking-[0.15em] transition-colors ${
                   tab === t.id
                     ? "bg-primary text-primary-foreground"
                     : "border border-border text-muted-foreground hover:bg-secondary"
@@ -559,10 +571,12 @@ export function PanelApp() {
                       : `${nodeLimit - activeDeviceCount} düğüm hakkınız kaldı; yeni cihazı QR ile saniyeler içinde ekleyin.`}
                   </p>
                   <button
-                    onClick={() => setTab(canManage ? "yonetim" : "ayarlar")}
-                    className="mt-4 rounded-sm border border-border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                    type="button"
+                    onClick={() => void managePlan()}
+                    disabled={portalBusy}
+                    className="mt-4 min-h-12 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-text)] disabled:opacity-50"
                   >
-                    Planı yönet
+                    {portalBusy ? "Açılıyor…" : "Planı yönet"}
                   </button>
                 </div>
 
@@ -646,18 +660,20 @@ export function PanelApp() {
                     </h2>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Link
-                      to="/saha-raporu"
-                      className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                    <button
+                      type="button"
+                      onClick={() => setTab("kalibrasyon")}
+                      className="min-h-12 rounded-xl border border-[var(--tb-border)] px-3 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-text)]"
                     >
                       Saha raporu
-                    </Link>
-                    <Link
-                      to="/api-dokumantasyon"
-                      className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openWindow("sysinfo", "Sistem Bilgisi")}
+                      className="min-h-12 rounded-xl border border-[var(--tb-border)] px-3 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-text)]"
                     >
                       Telemetri API'si
-                    </Link>
+                    </button>
                   </div>
                 </div>
 
@@ -889,12 +905,13 @@ export function PanelApp() {
                       {l.plan} .env indir
                     </button>
                   ))}
-                  <Link
-                    to="/dokumanlar"
-                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                  <button
+                    type="button"
+                    onClick={() => openWindow("sysinfo", "Sistem Bilgisi")}
+                    className="min-h-12 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-xs uppercase tracking-[0.15em] text-[var(--tb-text)]"
                   >
                     Dokümanlar
-                  </Link>
+                  </button>
                   <a
                     href="/tedbirge-teknik-ozet.md"
                     download
