@@ -45,8 +45,29 @@ systemd birimi kabuğu her açılışta yeniden başlatır; SBC/kiosk cihazları
 
 Mobil kilitli kabuk (iOS/Android) Capacitor kolundan yürür — bkz. `MOBILE.md`.
 
+## Faz 10 — Başsız daemon ve kaynak profilleri
+
+```bash
+tedbirge-shell --root /opt/tedbirge/dist --headless --state /var/tedbirge --profile sbc
+```
+
+- `--headless` (ya da `TEDBIRGE_MODE=headless`): görüntüleyici beklenmez, düğüm yalnız röle olur.
+- `--profile tiny|sbc|server`: verilmezse `/proc/meminfo` üzerinden otomatik seçilir
+  (≤128 MB → `tiny`, ≤1 GB → `sbc`, üstü → `server`). Duyuru sıklığı ve çerçeve
+  tamponu profile göre değişir.
+- `--state <dizin>`: 30 saniyede bir `telemetry.json` yazılır (yerel tanılama; ağa gitmez).
+
+## Faz 11 — Universal HMI
+
+- Girdi soyutlaması iki tarafta da tek sözleşme: TypeScript `src/hal/input.ts`
+  (`pointer` / `press` / `key`) ve Rust `crates/tedbirge-hal-linux/src/input.rs`.
+  Kabuk, olayın fare, dokunmatik, evdev ya da sensörden geldiğini bilmez.
+- Üst çubuk dar ekranda taşmaz (Off-Grid rozeti kısalır, saat `sm` altında gizlenir);
+  radar animasyonu telemetri tiklerinden ayrılmıştır.
+
 ## Notlar
 
 - ISO ve ARM64 boru hatları kök yetkili bir Linux ana makinede çalıştırılır; Lovable
   önizleme ortamında yalnız betikler bulunur, imaj üretilmez.
 - Ağ portları: kabuk `8377/tcp`, mesh duyurusu `7946/udp`.
+
