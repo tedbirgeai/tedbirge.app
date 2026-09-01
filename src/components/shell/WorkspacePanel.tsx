@@ -78,17 +78,9 @@ export function WorkspacePanel() {
   const isMobile = useIsCompact();
   const windows = useWindows();
   const surfaceRef = useRef<HTMLDivElement>(null);
-  const [surfaceH, setSurfaceH] = useState(600);
   const [spotlight, setSpotlight] = useState(false);
 
-  useEffect(() => {
-    const el = surfaceRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setSurfaceH(el.clientHeight));
-    ro.observe(el);
-    setSurfaceH(el.clientHeight);
-    return () => ro.disconnect();
-  }, []);
+
 
   // Çevrimdışı güvence: dosyalar yer baskısında bile silinmesin.
   useEffect(() => {
