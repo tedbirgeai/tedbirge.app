@@ -342,6 +342,12 @@ export const Route = createFileRoute("/api/public/iso")({
     handlers: {
       GET: async ({ request }) => {
         const origin = new URL(request.url).origin;
+        // Yapılandırılmış uzak yayın adresi (GitHub Release / CDN) varsa
+        // istemci doğrudan oraya yönlendirilir.
+        const remote = (process.env["VITE_ISO_DOWNLOAD_URL"] ?? "").trim();
+        if (remote) {
+          return new Response(null, { status: 302, headers: { Location: remote } });
+        }
         try {
           const image = await fetch(`${origin}/${ISO_FILE_NAME}`);
           const type = image.headers.get("content-type") ?? "";
