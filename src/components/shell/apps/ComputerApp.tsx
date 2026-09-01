@@ -577,10 +577,11 @@ export function ComputerApp({
   onLaunch?: (id: string) => void;
 }) {
   const [tab, setTab] = useState<TabId>("ozet");
+  const scopeLabel = useDeviceScopeLabel();
 
   return (
     <WindowShell
-      title="Bilgisayarım"
+      title={scopeLabel}
       subtitle="Cihaz, depolama, ağ ve sistem ayarları"
       padded={false}
       toolbar={
