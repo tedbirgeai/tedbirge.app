@@ -12,15 +12,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { setupOfflineSupport } from "../lib/pwa";
 import { OfflineBanner } from "../components/site/OfflineBanner";
-import { CallHost } from "../components/chat/CallHost";
-
-import { bootNodeRuntime, startNode } from "../lib/node-runtime";
-import { bootAccessEngine } from "../lib/access-tiers";
-import { ensureOfflineGrant } from "../lib/offline-license";
-import { runOneTimePurge } from "../lib/hard-reset";
-import { syncViewportUnits } from "../lib/ui/viewport";
+import { BackgroundServicesProvider } from "../shell/BackgroundServices";
 import { THEME_BOOT_SCRIPT } from "../lib/ui/theme";
 import { Toaster } from "../components/ui/sonner";
 
