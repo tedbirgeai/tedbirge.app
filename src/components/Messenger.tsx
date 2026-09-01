@@ -472,13 +472,23 @@ export default function Messenger() {
     el.srcObject = camOn ? localStream : null;
   }, [camOn, localStream, inCall]);
 
-  // Seçilen cihazdan gelen canlı görüntü.
-  const remoteStream = activePeer ? getPeerStream(activePeer) : null;
+  // Seçilen cihazdan gelen canlı görüntü; eş seçili değilse hattaki ilk
+  // canlı akışa bağlanılır (yeniden pazarlık sonrası kutu boş kalmasın).
+  const remoteStream =
+    (activePeer ? getPeerStream(activePeer) : null) ?? (inCall ? getRemoteStream() : null);
+  const [needsTap, setNeedsTap] = useState(false);
   useEffect(() => {
     const el = remoteVideoRef.current;
     if (!el) return;
-    el.srcObject = remoteStream ?? null;
-  }, [remoteStream, call.streamVersion]);
+    if (el.srcObject !== (remoteStream ?? null)) el.srcObject = remoteStream ?? null;
+    if (!remoteStream) return setNeedsTap(false);
+    // iOS otomatik oynatmayı reddedebilir: sessizce yutmak yerine
+    // kullanıcıya "dokunarak başlat" örtüsü gösterilir.
+    void el
+      .play()
+      .then(() => setNeedsTap(false))
+      .catch(() => setNeedsTap(true));
+  }, [remoteStream, call.streamVersion, call.phase, inCall]);
 
   const remoteStatusText =
     call.phase === "active"
