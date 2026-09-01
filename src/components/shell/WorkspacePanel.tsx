@@ -276,9 +276,19 @@ function MobileAppShell({
           setDrag(0);
         }}
       >
+        <button
+          type="button"
+          onClick={() => closeWindow(win.id)}
+          aria-label="Ana ekrana dön"
+          className="wa-press flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-[var(--tb-fg)]"
+        >
+          <ArrowLeft className="h-5 w-5" aria-hidden />
+        </button>
         <span className="flex min-w-0 flex-1 flex-col">
           <span aria-hidden className="mx-auto mb-1 h-1 w-10 rounded-full bg-[var(--tb-border)]" />
-          <h2 className="truncate font-osmono text-[13px] text-[var(--tb-muted)]">{win.title}</h2>
+          <h2 className="truncate text-center font-osmono text-[13px] text-[var(--tb-muted)]">
+            {win.title}
+          </h2>
         </span>
         <button
           type="button"
