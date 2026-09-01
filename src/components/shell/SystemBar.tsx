@@ -145,7 +145,10 @@ export function SystemBar({
         ) : null}
         <InstallSystemButton />
         <BareMetalIsoButton compact />
-        <span className="font-osmono text-[11px] text-[var(--tb-muted)]" aria-live="polite">
+        <span
+          className="hidden whitespace-nowrap font-osmono text-[11px] text-[var(--tb-muted)] xs:inline"
+          aria-live="polite"
+        >
           {clock}
         </span>
 
