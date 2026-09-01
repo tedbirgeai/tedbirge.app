@@ -196,7 +196,84 @@ fn respond(stream: &mut TcpStream, status: &str, mime: &str, body: &[u8]) {
     let _ = stream.flush();
 }
 
-fn serve(stream: &mut TcpStream, root: &Path) {
+/* ---------- FAZ 8 — kabuk ↔ blok depolama HTTP köprüsü ------------- */
+
+fn json_escape(s: &str) -> String {
+    s.chars()
+        .flat_map(|c| match c {
+            '"' => "\\\"".chars().collect::<Vec<_>>(),
+            '\\' => "\\\\".chars().collect(),
+            '\n' | '\r' | '\t' => ' '.to_string().chars().collect(),
+            c if (c as u32) < 0x20 => vec![],
+            c => vec![c],
+        })
+        .collect()
+}
+
+/// `/hal/report` gövdesi — tarayıcı kolu bu raporu okuyup native HAL'e geçer.
+fn report_json(r: &HalReport, link: &str, storage_root: &str) -> String {
+    format!(
+        "{{\"target\":\"native\",\"display\":\"{}\",\"width\":{},\"height\":{},\"input\":{},\"interfaces\":{},\"disks\":{},\"audio\":{},\"serial\":{},\"link\":\"{}\",\"storage\":\"{}\"}}",
+        r.display,
+        r.width,
+        r.height,
+        r.input_devices,
+        r.interfaces,
+        r.disks,
+        r.audio,
+        r.serial,
+        link,
+        json_escape(storage_root)
+    )
+}
+
+/// `/hal/files` gövdesi — native VFS üstverisi (web `StorageHal.list()` karşılığı).
+fn files_json(store: &NativeStorage) -> String {
+    let rows: Vec<String> = store
+        .list()
+        .iter()
+        .map(|m| {
+            format!(
+                "{{\"id\":\"{}\",\"name\":\"{}\",\"size\":{},\"folder\":\"{}\",\"createdAt\":{}}}",
+                json_escape(&m.id),
+                json_escape(&m.name),
+                m.size,
+                json_escape(&m.folder),
+                m.created
+            )
+        })
+        .collect();
+    let (count, bytes) = store.stat();
+    format!(
+        "{{\"count\":{count},\"bytes\":{bytes},\"files\":[{}]}}",
+        rows.join(",")
+    )
+}
+
+/// `/hal/disks` gövdesi — keşfedilen blok aygıtlar.
+fn disks_json() -> String {
+    let rows: Vec<String> = block_devices()
+        .iter()
+        .map(|d| {
+            format!(
+                "{{\"path\":\"{}\",\"bytes\":{},\"removable\":{}}}",
+                json_escape(&d.path()),
+                d.bytes,
+                d.removable
+            )
+        })
+        .collect();
+    format!("[{}]", rows.join(","))
+}
+
+struct Node {
+    root: PathBuf,
+    storage: Arc<NativeStorage>,
+    report: Arc<String>,
+}
+
+fn serve(stream: &mut TcpStream, node: &Node) {
+    let root = node.root.as_path();
     let mut buf = [0u8; 2048];
     let Ok(n) = stream.read(&mut buf) else { return };
     let head = String::from_utf8_lossy(&buf[..n]);
@@ -207,6 +284,35 @@ fn serve(stream: &mut TcpStream, root: &Path) {
         respond(stream, "405 Method Not Allowed", "text/plain", b"only GET");
         return;
     }
+
+    // FAZ 6/8 — donanım ve depolama köprüsü (yalnız yerel soket).
+    let route = target.split('?').next().unwrap_or("/");
+    const JSON: &str = "application/json; charset=utf-8";
+    if route == "/hal/report" {
+        respond(stream, "200 OK", JSON, node.report.as_bytes());
+        return;
+    }
+    if route == "/hal/files" {
+        respond(stream, "200 OK", JSON, files_json(&node.storage).as_bytes());
+        return;
+    }
+    if route == "/hal/disks" {
+        respond(stream, "200 OK", JSON, disks_json().as_bytes());
+        return;
+    }
+    if let Some(id) = route.strip_prefix("/hal/file/") {
+        // Kimlik yalnız [0-9a-f-]; dosya sistemi kaçışı imkânsız.
+        if id.is_empty() || !id.chars().all(|c| c.is_ascii_hexdigit() || c == '-') {
+            respond(stream, "400 Bad Request", "text/plain", b"bad id");
+            return;
+        }
+        match node.storage.read(id) {
+            Ok(body) => respond(stream, "200 OK", "application/octet-stream", &body),
+            Err(_) => respond(stream, "404 Not Found", "text/plain", b"yok"),
+        }
+        return;
+    }
+
 
     let Some(mut path) = safe_join(root, target) else {
         respond(stream, "400 Bad Request", "text/plain", b"bad path");
