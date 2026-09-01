@@ -161,6 +161,7 @@ function RootComponent() {
       {!embedded && <OfflineBanner />}
       {/* Görünmeyen arka plan servisleri: düğüm, P2P, çağrı karşılayıcı. */}
       <BackgroundServicesProvider />
+      <IsoFallbackHost />
       <Toaster />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
