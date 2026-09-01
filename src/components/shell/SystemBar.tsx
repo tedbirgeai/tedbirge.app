@@ -93,14 +93,21 @@ export function SystemBar({
           }}
           aria-label="Kontrol merkezi"
           aria-expanded={control}
-          className="wa-press hidden min-w-0 items-center gap-1.5 rounded-lg px-1.5 py-0.5 sm:flex"
+          className="wa-press hidden min-h-12 min-w-0 items-center gap-1.5 rounded-lg px-1.5 py-0.5 sm:flex"
         >
-          <span className="truncate font-osmono text-[11px] text-[var(--tb-muted)]">
-            {status} · {peers} cihaz
-            {rttMs != null ? ` · ${rttMs} ms` : ""}
-            {memMb != null ? ` · ${memMb} MB` : ""}
+          {/* Sabit ölçülü şerit: sayaç değişimleri komşu öğeleri kaydırmaz. */}
+          <span className="flex items-center gap-1 font-osmono text-[11px] leading-4 text-[var(--tb-muted)] tabular-nums">
+            <span className="inline-block w-[min(34vw,220px)] truncate text-left">{status}</span>
+            <span className="inline-block w-[62px] shrink-0 text-right">{peers} cihaz</span>
+            <span className="inline-block w-[62px] shrink-0 text-right">
+              {rttMs != null ? `${rttMs} ms` : ""}
+            </span>
+            <span className="inline-block w-[62px] shrink-0 text-right">
+              {memMb != null ? `${memMb} MB` : ""}
+            </span>
           </span>
         </button>
+
       </div>
 
       <NetworkControl open={network} onClose={() => setNetwork(false)} />
