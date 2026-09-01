@@ -1,0 +1,22 @@
+[package]
+name = "tedbirge-compositor"
+version = "0.1.0"
+edition = "2021"
+description = "Tedbirge OS — tarayıcısız kiosk kompozitörü ve yetenek kısıtlı Wasm uygulama çalıştırıcısı"
+
+[[bin]]
+name = "tedbirge-compositor"
+path = "src/main.rs"
+
+[lib]
+name = "tedbirge_compositor"
+path = "src/lib.rs"
+
+[dependencies]
+tedbirge-kernel = { path = "../tedbirge-kernel", default-features = false, features = ["std"] }
+tedbirge-hal-linux = { path = "../tedbirge-hal-linux" }
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true

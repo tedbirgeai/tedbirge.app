@@ -188,6 +188,88 @@ fn arg_map() -> HashMap<String, String> {
     map
 }
 
+/* ------------------- FAZ 10 — kaynak profilleri --------------------- */
+
+/// Düğümün çalıştığı donanım sınıfı. Bellek ve duyuru sıklığı buradan
+/// türetilir; 64 MB'lık bir SBC ile sunucu aynı ikiliyi çalıştırır.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Profile {
+    /// ≤ 128 MB RAM — seyrek duyuru, küçük tampon.
+    Tiny,
+    /// 128 MB – 1 GB — SBC / kiosk.
+    Sbc,
+    /// > 1 GB — masaüstü ve sunucu.
+    Server,
+}
+
+impl Profile {
+    fn from_name(name: &str) -> Option<Profile> {
+        match name {
+            "tiny" => Some(Profile::Tiny),
+            "sbc" => Some(Profile::Sbc),
+            "server" => Some(Profile::Server),
+            _ => None,
+        }
+    }
+
+    /// `/proc/meminfo` MemTotal (kB) → profil.
+    fn from_mem_kb(total_kb: u64) -> Profile {
+        match total_kb {
+            0..=131_072 => Profile::Tiny,
+            131_073..=1_048_576 => Profile::Sbc,
+            _ => Profile::Server,
+        }
+    }
+
+    fn detect() -> Profile {
+        let kb = fs::read_to_string("/proc/meminfo")
+            .ok()
+            .and_then(|s| {
+                s.lines()
+                    .find(|l| l.starts_with("MemTotal:"))?
+                    .split_whitespace()
+                    .nth(1)?
+                    .parse::<u64>()
+                    .ok()
+            })
+            .unwrap_or(2_097_152);
+        Profile::from_mem_kb(kb)
+    }
+
+    fn beacon_ms(self) -> u64 {
+        match self {
+            Profile::Tiny => 5_000,
+            Profile::Sbc => 2_000,
+            Profile::Server => 1_000,
+        }
+    }
+
+    fn frame_bytes(self) -> usize {
+        match self {
+            Profile::Tiny => 512,
+            Profile::Sbc => 1_500,
+            Profile::Server => 8_192,
+        }
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            Profile::Tiny => "tiny",
+            Profile::Sbc => "sbc",
+            Profile::Server => "server",
+        }
+    }
+}
+
+/// Telemetri anlık görüntüsü — `<state>/telemetry.json` olarak yazılır.
+fn telemetry_json(node_id: u32, profile: Profile, headless: bool, sent: u64, recv: u64, up_s: u64) -> String {
+    format!(
+        "{{\"node\":\"{node_id:08x}\",\"profile\":\"{}\",\"headless\":{},\"sent\":{sent},\"received\":{recv},\"uptime_s\":{up_s}}}",
+        profile.name(),
+        headless
+    )
+}
+
 fn main() -> std::io::Result<()> {
     let args = arg_map();
     let root = PathBuf::from(args.get("root").cloned().unwrap_or_else(|| "dist".into()));
@@ -199,6 +281,14 @@ fn main() -> std::io::Result<()> {
         .get("mesh-port")
         .and_then(|p| p.parse().ok())
         .unwrap_or(7946);
+    // FAZ 10: görüntüleyici beklemeden röle olarak çalışma.
+    let headless = args.contains_key("headless")
+        || std::env::var("TEDBIRGE_MODE").as_deref() == Ok("headless");
+    let state = PathBuf::from(args.get("state").cloned().unwrap_or_else(|| "/var/tedbirge".into()));
+    let profile = args
+        .get("profile")
+        .and_then(|p| Profile::from_name(p))
+        .unwrap_or_else(Profile::detect);
 
     let clock = SystemClock::new();
     let rng = XorShiftRng(seed_from_clock());
@@ -209,16 +299,20 @@ fn main() -> std::io::Result<()> {
 
     let node_id = platform.rng.next_u32();
     println!(
-        "Tedbirge yerel kabuk · dugum {:08x} · ABI {} · kabuk http://127.0.0.1:{} · mesh udp/{}",
+        "Tedbirge yerel kabuk · dugum {:08x} · ABI {} · profil {} · {} · kabuk http://127.0.0.1:{} · mesh udp/{}",
         node_id,
         tedbirge_kernel::abi_version(),
+        profile.name(),
+        if headless { "bassiz role" } else { "kiosk" },
         http_port,
         mesh_port
     );
 
     // Duyuru/dinleme dongusu — cekirdek HAL'i uzerinden.
+    let beacon_ms = profile.beacon_ms();
+    let frame_bytes = profile.frame_bytes();
     thread::spawn(move || {
-        let mut frame = [0u8; 1500];
+        let mut frame = vec![0u8; frame_bytes];
         let mut beat: u32 = 0;
         loop {
             beat = beat.wrapping_add(1);
@@ -239,18 +333,24 @@ fn main() -> std::io::Result<()> {
                     );
                 }
             }
-            thread::sleep(Duration::from_millis(1000));
+            thread::sleep(Duration::from_millis(beacon_ms));
         }
     });
 
-    // Sayaç raporu (tanılama).
-    thread::spawn(move || loop {
-        thread::sleep(Duration::from_secs(30));
-        println!(
-            "tasima · gonderilen {} bayt · alinan {} bayt",
-            sent.load(Ordering::Relaxed),
-            recv.load(Ordering::Relaxed)
-        );
+    // Sayaç raporu + telemetri dosyası (yerel tanılama; ağa hiçbir şey gitmez).
+    let state_dir = state.clone();
+    thread::spawn(move || {
+        let _ = fs::create_dir_all(&state_dir);
+        let start = Instant::now();
+        loop {
+            thread::sleep(Duration::from_secs(30));
+            let (s, r) = (sent.load(Ordering::Relaxed), recv.load(Ordering::Relaxed));
+            println!("tasima · gonderilen {s} bayt · alinan {r} bayt");
+            let _ = fs::write(
+                state_dir.join("telemetry.json"),
+                telemetry_json(node_id, profile, headless, s, r, start.elapsed().as_secs()),
+            );
+        }
     });
 
     let listener = TcpListener::bind(("0.0.0.0", http_port))?;
@@ -261,3 +361,38 @@ fn main() -> std::io::Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn profile_follows_available_memory() {
+        assert_eq!(Profile::from_mem_kb(65_536), Profile::Tiny);
+        assert_eq!(Profile::from_mem_kb(524_288), Profile::Sbc);
+        assert_eq!(Profile::from_mem_kb(8_388_608), Profile::Server);
+        assert!(Profile::Tiny.beacon_ms() > Profile::Server.beacon_ms());
+        assert!(Profile::Tiny.frame_bytes() < Profile::Server.frame_bytes());
+    }
+
+    #[test]
+    fn telemetry_is_valid_json_shape() {
+        let j = telemetry_json(0x0000_00ff, Profile::Sbc, true, 10, 20, 30);
+        assert!(j.starts_with('{') && j.ends_with('}'));
+        assert!(j.contains("\"node\":\"000000ff\""));
+        assert!(j.contains("\"profile\":\"sbc\""));
+        assert!(j.contains("\"headless\":true"));
+        assert!(j.contains("\"uptime_s\":30"));
+    }
+
+    #[test]
+    fn path_traversal_is_blocked() {
+        let root = Path::new("/opt/tedbirge/dist");
+        assert!(safe_join(root, "/../../etc/passwd").is_none());
+        assert_eq!(
+            safe_join(root, "/kernel/tedbirge_kernel.wasm").unwrap(),
+            root.join("kernel/tedbirge_kernel.wasm")
+        );
+    }
+}
+

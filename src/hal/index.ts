@@ -8,6 +8,7 @@
  */
 
 import { webDisplayHal, type DisplayHal } from "@/hal/display";
+import { webInputHal, type InputHal } from "@/hal/input";
 import { webNetHal, type NetHal } from "@/hal/net";
 import { webStorageHal, type StorageHal } from "@/hal/storage";
 
@@ -15,6 +16,7 @@ export type Hal = {
   storage: StorageHal;
   net: NetHal;
   display: DisplayHal;
+  input: InputHal;
 };
 
 export type HalTarget = "web" | "native";
@@ -23,6 +25,7 @@ let current: Hal = {
   storage: webStorageHal,
   net: webNetHal,
   display: webDisplayHal,
+  input: webInputHal,
 };
 
 let target: HalTarget = "web";
@@ -43,4 +46,4 @@ export function halTarget(): HalTarget {
   return target;
 }
 
-export type { StorageHal, NetHal, DisplayHal };
+export type { StorageHal, NetHal, DisplayHal, InputHal };
