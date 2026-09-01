@@ -150,13 +150,20 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
     if (d) moveWindow(win.id, d.x, d.y);
   }, [snap, win.id]);
 
-  }, [snap, win.id, area]);
-
   const onResizeStart = useCallback(
     (edge: Edge) => (e: ReactPointerEvent<HTMLDivElement>) => {
       focusWindow(win.id);
       setDragging(true);
-      size.current = { edge, px: e.clientX, py: e.clientY, x: win.x, y: win.y, w: win.w, h: win.h };
+      size.current = {
+        edge,
+        px: e.clientX,
+        py: e.clientY,
+        x: win.x,
+        y: win.y,
+        w: win.w,
+        h: win.h,
+        raf: 0,
+      };
       e.currentTarget.setPointerCapture(e.pointerId);
       e.stopPropagation();
     },
@@ -167,24 +174,32 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
     (e: ReactPointerEvent<HTMLDivElement>) => {
       const s = size.current;
       if (!s) return;
-      const dx = e.clientX - s.px;
-      const dy = e.clientY - s.py;
-      let { x, y, w, h } = s;
-      if (s.edge.includes("e")) w = s.w + dx;
-      if (s.edge.includes("s")) h = s.h + dy;
-      if (s.edge.includes("w")) {
-        w = s.w - dx;
-        x = s.x + dx;
-      }
-      if (s.edge.includes("n")) {
-        h = s.h - dy;
-        y = s.y + dy;
-      }
-      if (s.edge.includes("w") || s.edge.includes("n")) setWindowBox(win.id, x, y, w, h);
-      else resizeWindow(win.id, w, h);
+      const cx = e.clientX;
+      const cy = e.clientY;
+      // Boyutlandırma da kare başına tek commit ile sınırlanır.
+      if (s.raf) return;
+      s.raf = requestAnimationFrame(() => {
+        s.raf = 0;
+        const dx = cx - s.px;
+        const dy = cy - s.py;
+        let { x, y, w, h } = s;
+        if (s.edge.includes("e")) w = s.w + dx;
+        if (s.edge.includes("s")) h = s.h + dy;
+        if (s.edge.includes("w")) {
+          w = s.w - dx;
+          x = s.x + dx;
+        }
+        if (s.edge.includes("n")) {
+          h = s.h - dy;
+          y = s.y + dy;
+        }
+        if (s.edge.includes("w") || s.edge.includes("n")) setWindowBox(win.id, x, y, w, h);
+        else resizeWindow(win.id, w, h);
+      });
     },
     [win.id],
   );
+
 
   const onResizeEnd = useCallback(() => {
     size.current = null;
