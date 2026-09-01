@@ -237,7 +237,7 @@ function buildKitBat(): string {
     "@echo off",
     "chcp 65001 > nul",
     "title Tedbirge(R) WebOS - Kurulum",
-    `cmd /k "powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0${KIT_PS1}""`,
+    `cmd /k powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0${KIT_PS1}"`,
     "pause",
   ].join("\r\n");
 
