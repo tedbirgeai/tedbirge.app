@@ -248,10 +248,20 @@ function MobileAppShell({
   // Donanım geri tuşu / kenar jesti: uygulamayı kapatır, siteden çıkarmaz.
   useEffect(() => {
     const id = win.id;
+    let popped = false;
     window.history.pushState({ tbosWindow: id }, "");
-    const onPop = () => closeWindow(id);
+    const onPop = () => {
+      popped = true;
+      closeWindow(id);
+    };
     window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      // Düğmeyle kapatıldıysa bizim eklediğimiz geçmiş katmanı geri alınır.
+      if (!popped && (window.history.state as { tbosWindow?: string } | null)?.tbosWindow === id) {
+        window.history.back();
+      }
+    };
   }, [win.id]);
 
   return (
