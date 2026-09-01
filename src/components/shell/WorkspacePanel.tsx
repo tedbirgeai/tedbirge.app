@@ -113,7 +113,7 @@ export function WorkspacePanel() {
     if (!getApp(id) && !web && import.meta.env.DEV) {
       console.warn(`[tbos] "${id}" AppRegistry'de kayıtlı değil.`);
     }
-    openWindow(id, web ? web.label : (WINDOW_TITLES[id] ?? catalogApp(id)?.label ?? id), fresh);
+    openWindow(id, web ? web.label : (windowTitle(id) ?? catalogApp(id)?.label ?? id), fresh);
 
   }, []);
 
