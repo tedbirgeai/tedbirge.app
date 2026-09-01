@@ -1,6 +1,9 @@
-import { Link } from "@/components/shell/OsLink";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { openWindow } from "@/shell/windows";
+import { notify, notifyError, notifyOk } from "@/lib/shell/notify";
+import { promptInstall } from "@/lib/pwa-install";
+
 import { SectionLabel } from "@/components/site/SiteChrome";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { createPortalSession } from "@/utils/payments.functions";
