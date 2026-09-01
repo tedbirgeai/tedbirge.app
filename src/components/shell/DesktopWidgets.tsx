@@ -12,6 +12,7 @@ import { ChevronRight, Focus, GripVertical, HardDrive, Radio, X } from "lucide-r
 import { useFocusMode, setFocusMode } from "@/lib/shell/focus-mode";
 import { useNetworkMode, NETWORK_MODES } from "@/lib/shell/network-mode";
 import { notifyOk } from "@/lib/shell/notify";
+import { useTick } from "@/lib/shell/telemetry-store";
 import { onVfsChange, storageUsage, type StorageUsage } from "@/lib/vfs/store";
 import { useShell } from "@/shell/shell-context";
 
