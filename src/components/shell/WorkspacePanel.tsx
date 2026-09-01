@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 
 import { MusicApp } from "@/components/shell/apps/MusicApp";
 import { MediaApp } from "@/components/shell/apps/MediaApp";
@@ -23,6 +23,7 @@ import { objectUrl, readFile, requestPersistentStorage } from "@/lib/vfs/store";
 import { TransfersApp } from "@/components/shell/apps/TransfersApp";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
 import { describeNode } from "@/lib/node-runtime";
+import { deviceScopeLabel } from "@/lib/identity/device";
 import { useShell } from "@/shell/ShellProvider";
 import { useIsCompact } from "@/hooks/use-mobile";
 import { webApp } from "@/shell/web-apps";
