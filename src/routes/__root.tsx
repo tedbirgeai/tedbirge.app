@@ -159,30 +159,19 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  // Gömülü uygulama kabuğu (sohbet) ve Web-OS ana ekranı: kurumsal şerit gizlenir.
+  // Kabuk yüzeyleri (masaüstü ve sohbet) kurumsal şeridi göstermez.
   const embedded =
     pathname === "/" || pathname.startsWith("/chat") || pathname.startsWith("/sohbet");
-
-  useEffect(() => {
-    // Eski mükerrer kayıtları temizleyen tek seferlik sıfırlama; sayfa yenilenir.
-    if (runOneTimePurge()) return;
-    setupOfflineSupport();
-    bootNodeRuntime();
-    // Düğüm arka planda otomatik başlar; kullanıcı hiçbir butona basmaz.
-    void startNode();
-    bootAccessEngine();
-    void ensureOfflineGrant();
-    return syncViewportUnits();
-  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       {!embedded && <OfflineBanner />}
-      {/* Gelen arama her sayfada karşılanır (telefon mantığı). */}
-      <CallHost />
+      {/* Görünmeyen arka plan servisleri: düğüm, P2P, çağrı karşılayıcı. */}
+      <BackgroundServicesProvider />
       <Toaster />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
   );
 }
+
