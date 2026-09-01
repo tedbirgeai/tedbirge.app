@@ -10,6 +10,8 @@ path = "src/main.rs"
 
 [dependencies]
 tedbirge-kernel = { path = "../tedbirge-kernel", default-features = false, features = ["std"] }
+# FAZ 6/8 — donanım sürücüleri ve blok depolama köprüsü (harici crate yok).
+tedbirge-hal-linux = { path = "../tedbirge-hal-linux" }
 
 [profile.release]
 opt-level = "z"
