@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { CONTRACT_ANNEXES, REG_VERSION, REG_REVIEWED, REG_VENDOR } from "@/lib/regulation";
@@ -130,25 +130,20 @@ function LegalPack() {
 
       <section className="mx-auto max-w-6xl px-6 py-16">
         <div className="flex flex-wrap gap-3">
-          <Link
-            to="/mevzuat"
-            className="rounded-sm bg-primary px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
-          >
-            Regülasyon merkezi
-          </Link>
-          <Link
-            to="/izinler"
-            className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
-          >
-            İzin matrisi
-          </Link>
-          <Link
-            to="/ihracat-uyum"
+          <a
+            href="/ihracat-uyum"
             className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
           >
             İhracat kontrolü
-          </Link>
+          </a>
+          <a
+            href="/"
+            className="rounded-sm bg-primary px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
+          >
+            Tedbirge WebOS
+          </a>
         </div>
+
         <p className="mt-6 max-w-3xl text-xs leading-relaxed text-muted-foreground">
           Bu metinler taslaktır, hukuki görüş yerine geçmez ve imzalanmadan önce hukuk müşavirinizce
           nihai hâline getirilmelidir. Sorumluluk sınırlandırmaları, ilgili yargı bölgesinin
