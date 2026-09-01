@@ -54,6 +54,8 @@ export function Dock({
               onClick={() => {
                 if (!win) return onLaunch(id);
                 if (win.minimized) return restoreWindow(win.id);
+                // Mobil: önde duran uygulamaya tekrar dokunmak ana ekrana döndürür.
+                if (compact) return closeWindow(win.id);
                 focusWindow(win.id);
               }}
               onContextMenu={(e) => {
