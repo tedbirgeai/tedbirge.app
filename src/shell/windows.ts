@@ -11,6 +11,9 @@
 
 import { useSyncExternalStore } from "react";
 
+import { announce } from "@/lib/shell/announce";
+import { pushUndo } from "@/lib/shell/undo-stack";
+
 export type WindowRecord = {
   /** Örnek kimliği (aynı uygulamadan birden çok pencere açılabilir). */
   id: string;
@@ -86,12 +89,19 @@ export function openWindow(appId: string, title: string, fresh = false): string 
     { id, appId, title, z: zTop, maximized: false, minimized: false, ...nextGeometry(seq) },
   ];
   emit();
+  announce(`${title} açıldı`);
   return id;
 }
 
 export function closeWindow(id: string) {
+  const closed = windows.find((w) => w.id === id);
   windows = windows.filter((w) => w.id !== id);
   emit();
+  if (closed) {
+    // Nielsen #3: kapatma geri alınabilir (Ctrl + Z).
+    pushUndo({ label: `${closed.title} kapatıldı`, undo: () => reopenWindow(closed) });
+    announce(`${closed.title} kapatıldı`);
+  }
 }
 
 export function focusWindow(id: string) {
