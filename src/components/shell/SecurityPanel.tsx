@@ -11,6 +11,7 @@ import { Fingerprint, Lock, ShieldAlert, ShieldCheck, Users } from "lucide-react
 import { useNodeRuntime } from "@/lib/node-runtime";
 import { guardStats, onGuardStats } from "@/lib/mesh/guard";
 import { edgeHealthSnapshot } from "@/lib/mesh/edge-health";
+import { useTick } from "@/lib/shell/telemetry-store";
 import { listEvents, type EventRecord } from "@/lib/store/idb";
 
 
@@ -37,7 +38,7 @@ function Section({
 function Row({ k, v, tone = "text-slate-200" }: { k: string; v: string; tone?: string }) {
   return (
     <div className="flex items-start justify-between gap-3 py-0.5">
-      <span className="shrink-0 text-slate-500">{k}</span>
+      <span className="shrink-0 text-[var(--tb-muted)]">{k}</span>
       <span className={`min-w-0 break-all text-right ${tone}`}>{v}</span>
     </div>
   );
@@ -48,17 +49,16 @@ export function SecurityPanel() {
   const [events, setEvents] = useState<EventRecord[]>([]);
   const gate = useSyncExternalStore(onGuardStats, guardStats, guardStats);
   const [quarantine, setQuarantine] = useState<ReturnType<typeof edgeHealthSnapshot>>([]);
+  const tick = useTick(4);
 
   useEffect(() => {
     void listEvents().then((rows) => setEvents(rows.slice(-12).reverse()));
   }, []);
 
+  // Paylaşımlı telemetri tetikleyicisi: ayrı zamanlayıcı kurulmaz.
   useEffect(() => {
-    const tick = () => setQuarantine(edgeHealthSnapshot());
-    tick();
-    const id = setInterval(tick, 4000);
-    return () => clearInterval(id);
-  }, []);
+    setQuarantine(edgeHealthSnapshot());
+  }, [tick]);
 
   const verified = node.peers.filter((p) => p.verified).length;
 
@@ -105,7 +105,7 @@ export function SecurityPanel() {
             quarantine.some((e) => e.quarantined) ? "text-amber-400" : "text-emerald-400"
           }
         />
-        <p className="pt-1 text-[10px] leading-relaxed text-slate-500">
+        <p className="pt-1 text-[10px] leading-relaxed text-[var(--tb-muted)]">
           Arızalı hat kendiliğinden karantinaya alınır, düzeldikçe ceza erir — ağ kendini onarır.
         </p>
       </Section>
@@ -114,7 +114,7 @@ export function SecurityPanel() {
       <Section icon={<Fingerprint className="h-3.5 w-3.5" />} title="Cihaz kimliği">
         <Row k="DÜĞÜM KİMLİĞİ:" v={node.nodeId || "—"} />
         <Row k="PARMAK İZİ:" v={node.fingerprint || "üretiliyor"} tone="text-cyan-400" />
-        <p className="pt-1 text-[10px] leading-relaxed text-slate-500">
+        <p className="pt-1 text-[10px] leading-relaxed text-[var(--tb-muted)]">
           Parmak izini karşı tarafla yüz yüze karşılaştırdığınızda kanalın araya girme (MITM)
           girişimine kapalı olduğunu doğrulamış olursunuz.
         </p>
@@ -157,7 +157,7 @@ export function SecurityPanel() {
             </div>
           ))
         )}
-        <p className="pt-1 text-[10px] leading-relaxed text-slate-500">
+        <p className="pt-1 text-[10px] leading-relaxed text-[var(--tb-muted)]">
           Günlük yalnızca bu cihazda tutulur; hiçbir kayıt sunucuya gönderilmez.
         </p>
       </Section>

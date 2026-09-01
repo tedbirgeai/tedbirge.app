@@ -54,6 +54,7 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
   } | null>(null);
 
   const box = useRef<HTMLElement>(null);
+  const tick = useTick(30);
 
   useEffect(() => {
     setPos(readPos());
@@ -70,12 +71,9 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
     };
     read();
     const off = onVfsChange(read);
-    const t = window.setInterval(read, 30000);
-    return () => {
-      off();
-      window.clearInterval(t);
-    };
-  }, []);
+    return off;
+    // Paylaşımlı 30 sn tetikleyicisi ayrı zamanlayıcı ihtiyacını kaldırır.
+  }, [tick]);
 
   const direct = node.peers.filter((p) => p.direct).length;
   const modeLabel = NETWORK_MODES.find((m) => m.id === mode)?.label ?? "Küresel İnternet";
