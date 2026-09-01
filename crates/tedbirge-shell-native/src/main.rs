@@ -21,6 +21,9 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
+use tedbirge_hal_linux::serial::SerialTransport;
+use tedbirge_hal_linux::storage::{block_devices, NativeStorage};
+use tedbirge_hal_linux::{probe, HalReport};
 use tedbirge_kernel::hal::{Clock, Platform, Rng, Transport, XorShiftRng};
 
 /* ------------------------- HAL sürücüleri ------------------------- */
@@ -95,6 +98,62 @@ fn seed_from_clock() -> u32 {
         .unwrap_or(0x2545_F491)
 }
 
+/* ------------- FAZ 6 — çift taşıyıcı (UDP + seri/LoRa) ------------- */
+
+/// Yerel ağ yoksa aynı çerçeveler seri/LoRa hattından gider. Çekirdek
+/// hangi taşıyıcının çalıştığını bilmez; yalnız `Transport` görür.
+enum Link {
+    Udp(UdpTransport),
+    Serial(SerialTransport),
+}
+
+impl Link {
+    fn open(mesh_port: u16, prefer_serial: bool) -> std::io::Result<(Link, &'static str)> {
+        if prefer_serial {
+            let serial = SerialTransport::autodetect();
+            if serial.available() {
+                return Ok((Link::Serial(serial), "serial"));
+            }
+        }
+        match UdpTransport::bind(mesh_port) {
+            Ok(udp) => Ok((Link::Udp(udp), "udp")),
+            Err(e) => {
+                let serial = SerialTransport::autodetect();
+                if serial.available() {
+                    Ok((Link::Serial(serial), "serial"))
+                } else {
+                    Err(e)
+                }
+            }
+        }
+    }
+
+    /// UDP kolunun paylaşılan sayaçları (seri kolda yoktur).
+    fn counters(&self) -> Option<(Arc<AtomicU64>, Arc<AtomicU64>)> {
+        match self {
+            Link::Udp(u) => Some((u.sent.clone(), u.recv.clone())),
+            Link::Serial(_) => None,
+        }
+    }
+}
+
+impl Transport for Link {
+    fn send(&mut self, peer: u32, frame: &[u8]) -> usize {
+        match self {
+            Link::Udp(u) => u.send(peer, frame),
+            Link::Serial(s) => s.send(peer, frame),
+        }
+    }
+
+    fn poll(&mut self, out: &mut [u8]) -> usize {
+        match self {
+            Link::Udp(u) => u.poll(out),
+            Link::Serial(s) => s.poll(out),
+        }
+    }
+}
+
+
 /* --------------------------- Kabuk sunucusu ------------------------ */
 
 fn mime_for(path: &Path) -> &'static str {
@@ -137,7 +196,84 @@ fn respond(stream: &mut TcpStream, status: &str, mime: &str, body: &[u8]) {
     let _ = stream.flush();
 }
 
-fn serve(stream: &mut TcpStream, root: &Path) {
+/* ---------- FAZ 8 — kabuk ↔ blok depolama HTTP köprüsü ------------- */
+
+fn json_escape(s: &str) -> String {
+    s.chars()
+        .flat_map(|c| match c {
+            '"' => "\\\"".chars().collect::<Vec<_>>(),
+            '\\' => "\\\\".chars().collect(),
+            '\n' | '\r' | '\t' => ' '.to_string().chars().collect(),
+            c if (c as u32) < 0x20 => vec![],
+            c => vec![c],
+        })
+        .collect()
+}
+
+/// `/hal/report` gövdesi — tarayıcı kolu bu raporu okuyup native HAL'e geçer.
+fn report_json(r: &HalReport, link: &str, storage_root: &str) -> String {
+    format!(
+        "{{\"target\":\"native\",\"display\":\"{}\",\"width\":{},\"height\":{},\"input\":{},\"interfaces\":{},\"disks\":{},\"audio\":{},\"serial\":{},\"link\":\"{}\",\"storage\":\"{}\"}}",
+        r.display,
+        r.width,
+        r.height,
+        r.input_devices,
+        r.interfaces,
+        r.disks,
+        r.audio,
+        r.serial,
+        link,
+        json_escape(storage_root)
+    )
+}
+
+/// `/hal/files` gövdesi — native VFS üstverisi (web `StorageHal.list()` karşılığı).
+fn files_json(store: &NativeStorage) -> String {
+    let rows: Vec<String> = store
+        .list()
+        .iter()
+        .map(|m| {
+            format!(
+                "{{\"id\":\"{}\",\"name\":\"{}\",\"size\":{},\"folder\":\"{}\",\"createdAt\":{}}}",
+                json_escape(&m.id),
+                json_escape(&m.name),
+                m.size,
+                json_escape(&m.folder),
+                m.created
+            )
+        })
+        .collect();
+    let (count, bytes) = store.stat();
+    format!(
+        "{{\"count\":{count},\"bytes\":{bytes},\"files\":[{}]}}",
+        rows.join(",")
+    )
+}
+
+/// `/hal/disks` gövdesi — keşfedilen blok aygıtlar.
+fn disks_json() -> String {
+    let rows: Vec<String> = block_devices()
+        .iter()
+        .map(|d| {
+            format!(
+                "{{\"path\":\"{}\",\"bytes\":{},\"removable\":{}}}",
+                json_escape(&d.path()),
+                d.bytes,
+                d.removable
+            )
+        })
+        .collect();
+    format!("[{}]", rows.join(","))
+}
+
+struct Node {
+    root: PathBuf,
+    storage: Arc<NativeStorage>,
+    report: Arc<String>,
+}
+
+fn serve(stream: &mut TcpStream, node: &Node) {
+    let root = node.root.as_path();
     let mut buf = [0u8; 2048];
     let Ok(n) = stream.read(&mut buf) else { return };
     let head = String::from_utf8_lossy(&buf[..n]);
@@ -148,6 +284,35 @@ fn serve(stream: &mut TcpStream, root: &Path) {
         respond(stream, "405 Method Not Allowed", "text/plain", b"only GET");
         return;
     }
+
+    // FAZ 6/8 — donanım ve depolama köprüsü (yalnız yerel soket).
+    let route = target.split('?').next().unwrap_or("/");
+    const JSON: &str = "application/json; charset=utf-8";
+    if route == "/hal/report" {
+        respond(stream, "200 OK", JSON, node.report.as_bytes());
+        return;
+    }
+    if route == "/hal/files" {
+        respond(stream, "200 OK", JSON, files_json(&node.storage).as_bytes());
+        return;
+    }
+    if route == "/hal/disks" {
+        respond(stream, "200 OK", JSON, disks_json().as_bytes());
+        return;
+    }
+    if let Some(id) = route.strip_prefix("/hal/file/") {
+        // Kimlik yalnız [0-9a-f-]; dosya sistemi kaçışı imkânsız.
+        if id.is_empty() || !id.chars().all(|c| c.is_ascii_hexdigit() || c == '-') {
+            respond(stream, "400 Bad Request", "text/plain", b"bad id");
+            return;
+        }
+        match node.storage.read(id) {
+            Ok(body) => respond(stream, "200 OK", "application/octet-stream", &body),
+            Err(_) => respond(stream, "404 Not Found", "text/plain", b"yok"),
+        }
+        return;
+    }
+
 
     let Some(mut path) = safe_join(root, target) else {
         respond(stream, "400 Bad Request", "text/plain", b"bad path");
@@ -290,23 +455,39 @@ fn main() -> std::io::Result<()> {
         .and_then(|p| Profile::from_name(p))
         .unwrap_or_else(Profile::detect);
 
+    // FAZ 8 — kalıcı blok depolama (state dizini bir bölüm ya da tmpfs olabilir).
+    fs::create_dir_all(&state)?;
+    let storage = Arc::new(NativeStorage::open(state.join("vfs"))?);
+
+    // FAZ 6 — donanım taraması ve taşıyıcı seçimi (UDP yoksa seri/LoRa).
+    let hw = probe();
     let clock = SystemClock::new();
     let rng = XorShiftRng(seed_from_clock());
-    let transport = UdpTransport::bind(mesh_port)?;
-    let sent = transport.sent.clone();
-    let recv = transport.recv.clone();
+    let (transport, link) = Link::open(mesh_port, args.contains_key("serial"))?;
+    let counters = transport.counters();
     let mut platform = Platform::new(clock, rng, transport);
 
     let node_id = platform.rng.next_u32();
+    let report = Arc::new(report_json(
+        &hw,
+        link,
+        &state.join("vfs").to_string_lossy(),
+    ));
     println!(
-        "Tedbirge yerel kabuk · dugum {:08x} · ABI {} · profil {} · {} · kabuk http://127.0.0.1:{} · mesh udp/{}",
+        "Tedbirge yerel kabuk · dugum {:08x} · ABI {} · profil {} · {} · ekran {} {}x{} · girdi {} · disk {} · tasiyici {} · kabuk http://127.0.0.1:{}",
         node_id,
         tedbirge_kernel::abi_version(),
         profile.name(),
         if headless { "bassiz role" } else { "kiosk" },
-        http_port,
-        mesh_port
+        hw.display,
+        hw.width,
+        hw.height,
+        hw.input_devices,
+        hw.disks,
+        link,
+        http_port
     );
+
 
     // Duyuru/dinleme dongusu — cekirdek HAL'i uzerinden.
     let beacon_ms = profile.beacon_ms();
@@ -340,11 +521,13 @@ fn main() -> std::io::Result<()> {
     // Sayaç raporu + telemetri dosyası (yerel tanılama; ağa hiçbir şey gitmez).
     let state_dir = state.clone();
     thread::spawn(move || {
-        let _ = fs::create_dir_all(&state_dir);
         let start = Instant::now();
         loop {
             thread::sleep(Duration::from_secs(30));
-            let (s, r) = (sent.load(Ordering::Relaxed), recv.load(Ordering::Relaxed));
+            let (s, r) = match &counters {
+                Some((sent, recv)) => (sent.load(Ordering::Relaxed), recv.load(Ordering::Relaxed)),
+                None => (0, 0),
+            };
             println!("tasima · gonderilen {s} bayt · alinan {r} bayt");
             let _ = fs::write(
                 state_dir.join("telemetry.json"),
@@ -356,11 +539,16 @@ fn main() -> std::io::Result<()> {
     let listener = TcpListener::bind(("0.0.0.0", http_port))?;
     for stream in listener.incoming() {
         let Ok(mut stream) = stream else { continue };
-        let root = root.clone();
-        thread::spawn(move || serve(&mut stream, &root));
+        let node = Node {
+            root: root.clone(),
+            storage: storage.clone(),
+            report: report.clone(),
+        };
+        thread::spawn(move || serve(&mut stream, &node));
     }
     Ok(())
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -394,5 +582,47 @@ mod tests {
             root.join("kernel/tedbirge_kernel.wasm")
         );
     }
+
+    #[test]
+    fn hal_report_json_is_wellformed() {
+        let r = HalReport {
+            display: "drm/kms",
+            width: 1920,
+            height: 1080,
+            input_devices: 2,
+            interfaces: 3,
+            disks: 1,
+            audio: true,
+            serial: false,
+        };
+        let j = report_json(&r, "udp", "/var/tedbirge/vfs");
+        assert!(j.starts_with('{') && j.ends_with('}'));
+        assert!(j.contains("\"target\":\"native\""));
+        assert!(j.contains("\"display\":\"drm/kms\""));
+        assert!(j.contains("\"link\":\"udp\""));
+        assert!(j.contains("\"storage\":\"/var/tedbirge/vfs\""));
+    }
+
+    #[test]
+    fn json_escape_neutralises_quotes_and_control_chars() {
+        assert_eq!(json_escape("a\"b\\c"), "a\\\"b\\\\c");
+        assert_eq!(json_escape("satir\nsonu"), "satir sonu");
+        assert!(!json_escape("x\u{0007}y").contains('\u{0007}'));
+    }
+
+    #[test]
+    fn native_storage_round_trips_through_the_bridge() {
+        let dir = std::env::temp_dir().join(format!("tbg-test-{}", seed_from_clock()));
+        let store = NativeStorage::open(&dir).expect("depo acilmali");
+        let meta = store.write("not.txt", "belgeler", b"merhaba", 1).unwrap();
+        let body = files_json(&store);
+        assert!(body.contains("\"count\":1"));
+        assert!(body.contains("\"name\":\"not.txt\""));
+        assert_eq!(store.read(&meta.id).unwrap(), b"merhaba");
+        store.remove(&meta.id).unwrap();
+        assert!(files_json(&store).contains("\"count\":0"));
+        let _ = fs::remove_dir_all(&dir);
+    }
 }
+
 

@@ -10,13 +10,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "tedbirge-kernel"
-version = "0.1.0"
-
-[[package]]
-name = "tedbirge-shell-native"
+name = "tedbirge-installer"
 version = "0.1.0"
 dependencies = [
  "tedbirge-hal-linux",
- "tedbirge-kernel",
 ]
+
+[[package]]
+name = "tedbirge-kernel"
+version = "0.1.0"
