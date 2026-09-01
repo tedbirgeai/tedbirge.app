@@ -6,13 +6,14 @@
  */
 
 import { useEffect, useState } from "react";
-import { Link } from "@/components/shell/OsLink";
-import { Search, Settings, UserRound, Wifi } from "lucide-react";
+import { Bell, Search, Settings, UserRound, Wifi } from "lucide-react";
 
 import { BareMetalIsoButton } from "@/components/shell/BareMetalIso";
 import { InstallSystemButton } from "@/components/shell/InstallSystemButton";
 import { ControlCenter } from "@/components/shell/ControlCenter";
 import { NetworkControl } from "@/components/shell/NetworkControl";
+import { NotificationsPanel } from "@/components/shell/NotificationsPanel";
+import { useUnreadNoticeCount } from "@/lib/shell/notifications";
 import { useOnline } from "@/lib/pwa/offline-status";
 
 
@@ -34,21 +35,27 @@ export function SystemBar({
   onSettings,
   onPersonalize,
   onSearch,
+  onProfile,
 }: {
   status: string;
   peers: number;
   /** Son ölçülen gidiş-dönüş gecikmesi (ms); yoksa gizlenir. */
   rttMs?: number | null;
+  /** Sistem Ayarları uygulamasını açar. */
   onSettings: () => void;
   /** Kontrol merkezinden görünüm ayarlarını açar. */
   onPersonalize: () => void;
   /** Evrensel arama paletini açar. */
   onSearch?: () => void;
+  /** Profil ve Hesap uygulamasını açar. */
+  onProfile: () => void;
 }) {
   const [clock, setClock] = useState("");
   const [memMb, setMemMb] = useState<number | null>(null);
   const [control, setControl] = useState(false);
   const [network, setNetwork] = useState(false);
+  const [notices, setNotices] = useState(false);
+  const unread = useUnreadNoticeCount();
   const online = useOnline();
 
   useEffect(() => {
@@ -131,22 +138,41 @@ export function SystemBar({
       />
 
 
-      <div className="pointer-events-auto relative z-[90] flex shrink-0 items-center gap-1 sm:gap-1.5">
+      <div className="pointer-events-auto relative z-[90] flex shrink-0 items-center gap-0.5">
         {onSearch ? (
           <button
             type="button"
             onClick={onSearch}
             aria-label="Evrensel arama (Ctrl + Boşluk)"
             title="Evrensel arama · Ctrl + Boşluk"
-            className="wa-press grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)] sm:h-7 sm:w-7"
+            className="wa-press grid min-h-12 min-w-12 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
           >
             <Search className="h-4 w-4" aria-hidden />
           </button>
         ) : null}
+        <button
+          type="button"
+          onClick={() => {
+            setControl(false);
+            setNetwork(false);
+            setNotices((v) => !v);
+          }}
+          aria-label={unread > 0 ? `Bildirimler (${unread} okunmamış)` : "Bildirimler"}
+          aria-expanded={notices}
+          title="Bildirimler"
+          className="wa-press relative grid min-h-12 min-w-12 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+        >
+          <Bell className="h-4 w-4" aria-hidden />
+          {unread > 0 ? (
+            <span className="absolute right-2.5 top-2.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--tb-accent)] px-1 font-osmono text-[9px] text-[var(--tb-bg)]">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          ) : null}
+        </button>
         <InstallSystemButton compact />
         <BareMetalIsoButton compact />
         <span
-          className="hidden shrink-0 whitespace-nowrap font-osmono text-[11px] text-[var(--tb-muted)] md:inline"
+          className="hidden shrink-0 whitespace-nowrap px-1 font-osmono text-[11px] text-[var(--tb-muted)] md:inline"
           aria-live="polite"
         >
           {clock}
@@ -156,17 +182,22 @@ export function SystemBar({
           type="button"
           onClick={onSettings}
           aria-label="Sistem ayarları"
-          className="wa-press grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)] sm:h-7 sm:w-7"
+          title="Sistem Ayarları"
+          className="wa-press grid min-h-12 min-w-12 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
         >
           <Settings className="h-4 w-4" aria-hidden />
         </button>
-        <Link
-          to="/system"
-          aria-label="Profil ve sistem"
-          className="wa-press grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)] sm:h-7 sm:w-7"
+        <button
+          type="button"
+          onClick={onProfile}
+          aria-label="Profil ve hesap"
+          title="Profil ve Hesap"
+          className="wa-press grid min-h-12 min-w-12 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
         >
           <UserRound className="h-4 w-4" aria-hidden />
-        </Link>
+        </button>
+
+        <NotificationsPanel open={notices} onClose={() => setNotices(false)} />
       </div>
     </header>
   );

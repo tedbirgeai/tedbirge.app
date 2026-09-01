@@ -9,6 +9,9 @@ import {
   Activity,
   Boxes,
   Coins,
+  Info,
+  LayoutDashboard,
+  Settings2,
   FileUp,
   FolderOpen,
   Globe,
@@ -29,6 +32,7 @@ import {
   Wallet,
   BookOpen,
   Palette,
+  UserRound,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -43,6 +47,10 @@ const MAP: Record<string, ComponentType<{ className?: string }>> = {
   store: Store,
   computer: MonitorSmartphone,
   wallpaper: Palette,
+  profile: UserRound,
+  settings: Settings2,
+  sysinfo: Info,
+  panel: LayoutDashboard,
   transfer: FileUp,
   apps: Boxes,
   mesh: Activity,

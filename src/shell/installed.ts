@@ -68,6 +68,13 @@ export const LOCAL_APPS: CatalogApp[] = [
     builtin: true,
   },
   {
+    id: "profile",
+    label: "Profil",
+    hint: "Hesap, abonelik, lisans ve kota",
+    category: "sistem",
+    builtin: true,
+  },
+  {
     id: "wallpaper",
     label: "Görünüm",
     hint: "Duvar kâğıdı ve tema",
