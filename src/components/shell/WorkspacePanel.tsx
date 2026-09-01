@@ -245,13 +245,23 @@ function MobileAppShell({
   const start = useRef<number | null>(null);
   const [drag, setDrag] = useState(0);
 
+  // Donanım geri tuşu / kenar jesti: uygulamayı kapatır, siteden çıkarmaz.
+  useEffect(() => {
+    const id = win.id;
+    window.history.pushState({ tbosWindow: id }, "");
+    const onPop = () => closeWindow(id);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [win.id]);
+
   return (
     <div
       className="tbos tbos-mobile-app fixed inset-0 z-[70] flex flex-col bg-[var(--tb-bg)]"
       style={drag ? { transform: `translateY(${drag}px)`, transition: "none" } : undefined}
     >
       <div
-        className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--tb-border)] px-4 py-2"
+        className="sticky top-0 z-10 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--tb-border)] bg-[var(--tb-bg)] px-2 py-2"
+        style={{ paddingTop: "calc(0.5rem + env(safe-area-inset-top))" }}
         onTouchStart={(e) => {
           start.current = e.touches[0]?.clientY ?? null;
         }}
