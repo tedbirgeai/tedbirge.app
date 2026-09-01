@@ -44,6 +44,7 @@ describe("yetenek kapısı", () => {
       "messenger",
       "music",
       "panel",
+      "profile",
       "relay",
       "settings",
       "store",
