@@ -67,8 +67,12 @@ export const GATEWAY_HOSTS = [
 
 /** Geçidin bu hedefi aktarmasına izin verilip verilmediği. */
 export function isGatewayHostAllowed(hostname: string): boolean {
-  const h = hostname.toLowerCase();
-  return GATEWAY_HOSTS.some((a) => h === a || h.endsWith(`.${a}`));
+  // Sondaki nokta (FQDN), büyük harf ve `www.` öneki normalize edilir;
+  // böylece `www.coingecko.com` ile `coingecko.com` aynı kabul edilir.
+  const h = hostname.toLowerCase().replace(/\.$/, "");
+  const bare = h.startsWith("www.") ? h.slice(4) : h;
+  const match = (x: string) => GATEWAY_HOSTS.some((a) => x === a || x.endsWith(`.${a}`));
+  return match(h) || match(bare);
 }
 
 /** Tam adres için izin denetimi (yalnız https). */

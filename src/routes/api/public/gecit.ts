@@ -17,7 +17,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { isGatewayHostAllowed } from "@/lib/shell/gateway-hosts";
 
 const MAX_BYTES = 4 * 1024 * 1024;
-const TIMEOUT_MS = 12_000;
+/** İlk deneme kısa tutulur; ağır hedefte ikinci deneme daha uzun bekler. */
+const TIMEOUT_MS = [9_000, 18_000] as const;
 
 /** Alan adı başına basit hız sınırı: hedef sitelere yük bindirilmez. */
 const RATE_WINDOW_MS = 10_000;
@@ -81,20 +82,40 @@ export const Route = createFileRoute("/api/public/gecit")({
         }
 
 
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+        /**
+         * Dayanıklılık: ağır yüklenen hedeflerde (ör. coingecko) ilk
+         * denemenin düşmesi tüm pencereyi hata kartına atmasın diye tek
+         * kademeli otomatik yeniden deneme yapılır; ikinci denemenin
+         * zaman aşımı daha esnektir.
+         */
+        const attempt = async (ms: number) => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), ms);
+          try {
+            return await fetch(target.href, {
+              method: "GET",
+              redirect: "follow",
+              signal: controller.signal,
+              headers: {
+                // Kimlik taşımayan sade istek: çerez, yetki ve referrer yok.
+                "User-Agent": "Mozilla/5.0 (compatible; TedbirgeWebOS/1.0)",
+                Accept: request.headers.get("accept") ?? "*/*",
+                "Accept-Language": "tr,en;q=0.8",
+              },
+            });
+          } finally {
+            clearTimeout(timer);
+          }
+        };
+
         try {
-          const upstream = await fetch(target.href, {
-            method: "GET",
-            redirect: "follow",
-            signal: controller.signal,
-            headers: {
-              // Kimlik taşımayan sade istek: çerez, yetki ve referrer yok.
-              "User-Agent": "Mozilla/5.0 (compatible; TedbirgeWebOS/1.0)",
-              Accept: request.headers.get("accept") ?? "*/*",
-              "Accept-Language": "tr,en;q=0.8",
-            },
-          });
+          let upstream: Response;
+          try {
+            upstream = await attempt(TIMEOUT_MS[0]);
+            if (upstream.status >= 500) upstream = await attempt(TIMEOUT_MS[1]);
+          } catch {
+            upstream = await attempt(TIMEOUT_MS[1]);
+          }
 
           const type = upstream.headers.get("content-type") ?? "application/octet-stream";
           const headers = new Headers({
@@ -106,6 +127,9 @@ export const Route = createFileRoute("/api/public/gecit")({
             // çerçeve boş kalır.
             "Cross-Origin-Embedder-Policy": "credentialless",
             "Referrer-Policy": "no-referrer",
+            // Aktarılan içerik hiçbir koşulda tür tahminiyle çalıştırılmaz.
+            "X-Content-Type-Options": "nosniff",
+            "Permissions-Policy": "geolocation=(), camera=(), microphone=(), payment=()",
           });
 
 
@@ -123,8 +147,6 @@ export const Route = createFileRoute("/api/public/gecit")({
           return new Response(buf, { status: upstream.status, headers });
         } catch {
           return new Response("hedefe ulaşılamadı", { status: 502 });
-        } finally {
-          clearTimeout(timer);
         }
       },
     },
