@@ -21,6 +21,9 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
+use tedbirge_hal_linux::serial::SerialTransport;
+use tedbirge_hal_linux::storage::{block_devices, NativeStorage};
+use tedbirge_hal_linux::{probe, HalReport};
 use tedbirge_kernel::hal::{Clock, Platform, Rng, Transport, XorShiftRng};
 
 /* ------------------------- HAL sürücüleri ------------------------- */
