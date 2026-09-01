@@ -28,6 +28,7 @@ export function Dock({
   onStore: () => void;
 }) {
   const { installed } = useDesktopState();
+  const compact = useIsCompact();
   const [menu, setMenu] = useState<{ x: number; y: number; appId: string } | null>(null);
   const [properties, setProperties] = useState<string | null>(null);
   const extra = windows.filter((w) => !installed.includes(w.appId)).map((w) => w.appId);
