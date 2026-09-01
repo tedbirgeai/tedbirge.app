@@ -582,5 +582,47 @@ mod tests {
             root.join("kernel/tedbirge_kernel.wasm")
         );
     }
+
+    #[test]
+    fn hal_report_json_is_wellformed() {
+        let r = HalReport {
+            display: "drm/kms",
+            width: 1920,
+            height: 1080,
+            input_devices: 2,
+            interfaces: 3,
+            disks: 1,
+            audio: true,
+            serial: false,
+        };
+        let j = report_json(&r, "udp", "/var/tedbirge/vfs");
+        assert!(j.starts_with('{') && j.ends_with('}'));
+        assert!(j.contains("\"target\":\"native\""));
+        assert!(j.contains("\"display\":\"drm/kms\""));
+        assert!(j.contains("\"link\":\"udp\""));
+        assert!(j.contains("\"storage\":\"/var/tedbirge/vfs\""));
+    }
+
+    #[test]
+    fn json_escape_neutralises_quotes_and_control_chars() {
+        assert_eq!(json_escape("a\"b\\c"), "a\\\"b\\\\c");
+        assert_eq!(json_escape("satir\nsonu"), "satir sonu");
+        assert!(!json_escape("x\u{0007}y").contains('\u{0007}'));
+    }
+
+    #[test]
+    fn native_storage_round_trips_through_the_bridge() {
+        let dir = std::env::temp_dir().join(format!("tbg-test-{}", seed_from_clock()));
+        let store = NativeStorage::open(&dir).expect("depo acilmali");
+        let meta = store.write("not.txt", "belgeler", b"merhaba", 1).unwrap();
+        let body = files_json(&store);
+        assert!(body.contains("\"count\":1"));
+        assert!(body.contains("\"name\":\"not.txt\""));
+        assert_eq!(store.read(&meta.id).unwrap(), b"merhaba");
+        store.remove(&meta.id).unwrap();
+        assert!(files_json(&store).contains("\"count\":0"));
+        let _ = fs::remove_dir_all(&dir);
+    }
 }
+
 
