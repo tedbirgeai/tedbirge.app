@@ -180,7 +180,7 @@ function MobileStationCard() {
               type="button"
               onClick={() => void install()}
               disabled={busy}
-              className="min-h-12 rounded-xl bg-[var(--tb-accent)] px-4 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-on-accent)] disabled:opacity-50"
+              className="min-h-12 rounded-xl bg-[var(--tb-accent)] px-4 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-panel-solid)] disabled:opacity-50"
             >
               Telefona kur
             </button>
