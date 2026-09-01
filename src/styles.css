@@ -995,3 +995,30 @@ html[data-focus="on"] .tbos-wallpaper::after {
 .tbos-scale {
   zoom: var(--tb-font-scale, 1);
 }
+
+/* ------------------------------------------------------------------
+ * EVRENSEL DOKUNMATİK UYUM
+ * Dokunmatik cihazlarda (telefon/tablet) tüm sistem hedefleri en az
+ * 48px olur; fare kullanan masaüstünde yoğun yerleşim korunur.
+ * ------------------------------------------------------------------ */
+@media (pointer: coarse) {
+  .tbos-dock-item,
+  .tbos-winbtn {
+    min-width: 48px;
+    min-height: 48px;
+  }
+}
+
+/* Portre/manzara dönüşünde kabuk taşmaz: gerçek görünür yükseklik ve
+ * güvenli alan dolguları tek yerden uygulanır. */
+.tbos {
+  max-height: var(--wa-vh, 100dvh);
+  overscroll-behavior: none;
+}
+
+.tbos-mobile-app {
+  height: var(--wa-vh, 100dvh);
+  max-height: var(--wa-vh, 100dvh);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-top: env(safe-area-inset-top, 0px);
+}
