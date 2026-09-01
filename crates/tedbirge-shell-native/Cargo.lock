@@ -3,6 +3,13 @@
 version = 4
 
 [[package]]
+name = "tedbirge-hal-linux"
+version = "0.1.0"
+dependencies = [
+ "tedbirge-kernel",
+]
+
+[[package]]
 name = "tedbirge-kernel"
 version = "0.1.0"
 
@@ -10,5 +17,6 @@ version = "0.1.0"
 name = "tedbirge-shell-native"
 version = "0.1.0"
 dependencies = [
+ "tedbirge-hal-linux",
  "tedbirge-kernel",
 ]
