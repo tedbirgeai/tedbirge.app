@@ -6,7 +6,7 @@
  * hiçbir sayı sabit yazılmaz. Renkler yalnız `--tb-*` değişkenlerinden.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { WindowEmpty, WindowShell } from "@/components/shell/WindowShell";
 import { detectNativeHal, type NativeHalReport } from "@/hal/native";
@@ -14,6 +14,8 @@ import { BUILD_LABEL } from "@/lib/build-id";
 import { describeNode } from "@/lib/node-runtime";
 import { listTransfers, onTransferChange, type Transfer } from "@/lib/p2p/file-transfer";
 import { notifyError, notifyOk } from "@/lib/shell/notify";
+import { formatUptime, useMemoryMb, useUptimeSec } from "@/lib/shell/telemetry-store";
+
 import {
   NETWORK_MODES,
   setNetworkMode,
