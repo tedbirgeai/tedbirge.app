@@ -6,13 +6,14 @@
  */
 
 import { useEffect, useState } from "react";
-import { Link } from "@/components/shell/OsLink";
-import { Search, Settings, UserRound, Wifi } from "lucide-react";
+import { Bell, Search, Settings, UserRound, Wifi } from "lucide-react";
 
 import { BareMetalIsoButton } from "@/components/shell/BareMetalIso";
 import { InstallSystemButton } from "@/components/shell/InstallSystemButton";
 import { ControlCenter } from "@/components/shell/ControlCenter";
 import { NetworkControl } from "@/components/shell/NetworkControl";
+import { NotificationsPanel } from "@/components/shell/NotificationsPanel";
+import { useUnreadNoticeCount } from "@/lib/shell/notifications";
 import { useOnline } from "@/lib/pwa/offline-status";
 
 
