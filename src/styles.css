@@ -898,6 +898,28 @@ body {
   background: var(--tb-panel);
   border-bottom: 1px solid var(--tb-border);
   backdrop-filter: blur(18px) saturate(150%);
+  /* Tarayıcı / PWA pencere düğmeleri için sağ güvenli alan. */
+  --tbos-sysbar-pad-right: env(safe-area-inset-right, 0px);
+  padding-right: calc(0.75rem + var(--tbos-sysbar-pad-right));
+  padding-left: calc(0.75rem + env(safe-area-inset-left, 0px));
+}
+@media all and (display-mode: standalone) {
+  .tbos-sysbar {
+    --tbos-sysbar-pad-right: max(env(safe-area-inset-right, 0px), 24px);
+  }
+}
+@media all and (display-mode: window-controls-overlay) {
+  .tbos-sysbar {
+    --tbos-sysbar-pad-right: max(env(safe-area-inset-right, 0px), 148px);
+    -webkit-app-region: drag;
+    app-region: drag;
+  }
+  .tbos-sysbar button,
+  .tbos-sysbar a,
+  .tbos-sysbar [role="button"] {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+  }
 }
 
 .tbos-dock {
