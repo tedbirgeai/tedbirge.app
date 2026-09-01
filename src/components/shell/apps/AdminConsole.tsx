@@ -207,7 +207,6 @@ export function AdminConsole() {
 
         {tab === "plan" ? (
           <AdminBusinessPlan />
-        ) : tab === "interop" ? (
         ) : tab === "docs" ? (
           <AdminOfficialDrafts />
         ) : tab === "ai" ? (
