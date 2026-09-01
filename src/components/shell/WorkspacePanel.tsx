@@ -197,27 +197,9 @@ export function WorkspacePanel() {
         ) : null}
       </div>
 
-      {/* Mobil: tek uygulama tam ekran PWA kılıfı. */}
+      {/* Mobil/tablet: tek uygulama tam ekran kart olarak açılır. */}
       {isMobile && top ? (
-        <div className="tbos fixed inset-0 z-[70] flex flex-col bg-[var(--tb-bg)]">
-          <div
-            className="flex shrink-0 items-center justify-between gap-3 px-4 py-2.5"
-            style={{ borderBottom: "1px solid var(--border)" }}
-          >
-            <h2 className="truncate font-osmono text-[13px] text-[var(--tb-muted)]">{top.title}</h2>
-            <button
-              type="button"
-              onClick={() => closeWindow(top.id)}
-              aria-label="Kapat"
-              className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-[var(--tb-muted)]"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <AppSurface win={top} onLaunch={launch} onTransfer={() => launch("transfer")} />
-          </div>
-        </div>
+        <MobileAppShell win={top} onLaunch={launch} onTransfer={() => launch("transfer")} />
       ) : null}
 
       <Dock
