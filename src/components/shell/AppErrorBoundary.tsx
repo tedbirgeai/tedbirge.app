@@ -3,12 +3,22 @@
  * ------------------------------------------------------------------
  * Web-OS kabuğu ile içindeki uygulamaları birbirinden yalıtır: bir iç
  * panel (ayarlar, güvenlik, ağ, video) çökerse masaüstü ayakta kalır,
- * yalnız o pencere hata kartına düşer ve tek tıkla yeniden yüklenir.
+ * yalnız o pencere hata kartına düşer ve tek tıkla yeniden başlatılır.
+ * Hata sessizce yutulmaz; konsola ve Lovable hata kanalına iletilir.
  */
 
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
-type Props = { title?: string; children: ReactNode };
+import { announce } from "@/lib/shell/announce";
+import { reportLovableError } from "@/lib/lovable-error-reporting";
+
+type Props = {
+  /** Kart başlığı; genelde uygulama adı. */
+  title?: string;
+  /** Hata sınırının kapsadığı uygulama kimliği (raporlama için). */
+  appId?: string;
+  children: ReactNode;
+};
 type State = { error: Error | null; key: number; restarts: number };
 
 /** Kendiliğinden yeniden başlatma sınırı — sonsuz çökme döngüsü engellenir. */
@@ -24,9 +34,14 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // Kabuğu düşürmeden yalnız konsola bildir.
+    // Kabuğu düşürmeden bildir.
     console.error("[web-os] pencere hatası:", error, info.componentStack);
-    // Faz B: ilk iki çöküşte pencere kendini sessizce toparlar.
+    reportLovableError(error, {
+      boundary: "tbos_app_error_boundary",
+      app: this.props.appId ?? this.props.title ?? "bilinmiyor",
+    });
+    announce(`${this.props.title ?? "Uygulama"} yanıt vermedi, pencere yalıtıldı`);
+    // İlk iki çöküşte pencere kendini sessizce toparlar.
     if (this.state.restarts < AUTO_RESTART_LIMIT) {
       this.timer = setTimeout(() => this.reset(true), AUTO_RESTART_DELAY);
     }
@@ -45,25 +60,30 @@ export class AppErrorBoundary extends Component<Props, State> {
 
   render() {
     const { error, restarts } = this.state;
-    if (!error) return <div key={this.state.key}>{this.props.children}</div>;
+    if (!error) return <div key={this.state.key} className="contents">{this.props.children}</div>;
     const exhausted = restarts >= AUTO_RESTART_LIMIT;
     return (
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-200">
+      <div
+        role="alert"
+        className="m-4 rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-4 text-sm text-[var(--tb-text)]"
+      >
         <p className="font-medium">{this.props.title ?? "Bu pencere yüklenemedi"}</p>
-        <p className="mt-1 text-amber-200/70">
+        <p className="mt-1 text-[13px] leading-5 text-[var(--tb-muted)]">
           {exhausted
-            ? "Masaüstü çalışmaya devam ediyor. Bu pencere birkaç kez kendini toparlayamadı; elle yeniden açmayı deneyin."
-            : "Masaüstü çalışmaya devam ediyor. Pencere birkaç saniye içinde kendini yeniden başlatıyor…"}
+            ? "İşletim sistemi çalışmaya devam ediyor. Bu uygulama birkaç kez kendini toparlayamadı; aşağıdaki düğmeyle yeniden başlatabilirsiniz."
+            : "İşletim sistemi çalışmaya devam ediyor. Uygulama birkaç saniye içinde kendini yeniden başlatıyor…"}
+        </p>
+        <p className="mt-2 break-words font-osmono text-[11px] text-[var(--tb-muted)]">
+          {error.message}
         </p>
         <button
           type="button"
           onClick={() => this.reset(false)}
-          className="mt-3 rounded-md border border-amber-400/40 px-3 py-1.5 text-xs font-medium text-amber-100 transition-colors hover:bg-amber-400/10"
+          className="wa-press mt-3 min-h-12 rounded-xl border border-[var(--tb-border)] px-4 text-sm font-medium text-[var(--tb-text)]"
         >
-          Yeniden yükle
+          Uygulamayı Yeniden Başlat
         </button>
       </div>
     );
   }
 }
-

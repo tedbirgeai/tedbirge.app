@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 
 import { WindowEmpty } from "@/components/shell/WindowShell";
+import { ConfirmDialog } from "@/components/shell/ConfirmDialog";
+import { pushUndo } from "@/lib/shell/undo-stack";
 import { useShell } from "@/shell/shell-context";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
 import { notifyError, notifyOk } from "@/lib/shell/notify";
@@ -108,6 +110,7 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
   const [folder, setFolder] = useState<VfsFolder>("Belgeler");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     listFiles()
@@ -401,12 +404,7 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
                 <button
                   type="button"
                   className={btn}
-                  onClick={() => {
-                    void deleteFile(current.id).then(() => {
-                      setSelected(null);
-                      notifyOk("Silindi", current.name);
-                    });
-                  }}
+                  onClick={() => setConfirmDelete(current.id)}
                 >
                   <Trash2 className="h-3.5 w-3.5" aria-hidden /> Sil
                 </button>
@@ -415,6 +413,33 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
           ) : null}
         </div>
       </div>
+
+      {/* Nielsen #5: yıkıcı işlem iki aşamalı onay + geri alma ile korunur. */}
+      <ConfirmDialog
+        open={confirmDelete != null}
+        title="Dosya silinsin mi?"
+        description="Dosya cihazdaki sanal dosya sisteminden kaldırılacak. Silme işlemini Ctrl + Z ile geri alabilirsiniz."
+        confirmLabel="Sil"
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          const id = confirmDelete;
+          if (!id) return;
+          const entry = files.find((f) => f.id === id);
+          void readFile(id).then(async (file) => {
+            await deleteFile(id);
+            setSelected(null);
+            notifyOk("Silindi", entry?.name ?? "Dosya");
+            if (file) {
+              pushUndo({
+                label: `${entry?.name ?? "Dosya"} silindi`,
+                undo: async () => {
+                  await saveFiles([file]);
+                },
+              });
+            }
+          });
+        }}
+      />
     </div>
   );
 }

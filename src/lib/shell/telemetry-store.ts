@@ -100,3 +100,17 @@ export function formatUptime(sec: number): string {
   const ss = sec % 60;
   return [hh, mm, ss].map((n) => String(n).padStart(2, "0")).join(":");
 }
+
+/**
+ * Kaba taneli paylaşımlı tetikleyici: `everySec` saniyede bir değişen
+ * tamsayı döner. Bileşenler kendi `setInterval`'ini kurmaz; tek
+ * zamanlayıcıdan beslenir, ara saniyelerde yeniden render olmaz.
+ */
+export function useTick(everySec: number): number {
+  const step = Math.max(1, Math.round(everySec));
+  return useSyncExternalStore(
+    subscribe,
+    () => Math.floor(snapshot.uptimeSec / step),
+    () => 0,
+  );
+}

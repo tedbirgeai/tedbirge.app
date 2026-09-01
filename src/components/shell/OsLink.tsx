@@ -109,7 +109,7 @@ export function OsLink({
   }
   return (
     <a
-      href="#"
+      href={to}
       className={className}
       title={title}
       style={style}

@@ -17,6 +17,9 @@ import { PanelApp } from "@/components/shell/apps/PanelApp";
 import { ProfileApp } from "@/components/shell/apps/ProfileApp";
 
 import { WindowFrame } from "@/components/shell/WindowFrame";
+import { AppErrorBoundary } from "@/components/shell/AppErrorBoundary";
+import { WindowSwitcher } from "@/components/shell/WindowSwitcher";
+import { LiveRegion } from "@/components/shell/LiveRegion";
 import { Dock } from "@/components/shell/Dock";
 import { SystemBar } from "@/components/shell/SystemBar";
 import { Desktop } from "@/components/shell/Desktop";
@@ -159,20 +162,24 @@ export function WorkspacePanel() {
 
   return (
     <div className="tbos flex min-h-0 flex-1 flex-col">
-      <SystemBar
-        status={status.text}
+      <AppErrorBoundary title="Sistem çubuğu" appId="shell.systembar">
+        <SystemBar
+          status={status.text}
         peers={status.directPeers}
         rttMs={node.rttMs}
         onSettings={() => launch("settings")}
         onProfile={() => launch("profile")}
         onPersonalize={() => launch("wallpaper")}
-        onSearch={() => setSpotlight(true)}
-      />
+          onSearch={() => setSpotlight(true)}
+        />
+      </AppErrorBoundary>
 
 
       {/* Masaüstü yüzeyi: duvar kâğıdı, kısayollar ve pencereler. */}
       <div ref={surfaceRef} className="relative min-h-0 flex-1 overflow-hidden">
-        <Desktop onOpen={launch} onOpenNew={launchNew} />
+        <AppErrorBoundary title="Masaüstü" appId="shell.desktop">
+          <Desktop onOpen={launch} onOpenNew={launchNew} />
+        </AppErrorBoundary>
 
         {!isMobile && windows.length > 0 ? (
           <div className="pointer-events-none absolute inset-0">
@@ -197,7 +204,10 @@ export function WorkspacePanel() {
                 }}
               >
                 <WindowFrame win={w}>
-                  <AppSurface win={w} onLaunch={launch} onTransfer={() => launch("transfer")} />
+                  {/* Hata yalıtımı: uygulama çökse de kabuk ayakta kalır. */}
+                  <AppErrorBoundary title={w.title} appId={w.appId}>
+                    <AppSurface win={w} onLaunch={launch} onTransfer={() => launch("transfer")} />
+                  </AppErrorBoundary>
                 </WindowFrame>
               </div>
             ))}
@@ -210,12 +220,18 @@ export function WorkspacePanel() {
         <MobileAppShell win={top} onLaunch={launch} onTransfer={() => launch("transfer")} />
       ) : null}
 
-      <Dock
-        windows={windows}
-        onLaunch={launch}
-        onLaunchNew={launchNew}
-        onStore={() => launch("store")}
-      />
+
+      <AppErrorBoundary title="Görev çubuğu" appId="shell.dock">
+        <Dock
+          windows={windows}
+          onLaunch={launch}
+          onLaunchNew={launchNew}
+          onStore={() => launch("store")}
+        />
+      </AppErrorBoundary>
+
+      <WindowSwitcher surface={surfaceRef} />
+      <LiveRegion />
 
       <Spotlight open={spotlight} onClose={() => setSpotlight(false)} onLaunch={launch} />
 
@@ -311,7 +327,9 @@ function MobileAppShell({
         </button>
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <AppSurface win={win} onLaunch={onLaunch} onTransfer={onTransfer} />
+        <AppErrorBoundary title={win.title} appId={win.appId}>
+          <AppSurface win={win} onLaunch={onLaunch} onTransfer={onTransfer} />
+        </AppErrorBoundary>
       </div>
     </div>
   );

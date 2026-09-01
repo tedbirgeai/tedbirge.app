@@ -106,9 +106,14 @@ function nativeStorageHal(): StorageHal {
  */
 export async function detectNativeHal(): Promise<NativeHalReport | null> {
   if (typeof window === "undefined" || report) return report;
+  // Web dağıtımında yerel kabuk yoktur: 404 üreten gereksiz istek atılmaz,
+  // konsol temiz kalır. Yalnız native kabuk (Tauri/Capacitor) yoklanır.
+  const shell = window as Window & { __TAURI__?: unknown; Capacitor?: unknown };
+  if (!shell.__TAURI__ && !shell.Capacitor) return null;
   try {
     const res = await fetch("/hal/report", { cache: "no-store" });
     if (!res.ok) return null;
+
     const body = (await res.json()) as Partial<NativeHalReport>;
     if (body.target !== "native") return null;
     report = body as NativeHalReport;

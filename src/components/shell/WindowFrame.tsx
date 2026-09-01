@@ -9,8 +9,10 @@
 
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
@@ -75,6 +77,46 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
     raf: number;
   } | null>(null);
   const [snap, setSnap] = useState<SnapBox | null>(null);
+  const opener = useRef<Element | null>(null);
+
+  /**
+   * ISO 9241-171 odak yönetimi: pencere açılınca odak başlığa taşınır,
+   * kapanınca çağıran öğeye döner.
+   */
+  useEffect(() => {
+    opener.current = typeof document === "undefined" ? null : document.activeElement;
+    const el = root.current;
+    el?.focus({ preventScroll: true });
+    return () => {
+      const back = opener.current as HTMLElement | null;
+      if (back && typeof back.focus === "function" && document.contains(back)) {
+        back.focus({ preventScroll: true });
+      }
+    };
+  }, []);
+
+  /** Tab döngüsü aktif pencerenin içinde kalır. */
+  const trapTab = useCallback((e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab") return;
+    const el = root.current;
+    if (!el) return;
+    const nodes = Array.from(
+      el.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((n) => n.offsetParent !== null);
+    if (!nodes.length) return;
+    const first = nodes[0]!;
+    const last = nodes[nodes.length - 1]!;
+    const active = document.activeElement as HTMLElement | null;
+    if (e.shiftKey && (active === first || active === el)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }, []);
 
   const area = useCallback(() => {
     const parent = root.current?.parentElement;
@@ -229,6 +271,8 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
         className="tbos-window absolute flex min-h-0 flex-col overflow-hidden rounded-2xl shadow-2xl"
         style={style}
         onPointerDown={() => focusWindow(win.id)}
+        onKeyDown={trapTab}
+        tabIndex={-1}
         role="dialog"
         aria-label={win.title}
       >

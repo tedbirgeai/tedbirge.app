@@ -13,8 +13,9 @@ import { NodeSettingsPanel } from "@/components/shell/NodeSettingsPanel";
 import { WallpaperSettingsApp } from "@/components/shell/apps/WallpaperSettingsApp";
 import { AuthPanel } from "@/components/shell/apps/AuthPanel";
 import { useDeviceScopeLabel } from "@/hooks/use-device-label";
+import { SHELL_SHORTCUTS } from "@/lib/shell/shortcuts";
 
-type TabId = "sistem" | "guvenlik" | "gorunum" | "hesap" | "gizlilik";
+type TabId = "sistem" | "guvenlik" | "gorunum" | "hesap" | "gizlilik" | "kisayol";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "sistem", label: "Sistem" },
@@ -22,6 +23,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "gorunum", label: "Görünüm" },
   { id: "hesap", label: "Hesap" },
   { id: "gizlilik", label: "Gizlilik" },
+  { id: "kisayol", label: "Kısayollar" },
 ];
 
 export function AyarlarApp() {
@@ -62,6 +64,7 @@ export function AyarlarApp() {
           )}
           {tab === "hesap" && <AuthPanel />}
           {tab === "gizlilik" && <PrivacyTab />}
+          {tab === "kisayol" && <ShortcutsTab />}
         </div>
       </div>
     </WindowShell>
@@ -106,5 +109,28 @@ function PrivacyTab() {
         ))}
       </ul>
     </div>
+  );
+}
+
+/** Klavye kısayolları: tek kaynaktan (shortcuts.ts) listelenir. */
+function ShortcutsTab() {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-sm font-semibold text-[var(--tb-text)]">Klavye kısayolları</h2>
+      <p className="text-[13px] leading-5 text-[var(--tb-muted)]">
+        Deneyimli kullanıcılar için hızlandırıcılar. Super tuşu Windows klavyelerinde ⊞, Mac
+        klavyelerinde ⌘ tuşudur.
+      </p>
+      <ul className="divide-y divide-[var(--tb-border)] rounded-xl border border-[var(--tb-border)]">
+        {SHELL_SHORTCUTS.map((s) => (
+          <li key={s.keys} className="flex min-h-12 items-center justify-between gap-3 px-3 py-2">
+            <span className="text-[13px] text-[var(--tb-text)]">{s.label}</span>
+            <kbd className="shrink-0 rounded-md border border-[var(--tb-border)] px-2 py-1 font-osmono text-[11px] text-[var(--tb-muted)]">
+              {s.keys}
+            </kbd>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

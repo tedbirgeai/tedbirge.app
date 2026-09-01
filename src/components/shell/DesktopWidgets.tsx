@@ -12,6 +12,7 @@ import { ChevronRight, Focus, GripVertical, HardDrive, Radio, X } from "lucide-r
 import { useFocusMode, setFocusMode } from "@/lib/shell/focus-mode";
 import { useNetworkMode, NETWORK_MODES } from "@/lib/shell/network-mode";
 import { notifyOk } from "@/lib/shell/notify";
+import { useTick } from "@/lib/shell/telemetry-store";
 import { onVfsChange, storageUsage, type StorageUsage } from "@/lib/vfs/store";
 import { useShell } from "@/shell/shell-context";
 
@@ -54,6 +55,7 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
   } | null>(null);
 
   const box = useRef<HTMLElement>(null);
+  const tick = useTick(30);
 
   useEffect(() => {
     setPos(readPos());
@@ -70,12 +72,9 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
     };
     read();
     const off = onVfsChange(read);
-    const t = window.setInterval(read, 30000);
-    return () => {
-      off();
-      window.clearInterval(t);
-    };
-  }, []);
+    return off;
+    // Paylaşımlı 30 sn tetikleyicisi ayrı zamanlayıcı ihtiyacını kaldırır.
+  }, [tick]);
 
   const direct = node.peers.filter((p) => p.direct).length;
   const modeLabel = NETWORK_MODES.find((m) => m.id === mode)?.label ?? "Küresel İnternet";

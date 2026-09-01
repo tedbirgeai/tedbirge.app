@@ -11,6 +11,9 @@
 
 import { useSyncExternalStore } from "react";
 
+import { announce } from "@/lib/shell/announce";
+import { pushUndo } from "@/lib/shell/undo-stack";
+
 export type WindowRecord = {
   /** Örnek kimliği (aynı uygulamadan birden çok pencere açılabilir). */
   id: string;
@@ -86,12 +89,19 @@ export function openWindow(appId: string, title: string, fresh = false): string 
     { id, appId, title, z: zTop, maximized: false, minimized: false, ...nextGeometry(seq) },
   ];
   emit();
+  announce(`${title} açıldı`);
   return id;
 }
 
 export function closeWindow(id: string) {
+  const closed = windows.find((w) => w.id === id);
   windows = windows.filter((w) => w.id !== id);
   emit();
+  if (closed) {
+    // Nielsen #3: kapatma geri alınabilir (Ctrl + Z).
+    pushUndo({ label: `${closed.title} kapatıldı`, undo: () => reopenWindow(closed) });
+    announce(`${closed.title} kapatıldı`);
+  }
 }
 
 export function focusWindow(id: string) {
@@ -170,4 +180,44 @@ export function placeWindow(id: string, x: number, y: number, w: number, h: numb
   );
   emit();
   focusWindow(id);
+}
+
+/** Tüm pencerelerin anlık listesi (React dışı okumalar için). */
+export function getWindows(): WindowRecord[] {
+  return windows;
+}
+
+/** Odaklanmış (en üstteki, küçültülmemiş) pencere. */
+export function activeWindow(): WindowRecord | null {
+  const visible = windows.filter((w) => !w.minimized);
+  if (!visible.length) return null;
+  return visible.reduce((a, b) => (a.z > b.z ? a : b));
+}
+
+/**
+ * Kapatılan pencereyi aynı kimlik ve geometriyle geri getirir.
+ * Geri alma yığını (Ctrl + Z) tarafından kullanılır.
+ */
+export function reopenWindow(rec: WindowRecord) {
+  if (windows.some((w) => w.id === rec.id)) return;
+  zTop += 1;
+  windows = [...windows, { ...rec, z: zTop, minimized: false }];
+  emit();
+}
+
+/** Tüm pencereleri küçültür; geri getirmek için önceki durum döner. */
+export function minimizeAll(): string[] {
+  const ids = windows.filter((w) => !w.minimized).map((w) => w.id);
+  if (!ids.length) return [];
+  windows = windows.map((w) => (w.minimized ? w : { ...w, minimized: true }));
+  emit();
+  return ids;
+}
+
+/** Verilen pencereleri yeniden görünür yapar. */
+export function restoreMany(ids: string[]) {
+  if (!ids.length) return;
+  const set = new Set(ids);
+  windows = windows.map((w) => (set.has(w.id) ? { ...w, minimized: false } : w));
+  emit();
 }
