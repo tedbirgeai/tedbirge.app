@@ -230,7 +230,7 @@ export const Route = createFileRoute("/api/public/iso")({
           { name: "OKUBENI.txt", data: buildReadme(origin) },
         ]);
 
-        return new Response(zip, {
+        return new Response(zip.buffer as ArrayBuffer, {
           status: 200,
           headers: {
             "Content-Type": "application/zip",
