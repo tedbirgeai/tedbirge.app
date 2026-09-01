@@ -105,11 +105,20 @@ export function IsoGuideDialog({ open, onClose }: { open: boolean; onClose: () =
           ))}
         </ol>
 
-        <p className="mt-4 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] p-3 font-osmono text-[11px] leading-relaxed text-[var(--tb-muted)]">
-          Yayın paketinde hazır imaj yoksa indirilen dosya, imajı kendi
-          makinenizde tek tıkla üreten kurulum kitidir. Sahte bir .iso asla
-          üretilmez.
+        <a
+          href="/tedbirge-webos-v1.0-x86_64.iso"
+          download
+          className="wa-press mt-4 flex min-h-12 items-center justify-center rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-[12px] text-[var(--tb-text)]"
+        >
+          Doğrudan hazır .iso kalıbını indir
+        </a>
+
+        <p className="mt-3 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] p-3 font-osmono text-[11px] leading-relaxed text-[var(--tb-muted)]">
+          Hazır kalıp yayında yoksa bu bağlantı çalışmaz; o durumda yukarıdaki
+          kurulum kiti imajı kendi makinenizde tek tıkla üretir. Sahte bir .iso
+          asla üretilmez.
         </p>
+
 
       </div>
     </div>

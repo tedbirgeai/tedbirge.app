@@ -1,6 +1,9 @@
-import { Link } from "@/components/shell/OsLink";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { openWindow } from "@/shell/windows";
+import { notify, notifyError, notifyOk } from "@/lib/shell/notify";
+import { promptInstall } from "@/lib/pwa-install";
+
 import { SectionLabel } from "@/components/site/SiteChrome";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { createPortalSession } from "@/utils/payments.functions";
@@ -120,63 +123,88 @@ const TABS: { id: TabId; label: string; needs?: "operate" | "manage" }[] = [
   { id: "ayarlar", label: "Ayarlar" },
 ];
 
-/** Cep telefonunun paneldeki rolünü netleştiren bilgi kartı.
- *  Telefon bir düğüm değil, yönetim/izleme istasyonudur. */
+/** Cep telefonunun paneldeki rolünü netleştiren kart.
+ *  Telefon bir düğüm değil, yönetim/izleme istasyonudur. Kurulum artık
+ *  silinmiş bir rota yerine kabuğun kendi PWA kurulum akışını kullanır. */
 function MobileStationCard() {
   const [origin, setOrigin] = useState("");
+  const [busy, setBusy] = useState(false);
   useEffect(() => setOrigin(window.location.origin), []);
-  const sahaLink = origin ? `${origin}/saha` : "https://tedbirge-app.lovable.app/saha";
+  const shellLink = origin || "https://tedbirge-app.lovable.app";
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(shellLink);
+      notifyOk("Bağlantı kopyalandı", shellLink);
+    } catch {
+      notifyError("Kopyalanamadı", "Tarayıcı pano erişimine izin vermedi.");
+    }
+  };
+
+  const install = async () => {
+    setBusy(true);
+    try {
+      const r = await promptInstall();
+      if (r === "accepted") notifyOk("Kurulum başladı", "Tedbirge® WebOS ana ekrana ekleniyor.");
+      else if (r === "dismissed") notify("Kurulum iptal edildi");
+      else
+        notify(
+          "Kurulum menüsünü kullanın",
+          "iPhone: Paylaş → Ana Ekrana Ekle · Android: menü → Uygulamayı yükle",
+        );
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <div className="rounded-sm border border-primary/30 bg-primary/5 p-6">
+    <div className="rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
+          <p className="font-osmono text-xs uppercase tracking-[0.2em] text-[var(--tb-accent)]">
             Cep telefonu / tablet
           </p>
-          <h2 className="mt-2 text-xl font-semibold tracking-tight">Uygulamayı telefona ekleyin</h2>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Telefon ve tablet, yukarıdaki{" "}
-            <strong className="text-foreground">tarayıcı düğümü</strong> ile donanımsız çalışan
-            gerçek bir düğüme dönüşür; ayrıca yönetim/izleme istasyonudur. Uzun menzil
-            (LoRa/HaLow/TVWS) istiyorsanız o taşıyıcıya ait radyo modülünü ayrıca eklersiniz.
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-[var(--tb-text)]">
+            Uygulamayı telefona ekleyin
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--tb-muted)]">
+            Telefon ve tablet, tarayıcı düğümü ile donanımsız çalışan gerçek bir düğüme dönüşür;
+            ayrıca yönetim/izleme istasyonudur. Uzun menzil (LoRa/HaLow/TVWS) için o taşıyıcıya ait
+            radyo modülünü ayrıca eklersiniz.
           </p>
-          <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-            <li>Bilgisayardaki düğümü başlatın (lisans anahtarı + node-id ile).</li>
-            <li>Telefonda aşağıdaki linki açın ve “Ana ekrana ekle” deyin.</li>
-            <li>Paneldeki düğüm “çevrimiçi” olur; telefondan izleyin.</li>
-          </ol>
         </div>
-        <div className="min-w-[16rem] rounded-sm border border-border bg-card/50 p-5">
-          <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-            Mobil erişim linki
+        <div className="min-w-[16rem] rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel-solid)] p-5">
+          <p className="font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-muted)]">
+            Kabuk adresi
           </p>
-          <p className="mt-2 break-all font-mono text-sm text-foreground">{sahaLink}</p>
+          <p className="mt-2 break-all font-osmono text-sm text-[var(--tb-text)]">{shellLink}</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <a
-              href={sahaLink}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-sm bg-primary px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-primary-foreground"
-            >
-              Telefonda aç
-            </a>
             <button
-              onClick={() => void navigator.clipboard.writeText(sahaLink)}
-              className="rounded-sm border border-border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+              type="button"
+              onClick={() => void install()}
+              disabled={busy}
+              className="min-h-12 rounded-xl bg-[var(--tb-accent)] px-4 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-panel-solid)] disabled:opacity-50"
+            >
+              Telefona kur
+            </button>
+            <button
+              type="button"
+              onClick={() => void copy()}
+              className="min-h-12 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-text)]"
             >
               Linki kopyala
             </button>
           </div>
-          <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
-            iPhone kullanıyorsanız Safari ile açıp paylaş menüsünden “Ana Ekrana Ekle” seçin.
-            Android’de Chrome menüden “Uygulamayı yükle” yeterlidir.
+          <p className="mt-4 text-[11px] leading-relaxed text-[var(--tb-muted)]">
+            iPhone: Safari → Paylaş → “Ana Ekrana Ekle”. Android: Chrome menüsü → “Uygulamayı
+            yükle”.
           </p>
         </div>
       </div>
     </div>
   );
 }
+
 
 const RADIO_CARRIERS = new Set(["lora", "halow", "tvws", "wifi", "wigig", "fso"]);
 
@@ -434,10 +462,22 @@ export function PanelApp() {
           environment: getPaddleEnvironment(),
         },
       });
-      window.open(url, "_blank");
+      window.open(url, "_blank", "noopener");
+    } catch {
+      notifyError("Ödeme portalı açılamadı", "İnternet bağlantınızı kontrol edip tekrar deneyin.");
     } finally {
       setPortalBusy(false);
     }
+  }
+
+  /** Aboneliği olan kullanıcı portala, olmayan Mağaza penceresine gider. */
+  async function managePlan() {
+    if (subscription?.paddle_customer_id) {
+      await openPortal();
+      return;
+    }
+    openWindow("store", "Uygulama Mağazası");
+    notify("Plan yükseltme", "Mağaza penceresinden paketinizi seçebilirsiniz.");
   }
 
   const active =
@@ -471,12 +511,14 @@ export function PanelApp() {
               Düğüm {activeDeviceCount}/{nodeLimit}
             </span>
             {isAdmin && (
-              <Link
-                to="/yonetim"
-                className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+              <button
+                type="button"
+                onClick={() => setTab(canManage ? "yonetim" : "ayarlar")}
+                className="min-h-12 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-xs uppercase tracking-[0.15em] text-[var(--tb-text)]"
               >
                 Yönetim ekranı
-              </Link>
+              </button>
+
             )}
           </div>
         </header>
@@ -489,7 +531,7 @@ export function PanelApp() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 aria-current={tab === t.id ? "page" : undefined}
-                className={`shrink-0 rounded-sm px-3 py-2 font-mono text-[11px] uppercase tracking-[0.15em] transition-colors ${
+                className={`min-h-12 shrink-0 rounded-xl px-4 font-osmono text-[11px] uppercase tracking-[0.15em] transition-colors ${
                   tab === t.id
                     ? "bg-primary text-primary-foreground"
                     : "border border-border text-muted-foreground hover:bg-secondary"
@@ -529,10 +571,12 @@ export function PanelApp() {
                       : `${nodeLimit - activeDeviceCount} düğüm hakkınız kaldı; yeni cihazı QR ile saniyeler içinde ekleyin.`}
                   </p>
                   <button
-                    onClick={() => setTab(canManage ? "yonetim" : "ayarlar")}
-                    className="mt-4 rounded-sm border border-border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                    type="button"
+                    onClick={() => void managePlan()}
+                    disabled={portalBusy}
+                    className="mt-4 min-h-12 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-text)] disabled:opacity-50"
                   >
-                    Planı yönet
+                    {portalBusy ? "Açılıyor…" : "Planı yönet"}
                   </button>
                 </div>
 
@@ -616,18 +660,20 @@ export function PanelApp() {
                     </h2>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Link
-                      to="/saha-raporu"
-                      className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                    <button
+                      type="button"
+                      onClick={() => setTab("kalibrasyon")}
+                      className="min-h-12 rounded-xl border border-[var(--tb-border)] px-3 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-text)]"
                     >
                       Saha raporu
-                    </Link>
-                    <Link
-                      to="/api-dokumantasyon"
-                      className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openWindow("sysinfo", "Sistem Bilgisi")}
+                      className="min-h-12 rounded-xl border border-[var(--tb-border)] px-3 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-text)]"
                     >
                       Telemetri API'si
-                    </Link>
+                    </button>
                   </div>
                 </div>
 
@@ -695,14 +741,14 @@ export function PanelApp() {
                                       )
                                     }
                                     disabled={busyId === d.id}
-                                    className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
+                                    className="min-h-12 rounded-xl border border-[var(--tb-border)] px-3 font-osmono text-[10px] uppercase tracking-[0.15em] text-[var(--tb-text)] disabled:opacity-50"
                                   >
                                     {d.status === "active" ? "İptal et" : "Yeniden aç"}
                                   </button>
                                   <button
                                     onClick={() => removeDevice(d.id)}
                                     disabled={busyId === d.id}
-                                    className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
+                                    className="min-h-12 rounded-xl border border-[var(--tb-border)] px-3 font-osmono text-[10px] uppercase tracking-[0.15em] text-[var(--tb-text)] disabled:opacity-50"
                                   >
                                     Sil
                                   </button>
@@ -854,21 +900,22 @@ export function PanelApp() {
                     <button
                       key={l.id}
                       onClick={() => downloadLicense(l)}
-                      className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                      className="min-h-12 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-xs uppercase tracking-[0.15em] text-[var(--tb-text)]"
                     >
                       {l.plan} .env indir
                     </button>
                   ))}
-                  <Link
-                    to="/dokumanlar"
-                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                  <button
+                    type="button"
+                    onClick={() => openWindow("sysinfo", "Sistem Bilgisi")}
+                    className="min-h-12 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-xs uppercase tracking-[0.15em] text-[var(--tb-text)]"
                   >
                     Dokümanlar
-                  </Link>
+                  </button>
                   <a
                     href="/tedbirge-teknik-ozet.md"
                     download
-                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                    className="inline-flex min-h-12 items-center rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-xs uppercase tracking-[0.15em] text-[var(--tb-text)]"
                   >
                     Teknik özet (.md)
                   </a>
@@ -938,18 +985,24 @@ TEDBIRGE_NODE_LIMIT=${l.node_limit}
   a.download = "tedbirge.env";
   a.click();
   URL.revokeObjectURL(url);
+  notifyOk("Lisans dosyası indirildi", `${l.plan} · tedbirge.env`);
 }
 
 function CopyButton({ value, label }: { value: string; label: string }) {
   const [done, setDone] = useState(false);
   return (
     <button
+      type="button"
       onClick={async () => {
-        await navigator.clipboard.writeText(value);
-        setDone(true);
-        setTimeout(() => setDone(false), 1600);
+        try {
+          await navigator.clipboard.writeText(value);
+          setDone(true);
+          setTimeout(() => setDone(false), 1600);
+        } catch {
+          notifyError("Kopyalanamadı", "Tarayıcı pano erişimine izin vermedi.");
+        }
       }}
-      className="shrink-0 rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+      className="min-h-12 shrink-0 rounded-xl border border-[var(--tb-border)] px-3 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-text)]"
     >
       {done ? "Kopyalandı" : label}
     </button>
