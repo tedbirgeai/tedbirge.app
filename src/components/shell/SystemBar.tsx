@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/components/shell/OsLink";
 import { Search, Settings, UserRound, Wifi } from "lucide-react";
 
 import { BareMetalIsoButton } from "@/components/shell/BareMetalIso";

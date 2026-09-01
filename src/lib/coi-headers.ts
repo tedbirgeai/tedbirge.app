@@ -11,7 +11,7 @@
  */
 
 /** Yalıtım uygulanacak WebOS rota önekleri. */
-export const ISOLATED_PREFIXES = ["/", "/chat", "/app", "/system", "/dashboard"] as const;
+export const ISOLATED_PREFIXES = ["/", "/chat"] as const;
 
 export function isIsolatedPath(pathname: string): boolean {
   if (pathname === "/") return true;

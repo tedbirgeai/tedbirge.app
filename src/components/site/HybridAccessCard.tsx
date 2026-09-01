@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/components/shell/OsLink";
 import { describeTier, joinUrl, scanLocalNetwork, useAccessTier } from "@/lib/access-tiers";
 import { ensureOfflineGrant, type OfflineGrant } from "@/lib/offline-license";
 

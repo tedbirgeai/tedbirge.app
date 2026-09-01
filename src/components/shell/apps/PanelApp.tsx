@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "@/components/shell/OsLink";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { SectionLabel } from "@/components/site/SiteChrome";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { createPortalSession } from "@/utils/payments.functions";
 import { setDeviceStatus as setDeviceStatusFn, deleteDevice } from "@/lib/devices.functions";
@@ -49,26 +49,6 @@ import { PanelCommerce } from "@/components/site/PanelCommerce";
 import { DiagnosticsPanel } from "@/components/site/DiagnosticsPanel";
 import { PanelEnergy } from "@/components/site/PanelEnergy";
 
-export const Route = createFileRoute("/_authenticated/panel")({
-  head: () => ({
-    meta: [
-      { title: "Hesabım — tedbirge.app" },
-      {
-        name: "description",
-        content:
-          "Tedbirge lisans anahtarlarınızı, düğümlerinizi ve sistem sağlığınızı tek ekrandan yönetin.",
-      },
-      { property: "og:title", content: "Hesabım — tedbirge.app" },
-      {
-        property: "og:description",
-        content: "Lisans, düğüm, canlı akış ve sistem sağlığı yönetimi.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: Panel,
-});
 
 type Subscription = {
   id: string;
@@ -328,7 +308,7 @@ function Readiness({ label, ready, detail }: { label: string; ready: boolean; de
   );
 }
 
-function Panel() {
+export function PanelApp() {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin(user?.id);
   const { role, canOperate, canManage } = usePanelRole(user?.id);
@@ -474,7 +454,7 @@ function Panel() {
   }));
 
   return (
-    <SitePage>
+    <div className="tbos flex min-h-0 flex-1 flex-col overflow-y-auto pb-24">
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:flex-wrap sm:justify-between">
           <div className="min-w-0">
@@ -917,7 +897,7 @@ function Panel() {
           )}
         </div>
       </section>
-    </SitePage>
+    </div>
   );
 }
 

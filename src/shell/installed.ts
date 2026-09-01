@@ -47,6 +47,27 @@ export const LOCAL_APPS: CatalogApp[] = [
     builtin: true,
   },
   {
+    id: "settings",
+    label: "Ayarlar",
+    hint: "Sistem, güvenlik, hesap ve görünüm",
+    category: "sistem",
+    builtin: true,
+  },
+  {
+    id: "sysinfo",
+    label: "Sistem Bilgisi",
+    hint: "Kurumsal, sürüm, protokol ve yasal",
+    category: "sistem",
+    builtin: true,
+  },
+  {
+    id: "panel",
+    label: "Panel",
+    hint: "Lisans, düğüm ve saha yönetimi",
+    category: "sistem",
+    builtin: true,
+  },
+  {
     id: "wallpaper",
     label: "Görünüm",
     hint: "Duvar kâğıdı ve tema",

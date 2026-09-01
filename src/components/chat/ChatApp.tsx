@@ -8,9 +8,8 @@ import { COMMUNITY_NODE_LIMIT } from "@/lib/paddle-catalog";
 import { DesktopRail } from "@/components/chat/DesktopRail";
 import { NewChatSheet } from "@/components/chat/NewChatSheet";
 import { SplashScreen } from "@/components/chat/SplashScreen";
-import { AiAdvisor } from "@/components/site/AiAdvisor";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/components/shell/OsLink";
 import { toast } from "sonner";
 
 import {
@@ -2337,7 +2336,6 @@ function ChatAppInner() {
       />
 
       {/* AI danışman: arama çubuğundaki "AI'ye Sor" ile açılır. */}
-      <AiAdvisor hideLauncher />
     </div>
   );
 }

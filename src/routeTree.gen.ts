@@ -10,54 +10,16 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as YasalRouteImport } from './routes/yasal'
-import { Route as UyumlulukRouteImport } from './routes/uyumluluk'
-import { Route as UrunRouteImport } from './routes/urun'
-import { Route as TurkiyeMevzuatRouteImport } from './routes/turkiye-mevzuat'
-import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
-import { Route as SystemRouteImport } from './routes/system'
 import { Route as SohbetRouteImport } from './routes/sohbet'
-import { Route as SertifikasyonRouteImport } from './routes/sertifikasyon'
-import { Route as SahaRouteImport } from './routes/saha'
-import { Route as ProtokolRouteImport } from './routes/protokol'
-import { Route as PilotPanosuRouteImport } from './routes/pilot-panosu'
-import { Route as MevzuatRouteImport } from './routes/mevzuat'
-import { Route as KurumsalRouteImport } from './routes/kurumsal'
-import { Route as KurRouteImport } from './routes/kur'
 import { Route as KosullarRouteImport } from './routes/kosullar'
-import { Route as KayitRouteImport } from './routes/kayit'
-import { Route as KatilRouteImport } from './routes/katil'
-import { Route as KarsilastirmaRouteImport } from './routes/karsilastirma'
-import { Route as KapsamaRouteImport } from './routes/kapsama'
-import { Route as KablosuzSarjRouteImport } from './routes/kablosuz-sarj'
-import { Route as IzinlerRouteImport } from './routes/izinler'
-import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
 import { Route as IadeRouteImport } from './routes/iade'
-import { Route as HibritModelRouteImport } from './routes/hibrit-model'
-import { Route as HakkimizdaRouteImport } from './routes/hakkimizda'
-import { Route as GuvenlikRouteImport } from './routes/guvenlik'
 import { Route as GizlilikRouteImport } from './routes/gizlilik'
-import { Route as GirisRouteImport } from './routes/giris'
-import { Route as FiyatlandirmaRouteImport } from './routes/fiyatlandirma'
-import { Route as EnerjiRouteImport } from './routes/enerji'
-import { Route as EnRouteImport } from './routes/en'
-import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
-import { Route as DemoRouteImport } from './routes/demo'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CevrimdisiRouteImport } from './routes/cevrimdisi'
-import { Route as AppRouteImport } from './routes/app'
-import { Route as ApiDokumantasyonRouteImport } from './routes/api-dokumantasyon'
-import { Route as AfetKamuRouteImport } from './routes/afet-kamu'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as RehberIndexRouteImport } from './routes/rehber.index'
-import { Route as RehberSlugRouteImport } from './routes/rehber.$slug'
 import { Route as ApiTranslateRouteImport } from './routes/api/translate'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
-import { Route as AuthenticatedSahaRaporuRouteImport } from './routes/_authenticated/saha-raporu'
-import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as ApiPublicRelayRouteImport } from './routes/api/public/relay'
 import { Route as ApiPublicQueueRouteImport } from './routes/api/public/queue'
@@ -68,7 +30,6 @@ import { Route as ApiPublicIsoRouteImport } from './routes/api/public/iso'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicGecitRouteImport } from './routes/api/public/gecit'
 import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
-import { Route as AuthenticatedTeklifIdRouteImport } from './routes/_authenticated/teklif.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicCronOfflineCheckRouteImport } from './routes/api/public/cron/offline-check'
 
@@ -77,109 +38,14 @@ const YasalRoute = YasalRouteImport.update({
   path: '/yasal',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UyumlulukRoute = UyumlulukRouteImport.update({
-  id: '/uyumluluk',
-  path: '/uyumluluk',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const UrunRoute = UrunRouteImport.update({
-  id: '/urun',
-  path: '/urun',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TurkiyeMevzuatRoute = TurkiyeMevzuatRouteImport.update({
-  id: '/turkiye-mevzuat',
-  path: '/turkiye-mevzuat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TasiyicilarRoute = TasiyicilarRouteImport.update({
-  id: '/tasiyicilar',
-  path: '/tasiyicilar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SystemRoute = SystemRouteImport.update({
-  id: '/system',
-  path: '/system',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SohbetRoute = SohbetRouteImport.update({
   id: '/sohbet',
   path: '/sohbet',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SertifikasyonRoute = SertifikasyonRouteImport.update({
-  id: '/sertifikasyon',
-  path: '/sertifikasyon',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SahaRoute = SahaRouteImport.update({
-  id: '/saha',
-  path: '/saha',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProtokolRoute = ProtokolRouteImport.update({
-  id: '/protokol',
-  path: '/protokol',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PilotPanosuRoute = PilotPanosuRouteImport.update({
-  id: '/pilot-panosu',
-  path: '/pilot-panosu',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MevzuatRoute = MevzuatRouteImport.update({
-  id: '/mevzuat',
-  path: '/mevzuat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KurumsalRoute = KurumsalRouteImport.update({
-  id: '/kurumsal',
-  path: '/kurumsal',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KurRoute = KurRouteImport.update({
-  id: '/kur',
-  path: '/kur',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const KosullarRoute = KosullarRouteImport.update({
   id: '/kosullar',
   path: '/kosullar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KayitRoute = KayitRouteImport.update({
-  id: '/kayit',
-  path: '/kayit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KatilRoute = KatilRouteImport.update({
-  id: '/katil',
-  path: '/katil',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KarsilastirmaRoute = KarsilastirmaRouteImport.update({
-  id: '/karsilastirma',
-  path: '/karsilastirma',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KapsamaRoute = KapsamaRouteImport.update({
-  id: '/kapsama',
-  path: '/kapsama',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KablosuzSarjRoute = KablosuzSarjRouteImport.update({
-  id: '/kablosuz-sarj',
-  path: '/kablosuz-sarj',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IzinlerRoute = IzinlerRouteImport.update({
-  id: '/izinler',
-  path: '/izinler',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IletisimRoute = IletisimRouteImport.update({
-  id: '/iletisim',
-  path: '/iletisim',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IhracatUyumRoute = IhracatUyumRouteImport.update({
@@ -192,59 +58,9 @@ const IadeRoute = IadeRouteImport.update({
   path: '/iade',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HibritModelRoute = HibritModelRouteImport.update({
-  id: '/hibrit-model',
-  path: '/hibrit-model',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HakkimizdaRoute = HakkimizdaRouteImport.update({
-  id: '/hakkimizda',
-  path: '/hakkimizda',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GuvenlikRoute = GuvenlikRouteImport.update({
-  id: '/guvenlik',
-  path: '/guvenlik',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const GizlilikRoute = GizlilikRouteImport.update({
   id: '/gizlilik',
   path: '/gizlilik',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GirisRoute = GirisRouteImport.update({
-  id: '/giris',
-  path: '/giris',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FiyatlandirmaRoute = FiyatlandirmaRouteImport.update({
-  id: '/fiyatlandirma',
-  path: '/fiyatlandirma',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EnerjiRoute = EnerjiRouteImport.update({
-  id: '/enerji',
-  path: '/enerji',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EnRoute = EnRouteImport.update({
-  id: '/en',
-  path: '/en',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DokumanlarRoute = DokumanlarRouteImport.update({
-  id: '/dokumanlar',
-  path: '/dokumanlar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoRoute = DemoRouteImport.update({
-  id: '/demo',
-  path: '/demo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -257,38 +73,9 @@ const CevrimdisiRoute = CevrimdisiRouteImport.update({
   path: '/cevrimdisi',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/app',
-  path: '/app',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiDokumantasyonRoute = ApiDokumantasyonRouteImport.update({
-  id: '/api-dokumantasyon',
-  path: '/api-dokumantasyon',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AfetKamuRoute = AfetKamuRouteImport.update({
-  id: '/afet-kamu',
-  path: '/afet-kamu',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RehberIndexRoute = RehberIndexRouteImport.update({
-  id: '/rehber/',
-  path: '/rehber/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RehberSlugRoute = RehberSlugRouteImport.update({
-  id: '/rehber/$slug',
-  path: '/rehber/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTranslateRoute = ApiTranslateRouteImport.update({
@@ -300,21 +87,6 @@ const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedYonetimRoute = AuthenticatedYonetimRouteImport.update({
-  id: '/yonetim',
-  path: '/yonetim',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSahaRaporuRoute = AuthenticatedSahaRaporuRouteImport.update({
-  id: '/saha-raporu',
-  path: '/saha-raporu',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
-  id: '/panel',
-  path: '/panel',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
   id: '/api/public/telemetry',
@@ -366,11 +138,6 @@ const ApiPublicEnrollRoute = ApiPublicEnrollRouteImport.update({
   path: '/api/public/enroll',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedTeklifIdRoute = AuthenticatedTeklifIdRouteImport.update({
-  id: '/teklif/$id',
-  path: '/teklif/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -386,54 +153,16 @@ const ApiPublicCronOfflineCheckRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/afet-kamu': typeof AfetKamuRoute
-  '/api-dokumantasyon': typeof ApiDokumantasyonRoute
-  '/app': typeof AppRoute
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
-  '/dashboard': typeof DashboardRoute
-  '/demo': typeof DemoRoute
-  '/dokumanlar': typeof DokumanlarRoute
-  '/en': typeof EnRoute
-  '/enerji': typeof EnerjiRoute
-  '/fiyatlandirma': typeof FiyatlandirmaRoute
-  '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
-  '/guvenlik': typeof GuvenlikRoute
-  '/hakkimizda': typeof HakkimizdaRoute
-  '/hibrit-model': typeof HibritModelRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
-  '/iletisim': typeof IletisimRoute
-  '/izinler': typeof IzinlerRoute
-  '/kablosuz-sarj': typeof KablosuzSarjRoute
-  '/kapsama': typeof KapsamaRoute
-  '/karsilastirma': typeof KarsilastirmaRoute
-  '/katil': typeof KatilRoute
-  '/kayit': typeof KayitRoute
   '/kosullar': typeof KosullarRoute
-  '/kur': typeof KurRoute
-  '/kurumsal': typeof KurumsalRoute
-  '/mevzuat': typeof MevzuatRoute
-  '/pilot-panosu': typeof PilotPanosuRoute
-  '/protokol': typeof ProtokolRoute
-  '/saha': typeof SahaRoute
-  '/sertifikasyon': typeof SertifikasyonRoute
   '/sohbet': typeof SohbetRoute
-  '/system': typeof SystemRoute
-  '/tasiyicilar': typeof TasiyicilarRoute
-  '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
-  '/urun': typeof UrunRoute
-  '/uyumluluk': typeof UyumlulukRoute
   '/yasal': typeof YasalRoute
-  '/panel': typeof AuthenticatedPanelRoute
-  '/saha-raporu': typeof AuthenticatedSahaRaporuRoute
-  '/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
   '/api/translate': typeof ApiTranslateRoute
-  '/rehber/$slug': typeof RehberSlugRoute
-  '/rehber/': typeof RehberIndexRoute
-  '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/gecit': typeof ApiPublicGecitRoute
   '/api/public/health': typeof ApiPublicHealthRoute
@@ -449,54 +178,16 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/afet-kamu': typeof AfetKamuRoute
-  '/api-dokumantasyon': typeof ApiDokumantasyonRoute
-  '/app': typeof AppRoute
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
-  '/dashboard': typeof DashboardRoute
-  '/demo': typeof DemoRoute
-  '/dokumanlar': typeof DokumanlarRoute
-  '/en': typeof EnRoute
-  '/enerji': typeof EnerjiRoute
-  '/fiyatlandirma': typeof FiyatlandirmaRoute
-  '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
-  '/guvenlik': typeof GuvenlikRoute
-  '/hakkimizda': typeof HakkimizdaRoute
-  '/hibrit-model': typeof HibritModelRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
-  '/iletisim': typeof IletisimRoute
-  '/izinler': typeof IzinlerRoute
-  '/kablosuz-sarj': typeof KablosuzSarjRoute
-  '/kapsama': typeof KapsamaRoute
-  '/karsilastirma': typeof KarsilastirmaRoute
-  '/katil': typeof KatilRoute
-  '/kayit': typeof KayitRoute
   '/kosullar': typeof KosullarRoute
-  '/kur': typeof KurRoute
-  '/kurumsal': typeof KurumsalRoute
-  '/mevzuat': typeof MevzuatRoute
-  '/pilot-panosu': typeof PilotPanosuRoute
-  '/protokol': typeof ProtokolRoute
-  '/saha': typeof SahaRoute
-  '/sertifikasyon': typeof SertifikasyonRoute
   '/sohbet': typeof SohbetRoute
-  '/system': typeof SystemRoute
-  '/tasiyicilar': typeof TasiyicilarRoute
-  '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
-  '/urun': typeof UrunRoute
-  '/uyumluluk': typeof UyumlulukRoute
   '/yasal': typeof YasalRoute
-  '/panel': typeof AuthenticatedPanelRoute
-  '/saha-raporu': typeof AuthenticatedSahaRaporuRoute
-  '/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
   '/api/translate': typeof ApiTranslateRoute
-  '/rehber/$slug': typeof RehberSlugRoute
-  '/rehber': typeof RehberIndexRoute
-  '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/gecit': typeof ApiPublicGecitRoute
   '/api/public/health': typeof ApiPublicHealthRoute
@@ -513,55 +204,16 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/afet-kamu': typeof AfetKamuRoute
-  '/api-dokumantasyon': typeof ApiDokumantasyonRoute
-  '/app': typeof AppRoute
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
-  '/dashboard': typeof DashboardRoute
-  '/demo': typeof DemoRoute
-  '/dokumanlar': typeof DokumanlarRoute
-  '/en': typeof EnRoute
-  '/enerji': typeof EnerjiRoute
-  '/fiyatlandirma': typeof FiyatlandirmaRoute
-  '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
-  '/guvenlik': typeof GuvenlikRoute
-  '/hakkimizda': typeof HakkimizdaRoute
-  '/hibrit-model': typeof HibritModelRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
-  '/iletisim': typeof IletisimRoute
-  '/izinler': typeof IzinlerRoute
-  '/kablosuz-sarj': typeof KablosuzSarjRoute
-  '/kapsama': typeof KapsamaRoute
-  '/karsilastirma': typeof KarsilastirmaRoute
-  '/katil': typeof KatilRoute
-  '/kayit': typeof KayitRoute
   '/kosullar': typeof KosullarRoute
-  '/kur': typeof KurRoute
-  '/kurumsal': typeof KurumsalRoute
-  '/mevzuat': typeof MevzuatRoute
-  '/pilot-panosu': typeof PilotPanosuRoute
-  '/protokol': typeof ProtokolRoute
-  '/saha': typeof SahaRoute
-  '/sertifikasyon': typeof SertifikasyonRoute
   '/sohbet': typeof SohbetRoute
-  '/system': typeof SystemRoute
-  '/tasiyicilar': typeof TasiyicilarRoute
-  '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
-  '/urun': typeof UrunRoute
-  '/uyumluluk': typeof UyumlulukRoute
   '/yasal': typeof YasalRoute
-  '/_authenticated/panel': typeof AuthenticatedPanelRoute
-  '/_authenticated/saha-raporu': typeof AuthenticatedSahaRaporuRoute
-  '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
   '/api/translate': typeof ApiTranslateRoute
-  '/rehber/$slug': typeof RehberSlugRoute
-  '/rehber/': typeof RehberIndexRoute
-  '/_authenticated/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/gecit': typeof ApiPublicGecitRoute
   '/api/public/health': typeof ApiPublicHealthRoute
@@ -579,54 +231,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/afet-kamu'
-    | '/api-dokumantasyon'
-    | '/app'
     | '/cevrimdisi'
     | '/chat'
-    | '/dashboard'
-    | '/demo'
-    | '/dokumanlar'
-    | '/en'
-    | '/enerji'
-    | '/fiyatlandirma'
-    | '/giris'
     | '/gizlilik'
-    | '/guvenlik'
-    | '/hakkimizda'
-    | '/hibrit-model'
     | '/iade'
     | '/ihracat-uyum'
-    | '/iletisim'
-    | '/izinler'
-    | '/kablosuz-sarj'
-    | '/kapsama'
-    | '/karsilastirma'
-    | '/katil'
-    | '/kayit'
     | '/kosullar'
-    | '/kur'
-    | '/kurumsal'
-    | '/mevzuat'
-    | '/pilot-panosu'
-    | '/protokol'
-    | '/saha'
-    | '/sertifikasyon'
     | '/sohbet'
-    | '/system'
-    | '/tasiyicilar'
-    | '/turkiye-mevzuat'
-    | '/urun'
-    | '/uyumluluk'
     | '/yasal'
-    | '/panel'
-    | '/saha-raporu'
-    | '/yonetim'
     | '/api/chat'
     | '/api/translate'
-    | '/rehber/$slug'
-    | '/rehber/'
-    | '/teklif/$id'
     | '/api/public/enroll'
     | '/api/public/gecit'
     | '/api/public/health'
@@ -642,54 +256,16 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/afet-kamu'
-    | '/api-dokumantasyon'
-    | '/app'
     | '/cevrimdisi'
     | '/chat'
-    | '/dashboard'
-    | '/demo'
-    | '/dokumanlar'
-    | '/en'
-    | '/enerji'
-    | '/fiyatlandirma'
-    | '/giris'
     | '/gizlilik'
-    | '/guvenlik'
-    | '/hakkimizda'
-    | '/hibrit-model'
     | '/iade'
     | '/ihracat-uyum'
-    | '/iletisim'
-    | '/izinler'
-    | '/kablosuz-sarj'
-    | '/kapsama'
-    | '/karsilastirma'
-    | '/katil'
-    | '/kayit'
     | '/kosullar'
-    | '/kur'
-    | '/kurumsal'
-    | '/mevzuat'
-    | '/pilot-panosu'
-    | '/protokol'
-    | '/saha'
-    | '/sertifikasyon'
     | '/sohbet'
-    | '/system'
-    | '/tasiyicilar'
-    | '/turkiye-mevzuat'
-    | '/urun'
-    | '/uyumluluk'
     | '/yasal'
-    | '/panel'
-    | '/saha-raporu'
-    | '/yonetim'
     | '/api/chat'
     | '/api/translate'
-    | '/rehber/$slug'
-    | '/rehber'
-    | '/teklif/$id'
     | '/api/public/enroll'
     | '/api/public/gecit'
     | '/api/public/health'
@@ -705,55 +281,16 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/_authenticated'
-    | '/afet-kamu'
-    | '/api-dokumantasyon'
-    | '/app'
     | '/cevrimdisi'
     | '/chat'
-    | '/dashboard'
-    | '/demo'
-    | '/dokumanlar'
-    | '/en'
-    | '/enerji'
-    | '/fiyatlandirma'
-    | '/giris'
     | '/gizlilik'
-    | '/guvenlik'
-    | '/hakkimizda'
-    | '/hibrit-model'
     | '/iade'
     | '/ihracat-uyum'
-    | '/iletisim'
-    | '/izinler'
-    | '/kablosuz-sarj'
-    | '/kapsama'
-    | '/karsilastirma'
-    | '/katil'
-    | '/kayit'
     | '/kosullar'
-    | '/kur'
-    | '/kurumsal'
-    | '/mevzuat'
-    | '/pilot-panosu'
-    | '/protokol'
-    | '/saha'
-    | '/sertifikasyon'
     | '/sohbet'
-    | '/system'
-    | '/tasiyicilar'
-    | '/turkiye-mevzuat'
-    | '/urun'
-    | '/uyumluluk'
     | '/yasal'
-    | '/_authenticated/panel'
-    | '/_authenticated/saha-raporu'
-    | '/_authenticated/yonetim'
     | '/api/chat'
     | '/api/translate'
-    | '/rehber/$slug'
-    | '/rehber/'
-    | '/_authenticated/teklif/$id'
     | '/api/public/enroll'
     | '/api/public/gecit'
     | '/api/public/health'
@@ -770,51 +307,16 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AfetKamuRoute: typeof AfetKamuRoute
-  ApiDokumantasyonRoute: typeof ApiDokumantasyonRoute
-  AppRoute: typeof AppRoute
   CevrimdisiRoute: typeof CevrimdisiRoute
   ChatRoute: typeof ChatRoute
-  DashboardRoute: typeof DashboardRoute
-  DemoRoute: typeof DemoRoute
-  DokumanlarRoute: typeof DokumanlarRoute
-  EnRoute: typeof EnRoute
-  EnerjiRoute: typeof EnerjiRoute
-  FiyatlandirmaRoute: typeof FiyatlandirmaRoute
-  GirisRoute: typeof GirisRoute
   GizlilikRoute: typeof GizlilikRoute
-  GuvenlikRoute: typeof GuvenlikRoute
-  HakkimizdaRoute: typeof HakkimizdaRoute
-  HibritModelRoute: typeof HibritModelRoute
   IadeRoute: typeof IadeRoute
   IhracatUyumRoute: typeof IhracatUyumRoute
-  IletisimRoute: typeof IletisimRoute
-  IzinlerRoute: typeof IzinlerRoute
-  KablosuzSarjRoute: typeof KablosuzSarjRoute
-  KapsamaRoute: typeof KapsamaRoute
-  KarsilastirmaRoute: typeof KarsilastirmaRoute
-  KatilRoute: typeof KatilRoute
-  KayitRoute: typeof KayitRoute
   KosullarRoute: typeof KosullarRoute
-  KurRoute: typeof KurRoute
-  KurumsalRoute: typeof KurumsalRoute
-  MevzuatRoute: typeof MevzuatRoute
-  PilotPanosuRoute: typeof PilotPanosuRoute
-  ProtokolRoute: typeof ProtokolRoute
-  SahaRoute: typeof SahaRoute
-  SertifikasyonRoute: typeof SertifikasyonRoute
   SohbetRoute: typeof SohbetRoute
-  SystemRoute: typeof SystemRoute
-  TasiyicilarRoute: typeof TasiyicilarRoute
-  TurkiyeMevzuatRoute: typeof TurkiyeMevzuatRoute
-  UrunRoute: typeof UrunRoute
-  UyumlulukRoute: typeof UyumlulukRoute
   YasalRoute: typeof YasalRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiTranslateRoute: typeof ApiTranslateRoute
-  RehberSlugRoute: typeof RehberSlugRoute
-  RehberIndexRoute: typeof RehberIndexRoute
   ApiPublicEnrollRoute: typeof ApiPublicEnrollRoute
   ApiPublicGecitRoute: typeof ApiPublicGecitRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
@@ -838,41 +340,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof YasalRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/uyumluluk': {
-      id: '/uyumluluk'
-      path: '/uyumluluk'
-      fullPath: '/uyumluluk'
-      preLoaderRoute: typeof UyumlulukRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/urun': {
-      id: '/urun'
-      path: '/urun'
-      fullPath: '/urun'
-      preLoaderRoute: typeof UrunRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/turkiye-mevzuat': {
-      id: '/turkiye-mevzuat'
-      path: '/turkiye-mevzuat'
-      fullPath: '/turkiye-mevzuat'
-      preLoaderRoute: typeof TurkiyeMevzuatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tasiyicilar': {
-      id: '/tasiyicilar'
-      path: '/tasiyicilar'
-      fullPath: '/tasiyicilar'
-      preLoaderRoute: typeof TasiyicilarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/system': {
-      id: '/system'
-      path: '/system'
-      fullPath: '/system'
-      preLoaderRoute: typeof SystemRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/sohbet': {
       id: '/sohbet'
       path: '/sohbet'
@@ -880,109 +347,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SohbetRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sertifikasyon': {
-      id: '/sertifikasyon'
-      path: '/sertifikasyon'
-      fullPath: '/sertifikasyon'
-      preLoaderRoute: typeof SertifikasyonRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/saha': {
-      id: '/saha'
-      path: '/saha'
-      fullPath: '/saha'
-      preLoaderRoute: typeof SahaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/protokol': {
-      id: '/protokol'
-      path: '/protokol'
-      fullPath: '/protokol'
-      preLoaderRoute: typeof ProtokolRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pilot-panosu': {
-      id: '/pilot-panosu'
-      path: '/pilot-panosu'
-      fullPath: '/pilot-panosu'
-      preLoaderRoute: typeof PilotPanosuRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mevzuat': {
-      id: '/mevzuat'
-      path: '/mevzuat'
-      fullPath: '/mevzuat'
-      preLoaderRoute: typeof MevzuatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kurumsal': {
-      id: '/kurumsal'
-      path: '/kurumsal'
-      fullPath: '/kurumsal'
-      preLoaderRoute: typeof KurumsalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kur': {
-      id: '/kur'
-      path: '/kur'
-      fullPath: '/kur'
-      preLoaderRoute: typeof KurRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/kosullar': {
       id: '/kosullar'
       path: '/kosullar'
       fullPath: '/kosullar'
       preLoaderRoute: typeof KosullarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kayit': {
-      id: '/kayit'
-      path: '/kayit'
-      fullPath: '/kayit'
-      preLoaderRoute: typeof KayitRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/katil': {
-      id: '/katil'
-      path: '/katil'
-      fullPath: '/katil'
-      preLoaderRoute: typeof KatilRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/karsilastirma': {
-      id: '/karsilastirma'
-      path: '/karsilastirma'
-      fullPath: '/karsilastirma'
-      preLoaderRoute: typeof KarsilastirmaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kapsama': {
-      id: '/kapsama'
-      path: '/kapsama'
-      fullPath: '/kapsama'
-      preLoaderRoute: typeof KapsamaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kablosuz-sarj': {
-      id: '/kablosuz-sarj'
-      path: '/kablosuz-sarj'
-      fullPath: '/kablosuz-sarj'
-      preLoaderRoute: typeof KablosuzSarjRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/izinler': {
-      id: '/izinler'
-      path: '/izinler'
-      fullPath: '/izinler'
-      preLoaderRoute: typeof IzinlerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/iletisim': {
-      id: '/iletisim'
-      path: '/iletisim'
-      fullPath: '/iletisim'
-      preLoaderRoute: typeof IletisimRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ihracat-uyum': {
@@ -999,81 +368,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IadeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hibrit-model': {
-      id: '/hibrit-model'
-      path: '/hibrit-model'
-      fullPath: '/hibrit-model'
-      preLoaderRoute: typeof HibritModelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hakkimizda': {
-      id: '/hakkimizda'
-      path: '/hakkimizda'
-      fullPath: '/hakkimizda'
-      preLoaderRoute: typeof HakkimizdaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guvenlik': {
-      id: '/guvenlik'
-      path: '/guvenlik'
-      fullPath: '/guvenlik'
-      preLoaderRoute: typeof GuvenlikRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/gizlilik': {
       id: '/gizlilik'
       path: '/gizlilik'
       fullPath: '/gizlilik'
       preLoaderRoute: typeof GizlilikRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/giris': {
-      id: '/giris'
-      path: '/giris'
-      fullPath: '/giris'
-      preLoaderRoute: typeof GirisRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/fiyatlandirma': {
-      id: '/fiyatlandirma'
-      path: '/fiyatlandirma'
-      fullPath: '/fiyatlandirma'
-      preLoaderRoute: typeof FiyatlandirmaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/enerji': {
-      id: '/enerji'
-      path: '/enerji'
-      fullPath: '/enerji'
-      preLoaderRoute: typeof EnerjiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/en': {
-      id: '/en'
-      path: '/en'
-      fullPath: '/en'
-      preLoaderRoute: typeof EnRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dokumanlar': {
-      id: '/dokumanlar'
-      path: '/dokumanlar'
-      fullPath: '/dokumanlar'
-      preLoaderRoute: typeof DokumanlarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo': {
-      id: '/demo'
-      path: '/demo'
-      fullPath: '/demo'
-      preLoaderRoute: typeof DemoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -1090,53 +389,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CevrimdisiRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api-dokumantasyon': {
-      id: '/api-dokumantasyon'
-      path: '/api-dokumantasyon'
-      fullPath: '/api-dokumantasyon'
-      preLoaderRoute: typeof ApiDokumantasyonRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/afet-kamu': {
-      id: '/afet-kamu'
-      path: '/afet-kamu'
-      fullPath: '/afet-kamu'
-      preLoaderRoute: typeof AfetKamuRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rehber/': {
-      id: '/rehber/'
-      path: '/rehber'
-      fullPath: '/rehber/'
-      preLoaderRoute: typeof RehberIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rehber/$slug': {
-      id: '/rehber/$slug'
-      path: '/rehber/$slug'
-      fullPath: '/rehber/$slug'
-      preLoaderRoute: typeof RehberSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/translate': {
@@ -1152,27 +409,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/yonetim': {
-      id: '/_authenticated/yonetim'
-      path: '/yonetim'
-      fullPath: '/yonetim'
-      preLoaderRoute: typeof AuthenticatedYonetimRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/saha-raporu': {
-      id: '/_authenticated/saha-raporu'
-      path: '/saha-raporu'
-      fullPath: '/saha-raporu'
-      preLoaderRoute: typeof AuthenticatedSahaRaporuRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/panel': {
-      id: '/_authenticated/panel'
-      path: '/panel'
-      fullPath: '/panel'
-      preLoaderRoute: typeof AuthenticatedPanelRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/telemetry': {
       id: '/api/public/telemetry'
@@ -1244,13 +480,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicEnrollRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/teklif/$id': {
-      id: '/_authenticated/teklif/$id'
-      path: '/teklif/$id'
-      fullPath: '/teklif/$id'
-      preLoaderRoute: typeof AuthenticatedTeklifIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -1268,70 +497,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedRouteRouteChildren {
-  AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
-  AuthenticatedSahaRaporuRoute: typeof AuthenticatedSahaRaporuRoute
-  AuthenticatedYonetimRoute: typeof AuthenticatedYonetimRoute
-  AuthenticatedTeklifIdRoute: typeof AuthenticatedTeklifIdRoute
-}
-
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedPanelRoute: AuthenticatedPanelRoute,
-  AuthenticatedSahaRaporuRoute: AuthenticatedSahaRaporuRoute,
-  AuthenticatedYonetimRoute: AuthenticatedYonetimRoute,
-  AuthenticatedTeklifIdRoute: AuthenticatedTeklifIdRoute,
-}
-
-const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AfetKamuRoute: AfetKamuRoute,
-  ApiDokumantasyonRoute: ApiDokumantasyonRoute,
-  AppRoute: AppRoute,
   CevrimdisiRoute: CevrimdisiRoute,
   ChatRoute: ChatRoute,
-  DashboardRoute: DashboardRoute,
-  DemoRoute: DemoRoute,
-  DokumanlarRoute: DokumanlarRoute,
-  EnRoute: EnRoute,
-  EnerjiRoute: EnerjiRoute,
-  FiyatlandirmaRoute: FiyatlandirmaRoute,
-  GirisRoute: GirisRoute,
   GizlilikRoute: GizlilikRoute,
-  GuvenlikRoute: GuvenlikRoute,
-  HakkimizdaRoute: HakkimizdaRoute,
-  HibritModelRoute: HibritModelRoute,
   IadeRoute: IadeRoute,
   IhracatUyumRoute: IhracatUyumRoute,
-  IletisimRoute: IletisimRoute,
-  IzinlerRoute: IzinlerRoute,
-  KablosuzSarjRoute: KablosuzSarjRoute,
-  KapsamaRoute: KapsamaRoute,
-  KarsilastirmaRoute: KarsilastirmaRoute,
-  KatilRoute: KatilRoute,
-  KayitRoute: KayitRoute,
   KosullarRoute: KosullarRoute,
-  KurRoute: KurRoute,
-  KurumsalRoute: KurumsalRoute,
-  MevzuatRoute: MevzuatRoute,
-  PilotPanosuRoute: PilotPanosuRoute,
-  ProtokolRoute: ProtokolRoute,
-  SahaRoute: SahaRoute,
-  SertifikasyonRoute: SertifikasyonRoute,
   SohbetRoute: SohbetRoute,
-  SystemRoute: SystemRoute,
-  TasiyicilarRoute: TasiyicilarRoute,
-  TurkiyeMevzuatRoute: TurkiyeMevzuatRoute,
-  UrunRoute: UrunRoute,
-  UyumlulukRoute: UyumlulukRoute,
   YasalRoute: YasalRoute,
   ApiChatRoute: ApiChatRoute,
   ApiTranslateRoute: ApiTranslateRoute,
-  RehberSlugRoute: RehberSlugRoute,
-  RehberIndexRoute: RehberIndexRoute,
   ApiPublicEnrollRoute: ApiPublicEnrollRoute,
   ApiPublicGecitRoute: ApiPublicGecitRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,

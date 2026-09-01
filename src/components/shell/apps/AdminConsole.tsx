@@ -1,32 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "@/components/shell/OsLink";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { SectionLabel } from "@/components/site/SiteChrome";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { updateAiLeadStatus, rebuildLeadPlan } from "@/lib/leads.functions";
 import { OFFICIAL_DRAFTS } from "@/lib/regulation";
-import { INTEROP_TARGETS } from "@/lib/interop";
 import { AdminBusinessPlan } from "@/components/site/AdminBusinessPlan";
-import { AdminInterop } from "@/components/site/AdminInterop";
 
-export const Route = createFileRoute("/_authenticated/yonetim")({
-  head: () => ({
-    meta: [
-      { title: "Yönetim — tedbirge.app" },
-      {
-        name: "description",
-        content:
-          "Tedbirge yönetim ekranı: pilot başvurularını inceleyin, durum güncelleyin ve lisansları takip edin.",
-      },
-      { property: "og:title", content: "Yönetim — tedbirge.app" },
-      { property: "og:description", content: "Pilot başvuruları ve lisans yönetimi." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: Admin,
-});
 
 type PilotRequest = {
   id: string;
@@ -68,10 +49,10 @@ type AiLead = {
   created_at: string;
 };
 
-function Admin() {
+export function AdminConsole() {
   const { user } = useAuth();
   const { isAdmin, loading: roleLoading } = useIsAdmin(user?.id);
-  const [tab, setTab] = useState<"pilot" | "ai" | "docs" | "interop" | "plan">("pilot");
+  const [tab, setTab] = useState<"pilot" | "ai" | "docs" | "plan">("pilot");
   const [rows, setRows] = useState<PilotRequest[]>([]);
   const [leads, setLeads] = useState<AiLead[]>([]);
   const [filter, setFilter] = useState<string>("all");
@@ -130,17 +111,17 @@ function Admin() {
 
   if (roleLoading) {
     return (
-      <SitePage>
+      <div className="tbos flex min-h-0 flex-1 flex-col overflow-y-auto pb-24">
         <div className="mx-auto max-w-6xl px-6 py-20 text-sm text-muted-foreground">
           Yükleniyor…
         </div>
-      </SitePage>
+      </div>
     );
   }
 
   if (!isAdmin) {
     return (
-      <SitePage>
+      <div className="tbos flex min-h-0 flex-1 flex-col overflow-y-auto pb-24">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <SectionLabel>Yetki gerekli</SectionLabel>
           <h1 className="mt-3 text-2xl font-semibold">Bu ekrana erişiminiz yok</h1>
@@ -148,14 +129,14 @@ function Admin() {
             Yönetim ekranı yalnızca admin rolüne sahip hesaplara açıktır.
           </p>
         </div>
-      </SitePage>
+      </div>
     );
   }
 
   const visible = filter === "all" ? rows : rows.filter((r) => r.status === filter);
 
   return (
-    <SitePage>
+    <div className="tbos flex min-h-0 flex-1 flex-col overflow-y-auto pb-24">
       <section className="mx-auto max-w-6xl px-6 py-16">
         <SectionLabel>Yönetim</SectionLabel>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">
@@ -165,9 +146,7 @@ function Admin() {
               ? "AI danışman talepleri"
               : tab === "plan"
                 ? "İş planı geliştirme rehberi"
-                : tab === "interop"
-                  ? "El sıkışma haritası"
-                  : "İdari belgeler & dilekçeler"}
+                : "İdari belgeler & dilekçeler"}
         </h1>
 
         <div className="mt-6 flex gap-2 border-b border-border/60 pb-4">
@@ -202,16 +181,6 @@ function Admin() {
             İdari dilekçeler ({OFFICIAL_DRAFTS.length})
           </button>
           <button
-            onClick={() => setTab("interop")}
-            className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
-              tab === "interop"
-                ? "bg-primary text-primary-foreground"
-                : "border border-border text-muted-foreground"
-            }`}
-          >
-            El sıkışma ({INTEROP_TARGETS.length})
-          </button>
-          <button
             onClick={() => setTab("plan")}
             className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
               tab === "plan"
@@ -225,8 +194,6 @@ function Admin() {
 
         {tab === "plan" ? (
           <AdminBusinessPlan />
-        ) : tab === "interop" ? (
-          <AdminInterop />
         ) : tab === "docs" ? (
           <AdminOfficialDrafts />
         ) : tab === "ai" ? (
@@ -375,7 +342,7 @@ function Admin() {
           </>
         )}
       </section>
-    </SitePage>
+    </div>
   );
 }
 

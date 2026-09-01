@@ -1,26 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "@/components/shell/OsLink";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { SectionLabel } from "@/components/site/SiteChrome";
 import { useAuth } from "@/hooks/useAuth";
 
-export const Route = createFileRoute("/_authenticated/saha-raporu")({
-  head: () => ({
-    meta: [
-      { title: "Saha Raporu — tedbirge.app" },
-      {
-        name: "description",
-        content:
-          "Sahadaki Tedbirge Protokol düğümlerinden gelen RTT, throughput ve paket kaybı ölçümlerini görün, yazdırılabilir saha test raporu üretin.",
-      },
-      { property: "og:title", content: "Saha Raporu — tedbirge.app" },
-      { property: "og:description", content: "Düğüm bazlı gecikme, hız ve paket kaybı ölçümleri." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: SahaRaporu,
-});
 
 type Device = {
   id: string;
@@ -55,7 +38,7 @@ function fmt(n: number | null, unit: string, digits = 1) {
   return `${n.toFixed(digits)} ${unit}`;
 }
 
-function SahaRaporu() {
+export function FieldReportApp() {
   const { user } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
   const [samples, setSamples] = useState<Sample[]>([]);
@@ -134,7 +117,7 @@ function SahaRaporu() {
   }
 
   return (
-    <SitePage>
+    <div className="tbos flex min-h-0 flex-1 flex-col overflow-y-auto pb-24">
       <section className="mx-auto max-w-5xl px-6 py-16">
         <SectionLabel>Saha test raporu</SectionLabel>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">Ölçüm ve kanıt özeti</h1>
@@ -253,7 +236,7 @@ function SahaRaporu() {
           döngüsü sınırları düğüm tarafında zorlanır.
         </p>
       </section>
-    </SitePage>
+    </div>
   );
 }
 

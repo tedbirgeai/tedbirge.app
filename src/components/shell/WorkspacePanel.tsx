@@ -11,6 +11,9 @@ import { RelaySettingsDialog } from "@/components/shell/RelaySettingsDialog";
 import { MeshStatusDialog } from "@/components/shell/MeshStatusDialog";
 import { TedbirgeWebView } from "@/components/shell/TedbirgeWebView";
 import { WallpaperSettingsApp } from "@/components/shell/apps/WallpaperSettingsApp";
+import { AyarlarApp } from "@/components/shell/apps/AyarlarApp";
+import { SistemBilgisiApp } from "@/components/shell/apps/SistemBilgisiApp";
+import { PanelApp } from "@/components/shell/apps/PanelApp";
 
 import { WindowFrame } from "@/components/shell/WindowFrame";
 import { Dock } from "@/components/shell/Dock";
@@ -44,6 +47,9 @@ const WINDOW_TITLES: Record<string, string> = {
   store: "Tedbirge Mağaza",
   wallpaper: "Görünüm — Duvar Kâğıdı ve Tema",
   transfer: "Aktarım Merkezi",
+  settings: "Ayarlar",
+  sysinfo: "Sistem Bilgisi",
+  panel: "Panel — Lisans ve Saha",
 
 };
 
@@ -339,6 +345,9 @@ function AppSurface({
     );
   }
   if (win.appId === "wallpaper") return <WallpaperSettingsApp />;
+  if (win.appId === "settings") return <AyarlarApp />;
+  if (win.appId === "sysinfo") return <SistemBilgisiApp />;
+  if (win.appId === "panel") return <PanelApp />;
 
   if (win.appId === "messenger") {
     return (
