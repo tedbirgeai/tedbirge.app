@@ -36,6 +36,14 @@ export function HealthCards({ refreshKey }: { refreshKey: number }) {
   const load = useCallback(async () => {
     setBusy(true);
     try {
+      // Sağlık ucu oturum ister: oturum yokken 401 fırlatmak yerine sessiz kal.
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        setHealth(null);
+        setError("Sağlık verisi için oturum açın.");
+        return;
+      }
       setHealth(await getSystemHealth());
       setError(null);
     } catch (e) {
@@ -44,6 +52,7 @@ export function HealthCards({ refreshKey }: { refreshKey: number }) {
       setBusy(false);
     }
   }, []);
+
 
   useEffect(() => {
     void load();
