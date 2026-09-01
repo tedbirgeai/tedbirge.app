@@ -6,7 +6,6 @@ import { SectionLabel } from "@/components/site/SiteChrome";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { updateAiLeadStatus, rebuildLeadPlan } from "@/lib/leads.functions";
 import { OFFICIAL_DRAFTS } from "@/lib/regulation";
-import { INTEROP_TARGETS } from "@/lib/interop";
 import { AdminBusinessPlan } from "@/components/site/AdminBusinessPlan";
 
 
@@ -53,7 +52,7 @@ type AiLead = {
 export function AdminConsole() {
   const { user } = useAuth();
   const { isAdmin, loading: roleLoading } = useIsAdmin(user?.id);
-  const [tab, setTab] = useState<"pilot" | "ai" | "docs" | "interop" | "plan">("pilot");
+  const [tab, setTab] = useState<"pilot" | "ai" | "docs" | "plan">("pilot");
   const [rows, setRows] = useState<PilotRequest[]>([]);
   const [leads, setLeads] = useState<AiLead[]>([]);
   const [filter, setFilter] = useState<string>("all");
@@ -147,9 +146,7 @@ export function AdminConsole() {
               ? "AI danışman talepleri"
               : tab === "plan"
                 ? "İş planı geliştirme rehberi"
-                : tab === "interop"
-                  ? "El sıkışma haritası"
-                  : "İdari belgeler & dilekçeler"}
+                : "İdari belgeler & dilekçeler"}
         </h1>
 
         <div className="mt-6 flex gap-2 border-b border-border/60 pb-4">
@@ -182,16 +179,6 @@ export function AdminConsole() {
             }`}
           >
             İdari dilekçeler ({OFFICIAL_DRAFTS.length})
-          </button>
-          <button
-            onClick={() => setTab("interop")}
-            className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
-              tab === "interop"
-                ? "bg-primary text-primary-foreground"
-                : "border border-border text-muted-foreground"
-            }`}
-          >
-            El sıkışma ({INTEROP_TARGETS.length})
           </button>
           <button
             onClick={() => setTab("plan")}
