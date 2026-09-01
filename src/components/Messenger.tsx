@@ -873,8 +873,22 @@ export default function Messenger() {
                         ref={remoteVideoRef}
                         autoPlay
                         playsInline
-                        className={remoteStream ? "h-full w-full object-cover" : "hidden"}
+                        className={
+                          remoteStream ? "absolute inset-0 h-full w-full object-contain" : "hidden"
+                        }
                       />
+                      {remoteStream && needsTap ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void remoteVideoRef.current?.play().then(() => setNeedsTap(false));
+                          }}
+                          className="absolute inset-0 z-10 grid place-items-center text-[12px] font-medium"
+                          style={{ background: "color-mix(in srgb, var(--tb-bg) 70%, transparent)" }}
+                        >
+                          Görüntüyü başlatmak için dokunun
+                        </button>
+                      ) : null}
                       {remoteStream ? null : activePeerName ? (
                         <span>{`${activePeerName} · ${remoteStatusText}`}</span>
                       ) : (
