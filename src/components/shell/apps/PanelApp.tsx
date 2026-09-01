@@ -120,63 +120,88 @@ const TABS: { id: TabId; label: string; needs?: "operate" | "manage" }[] = [
   { id: "ayarlar", label: "Ayarlar" },
 ];
 
-/** Cep telefonunun paneldeki rolünü netleştiren bilgi kartı.
- *  Telefon bir düğüm değil, yönetim/izleme istasyonudur. */
+/** Cep telefonunun paneldeki rolünü netleştiren kart.
+ *  Telefon bir düğüm değil, yönetim/izleme istasyonudur. Kurulum artık
+ *  silinmiş bir rota yerine kabuğun kendi PWA kurulum akışını kullanır. */
 function MobileStationCard() {
   const [origin, setOrigin] = useState("");
+  const [busy, setBusy] = useState(false);
   useEffect(() => setOrigin(window.location.origin), []);
-  const sahaLink = origin ? `${origin}/saha` : "https://tedbirge-app.lovable.app/saha";
+  const shellLink = origin || "https://tedbirge-app.lovable.app";
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(shellLink);
+      notifyOk("Bağlantı kopyalandı", shellLink);
+    } catch {
+      notifyError("Kopyalanamadı", "Tarayıcı pano erişimine izin vermedi.");
+    }
+  };
+
+  const install = async () => {
+    setBusy(true);
+    try {
+      const r = await promptInstall();
+      if (r === "accepted") notifyOk("Kurulum başladı", "Tedbirge® WebOS ana ekrana ekleniyor.");
+      else if (r === "dismissed") notify("Kurulum iptal edildi");
+      else
+        notify(
+          "Kurulum menüsünü kullanın",
+          "iPhone: Paylaş → Ana Ekrana Ekle · Android: menü → Uygulamayı yükle",
+        );
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <div className="rounded-sm border border-primary/30 bg-primary/5 p-6">
+    <div className="rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
+          <p className="font-osmono text-xs uppercase tracking-[0.2em] text-[var(--tb-accent)]">
             Cep telefonu / tablet
           </p>
-          <h2 className="mt-2 text-xl font-semibold tracking-tight">Uygulamayı telefona ekleyin</h2>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Telefon ve tablet, yukarıdaki{" "}
-            <strong className="text-foreground">tarayıcı düğümü</strong> ile donanımsız çalışan
-            gerçek bir düğüme dönüşür; ayrıca yönetim/izleme istasyonudur. Uzun menzil
-            (LoRa/HaLow/TVWS) istiyorsanız o taşıyıcıya ait radyo modülünü ayrıca eklersiniz.
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-[var(--tb-text)]">
+            Uygulamayı telefona ekleyin
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--tb-muted)]">
+            Telefon ve tablet, tarayıcı düğümü ile donanımsız çalışan gerçek bir düğüme dönüşür;
+            ayrıca yönetim/izleme istasyonudur. Uzun menzil (LoRa/HaLow/TVWS) için o taşıyıcıya ait
+            radyo modülünü ayrıca eklersiniz.
           </p>
-          <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-            <li>Bilgisayardaki düğümü başlatın (lisans anahtarı + node-id ile).</li>
-            <li>Telefonda aşağıdaki linki açın ve “Ana ekrana ekle” deyin.</li>
-            <li>Paneldeki düğüm “çevrimiçi” olur; telefondan izleyin.</li>
-          </ol>
         </div>
-        <div className="min-w-[16rem] rounded-sm border border-border bg-card/50 p-5">
-          <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-            Mobil erişim linki
+        <div className="min-w-[16rem] rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel-solid)] p-5">
+          <p className="font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-muted)]">
+            Kabuk adresi
           </p>
-          <p className="mt-2 break-all font-mono text-sm text-foreground">{sahaLink}</p>
+          <p className="mt-2 break-all font-osmono text-sm text-[var(--tb-text)]">{shellLink}</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <a
-              href={sahaLink}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-sm bg-primary px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-primary-foreground"
-            >
-              Telefonda aç
-            </a>
             <button
-              onClick={() => void navigator.clipboard.writeText(sahaLink)}
-              className="rounded-sm border border-border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+              type="button"
+              onClick={() => void install()}
+              disabled={busy}
+              className="min-h-12 rounded-xl bg-[var(--tb-accent)] px-4 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-on-accent)] disabled:opacity-50"
+            >
+              Telefona kur
+            </button>
+            <button
+              type="button"
+              onClick={() => void copy()}
+              className="min-h-12 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-[11px] uppercase tracking-[0.15em] text-[var(--tb-text)]"
             >
               Linki kopyala
             </button>
           </div>
-          <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
-            iPhone kullanıyorsanız Safari ile açıp paylaş menüsünden “Ana Ekrana Ekle” seçin.
-            Android’de Chrome menüden “Uygulamayı yükle” yeterlidir.
+          <p className="mt-4 text-[11px] leading-relaxed text-[var(--tb-muted)]">
+            iPhone: Safari → Paylaş → “Ana Ekrana Ekle”. Android: Chrome menüsü → “Uygulamayı
+            yükle”.
           </p>
         </div>
       </div>
     </div>
   );
 }
+
 
 const RADIO_CARRIERS = new Set(["lora", "halow", "tvws", "wifi", "wigig", "fso"]);
 
