@@ -41,11 +41,16 @@ const WINDOW_TITLES: Record<string, string> = {
   media: "Medya — Wasm Kum Havuzu Oynatıcı",
   files: "Dosyalar",
   store: "Tedbirge Mağaza",
-  computer: "Bilgisayarım",
   wallpaper: "Görünüm — Duvar Kâğıdı ve Tema",
   transfer: "Aktarım Merkezi",
 
 };
+
+/** Pencere başlığı: "computer" cihaz türüne göre adlandırılır. */
+function windowTitle(id: string): string | undefined {
+  if (id === "computer") return deviceScopeLabel();
+  return WINDOW_TITLES[id];
+}
 
 
 /**
