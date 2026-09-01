@@ -455,23 +455,39 @@ fn main() -> std::io::Result<()> {
         .and_then(|p| Profile::from_name(p))
         .unwrap_or_else(Profile::detect);
 
+    // FAZ 8 — kalıcı blok depolama (state dizini bir bölüm ya da tmpfs olabilir).
+    fs::create_dir_all(&state)?;
+    let storage = Arc::new(NativeStorage::open(state.join("vfs"))?);
+
+    // FAZ 6 — donanım taraması ve taşıyıcı seçimi (UDP yoksa seri/LoRa).
+    let hw = probe();
     let clock = SystemClock::new();
     let rng = XorShiftRng(seed_from_clock());
-    let transport = UdpTransport::bind(mesh_port)?;
-    let sent = transport.sent.clone();
-    let recv = transport.recv.clone();
+    let (transport, link) = Link::open(mesh_port, args.contains_key("serial"))?;
+    let counters = transport.counters();
     let mut platform = Platform::new(clock, rng, transport);
 
     let node_id = platform.rng.next_u32();
+    let report = Arc::new(report_json(
+        &hw,
+        link,
+        &state.join("vfs").to_string_lossy(),
+    ));
     println!(
-        "Tedbirge yerel kabuk · dugum {:08x} · ABI {} · profil {} · {} · kabuk http://127.0.0.1:{} · mesh udp/{}",
+        "Tedbirge yerel kabuk · dugum {:08x} · ABI {} · profil {} · {} · ekran {} {}x{} · girdi {} · disk {} · tasiyici {} · kabuk http://127.0.0.1:{}",
         node_id,
         tedbirge_kernel::abi_version(),
         profile.name(),
         if headless { "bassiz role" } else { "kiosk" },
-        http_port,
-        mesh_port
+        hw.display,
+        hw.width,
+        hw.height,
+        hw.input_devices,
+        hw.disks,
+        link,
+        http_port
     );
+
 
     // Duyuru/dinleme dongusu — cekirdek HAL'i uzerinden.
     let beacon_ms = profile.beacon_ms();
