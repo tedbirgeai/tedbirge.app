@@ -50,6 +50,7 @@ import {
 import {
   startCall as startPeerCall,
   endCall as endPeerCall,
+  getRemoteStream,
   getPeerStream,
   useCall,
 } from "@/lib/call/engine";
