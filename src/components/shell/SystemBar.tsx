@@ -74,7 +74,7 @@ export function SystemBar({
 
 
   return (
-    <header className="tbos-sysbar relative z-[80] grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-1.5">
+    <header className="tbos-sysbar relative z-[80] grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-1.5">
       <div className="flex min-w-0 items-center gap-3">
         <span className="shrink-0 font-osmono text-[12px] font-bold tracking-tight text-[var(--tb-text)]">
           TEDBİRGE<span className="text-[var(--tb-accent)]"> OS</span>
