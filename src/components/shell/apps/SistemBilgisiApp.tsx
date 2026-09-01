@@ -138,12 +138,12 @@ function TiersTab() {
   return (
     <ul className="grid gap-3 sm:grid-cols-2">
       {RAAS_TIERS.map((t) => (
-        <li key={t.id} className="rounded-2xl border border-[var(--tb-border)] p-4">
+        <li key={t.key} className="rounded-2xl border border-[var(--tb-border)] p-4">
           <h3 className="text-[14px] font-semibold text-[var(--tb-text)]">{t.name}</h3>
-          <p className="mt-1 font-osmono text-[12px] text-[var(--tb-accent)]">{t.price}</p>
-          <p className="mt-2 text-[13px] leading-relaxed text-[var(--tb-muted)]">{t.summary}</p>
+          <p className="mt-1 font-osmono text-[12px] text-[var(--tb-accent)]">{t.price} · {t.note}</p>
+          <p className="mt-2 text-[13px] leading-relaxed text-[var(--tb-muted)]">{t.for}</p>
           <ul className="mt-3 space-y-1 text-[12px] text-[var(--tb-text)]">
-            {t.features.map((f) => (
+            {t.points.map((f) => (
               <li key={f}>• {f}</li>
             ))}
           </ul>
