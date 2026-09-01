@@ -76,7 +76,7 @@ if fetch "\$ORIGIN/native/tedbirge-shell-\$ARCH" "\$STAGE/opt/tedbirge/tedbirge-
 elif [ -f crates/tedbirge-shell-native/Cargo.toml ] && command -v cargo >/dev/null 2>&1; then
   echo "› Hazir ikili yok — kaynaktan derleniyor (cargo)"
   cargo build --release --manifest-path crates/tedbirge-shell-native/Cargo.toml
-  cp crates/tedbirge-shell-native/target/release/tedbirge-shell "\$STAGE/opt/tedbirge/"
+  cp "\$(ls -1 crates/target/release/tedbirge-shell crates/*/target/release/tedbirge-shell 2>/dev/null | head -n1)" "\$STAGE/opt/tedbirge/"
 else
   echo "! \$ARCH icin hazir ikili yok ve cargo bulunamadi."
   echo "  Dugum yine de baska bir makinedeki kabuktan sunulabilir; imaj ikilisiz uretilir."

@@ -32,7 +32,7 @@ for c in "${CRATES[@]}"; do
 done
 
 for b in tedbirge-shell tedbirge-compositor tedbirge-install; do
-  f=$(ls -1 crates/*/target/release/$b 2>/dev/null | head -n1 || true)
+  f=$(find_bin "$b" || true)
   [ -n "$f" ] && cp "$f" "$OUT/" && echo "✓ $OUT/$b"
 done
 

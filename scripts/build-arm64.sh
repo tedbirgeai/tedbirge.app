@@ -17,7 +17,9 @@ cargo build --release --target "$TARGET" \
   --manifest-path crates/tedbirge-shell-native/Cargo.toml
 
 mkdir -p "$OUT"
-cp "crates/tedbirge-shell-native/target/$TARGET/release/tedbirge-shell" "$OUT/"
+source scripts/lib-paths.sh
+BIN=$(find_bin tedbirge-shell "$TARGET") || { echo "! capraz derleme ciktisi yok"; exit 1; }
+cp "$BIN" "$OUT/"
 rm -rf "$OUT/dist" && cp -r dist "$OUT/dist"
 
 # Kilitli kabuk (kiosk) servis tanımı — Raspberry Pi / ARM64 SBC.

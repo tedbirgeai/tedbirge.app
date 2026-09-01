@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { WindowEmpty, WindowShell } from "@/components/shell/WindowShell";
+import { detectNativeHal, type NativeHalReport } from "@/hal/native";
 import { BUILD_LABEL } from "@/lib/build-id";
 import { describeNode } from "@/lib/node-runtime";
 import { listTransfers, onTransferChange, type Transfer } from "@/lib/p2p/file-transfer";
@@ -112,6 +113,8 @@ function SummaryTab() {
   const status = describeNode(node);
   const [uptime, setUptime] = useState(0);
   const [mem, setMem] = useState<number | null>(null);
+  // FAZ 6/8 — bare-metal kabuk altındaysak gerçek donanım raporu gelir.
+  const [hal, setHal] = useState<NativeHalReport | null>(null);
 
   useEffect(() => {
     const tick = () => {
@@ -121,6 +124,7 @@ function SummaryTab() {
     };
     tick();
     const t = window.setInterval(tick, 2000);
+    void detectNativeHal().then(setHal);
     return () => window.clearInterval(t);
   }, []);
 
@@ -138,6 +142,7 @@ function SummaryTab() {
         <dl className="mt-2">
           <Row k="Cihaz" v={device} />
           <Row k="Sistem" v={`Tedbirge OS · ${BUILD_LABEL}`} />
+          <Row k="Çalışma biçimi" v={hal ? "Bare-metal (yerel kabuk)" : "Tarayıcı kabuğu"} />
           <Row
             k="Çalışma süresi"
             v={`${hh > 0 ? `${hh} sa ` : ""}${mm} dk ${ss} sn`}
@@ -146,6 +151,20 @@ function SummaryTab() {
           <Row k="İşlem hattı" v={cores ? `${cores} çekirdek` : "bilinmiyor"} />
         </dl>
       </div>
+      {hal && (
+        <div className={card}>
+          <h3 className="text-[15px] font-semibold text-[var(--tb-text)]">Donanım katmanı</h3>
+          <dl className="mt-2">
+            <Row k="Ekran" v={`${hal.display} · ${hal.width}×${hal.height}`} />
+            <Row k="Girdi aygıtı" v={`${hal.input} adet`} />
+            <Row k="Ağ arayüzü" v={`${hal.interfaces} adet`} />
+            <Row k="Disk" v={`${hal.disks} adet`} />
+            <Row k="Ses" v={hal.audio ? "hazır" : "yok"} />
+            <Row k="Taşıyıcı" v={hal.link === "serial" ? "Seri / LoRa" : "Yerel ağ"} />
+            <Row k="Kalıcı depolama" v={hal.storage} />
+          </dl>
+        </div>
+      )}
       <div className={card}>
         <h3 className="text-[15px] font-semibold text-[var(--tb-text)]">Ağ ve çekirdek</h3>
         <dl className="mt-2">
@@ -157,6 +176,7 @@ function SummaryTab() {
     </div>
   );
 }
+
 
 /* ------------------------------------------------------------------ */
 

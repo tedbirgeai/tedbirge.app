@@ -1,0 +1,28 @@
+# TEDBİRGE OS — CARGO ÇALIŞMA ALANI (FAZ 5–11)
+# ------------------------------------------------------------------
+# Beş crate tek çalışma alanında derlenir; böylece `cargo test` tüm
+# katmanları (çekirdek, HAL, kompozitör, installer, yerel kabuk) tek
+# komutla doğrular ve bağımlılık çözümü tek `Cargo.lock` üzerinden
+# yapılır. Ortak çıktı dizini: `crates/target`.
+[workspace]
+resolver = "2"
+members = [
+  "tedbirge-kernel",
+  "tedbirge-hal-linux",
+  "tedbirge-compositor",
+  "tedbirge-installer",
+  "tedbirge-shell-native",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[profile.release]
+# Bare-metal imajda yer ve önyükleme süresi kritik: küçük ve tek birim.
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
