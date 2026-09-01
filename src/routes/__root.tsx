@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { OfflineBanner } from "../components/site/OfflineBanner";
+import { IsoFallbackHost } from "../components/shell/BareMetalIso";
 import { BackgroundServicesProvider } from "../shell/BackgroundServices";
 import { THEME_BOOT_SCRIPT } from "../lib/ui/theme";
 import { Toaster } from "../components/ui/sonner";
