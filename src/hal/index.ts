@@ -46,4 +46,4 @@ export function halTarget(): HalTarget {
   return target;
 }
 
-export type { StorageHal, NetHal, DisplayHal };
+export type { StorageHal, NetHal, DisplayHal, InputHal };

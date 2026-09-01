@@ -94,9 +94,10 @@ export function SystemBar({
         {!online ? (
           <span
             role="status"
-            className="shrink-0 truncate rounded-full border border-[var(--tb-accent)] px-2 py-0.5 font-osmono text-[11px] text-[var(--tb-accent)]"
+            title="Off-Grid Modu Aktif · Yerel VFS & Wasm Hazır"
+            className="min-w-0 max-w-[46vw] shrink truncate rounded-full border border-[var(--tb-accent)] px-2 py-0.5 font-osmono text-[11px] text-[var(--tb-accent)] sm:max-w-none sm:shrink-0"
           >
-            Off-Grid Modu Aktif · Yerel VFS &amp; Wasm Hazır
+            Off-Grid<span className="hidden md:inline"> Modu Aktif · Yerel VFS &amp; Wasm Hazır</span>
           </span>
         ) : null}
         <button
