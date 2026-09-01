@@ -688,7 +688,10 @@ export default function Messenger() {
           </div>
 
           {tab === "chat" ? (
-            <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto xl:grid-cols-3 xl:overflow-hidden">
+            <div
+              className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto pb-24 xl:grid-cols-3 xl:overflow-hidden xl:pb-0"
+              style={{ scrollPaddingBottom: "6rem" }}
+            >
               <div
                 className="flex min-h-[60vh] flex-col overflow-hidden rounded-xl backdrop-blur-sm xl:col-span-2 xl:min-h-0"
                 style={{ background: "var(--tb-panel)", border: "1px solid var(--tb-border)" }}
