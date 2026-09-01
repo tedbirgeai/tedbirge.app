@@ -150,7 +150,7 @@ export const Route = createFileRoute("/api/public/iso")({
           /* imaj yayınlanmamış olabilir; kite düşülür */
         }
 
-        return new Response(KIT, {
+        return new Response(buildKit(origin), {
           status: 200,
           headers: {
             "Content-Type": "text/x-shellscript; charset=utf-8",
