@@ -8,6 +8,7 @@
 
 import { useSyncExternalStore } from "react";
 
+import { deviceScopeLabel } from "@/lib/identity/device";
 import { WEB_APPS, type AppCategory } from "@/shell/web-apps";
 
 export type CatalogApp = {
