@@ -61,7 +61,7 @@ export function Desktop({
       },
     },
     { label: "Yenile", onSelect: () => { window.dispatchEvent(new Event("tedbirge:vfs-refresh")); notifyOk("Masaüstü yenilendi"); } },
-    { label: "Ayarlar", onSelect: () => onOpen("computer") },
+    { label: "Ayarlar", onSelect: () => onOpen("settings") },
 
   ];
 

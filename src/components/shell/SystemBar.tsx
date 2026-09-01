@@ -14,19 +14,9 @@ import { ControlCenter } from "@/components/shell/ControlCenter";
 import { NetworkControl } from "@/components/shell/NetworkControl";
 import { NotificationsPanel } from "@/components/shell/NotificationsPanel";
 import { useUnreadNoticeCount } from "@/lib/shell/notifications";
+import { useClock, useMemoryMb } from "@/lib/shell/telemetry-store";
 import { useOnline } from "@/lib/pwa/offline-status";
 
-
-
-/** Bazı tarayıcılarda bulunan bellek ölçümü (standart dışı). */
-type MemoryInfo = { usedJSHeapSize: number; jsHeapSizeLimit: number };
-
-function readMemory(): number | null {
-  const perf = performance as Performance & { memory?: MemoryInfo };
-  const m = perf.memory;
-  if (!m || !m.jsHeapSizeLimit) return null;
-  return Math.round((m.usedJSHeapSize / 1024 / 1024) * 10) / 10;
-}
 
 export function SystemBar({
   status,
@@ -50,27 +40,15 @@ export function SystemBar({
   /** Profil ve Hesap uygulamasını açar. */
   onProfile: () => void;
 }) {
-  const [clock, setClock] = useState("");
-  const [memMb, setMemMb] = useState<number | null>(null);
   const [control, setControl] = useState(false);
   const [network, setNetwork] = useState(false);
   const [notices, setNotices] = useState(false);
   const unread = useUnreadNoticeCount();
   const online = useOnline();
+  // Saat ve bellek tek paylaşımlı 1 sn zamanlayıcıdan gelir (titreme yok).
+  const clock = useClock();
+  const memMb = useMemoryMb();
 
-  useEffect(() => {
-    const tick = () => {
-      setClock(
-        new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) +
-          " · " +
-          new Date().toLocaleDateString("tr-TR", { day: "2-digit", month: "short" }),
-      );
-      setMemMb(readMemory());
-    };
-    tick();
-    const t = window.setInterval(tick, 5000);
-    return () => window.clearInterval(t);
-  }, []);
 
   // Pencere içi "Ağ modunu değiştir" kısayolu ağ panelini açar.
   useEffect(() => {
@@ -115,14 +93,21 @@ export function SystemBar({
           }}
           aria-label="Kontrol merkezi"
           aria-expanded={control}
-          className="wa-press hidden min-w-0 items-center gap-1.5 rounded-lg px-1.5 py-0.5 sm:flex"
+          className="wa-press hidden min-h-12 min-w-0 items-center gap-1.5 rounded-lg px-1.5 py-0.5 sm:flex"
         >
-          <span className="truncate font-osmono text-[11px] text-[var(--tb-muted)]">
-            {status} · {peers} cihaz
-            {rttMs != null ? ` · ${rttMs} ms` : ""}
-            {memMb != null ? ` · ${memMb} MB` : ""}
+          {/* Sabit ölçülü şerit: sayaç değişimleri komşu öğeleri kaydırmaz. */}
+          <span className="flex items-center gap-1 font-osmono text-[11px] leading-4 text-[var(--tb-muted)] tabular-nums">
+            <span className="inline-block w-[min(34vw,220px)] truncate text-left">{status}</span>
+            <span className="inline-block w-[62px] shrink-0 text-right">{peers} cihaz</span>
+            <span className="inline-block w-[62px] shrink-0 text-right">
+              {rttMs != null ? `${rttMs} ms` : ""}
+            </span>
+            <span className="inline-block w-[62px] shrink-0 text-right">
+              {memMb != null ? `${memMb} MB` : ""}
+            </span>
           </span>
         </button>
+
       </div>
 
       <NetworkControl open={network} onClose={() => setNetwork(false)} />
@@ -172,11 +157,12 @@ export function SystemBar({
         <InstallSystemButton compact />
         <BareMetalIsoButton compact />
         <span
-          className="hidden shrink-0 whitespace-nowrap px-1 font-osmono text-[11px] text-[var(--tb-muted)] md:inline"
-          aria-live="polite"
+          className="hidden w-[104px] shrink-0 whitespace-nowrap px-1 text-center font-osmono text-[11px] leading-4 text-[var(--tb-muted)] tabular-nums md:inline-block"
+          aria-live="off"
         >
           {clock}
         </span>
+
 
         <button
           type="button"

@@ -49,7 +49,21 @@ function setDragging(on: boolean) {
 
 export function WindowFrame({ win, children }: { win: WindowRecord; children: ReactNode }) {
   const root = useRef<HTMLDivElement | null>(null);
-  const drag = useRef<{ dx: number; dy: number; raf: number } | null>(null);
+  /**
+   * Sürükleme boyunca React state güncellenmez: konum doğrudan GPU
+   * katmanına (`translate3d`) yazılır, ölçüler bir kez okunur ve
+   * bırakıldığında tek bir commit yapılır.
+   */
+  const drag = useRef<{
+    dx: number;
+    dy: number;
+    baseX: number;
+    baseY: number;
+    x: number;
+    y: number;
+    raf: number;
+    rect: { left: number; top: number; width: number; height: number };
+  } | null>(null);
   const size = useRef<{
     edge: Edge;
     px: number;
@@ -58,6 +72,7 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
     y: number;
     w: number;
     h: number;
+    raf: number;
   } | null>(null);
   const [snap, setSnap] = useState<SnapBox | null>(null);
 
@@ -73,53 +88,82 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
       if (win.maximized) return;
       focusWindow(win.id);
       setDragging(true);
-      drag.current = { dx: e.clientX - win.x, dy: e.clientY - win.y, raf: 0 };
+      drag.current = {
+        dx: e.clientX - win.x,
+        dy: e.clientY - win.y,
+        baseX: win.x,
+        baseY: win.y,
+        x: win.x,
+        y: win.y,
+        raf: 0,
+        // Tek sefer düzen okuması; döngüde getBoundingClientRect çağrılmaz.
+        rect: area(),
+      };
+      const el = root.current;
+      if (el) el.style.willChange = "transform";
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [win.id, win.maximized, win.x, win.y],
+    [win.id, win.maximized, win.x, win.y, area],
   );
 
-  const onDragMove = useCallback(
-    (e: ReactPointerEvent<HTMLDivElement>) => {
-      const d = drag.current;
-      if (!d) return;
-      const x = e.clientX - d.dx;
-      const y = e.clientY - d.dy;
-      const cx = e.clientX;
-      const cy = e.clientY;
-      if (d.raf) return;
-      d.raf = requestAnimationFrame(() => {
-        d.raf = 0;
-        moveWindow(win.id, x, y);
-        const box = snapBoxFor(cx, cy, area());
-        setSnap((prev) => {
-          const same =
-            prev && box && prev.x === box.x && prev.y === box.y && prev.w === box.w && prev.h === box.h;
-          if (same) return prev;
-          if (box && !prev) haptic(6);
-          return box;
-        });
+  const onDragMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    d.x = e.clientX - d.dx;
+    d.y = e.clientY - d.dy;
+    const cx = e.clientX;
+    const cy = e.clientY;
+    if (d.raf) return;
+    d.raf = requestAnimationFrame(() => {
+      d.raf = 0;
+      const el = root.current;
+      if (el) {
+        el.style.transform = `translate3d(${d.x - d.baseX}px, ${d.y - d.baseY}px, 0)`;
+      }
+      const box = snapBoxFor(cx, cy, d.rect);
+      setSnap((prev) => {
+        const same =
+          prev && box && prev.x === box.x && prev.y === box.y && prev.w === box.w && prev.h === box.h;
+        if (same) return prev;
+        if (box && !prev) haptic(6);
+        return box;
       });
-    },
-    [win.id, area],
-  );
+    });
+  }, []);
 
   const onDragEnd = useCallback(() => {
-    if (drag.current?.raf) cancelAnimationFrame(drag.current.raf);
+    const d = drag.current;
+    if (d?.raf) cancelAnimationFrame(d.raf);
     drag.current = null;
     setDragging(false);
+    const el = root.current;
+    if (el) {
+      el.style.transform = "";
+      el.style.willChange = "";
+    }
     if (snap) {
       placeWindow(win.id, snap.x, snap.y, snap.w, snap.h);
       haptic(12);
       setSnap(null);
+      return;
     }
-  }, [snap, win.id, area]);
+    if (d) moveWindow(win.id, d.x, d.y);
+  }, [snap, win.id]);
 
   const onResizeStart = useCallback(
     (edge: Edge) => (e: ReactPointerEvent<HTMLDivElement>) => {
       focusWindow(win.id);
       setDragging(true);
-      size.current = { edge, px: e.clientX, py: e.clientY, x: win.x, y: win.y, w: win.w, h: win.h };
+      size.current = {
+        edge,
+        px: e.clientX,
+        py: e.clientY,
+        x: win.x,
+        y: win.y,
+        w: win.w,
+        h: win.h,
+        raf: 0,
+      };
       e.currentTarget.setPointerCapture(e.pointerId);
       e.stopPropagation();
     },
@@ -130,29 +174,39 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
     (e: ReactPointerEvent<HTMLDivElement>) => {
       const s = size.current;
       if (!s) return;
-      const dx = e.clientX - s.px;
-      const dy = e.clientY - s.py;
-      let { x, y, w, h } = s;
-      if (s.edge.includes("e")) w = s.w + dx;
-      if (s.edge.includes("s")) h = s.h + dy;
-      if (s.edge.includes("w")) {
-        w = s.w - dx;
-        x = s.x + dx;
-      }
-      if (s.edge.includes("n")) {
-        h = s.h - dy;
-        y = s.y + dy;
-      }
-      if (s.edge.includes("w") || s.edge.includes("n")) setWindowBox(win.id, x, y, w, h);
-      else resizeWindow(win.id, w, h);
+      const cx = e.clientX;
+      const cy = e.clientY;
+      // Boyutlandırma da kare başına tek commit ile sınırlanır.
+      if (s.raf) return;
+      s.raf = requestAnimationFrame(() => {
+        s.raf = 0;
+        const dx = cx - s.px;
+        const dy = cy - s.py;
+        let { x, y, w, h } = s;
+        if (s.edge.includes("e")) w = s.w + dx;
+        if (s.edge.includes("s")) h = s.h + dy;
+        if (s.edge.includes("w")) {
+          w = s.w - dx;
+          x = s.x + dx;
+        }
+        if (s.edge.includes("n")) {
+          h = s.h - dy;
+          y = s.y + dy;
+        }
+        if (s.edge.includes("w") || s.edge.includes("n")) setWindowBox(win.id, x, y, w, h);
+        else resizeWindow(win.id, w, h);
+      });
     },
     [win.id],
   );
 
+
   const onResizeEnd = useCallback(() => {
+    if (size.current?.raf) cancelAnimationFrame(size.current.raf);
     size.current = null;
     setDragging(false);
   }, []);
+
 
   if (win.minimized) return null;
 

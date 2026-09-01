@@ -6,7 +6,7 @@
  * hiçbir sayı sabit yazılmaz. Renkler yalnız `--tb-*` değişkenlerinden.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { WindowEmpty, WindowShell } from "@/components/shell/WindowShell";
 import { detectNativeHal, type NativeHalReport } from "@/hal/native";
@@ -14,6 +14,8 @@ import { BUILD_LABEL } from "@/lib/build-id";
 import { describeNode } from "@/lib/node-runtime";
 import { listTransfers, onTransferChange, type Transfer } from "@/lib/p2p/file-transfer";
 import { notifyError, notifyOk } from "@/lib/shell/notify";
+import { formatUptime, useMemoryMb, useUptimeSec } from "@/lib/shell/telemetry-store";
+
 import {
   NETWORK_MODES,
   setNetworkMode,
@@ -62,7 +64,7 @@ function bytes(n: number): string {
   return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
-function Row({ k, v }: { k: string; v: string }) {
+function Row({ k, v }: { k: string; v: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 py-1">
       <dt className="font-osmono text-[12px] text-[var(--tb-muted)]">{k}</dt>
@@ -112,29 +114,19 @@ function Slider({
 function SummaryTab() {
   const { node } = useShell();
   const status = describeNode(node);
-  const [uptime, setUptime] = useState(0);
-  const [mem, setMem] = useState<number | null>(null);
+  // Tek paylaşımlı telemetri zamanlayıcısı (1 sn) — bileşene özel interval yok.
+  const uptime = useUptimeSec();
+  const mem = useMemoryMb();
   // FAZ 6/8 — bare-metal kabuk altındaysak gerçek donanım raporu gelir.
   const [hal, setHal] = useState<NativeHalReport | null>(null);
 
   useEffect(() => {
-    const tick = () => {
-      setUptime(Math.round(performance.now() / 1000));
-      const perf = performance as Performance & { memory?: { usedJSHeapSize: number } };
-      setMem(perf.memory ? Math.round(perf.memory.usedJSHeapSize / 1024 / 1024) : null);
-    };
-    tick();
-    const t = window.setInterval(tick, 2000);
     void detectNativeHal().then(setHal);
-    return () => window.clearInterval(t);
   }, []);
 
   const device =
     typeof navigator === "undefined" ? "Bu cihaz" : navigator.platform || "Bu cihaz";
   const cores = typeof navigator === "undefined" ? 0 : (navigator.hardwareConcurrency ?? 0);
-  const hh = Math.floor(uptime / 3600);
-  const mm = Math.floor((uptime % 3600) / 60);
-  const ss = uptime % 60;
 
   return (
     <div className="grid gap-3">
@@ -146,9 +138,17 @@ function SummaryTab() {
           <Row k="Çalışma biçimi" v={hal ? "Bare-metal (yerel kabuk)" : "Tarayıcı kabuğu"} />
           <Row
             k="Çalışma süresi"
-            v={`${hh > 0 ? `${hh} sa ` : ""}${mm} dk ${ss} sn`}
+            v={<span className="tabular-nums">{formatUptime(uptime)}</span>}
           />
-          <Row k="Bellek kullanımı" v={mem != null ? `${mem} MB` : "ölçülemiyor"} />
+          <Row
+            k="Bellek kullanımı"
+            v={
+              <span className="inline-block min-w-[86px] text-right tabular-nums">
+                {mem != null ? `${mem} MB` : "ölçülemiyor"}
+              </span>
+            }
+          />
+
           <Row k="İşlem hattı" v={cores ? `${cores} çekirdek` : "bilinmiyor"} />
         </dl>
       </div>
