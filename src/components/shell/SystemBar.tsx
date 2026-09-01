@@ -40,27 +40,15 @@ export function SystemBar({
   /** Profil ve Hesap uygulamasını açar. */
   onProfile: () => void;
 }) {
-  const [clock, setClock] = useState("");
-  const [memMb, setMemMb] = useState<number | null>(null);
   const [control, setControl] = useState(false);
   const [network, setNetwork] = useState(false);
   const [notices, setNotices] = useState(false);
   const unread = useUnreadNoticeCount();
   const online = useOnline();
+  // Saat ve bellek tek paylaşımlı 1 sn zamanlayıcıdan gelir (titreme yok).
+  const clock = useClock();
+  const memMb = useMemoryMb();
 
-  useEffect(() => {
-    const tick = () => {
-      setClock(
-        new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) +
-          " · " +
-          new Date().toLocaleDateString("tr-TR", { day: "2-digit", month: "short" }),
-      );
-      setMemMb(readMemory());
-    };
-    tick();
-    const t = window.setInterval(tick, 5000);
-    return () => window.clearInterval(t);
-  }, []);
 
   // Pencere içi "Ağ modunu değiştir" kısayolu ağ panelini açar.
   useEffect(() => {
