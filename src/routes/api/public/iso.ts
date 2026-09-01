@@ -193,7 +193,7 @@ function buildKitPs1(origin: string): string {
     "}",
     "",
     "$bitti = $false",
-    `$isoUrl = "$Origin/${ISO_FILE_NAME}"`,
+    `$isoUrl = if ($IsoUrl) { $IsoUrl } else { "$Origin/${ISO_FILE_NAME}" }`,
     "$isoOut = Join-Path $OutDir 'tedbirge-webos.iso'",
     "Write-Host '[1/3] Hazir kurulum imaji araniyor...'",
     "try {",
