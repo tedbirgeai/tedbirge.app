@@ -126,7 +126,7 @@ export function BareMetalIsoButton({ compact = false }: { compact?: boolean }) {
         aria-label="Bare-Metal ISO İndir"
         className={
           compact
-            ? "tbos-winbtn wa-press grid h-11 w-11 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-accent)]"
+            ? "tbos-winbtn wa-press grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-accent)] sm:h-7 sm:w-7"
             : "wa-press inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-[var(--tb-border)] px-3 py-2 font-osmono text-[12px] text-[var(--tb-text)]"
         }
       >
