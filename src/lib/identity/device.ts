@@ -76,6 +76,21 @@ export function composeIdentityLabel(alias: string, device: string): string {
   return a || d;
 }
 
+/**
+ * CİHAZ TİPİNE GÖRE DİNAMİK BAŞLIK
+ * Telefonda "Bilgisayarım" demek evrensel UX'e aykırıdır; etiket cihaz
+ * türüne göre üretilir. Ekran genişliği tespiti destekler (küçük ekranlı
+ * masaüstü tarayıcı da "Cihazım" olur).
+ */
+export function deviceScopeLabel(): string {
+  const kind = detectDevice().kind;
+  const w = typeof window === "undefined" ? 1280 : window.innerWidth;
+  if (kind === "mobile") return "Cihazım";
+  if (kind === "tablet") return "Tabletim";
+  if (kind === "desktop") return w < 768 ? "Cihazım" : "Bilgisayarım";
+  return w < 768 ? "Cihazım" : w < 1024 ? "Tabletim" : "Bilgisayarım";
+}
+
 /** Düğüm kimliğinin kısa rozeti: #B32 */
 export function shortBadge(nodeId: string): string {
   const clean = (nodeId || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
