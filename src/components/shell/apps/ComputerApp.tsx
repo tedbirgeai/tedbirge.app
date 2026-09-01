@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { WindowEmpty, WindowShell } from "@/components/shell/WindowShell";
+import { detectNativeHal, type NativeHalReport } from "@/hal/native";
 import { BUILD_LABEL } from "@/lib/build-id";
 import { describeNode } from "@/lib/node-runtime";
 import { listTransfers, onTransferChange, type Transfer } from "@/lib/p2p/file-transfer";
