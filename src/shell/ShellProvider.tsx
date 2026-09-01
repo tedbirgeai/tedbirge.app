@@ -54,6 +54,9 @@ export function ShellProvider({
   // yapmaz, yalnızca durumu okur. Çağrı fikirdaştır (idempotent).
   useEffect(() => {
     bootNodeRuntime();
+    // FAZ 8: yerel kabuk (bare-metal/SBC) altında çalışıyorsak dosyalar
+    // gerçek blok aygıttan okunur; web dağıtımında bu çağrı sessiz döner.
+    void import("@/hal/native").then((m) => m.detectNativeHal());
     // Faz C: daha önce yüklenmiş .tbapp paketleri kayda geri konur.
     void import("@/apps/tbapp").then((m) => m.restoreInstalledTbApps());
     // Sosyal akış ve dosya aktarımı gelen paketleri kabuk açılışında dinler.
