@@ -166,9 +166,9 @@ read -r -p "Kapatmak icin Enter'a basin " _ || true
  *  [3/3] sonucu bildir ve Read-Host ile pencereyi açık tut.
  * Sahte .iso ASLA üretilmez.
  */
-function buildKitPs1(origin: string): string {
+function buildKitPs1(origin: string, isoUrl: string): string {
   return [
-    `param([string]$Origin = "${origin}", [string]$OutDir = $PSScriptRoot)`,
+    `param([string]$Origin = "${origin}", [string]$IsoUrl = "${isoUrl}", [string]$OutDir = $PSScriptRoot)`,
     "$ErrorActionPreference = 'Continue'",
     "chcp 65001 > $null",
     "Write-Host ''",
