@@ -131,22 +131,22 @@ export function SystemBar({
       />
 
 
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="pointer-events-auto relative z-[90] flex shrink-0 items-center gap-1 sm:gap-1.5">
         {onSearch ? (
           <button
             type="button"
             onClick={onSearch}
             aria-label="Evrensel arama (Ctrl + Boşluk)"
             title="Evrensel arama · Ctrl + Boşluk"
-            className="wa-press grid h-7 w-7 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+            className="wa-press grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)] sm:h-7 sm:w-7"
           >
             <Search className="h-4 w-4" aria-hidden />
           </button>
         ) : null}
-        <InstallSystemButton />
+        <InstallSystemButton compact />
         <BareMetalIsoButton compact />
         <span
-          className="hidden whitespace-nowrap font-osmono text-[11px] text-[var(--tb-muted)] sm:inline"
+          className="hidden shrink-0 whitespace-nowrap font-osmono text-[11px] text-[var(--tb-muted)] md:inline"
           aria-live="polite"
         >
           {clock}
@@ -156,14 +156,14 @@ export function SystemBar({
           type="button"
           onClick={onSettings}
           aria-label="Sistem ayarları"
-          className="wa-press grid h-7 w-7 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+          className="wa-press grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)] sm:h-7 sm:w-7"
         >
           <Settings className="h-4 w-4" aria-hidden />
         </button>
         <Link
           to="/system"
           aria-label="Profil ve sistem"
-          className="wa-press grid h-7 w-7 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+          className="wa-press grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)] sm:h-7 sm:w-7"
         >
           <UserRound className="h-4 w-4" aria-hidden />
         </Link>
