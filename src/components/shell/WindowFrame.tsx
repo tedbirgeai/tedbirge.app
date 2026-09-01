@@ -202,9 +202,11 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
 
 
   const onResizeEnd = useCallback(() => {
+    if (size.current?.raf) cancelAnimationFrame(size.current.raf);
     size.current = null;
     setDragging(false);
   }, []);
+
 
   if (win.minimized) return null;
 
