@@ -30,17 +30,23 @@ const STEPS: ReadonlyArray<{ tool: string; text: string }> = [
   },
 ];
 
+/** Sessiz indirme: hiçbir arayüz katmanı açmadan imajı indirmeye başlar. */
+export function startIsoDownload() {
+  if (typeof document === "undefined") return;
+  // Aynı sekmede gizli bir indirme: sayfa terk edilmez, kabuk kapanmaz.
+  const a = document.createElement("a");
+  a.href = ISO_ROUTE;
+  a.rel = "noopener";
+  a.download = "";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 export function useIsoDownload() {
   const [guide, setGuide] = useState(false);
   const download = useCallback(() => {
-    // Aynı sekmede gizli bir indirme: sayfa terk edilmez, kabuk kapanmaz.
-    const a = document.createElement("a");
-    a.href = ISO_ROUTE;
-    a.rel = "noopener";
-    a.download = "";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    startIsoDownload();
     setGuide(true);
   }, []);
   return { guide, setGuide, download };
