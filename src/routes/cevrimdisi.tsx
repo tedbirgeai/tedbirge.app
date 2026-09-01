@@ -71,18 +71,16 @@ function OfflinePage() {
         >
           Yeniden dene
         </button>
-        <Link
-          to="/saha"
+        <a href="/"
           className="rounded-md border border-input px-4 py-2 text-sm font-medium text-foreground"
         >
           Saha portalı
-        </Link>
-        <Link
-          to="/"
+        </a>
+        <a href="/"
           className="rounded-md border border-input px-4 py-2 text-sm font-medium text-foreground"
         >
           Ana sayfa
-        </Link>
+        </a>
       </div>
     </main>
   );

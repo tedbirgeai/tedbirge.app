@@ -8,7 +8,6 @@ import { updateAiLeadStatus, rebuildLeadPlan } from "@/lib/leads.functions";
 import { OFFICIAL_DRAFTS } from "@/lib/regulation";
 import { INTEROP_TARGETS } from "@/lib/interop";
 import { AdminBusinessPlan } from "@/components/site/AdminBusinessPlan";
-import { AdminInterop } from "@/components/site/AdminInterop";
 
 
 type PilotRequest = {
@@ -209,7 +208,6 @@ export function AdminConsole() {
         {tab === "plan" ? (
           <AdminBusinessPlan />
         ) : tab === "interop" ? (
-          <AdminInterop />
         ) : tab === "docs" ? (
           <AdminOfficialDrafts />
         ) : tab === "ai" ? (

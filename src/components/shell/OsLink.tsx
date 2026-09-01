@@ -7,7 +7,7 @@
  * /gizlilik) gerçek bağlantı olarak korunur.
  */
 
-import type { ReactNode, MouseEvent } from "react";
+import type { CSSProperties, ReactNode, MouseEvent } from "react";
 
 import { closeAllWindows, openWindow } from "@/shell/windows";
 import { catalogApp } from "@/shell/installed";
@@ -82,9 +82,11 @@ export function OsLink({
   children,
   onClick,
   title,
+  style,
   ...rest
 }: {
   to: string;
+  style?: CSSProperties;
   className?: string;
   children?: ReactNode;
   onClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
@@ -96,10 +98,11 @@ export function OsLink({
   activeProps?: unknown;
   target?: string;
   rel?: string;
+  "aria-label"?: string;
 }) {
   if (LEGAL_PATHS.has(to)) {
     return (
-      <a href={to} className={className} title={title} {...(rest.target ? { target: rest.target } : {})}>
+      <a href={to} className={className} title={title} style={style} aria-label={rest["aria-label"]} {...(rest.target ? { target: rest.target } : {})}>
         {children}
       </a>
     );
@@ -109,6 +112,8 @@ export function OsLink({
       href="#"
       className={className}
       title={title}
+      style={style}
+      aria-label={rest["aria-label"]}
       onClick={(e) => {
         e.preventDefault();
         onClick?.(e);
