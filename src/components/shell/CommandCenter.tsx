@@ -195,6 +195,20 @@ function MarginWidget() {
   );
 }
 
+/**
+ * Radar halkaları saf CSS animasyonudur ve hiçbir duruma bağlı değildir;
+ * `memo` ile ayrılarak her telemetri tikinde yeniden çizilmesi engellenir.
+ */
+const RadarRings = memo(function RadarRings() {
+  return (
+    <div className="relative h-16 w-16 shrink-0">
+      <span className="absolute inset-0 animate-ping rounded-full border border-cyan-400/50" />
+      <span className="absolute inset-2 animate-pulse rounded-full border border-emerald-400/60" />
+      <span className="absolute inset-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.9)]" />
+    </div>
+  );
+});
+
 /** Canlı radar: aktif eş sayısı ve ücretsiz katman doluluğu. */
 function LiveRadar() {
   const state = useNodeRuntime();
@@ -207,11 +221,7 @@ function LiveRadar() {
       icon={<Radar className="h-3.5 w-3.5 text-cyan-400" />}
     >
       <div className="flex items-center gap-4">
-        <div className="relative h-16 w-16 shrink-0">
-          <span className="absolute inset-0 animate-ping rounded-full border border-cyan-400/50" />
-          <span className="absolute inset-2 animate-pulse rounded-full border border-emerald-400/60" />
-          <span className="absolute inset-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.9)]" />
-        </div>
+        <RadarRings />
         <div className="min-w-0">
           <p
             className={`font-mono text-lg font-bold ${full ? "text-amber-400" : "text-emerald-400"}`}
