@@ -17,6 +17,7 @@ import { createZip } from "@/lib/zip";
 export const ISO_FILE_NAME = "tedbirge-webos-v1.0-x86_64.iso";
 const KIT_SH = "tedbirge-webos-iso-kurulum-kiti.sh";
 const KIT_BAT = "kur.bat";
+const KIT_PS1 = "kur-indir.ps1";
 const KIT_ZIP = "tedbirge-webos-kurulum-kiti.zip";
 
 /**
