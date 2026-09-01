@@ -62,7 +62,7 @@ function bytes(n: number): string {
   return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
-function Row({ k, v }: { k: string; v: string }) {
+function Row({ k, v }: { k: string; v: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 py-1">
       <dt className="font-osmono text-[12px] text-[var(--tb-muted)]">{k}</dt>
