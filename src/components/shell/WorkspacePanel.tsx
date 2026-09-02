@@ -285,6 +285,8 @@ function MobileAppShell({
 
   return (
     <div
+      ref={edge.ref}
+      {...edge.handlers}
       className="tbos tbos-mobile-app fixed inset-0 z-[70] flex flex-col bg-[var(--tb-bg)]"
       style={drag ? { transform: `translateY(${drag}px)`, transition: "none" } : undefined}
     >
