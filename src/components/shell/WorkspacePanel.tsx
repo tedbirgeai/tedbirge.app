@@ -33,6 +33,7 @@ import { describeNode } from "@/lib/node-runtime";
 import { deviceScopeLabel } from "@/lib/identity/device";
 import { useShell } from "@/shell/shell-context";
 import { useIsCompact } from "@/hooks/use-mobile";
+import { useEdgeBackGesture } from "@/hooks/useSwipeGesture";
 import { webApp } from "@/shell/web-apps";
 import { catalogApp } from "@/shell/installed";
 import { getApp } from "@/apps/registry";
