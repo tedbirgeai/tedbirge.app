@@ -261,6 +261,8 @@ function MobileAppShell({
 }) {
   const start = useRef<number | null>(null);
   const [drag, setDrag] = useState(0);
+  // Sol kenardan sağa kaydırma: pencereyi yumuşakça kapatır.
+  const edge = useEdgeBackGesture(() => closeWindow(win.id));
 
   // Donanım geri tuşu / kenar jesti: uygulamayı kapatır, siteden çıkarmaz.
   useEffect(() => {
