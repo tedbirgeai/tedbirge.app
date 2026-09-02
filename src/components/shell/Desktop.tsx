@@ -34,6 +34,28 @@ export function Desktop({
   const [menu, setMenu] = useState<Menu | null>(null);
   const [properties, setProperties] = useState<string | null>(null);
   const wallpaper = useWallpaper();
+  const compact = useIsCompact();
+
+  /** Tek kısayol: ızgara ve sayfalayıcı aynı görünümü paylaşır. */
+  const renderIcon = (id: string): ReactNode => {
+    const app = catalogApp(id);
+    if (!app) return null;
+    return (
+      <DesktopIcon
+        key={id}
+        id={id}
+        label={app.label}
+        selected={selected === id}
+        onSelect={() => setSelected(id)}
+        onOpen={() => onOpen(id)}
+        onMenu={(pt) => {
+          setSelected(id);
+          setMenu({ x: pt.x, y: pt.y, appId: id });
+        }}
+      />
+    );
+  };
+
 
 
 
