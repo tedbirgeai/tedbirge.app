@@ -89,31 +89,22 @@ export function Desktop({
         setMenu({ x: e.clientX - r.left, y: e.clientY - r.top });
       }}
     >
-      <div
-        className="grid h-full grid-flow-col grid-rows-[repeat(auto-fill,100px)] justify-start gap-6 overflow-hidden p-6"
-        onPointerDown={(e) => {
-          if (e.target === e.currentTarget) setSelected(null);
-        }}
-      >
-        {installed.map((id) => {
-          const app = catalogApp(id);
-          if (!app) return null;
-          return (
-            <DesktopIcon
-              key={id}
-              id={id}
-              label={app.label}
-              selected={selected === id}
-              onSelect={() => setSelected(id)}
-              onOpen={() => onOpen(id)}
-              onMenu={(pt) => {
-                setSelected(id);
-                setMenu({ x: pt.x, y: pt.y, appId: id });
-              }}
-            />
-          );
-        })}
-      </div>
+      {compact ? (
+        <DesktopPager
+          ids={installed.filter((id) => catalogApp(id))}
+          renderIcon={renderIcon}
+          onEmptyPointerDown={() => setSelected(null)}
+        />
+      ) : (
+        <div
+          className="grid h-full grid-flow-col grid-rows-[repeat(auto-fill,100px)] justify-start gap-6 overflow-hidden p-6"
+          onPointerDown={(e) => {
+            if (e.target === e.currentTarget) setSelected(null);
+          }}
+        >
+          {installed.map((id) => (catalogApp(id) ? renderIcon(id) : null))}
+        </div>
+      )}
 
 
       <DesktopWidgets onOpen={onOpen} />
