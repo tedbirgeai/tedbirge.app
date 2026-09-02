@@ -30,10 +30,16 @@ export function DesktopIcon({
   onMenu?: (pt: { x: number; y: number }) => void;
 }) {
   const lastTap = useRef(0);
+  const lastPointer = useRef<string>("mouse");
 
   const onClick = useCallback(() => {
     onSelect();
-    // 400 ms içindeki ikinci tıklama uygulamayı açar (masaüstü mantığı).
+    // Dokunmatik/kalem: tek dokunuş doğrudan açar (mobil beklenti).
+    if (lastPointer.current !== "mouse") {
+      onOpen();
+      return;
+    }
+    // Fare: 400 ms içindeki ikinci tıklama uygulamayı açar (masaüstü mantığı).
     const now = Date.now();
     if (now - lastTap.current < 400) {
       lastTap.current = 0;
@@ -46,6 +52,9 @@ export function DesktopIcon({
   return (
     <button
       type="button"
+      onPointerDown={(e) => {
+        lastPointer.current = e.pointerType;
+      }}
       onClick={onClick}
       onDoubleClick={onOpen}
       onKeyDown={(e) => {
