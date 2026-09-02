@@ -7,9 +7,11 @@
  * tarayıcı menüsü engellenir ve işletim sistemi bağlam menüsü açılır.
  */
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { DesktopIcon } from "@/components/shell/DesktopIcon";
+import { DesktopPager } from "@/components/shell/DesktopPager";
+import { useIsCompact } from "@/hooks/use-mobile";
 import { DesktopWidgets } from "@/components/shell/DesktopWidgets";
 import { ContextMenu, type MenuItem } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
