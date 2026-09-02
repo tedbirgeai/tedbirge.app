@@ -15,6 +15,7 @@ import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContext
 import { catalogApp, useDesktopState } from "@/shell/installed";
 import { closeWindow, focusWindow, restoreWindow, type WindowRecord } from "@/shell/windows";
 import { useIsCompact } from "@/hooks/use-mobile";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
 export function Dock({
   windows,
@@ -35,12 +36,23 @@ export function Dock({
   // Mağaza sağdaki sabit düğmede duruyor; şeritte ikinci kez gösterilmez.
   const ids = Array.from(new Set([...installed, ...extra])).filter((id) => id !== "store");
 
+  // Dock üzerinde sağa/sola kaydırma: açık uygulamalar arasında hızlı geçiş.
+  const swipe = useSwipeGesture((dir) => {
+    const order = [...windows].filter((w) => !w.minimized).sort((a, b) => b.z - a.z);
+    if (order.length < 2) return;
+    const next = dir === "left" ? order[1] : order[order.length - 1];
+    if (next) focusWindow(next.id);
+  });
+
   return (
     <div
       className="pointer-events-none relative z-[95] flex shrink-0 justify-center px-2 pb-2"
       onContextMenu={(e) => e.preventDefault()}
     >
-      <div className="tbos-dock pointer-events-auto flex max-w-full items-end gap-1 overflow-x-auto px-2 py-1.5">
+      <div
+        className="tbos-dock pointer-events-auto flex max-w-full items-end gap-1 overflow-x-auto px-2 py-1.5"
+        {...swipe}
+      >
         {ids.map((id) => {
           const app = catalogApp(id);
           const win = windows.find((w) => w.appId === id);

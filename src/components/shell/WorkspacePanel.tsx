@@ -33,6 +33,7 @@ import { describeNode } from "@/lib/node-runtime";
 import { deviceScopeLabel } from "@/lib/identity/device";
 import { useShell } from "@/shell/shell-context";
 import { useIsCompact } from "@/hooks/use-mobile";
+import { useEdgeBackGesture } from "@/hooks/useSwipeGesture";
 import { webApp } from "@/shell/web-apps";
 import { catalogApp } from "@/shell/installed";
 import { getApp } from "@/apps/registry";
@@ -261,6 +262,8 @@ function MobileAppShell({
 }) {
   const start = useRef<number | null>(null);
   const [drag, setDrag] = useState(0);
+  // Sol kenardan sağa kaydırma: pencereyi yumuşakça kapatır.
+  const edge = useEdgeBackGesture(() => closeWindow(win.id));
 
   // Donanım geri tuşu / kenar jesti: uygulamayı kapatır, siteden çıkarmaz.
   useEffect(() => {
@@ -283,6 +286,8 @@ function MobileAppShell({
 
   return (
     <div
+      ref={edge.ref}
+      {...edge.handlers}
       className="tbos tbos-mobile-app fixed inset-0 z-[70] flex flex-col bg-[var(--tb-bg)]"
       style={drag ? { transform: `translateY(${drag}px)`, transition: "none" } : undefined}
     >

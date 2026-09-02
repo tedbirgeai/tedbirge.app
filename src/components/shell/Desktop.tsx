@@ -7,9 +7,11 @@
  * tarayıcı menüsü engellenir ve işletim sistemi bağlam menüsü açılır.
  */
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { DesktopIcon } from "@/components/shell/DesktopIcon";
+import { DesktopPager } from "@/components/shell/DesktopPager";
+import { useIsCompact } from "@/hooks/use-mobile";
 import { DesktopWidgets } from "@/components/shell/DesktopWidgets";
 import { ContextMenu, type MenuItem } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
@@ -32,6 +34,28 @@ export function Desktop({
   const [menu, setMenu] = useState<Menu | null>(null);
   const [properties, setProperties] = useState<string | null>(null);
   const wallpaper = useWallpaper();
+  const compact = useIsCompact();
+
+  /** Tek kısayol: ızgara ve sayfalayıcı aynı görünümü paylaşır. */
+  const renderIcon = (id: string): ReactNode => {
+    const app = catalogApp(id);
+    if (!app) return null;
+    return (
+      <DesktopIcon
+        key={id}
+        id={id}
+        label={app.label}
+        selected={selected === id}
+        onSelect={() => setSelected(id)}
+        onOpen={() => onOpen(id)}
+        onMenu={(pt) => {
+          setSelected(id);
+          setMenu({ x: pt.x, y: pt.y, appId: id });
+        }}
+      />
+    );
+  };
+
 
 
 
@@ -89,31 +113,22 @@ export function Desktop({
         setMenu({ x: e.clientX - r.left, y: e.clientY - r.top });
       }}
     >
-      <div
-        className="grid h-full grid-flow-col grid-rows-[repeat(auto-fill,100px)] justify-start gap-6 overflow-hidden p-6"
-        onPointerDown={(e) => {
-          if (e.target === e.currentTarget) setSelected(null);
-        }}
-      >
-        {installed.map((id) => {
-          const app = catalogApp(id);
-          if (!app) return null;
-          return (
-            <DesktopIcon
-              key={id}
-              id={id}
-              label={app.label}
-              selected={selected === id}
-              onSelect={() => setSelected(id)}
-              onOpen={() => onOpen(id)}
-              onMenu={(pt) => {
-                setSelected(id);
-                setMenu({ x: pt.x, y: pt.y, appId: id });
-              }}
-            />
-          );
-        })}
-      </div>
+      {compact ? (
+        <DesktopPager
+          ids={installed.filter((id) => catalogApp(id))}
+          renderIcon={renderIcon}
+          onEmptyPointerDown={() => setSelected(null)}
+        />
+      ) : (
+        <div
+          className="grid h-full grid-flow-col grid-rows-[repeat(auto-fill,100px)] justify-start gap-6 overflow-hidden p-6"
+          onPointerDown={(e) => {
+            if (e.target === e.currentTarget) setSelected(null);
+          }}
+        >
+          {installed.map((id) => (catalogApp(id) ? renderIcon(id) : null))}
+        </div>
+      )}
 
 
       <DesktopWidgets onOpen={onOpen} />
