@@ -15,6 +15,7 @@ import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContext
 import { catalogApp, useDesktopState } from "@/shell/installed";
 import { closeWindow, focusWindow, restoreWindow, type WindowRecord } from "@/shell/windows";
 import { useIsCompact } from "@/hooks/use-mobile";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
 export function Dock({
   windows,
