@@ -36,23 +36,27 @@ export function Dock({
   // Mağaza sağdaki sabit düğmede duruyor; şeritte ikinci kez gösterilmez.
   const ids = Array.from(new Set([...installed, ...extra])).filter((id) => id !== "store");
 
-  // Dock üzerinde sağa/sola kaydırma: açık uygulamalar arasında hızlı geçiş.
+  // Alt tutamaç (home indicator) üzerinde sağa/sola kaydırma: açık
+  // uygulamalar arasında sırayla geçiş. Simge şeridi yatay kaydırılabilir
+  // olduğu için jest oraya bağlanmaz; normal kaydırma bozulmaz.
   const swipe = useSwipeGesture((dir) => {
-    const order = [...windows].filter((w) => !w.minimized).sort((a, b) => b.z - a.z);
+    const order = [...windows]
+      .filter((w) => !w.minimized)
+      .sort((a, b) => a.id.localeCompare(b.id));
     if (order.length < 2) return;
-    const next = dir === "left" ? order[1] : order[order.length - 1];
-    if (next) focusWindow(next.id);
+    const top = [...windows].filter((w) => !w.minimized).sort((a, b) => b.z - a.z)[0];
+    const i = Math.max(0, order.findIndex((w) => w.id === top?.id));
+    const step = dir === "left" ? 1 : -1;
+    const next = order[(i + step + order.length) % order.length];
+    if (next && next.id !== top?.id) focusWindow(next.id);
   });
 
   return (
     <div
-      className="pointer-events-none relative z-[95] flex shrink-0 justify-center px-2 pb-2"
+      className="pointer-events-none relative z-[95] flex shrink-0 flex-col items-center px-2 pb-2"
       onContextMenu={(e) => e.preventDefault()}
     >
-      <div
-        className="tbos-dock pointer-events-auto flex max-w-full items-end gap-1 overflow-x-auto px-2 py-1.5"
-        {...swipe}
-      >
+      <div className="tbos-dock pointer-events-auto flex max-w-full items-end gap-1 overflow-x-auto px-2 py-1.5">
         {ids.map((id) => {
           const app = catalogApp(id);
           const win = windows.find((w) => w.appId === id);
@@ -103,6 +107,15 @@ export function Dock({
           <span className="mt-0.5 hidden font-osmono text-[10px] sm:block">Mağaza</span>
           <span className="mt-0.5 block h-1 w-1" aria-hidden />
         </button>
+      </div>
+
+      {/* Alt tutamaç: yatay kaydırma ile uygulamalar arası geçiş. */}
+      <div
+        aria-hidden
+        className="pointer-events-auto mt-1 flex h-5 w-40 max-w-[60%] items-center justify-center touch-pan-y"
+        {...swipe}
+      >
+        <span className="block h-1 w-24 rounded-full bg-[var(--tb-border)]" />
       </div>
 
       {menu ? (
