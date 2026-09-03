@@ -109,6 +109,15 @@ export function Dock({
         </button>
       </div>
 
+      {/* Alt tutamaç: yatay kaydırma ile uygulamalar arası geçiş. */}
+      <div
+        aria-hidden
+        className="pointer-events-auto mt-1 flex h-5 w-40 max-w-[60%] items-center justify-center touch-pan-y"
+        {...swipe}
+      >
+        <span className="block h-1 w-24 rounded-full bg-[var(--tb-border)]" />
+      </div>
+
       {menu ? (
         <div className="pointer-events-none fixed inset-0 z-[120]">
           <ContextMenu
