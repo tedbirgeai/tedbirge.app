@@ -53,13 +53,10 @@ export function Dock({
 
   return (
     <div
-      className="pointer-events-none relative z-[95] flex shrink-0 justify-center px-2 pb-2"
+      className="pointer-events-none relative z-[95] flex shrink-0 flex-col items-center px-2 pb-2"
       onContextMenu={(e) => e.preventDefault()}
     >
-      <div
-        className="tbos-dock pointer-events-auto flex max-w-full items-end gap-1 overflow-x-auto px-2 py-1.5"
-        {...swipe}
-      >
+      <div className="tbos-dock pointer-events-auto flex max-w-full items-end gap-1 overflow-x-auto px-2 py-1.5">
         {ids.map((id) => {
           const app = catalogApp(id);
           const win = windows.find((w) => w.appId === id);
