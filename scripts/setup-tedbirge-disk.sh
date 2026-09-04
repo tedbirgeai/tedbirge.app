@@ -12,12 +12,20 @@ set -u
 
 MNT=/mnt/tedbirge
 SRC_WWW=/var/www/localhost/htdocs
+LOG_DIR=/var/log/tedbirge
+LOG=$LOG_DIR/kurulum.log
 
-say() { printf '%s\n' "$1"; }
+mkdir -p "$LOG_DIR"
+: >"$LOG"
+kayit() { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" >>"$LOG"; }
+kayit "kurulum baslatildi"
+
+say() { printf '%s\n' "$1"; kayit "$1"; }
 hata() {
   say ""
   say "! $1"
   say ""
+  kayit "HATA: $1"
   read -r -p "Canli moda donmek icin Enter'a basin " _
   exit 1
 }
@@ -128,6 +136,10 @@ chroot "$MNT" /bin/sh -c '
   grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null
 ' || say "  (uyari: onyukleyici adimi kismen tamamlandi)"
 
+# Kurulum kaydi diske tasinir: hedef sistemde kalici hata izi olusur.
+mkdir -p "$MNT/var/log/tedbirge"
+cp "$LOG" "$MNT/var/log/tedbirge/kurulum.log" 2>/dev/null || true
+
 sync
 for d in dev proc sys; do umount "$MNT/$d" 2>/dev/null; done
 umount "$MNT/boot/efi" 2>/dev/null
@@ -138,6 +150,7 @@ say ""
 say "==============================================="
 say "  Kurulum tamamlandi, USB'yi cikarip yeniden"
 say "  baslatin."
+say "  Kurulum kaydi: /var/log/tedbirge/kurulum.log"
 say "==============================================="
 say ""
 read -r -p "Simdi yeniden baslatmak icin Enter'a basin " _
