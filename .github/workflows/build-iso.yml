@@ -1,13 +1,16 @@
 name: Tedbirge WebOS ISO
 
+# Depo: tedbirgeai/tedbirge.app
 # Önyüklenebilir imaj tamamen bu hatta üretilir; son kullanıcı hiçbir şey derlemez.
 on:
   push:
     branches: [main]
     paths:
       - "src/**"
+      - "crates/**"
       - "public/**"
       - "alpine/**"
+      - "scripts/**"
       - ".github/workflows/build-iso.yml"
       - "package.json"
   release:
@@ -30,6 +33,13 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
+      - name: Rust Wasm çekirdeğini derle
+        run: |
+          rustup target add wasm32-unknown-unknown
+          mkdir -p public/kernel
+          bash scripts/build-kernel.sh
+          test -s public/kernel/tedbirge_kernel.wasm
 
       - name: Web paketini derle
         run: |
@@ -63,6 +73,8 @@ jobs:
           if [ "$SIZE" -lt 104857600 ]; then
             echo "::error::ISO beklenenden küçük ($SIZE bayt) — yayınlanmayacak."; exit 1
           fi
+          # Sabit indirme adı: bağlantı sürümden bağımsız çalışsın
+          cp "$ISO" build/iso/tedbirge-webos-x86_64.iso
           (cd build/iso && sha256sum *.iso > SHA256SUMS)
           echo "ISO=$ISO" >> "$GITHUB_ENV"
 
@@ -88,7 +100,7 @@ jobs:
           tag_name: latest
           name: "Tedbirge® WebOS — güncel imaj"
           prerelease: true
-          body: "Otomatik derleme · ${{ steps.ver.outputs.version }}"
+          body: "Otomatik derleme · ${{ steps.ver.outputs.version }} · tedbirgeai/tedbirge.app"
           files: |
             build/iso/*.iso
             build/iso/SHA256SUMS
