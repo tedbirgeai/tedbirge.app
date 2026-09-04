@@ -146,6 +146,7 @@ export function StoreApp({ onOpen }: { onOpen: (id: string) => void }) {
           </p>
         ) : null}
       </div>
-    </div>
+      )}
+
   );
 }
