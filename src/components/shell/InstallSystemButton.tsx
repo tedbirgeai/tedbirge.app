@@ -17,7 +17,7 @@ export function InstallSystemButton({ compact = false }: { compact?: boolean }) 
 
   const install = useCallback(async () => {
     const result = await promptInstall();
-    if (result === "unavailable") startIsoDownload();
+    if (result === "unavailable") void startIsoDownload();
   }, []);
 
   if (installed || isStandaloneDisplay()) {

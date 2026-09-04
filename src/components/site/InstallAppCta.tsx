@@ -22,7 +22,7 @@ export function InstallAppCta({
 
   const onClick = useCallback(async () => {
     const result = await promptInstall();
-    if (result === "unavailable") startIsoDownload();
+    if (result === "unavailable") void startIsoDownload();
   }, []);
 
   const base =
