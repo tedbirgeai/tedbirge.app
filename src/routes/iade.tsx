@@ -64,6 +64,10 @@ function Refund() {
             sözleşmenizde açıkça belirtilir.
           </p>
           <p>Tüketici mevzuatından doğan cayma hakkınız bu politikadan bağımsız olarak saklıdır.</p>
+          <p>
+            Satıcı ve lisans veren:{" "}
+            <strong className="text-foreground">Mehmet DİNÇ (Tedbirge® WebOS)</strong>, Türkiye.
+          </p>
         </div>
       </section>
     </SitePage>
