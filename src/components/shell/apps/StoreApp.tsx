@@ -7,9 +7,10 @@
  */
 
 import { useMemo, useState } from "react";
-import { Check, Plus, Search, Trash2 } from "lucide-react";
+import { Check, CreditCard, Plus, Search, Trash2 } from "lucide-react";
 
 import { AppIcon } from "@/components/shell/app-icons";
+import { SubscriptionPanel } from "@/components/shell/SubscriptionPanel";
 import {
   CATALOG,
   CATEGORY_LABELS,
@@ -19,17 +20,20 @@ import {
 } from "@/shell/installed";
 import type { AppCategory } from "@/shell/web-apps";
 
-const TABS: Array<{ id: AppCategory | "all"; label: string }> = [
+type Tab = AppCategory | "all" | "subscription";
+
+const TABS: Array<{ id: Tab; label: string }> = [
   { id: "all", label: "Tümü" },
   ...(Object.keys(CATEGORY_LABELS) as AppCategory[]).map((c) => ({
-    id: c,
+    id: c as Tab,
     label: CATEGORY_LABELS[c],
   })),
+  { id: "subscription", label: "Abonelik" },
 ];
 
 export function StoreApp({ onOpen }: { onOpen: (id: string) => void }) {
   const { installed } = useDesktopState();
-  const [tab, setTab] = useState<AppCategory | "all">("all");
+  const [tab, setTab] = useState<Tab>("all");
   const [q, setQ] = useState("");
 
   const list = useMemo(() => {
@@ -44,6 +48,7 @@ export function StoreApp({ onOpen }: { onOpen: (id: string) => void }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+
       <div className="shrink-0 border-b border-[var(--tb-border)] p-3">
         <label className="flex items-center gap-2 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] px-3 py-2">
           <Search className="h-4 w-4 shrink-0 text-[var(--tb-muted)]" aria-hidden />
