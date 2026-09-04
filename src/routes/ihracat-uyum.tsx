@@ -3,7 +3,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
 const TITLE = "İhracat Uyumu — tedbirge.app";
 const DESC =
-  "Tedbirge Protokol'in kriptografik yetenekleri, Wassenaar Düzenlemesi kapsamındaki sınıflandırması, yasaklı ülke politikası ve son kullanıcı beyanı süreci.";
+  "TedbirgeÂ® WebOS'in kriptografik yetenekleri, Wassenaar Düzenlemesi kapsamındaki sınıflandırması, yasaklı ülke politikası ve son kullanıcı beyanı süreci.";
 const URL = "https://tedbirge.app/ihracat-uyum";
 
 export const Route = createFileRoute("/ihracat-uyum")({
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/ihracat-uyum")({
 });
 
 const classification = [
-  ["Ürün", "Tedbirge Protokol / Loop / Off-Grid — yalnızca yazılım (tek statik binary + SDK)"],
+  ["Ürün", "TedbirgeÂ® WebOS / Loop / Off-Grid — yalnızca yazılım (tek statik binary + SDK)"],
   ["Kriptografi", "AES-256-GCM (veri), Ed25519 (kimlik/imza), SHA-256 (özet)"],
   [
     "Wassenaar kategorisi",
@@ -73,7 +73,7 @@ function ExportCompliance() {
             Güçlü kriptografi, açık beyan
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Tedbirge Protokol güçlü şifreleme içeren bir yazılımdır ve bu nedenle çift kullanımlı
+            TedbirgeÂ® WebOS güçlü şifreleme içeren bir yazılımdır ve bu nedenle çift kullanımlı
             teknoloji rejimlerinin kapsamına girebilir. Dünya genelinde hizmet veriyoruz — yalnızca
             yasal sınırlar dahilinde.
           </p>

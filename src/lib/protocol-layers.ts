@@ -1,5 +1,5 @@
 /**
- * Tedbirge Protocol — 7 katmanlı mimarinin tek doğruluk kaynağı.
+ * TedbirgeÂ® WebOS — 7 katmanlı mimarinin tek doğruluk kaynağı.
  *
  * Buradaki metinler kullanıcı arayüzünde birebir kullanılır: kriptografik
  * uzun terimler (imza algoritmaları, anahtar türetme, karma fonksiyonları)

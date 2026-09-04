@@ -231,7 +231,7 @@ export function FieldReportApp() {
         </div>
 
         <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
-          Rapor sahibi: Mehmet DİNÇ (Tedbirge Protokol). Ölçümler yalnızca operatörün kendi
+          Rapor sahibi: Mehmet DİNÇ (TedbirgeÂ® WebOS). Ölçümler yalnızca operatörün kendi
           lisansına bağlı düğümlerinden gelir; TR profilinde 868 MHz / 25 mW e.r.p. / %1 görev
           döngüsü sınırları düğüm tarafında zorlanır.
         </p>

@@ -12,7 +12,7 @@ export const RELAY_LEGAL_TITLE = "Röle beyanı";
 
 export const RELAY_LEGAL_TEXT = [
   "Röle açıkken cihazınız, yakınındaki diğer Tedbirge düğümlerinin uçtan uca şifreli paketlerini taşıyabilir. Bu paketlerin içeriği cihazınızda çözülemez, saklanmaz ve okunamaz; yalnız bir sonraki düğüme iletilir.",
-  "Taşınan trafik internete çıkarılmaz. Tedbirge Protocol bir internet dağıtıcısı, VPN veya vekil sunucu değildir; röle yalnız Tedbirge ağı içindeki iletim içindir.",
+  "Taşınan trafik internete çıkarılmaz. TedbirgeÂ® WebOS bir internet dağıtıcısı, VPN veya vekil sunucu değildir; röle yalnız Tedbirge ağı içindeki iletim içindir.",
   "Röleyi istediğiniz an kapatabilirsiniz. Kapalıyken cihazınız yalnız kendi mesajlarını gönderir ve alır; ağın kapsama alanı buna karşılık daralır.",
   "Taşınan paket sayısı dışında hiçbir kayıt tutulmaz; kim ile kim arasında olduğu cihazınızda bilinmez.",
 ].join("\n\n");
