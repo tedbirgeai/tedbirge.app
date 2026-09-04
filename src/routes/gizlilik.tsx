@@ -13,10 +13,11 @@ export const Route = createFileRoute("/gizlilik")({
       { property: "og:title", content: "Gizlilik — tedbirge.app" },
       { property: "og:description", content: "Kişisel veri işleme, paylaşım ve haklarınız." },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://tedbirge-app.lovable.app/gizlilik" },
+      { property: "og:site_name", content: "Tedbirge® WebOS" },
+      { property: "og:url", content: "https://tedbirge.app/gizlilik" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/gizlilik" }],
+    links: [{ rel: "canonical", href: "https://tedbirge.app/gizlilik" }],
   }),
   component: Privacy,
 });

@@ -14,8 +14,8 @@ Bilgisayarınızda hiçbir şey derlemenize gerek yok. Yapmanız gereken üç ş
 
 | Seçenek | Ne yapar |
 | --- | --- |
-| **Tedbirge® WebOS (Canlı Kiosk)** | Sistemi RAM üzerinden çalıştırır. Diskinize hiç dokunmaz; USB'yi çıkardığınızda iz kalmaz. |
-| **Tedbirge® WebOS (SSD/HDD'ye Kur)** | Türkçe kurulum sihirbazını açar; hedef diski seçip onayladıktan sonra sistemi kalıcı olarak kurar. |
+| **Tedbirge® WebOS (Canlı — Live Kiosk)** | Sistemi RAM üzerinden çalıştırır. Diskinize hiç dokunmaz; USB'yi çıkardığınızda iz kalmaz. |
+| **Tedbirge® WebOS (Diske Kur — Otomatik Kurulum)** | Türkçe kurulum sihirbazını açar; hedef diski seçip onayladıktan sonra sistemi kalıcı olarak kurar. |
 | **Kurtarma konsolu** | Sorun giderme için basit komut ekranı. |
 
 Kurulum sihirbazı, siz büyük harflerle `EVET` yazana kadar hiçbir diske yazmaz.
@@ -33,6 +33,7 @@ Kurulum sihirbazı, siz büyük harflerle `EVET` yazana kadar hiçbir diske yazm
 → `alpine/ci-build.sh` → Alpine `mkimage` profili (`alpine/mkimg.tedbirge.sh`) +
 overlay (`alpine/genapkovl-tedbirge.sh`). Çıktı GitHub Releases alanına yüklenir ve
 `/api/public/iso` rotası her zaman en güncel dosyaya yönlendirir.
+Depo: **tedbirgeai/tedbirge.app** — https://github.com/tedbirgeai/tedbirge.app/releases/latest
 
 Denemek için sanal makine:
 

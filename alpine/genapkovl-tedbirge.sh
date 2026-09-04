@@ -151,8 +151,10 @@ EOF
 
 # ------------------------------------------------------- diske kurulum sihirbazı
 install -Dm755 "$PAYLOAD/install/tedbirge-kurulum.sh" "$tmp/opt/tedbirge/tedbirge-kurulum.sh"
+install -Dm755 "$PAYLOAD/install/setup-tedbirge-disk.sh" "$tmp/opt/tedbirge/setup-tedbirge-disk.sh"
 mkdir -p "$tmp/usr/local/bin"
 ln -sf /opt/tedbirge/tedbirge-kurulum.sh "$tmp/usr/local/bin/tedbirge-kur"
+
 
 # ----------------------------------------------------------------- servisler
 mkdir -p "$tmp/etc/apk"

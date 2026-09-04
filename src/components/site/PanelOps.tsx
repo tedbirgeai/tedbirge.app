@@ -755,7 +755,7 @@ export function SetupWizard({
     {
       title: "Ajanı kurun",
       body: "Raspberry Pi / x86 Linux / macOS için tek satır kurulum. Ajan gerçek ağ arayüzünü otomatik algılar ve 60 saniyede bir canlı heartbeat gönderir.",
-      code: `curl -fsSL https://tedbirge-app.lovable.app/install.sh | sh
+      code: `curl -fsSL https://tedbirge.app/install.sh | sh
 chmod +x tedbirge-gateway && ./tedbirge-gateway --version`,
     },
     {
@@ -767,7 +767,7 @@ TEDBIRGE_REGION=${region}
 TEDBIRGE_CARRIER=${carrier}
 TEDBIRGE_MESH=true
 TEDBIRGE_MESH_ADDR=:7946
-TEDBIRGE_TELEMETRY_URL=https://tedbirge-app.lovable.app/api/public/telemetry
+TEDBIRGE_TELEMETRY_URL=https://tedbirge.app/api/public/telemetry
 TEDBIRGE_TELEMETRY_INTERVAL=60s`,
     },
     {
@@ -779,7 +779,7 @@ sudo journalctl -u tedbirge-gateway -f`,
     {
       title: "Bağlantıyı doğrulayın",
       body: "İlk heartbeat gönderildiğinde düğüm panoda 'online' görünür.",
-      code: `curl -X POST https://tedbirge-app.lovable.app/api/public/telemetry \\
+      code: `curl -X POST https://tedbirge.app/api/public/telemetry \\
   -H "Content-Type: application/json" \\
   -H "X-Tedbirge-License: ${key}" \\
   -d '{"node_id":"${nodeId}","region":"${region}","carrier":"${carrier}","rtt_ms":42}'`,

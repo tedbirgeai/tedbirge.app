@@ -33,6 +33,6 @@ export function createCallLink(video: boolean, approval: boolean): CallLink {
 
 export function urlOfCallLink(link: CallLink): string {
   const origin =
-    typeof window === "undefined" ? "https://tedbirge-app.lovable.app" : window.location.origin;
+    typeof window === "undefined" ? "https://tedbirge.app" : window.location.origin;
   return `${origin}/chat?call=${link.id}&v=${link.video ? "1" : "0"}${link.approval ? "&ok=1" : ""}`;
 }

@@ -6,7 +6,7 @@ import { CONTRACT_ANNEXES, REG_VERSION, REG_REVIEWED, REG_VENDOR } from "@/lib/r
 const TITLE = "Sözleşme Ekleri — tedbirge.app";
 const DESC =
   "Ek-A spektrum taahhüdü, Ek-B 5651 log sorumluluk devri ve Ek-C ihracat/yaptırım kontrolü son kullanıcı beyanı için kopyalanabilir örnek sözleşme eki şablonları.";
-const URL = "https://tedbirge-app.lovable.app/yasal";
+const URL = "https://tedbirge.app/yasal";
 
 export const Route = createFileRoute("/yasal")({
   head: () => ({
@@ -16,6 +16,7 @@ export const Route = createFileRoute("/yasal")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESC },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Tedbirge® WebOS" },
       { property: "og:url", content: URL },
       { name: "twitter:card", content: "summary_large_image" },
     ],

@@ -6,7 +6,7 @@ cat > tedbirge-gateway <<'AGENT'
 set -eu
 
 VERSION="0.7.0-live-agent"
-DEFAULT_ENDPOINT="https://tedbirge-app.lovable.app/api/public/telemetry"
+DEFAULT_ENDPOINT="https://tedbirge.app/api/public/telemetry"
 
 if [ -f /etc/tedbirge/node.env ]; then
   . /etc/tedbirge/node.env

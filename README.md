@@ -3,7 +3,7 @@
 **Altyapıdan bağımsız bağlantı.** Tedbirge Protokol; Ethernet, Wi-Fi, hücresel, uydu, WiGig, FSO lazer, Wi-Fi HaLow, TVWS ve LoRa olmak üzere dokuz fiziksel taşıyıcıyı tek bir güvenli ağ geçidi altında birleştiren, kesinti anında otomatik devreye giren bağımsız bir mesh iletişim platformudur.
 
 Üretici / satıcı: **Mehmet DİNÇ (Tedbirge Protokol)** — Türkiye
-Canlı sürüm: <https://tedbirge-app.lovable.app>
+Canlı sürüm: <https://tedbirge.app>
 
 ---
 
@@ -57,7 +57,7 @@ Mehmet DİNÇ; kritik altyapı kesintilerinde iletişimin sürdürülebilirliği
 
 Çalışmalarının merkezinde üç ilke yer alır: **bağımsızlık** (hiçbir tekil altyapıya bağımlı olmamak), **yasallık** (her bölgede lisanssız bant kurallarına ve veri koruma mevzuatına tam uyum) ve **sadelik** (sahadaki ekibin eğitim gerektirmeden kurup çalıştırabileceği bir sistem). Pilot uygulama alanı Türkiye/Sakarya olup, platform yasal sınırlar dahilinde küresel kullanım için tasarlanmıştır.
 
-İletişim: <https://tedbirge-app.lovable.app/iletisim>
+İletişim: <https://tedbirge.app/iletisim>
 
 ---
 
