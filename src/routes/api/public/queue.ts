@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { storeGuard } from "@/lib/api-degrade.server";
+import { corsHeaders } from "@/lib/cors";
 import { z } from "zod";
 
 /**
@@ -12,11 +13,7 @@ import { z } from "zod";
  * Kimlik: X-Tedbirge-License başlığı.
  */
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-Tedbirge-License",
-};
+const CORS_OPTS = { methods: "POST, OPTIONS", headers: "Content-Type, X-Tedbirge-License" };
 
 const Body = z.discriminatedUnion("action", [
   z.object({
@@ -46,18 +43,25 @@ const Body = z.discriminatedUnion("action", [
   }),
 ]);
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json", ...CORS },
-  });
-}
-
 export const Route = createFileRoute("/api/public/queue")({
   server: {
     handlers: {
-      OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      POST: async ({ request }) => storeGuard(async () => {
+      OPTIONS: async ({ request }) =>
+        new Response(null, { status: 204, headers: corsHeaders(request, CORS_OPTS) }),
+      POST: async ({ request }) => {
+        const CORS = corsHeaders(request, CORS_OPTS);
+        const json = (body: unknown, status = 200) =>
+          new Response(JSON.stringify(body), {
+            status,
+            headers: { "Content-Type": "application/json", ...CORS },
+          });
+        return storeGuard(async () => {}s;
+s{
+      }, CORS),
+}{
+        }, CORS);
+      },
+
         const licenseKey = request.headers.get("x-tedbirge-license")?.trim();
         if (!licenseKey || licenseKey.length < 16 || licenseKey.length > 128) {
           return json({ error: "missing_or_invalid_license" }, 401);

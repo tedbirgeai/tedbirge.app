@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { storeGuard } from "@/lib/api-degrade.server";
+import { corsHeaders } from "@/lib/cors";
 import { z } from "zod";
 
 /**
@@ -10,11 +11,7 @@ import { z } from "zod";
  * lisans anahtarı döner. Davet tek kullanımlıktır ve süresi dolar.
  */
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+const CORS_OPTS = { methods: "POST, OPTIONS", headers: "Content-Type" };
 
 const Body = z.object({
   token: z.string().trim().min(8).max(64),
@@ -23,18 +20,25 @@ const Body = z.object({
   firmware: z.string().trim().max(40).optional(),
 });
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json", ...CORS },
-  });
-}
-
 export const Route = createFileRoute("/api/public/enroll")({
   server: {
     handlers: {
-      OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      POST: async ({ request }) => storeGuard(async () => {
+      OPTIONS: async ({ request }) =>
+        new Response(null, { status: 204, headers: corsHeaders(request, CORS_OPTS) }),
+      POST: async ({ request }) => {
+        const CORS = corsHeaders(request, CORS_OPTS);
+        const json = (body: unknown, status = 200) =>
+          new Response(JSON.stringify(body), {
+            status,
+            headers: { "Content-Type": "application/json", ...CORS },
+          });
+        return storeGuard(async () => {}s;
+s{
+      }, CORS),
+}{
+        }, CORS);
+      },
+
         let parsed;
         try {
           parsed = Body.parse(await request.json());
