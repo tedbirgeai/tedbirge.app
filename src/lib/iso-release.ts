@@ -1,23 +1,68 @@
 /**
  * BARE-METAL İMAJ YAYIN ADRESİ — TEK DOĞRULUK KAYNAĞI
  * ------------------------------------------------------------------
- * Hazır (önyüklenebilir) imaj bir GitHub Release ya da CDN üzerinde
- * yayınlandığında `VITE_ISO_DOWNLOAD_URL` tanımlanır ve indirme akışı
- * kod değişikliği olmadan devreye girer.
+ * Önyüklenebilir imaj GitHub Actions hattında üretilir ve GitHub
+ * Releases alanına yüklenir. Son kullanıcı hiçbir şey derlemez:
+ * "ISO İndir" düğmesi doğrudan hazır ikili dosyayı indirir.
  *
- * Adres tanımlı değilse hiçbir sahte indirme başlatılmaz; arayüz
- * kullanıcıya dürüst iki seçenek sunar (PWA kurulumu / yerel derleme).
+ * `VITE_ISO_DOWNLOAD_URL` tanımlıysa (CDN/ayna) o adres önceliklidir.
  */
 
 const RAW = (import.meta.env["VITE_ISO_DOWNLOAD_URL"] as string | undefined) ?? "";
 
-/** Yapılandırılmış uzak imaj adresi; tanımlı değilse boş metin. */
+/** Elle yapılandırılmış doğrudan imaj adresi (varsa). */
 export const ISO_DOWNLOAD_URL = RAW.trim();
 
-/** Hazır imaj adresi tanımlı mı? */
+/** İmajın yayınlandığı GitHub deposu. */
+export const ISO_GITHUB_REPO =
+  ((import.meta.env["VITE_ISO_GITHUB_REPO"] as string | undefined) ?? "tedbirgeai/aetheris").trim();
+
+/** Sürüm sayfası (kullanıcıya gösterilen bağlantı). */
+export const ISO_RELEASES_PAGE = `https://github.com/${ISO_GITHUB_REPO}/releases/latest`;
+
+/** İndirme rotası: sunucu en güncel imaja yönlendirir. */
+export const ISO_DOWNLOAD_ROUTE = "/api/public/iso";
+
+/** İmaj durumunu soran hafif uç nokta. */
+export const ISO_STATUS_ROUTE = "/api/public/iso?durum=1";
+
+export type IsoStatus = {
+  ready: boolean;
+  url: string;
+  name: string;
+  size: number;
+  version: string;
+  page: string;
+};
+
+/** Yapılandırılmış doğrudan adres var mı? */
 export function hasRemoteIso(): boolean {
   return ISO_DOWNLOAD_URL.length > 0;
 }
 
-/** Kurulum kiti (yalnız yerel derleme rehberi içinde sunulur). */
-export const ISO_KIT_ROUTE = "/api/public/iso";
+/** Yayındaki imajın durumunu sorar; hata olursa "hazır değil" döner. */
+export async function fetchIsoStatus(): Promise<IsoStatus> {
+  const bos: IsoStatus = {
+    ready: false,
+    url: "",
+    name: "",
+    size: 0,
+    version: "",
+    page: ISO_RELEASES_PAGE,
+  };
+  try {
+    const res = await fetch(ISO_STATUS_ROUTE, { headers: { Accept: "application/json" } });
+    if (!res.ok) return bos;
+    const data = (await res.json()) as Partial<IsoStatus>;
+    return { ...bos, ...data, ready: Boolean(data.ready) };
+  } catch {
+    return bos;
+  }
+}
+
+/** İnsan okunur boyut. */
+export function formatIsoSize(bytes: number): string {
+  if (!bytes) return "";
+  const mb = bytes / (1024 * 1024);
+  return mb >= 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${Math.round(mb)} MB`;
+}
