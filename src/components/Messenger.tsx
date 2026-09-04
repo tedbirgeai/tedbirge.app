@@ -1204,15 +1204,18 @@ export default function Messenger() {
         <span className="flex items-center gap-3">
           <span>Gecikme: {metric(tele.avgRttMs, " ms")}</span>
           <span>Kuyruk: {tele.queued}</span>
-          <Link
-            to="/dokumanlar"
+          <a
+            href={DEV_PORTAL_URL}
+            target="_blank"
+            rel="noreferrer noopener"
             title="Geliştirici Portalı & API Dokümantasyonu"
             aria-label="Geliştirici Portalı & API Dokümantasyonu"
             className="hover:underline"
             style={{ color: "var(--tb-accent)" }}
           >
             Geliştirici Portalı
-          </Link>
+          </a>
+
         </span>
       </footer>
     </div>
