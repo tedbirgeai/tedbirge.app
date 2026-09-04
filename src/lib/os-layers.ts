@@ -8,7 +8,7 @@
  * ("Uçtan uca şifreli", "Sıfır-bilgi", "Doğrulanmış düğüm") gösterilir.
  */
 
-export type ProtocolLayer = {
+export type OsLayer = {
   /** 1–7 katman numarası */
   n: number;
   /** Katman adı (marka) */
@@ -23,7 +23,7 @@ export type ProtocolLayer = {
   action: { to: string; label: string };
 };
 
-export const PROTOCOL_LAYERS = [
+export const OS_LAYERS = [
   {
     n: 1,
     name: "Tedbirge Trust",
@@ -80,7 +80,7 @@ export const PROTOCOL_LAYERS = [
     badges: ["Çıkış noktası", "Paylaşımlı kapasite", "Şeffaf ölçüm"],
     action: { to: "/saha", label: "Saha erişimi" },
   },
-] as const satisfies readonly ProtocolLayer[];
+] as const satisfies readonly OsLayer[];
 
 /** RaaS (Resilience-as-a-Service) paket özeti — pazarlama yüzeylerinde ortak kullanılır. */
 export const RAAS_TIERS = [
