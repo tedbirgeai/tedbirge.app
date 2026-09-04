@@ -130,7 +130,7 @@ function MobileStationCard() {
   const [origin, setOrigin] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => setOrigin(window.location.origin), []);
-  const shellLink = origin || "https://tedbirge-app.lovable.app";
+  const shellLink = origin || "https://tedbirge.app";
 
   const copy = async () => {
     try {
@@ -953,7 +953,7 @@ function quickStart(key?: string) {
   return [
     {
       title: "Ajanı tek komutla indirin",
-      code: "curl -fsSL https://tedbirge-app.lovable.app/install.sh | sh",
+      code: "curl -fsSL https://tedbirge.app/install.sh | sh",
     },
     {
       title: "Lisans ve düğüm kimliğini tanımlayın",

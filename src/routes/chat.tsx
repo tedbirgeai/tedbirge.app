@@ -20,7 +20,7 @@ export const Route = createFileRoute("/chat")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-app.lovable.app/chat" }],
+    links: [{ rel: "canonical", href: "https://tedbirge.app/chat" }],
   }),
   component: ChatRoute,
 });

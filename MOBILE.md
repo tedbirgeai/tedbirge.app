@@ -37,7 +37,7 @@ Web tarafında bir değişiklik yaptığınızda: `npm run mobile:sync`.
 ## Geliştirme modu (canlı siteye bağlanmak)
 
 ```bash
-CAP_LIVE_URL=https://tedbirge-app.lovable.app npx cap sync
+CAP_LIVE_URL=https://tedbirge.app npx cap sync
 ```
 
 Bu değişken tanımlı değilse uygulama mağaza modundadır: tüm dosyalar

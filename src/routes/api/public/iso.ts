@@ -31,7 +31,7 @@ function repo(): string {
   return (
     process.env["VITE_ISO_GITHUB_REPO"] ??
     process.env["ISO_GITHUB_REPO"] ??
-    "tedbirgeai/aetheris"
+    "tedbirgeai/tedbirge.app"
   ).trim();
 }
 

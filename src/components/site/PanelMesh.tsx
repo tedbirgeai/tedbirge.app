@@ -396,7 +396,7 @@ export function QueueBoard({
         </summary>
         <pre className="mt-3 overflow-x-auto font-mono text-[11px] leading-relaxed text-muted-foreground">
           {`# Bağlantı gelince biriken mesajları yükle
-curl -s https://tedbirge-app.lovable.app/api/public/queue \\
+curl -s https://tedbirge.app/api/public/queue \\
   -H "X-Tedbirge-License: ${licenseKey}" -H "Content-Type: application/json" \\
   -d '{"action":"enqueue","node_id":"saha-01","messages":[{"target_node":"ev-01","priority":3,"payload":{"text":"konum"}}]}'
 

@@ -4,7 +4,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 const TITLE = "İhracat Uyumu — tedbirge.app";
 const DESC =
   "Tedbirge Protokol'in kriptografik yetenekleri, Wassenaar Düzenlemesi kapsamındaki sınıflandırması, yasaklı ülke politikası ve son kullanıcı beyanı süreci.";
-const URL = "https://tedbirge-app.lovable.app/ihracat-uyum";
+const URL = "https://tedbirge.app/ihracat-uyum";
 
 export const Route = createFileRoute("/ihracat-uyum")({
   head: () => ({

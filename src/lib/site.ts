@@ -4,7 +4,7 @@ const ENV_SITE_URL =
     : undefined;
 
 /** Yayın alan adı. Üretim alan adı bağlandığında VITE_SITE_URL ile geçilir. */
-export const SITE_URL = (ENV_SITE_URL || "https://tedbirge-app.lovable.app").replace(/\/$/, "");
+export const SITE_URL = (ENV_SITE_URL || "https://tedbirge.app").replace(/\/$/, "");
 
 export function siteUrl(path = "/") {
   return `${SITE_URL}${path === "/" ? "" : path}`;

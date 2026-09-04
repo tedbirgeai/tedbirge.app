@@ -15,7 +15,7 @@ export const ISO_DOWNLOAD_URL = RAW.trim();
 
 /** İmajın yayınlandığı GitHub deposu. */
 export const ISO_GITHUB_REPO =
-  ((import.meta.env["VITE_ISO_GITHUB_REPO"] as string | undefined) ?? "tedbirgeai/aetheris").trim();
+  ((import.meta.env["VITE_ISO_GITHUB_REPO"] as string | undefined) ?? "tedbirgeai/tedbirge.app").trim();
 
 /** Sürüm sayfası (kullanıcıya gösterilen bağlantı). */
 export const ISO_RELEASES_PAGE = `https://github.com/${ISO_GITHUB_REPO}/releases/latest`;
