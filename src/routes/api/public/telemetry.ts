@@ -54,7 +54,7 @@ export const Route = createFileRoute("/api/public/telemetry")({
             status,
             headers: { "Content-Type": "application/json", ...CORS },
           });
-        return storeGuard(async () => {}s;
+        return storeGuard(async () => {
         const licenseKey = request.headers.get("x-tedbirge-license")?.trim();
         if (!licenseKey || licenseKey.length < 16 || licenseKey.length > 128) {
           return json({ error: "missing_or_invalid_license" }, 401);

@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/public/enroll")({
             status,
             headers: { "Content-Type": "application/json", ...CORS },
           });
-        return storeGuard(async () => {}s;
+        return storeGuard(async () => {
         let parsed;
         try {
           parsed = Body.parse(await request.json());
