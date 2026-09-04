@@ -80,7 +80,13 @@ export function StoreApp({ onOpen }: { onOpen: (id: string) => void }) {
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 content-start gap-2 overflow-y-auto p-3 sm:grid-cols-2">
+      {tab === "subscription" ? <SubscriptionPanel onOpen={onOpen} /> : null}
+
+      <div
+        className="grid min-h-0 flex-1 grid-cols-1 content-start gap-2 overflow-y-auto p-3 sm:grid-cols-2"
+        hidden={tab === "subscription"}
+      >
+
         {list.map((a) => {
           const on = installed.includes(a.id);
           return (
