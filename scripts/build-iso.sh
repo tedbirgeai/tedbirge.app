@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# [YALNIZCA GELİŞTİRİCİ ARACI] Son kullanıcı akışında yeri yoktur.
+# Yayınlanan imaj GitHub Actions üzerinde üretilir:
+#   .github/workflows/build-iso.yml → alpine/ci-build.sh → tedbirgeai/tedbirge.app Releases
 # Faz 3 — Önyüklenebilir Tedbirge OS imajı (x86_64)
 # Katmanlar: Linux çekirdeği (HAL) + tedbirge-shell (yerel kabuk) + kiosk görüntüleyici.
 # Kullanım: bash scripts/build-iso.sh   (Nix ve kök yetkisi olan bir Linux ana makine gerekir)
