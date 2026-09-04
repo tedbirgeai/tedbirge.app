@@ -8,7 +8,7 @@ export const Route = createFileRoute("/gizlilik")({
       {
         name: "description",
         content:
-          "TedbirgeÂ® WebOS gizlilik bildirimi: işlenen kişisel veri kategorileri, işleme amaçları, hukuki sebepler, saklama süreleri ve KVKK/GDPR hakları.",
+          "Tedbirge® WebOS gizlilik bildirimi: işlenen kişisel veri kategorileri, işleme amaçları, hukuki sebepler, saklama süreleri ve KVKK/GDPR hakları.",
       },
       { property: "og:title", content: "Gizlilik — tedbirge.app" },
       { property: "og:description", content: "Kişisel veri işleme, paylaşım ve haklarınız." },
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/gizlilik")({
   component: Privacy,
 });
 
-const SELLER = "Mehmet DİNÇ (TedbirgeÂ® WebOS)";
+const SELLER = "Mehmet DİNÇ (Tedbirge® WebOS)";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

@@ -8,7 +8,7 @@ export const Route = createFileRoute("/kosullar")({
       {
         name: "description",
         content:
-          "TedbirgeÂ® WebOS hizmet ve lisans kullanım koşulları: kabul, uygun kullanım, fikri mülkiyet, ödeme, askıya alma ve sorumluluk sınırları.",
+          "Tedbirge® WebOS hizmet ve lisans kullanım koşulları: kabul, uygun kullanım, fikri mülkiyet, ödeme, askıya alma ve sorumluluk sınırları.",
       },
       { property: "og:title", content: "Kullanım Koşulları — tedbirge.app" },
       { property: "og:description", content: "Hizmet ve lisans kullanım koşulları." },
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/kosullar")({
   component: Terms,
 });
 
-const SELLER = "Mehmet DİNÇ (TedbirgeÂ® WebOS)";
+const SELLER = "Mehmet DİNÇ (Tedbirge® WebOS)";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -47,7 +47,7 @@ function Terms() {
 
         <Section title="1. Taraflar ve kabul">
           <p>
-            Bu koşullar, TedbirgeÂ® WebOS yazılımını ve ilgili hizmetleri sunan {SELLER} (“Satıcı”,
+            Bu koşullar, Tedbirge® WebOS yazılımını ve ilgili hizmetleri sunan {SELLER} (“Satıcı”,
             “biz”) ile hizmeti kullanan gerçek veya tüzel kişi (“Kullanıcı”, “siz”) arasındadır.
             Siteyi veya yazılımı kullanmaya devam etmeniz bu koşulları kabul ettiğiniz anlamına
             gelir. Kurum adına kabul ediyorsanız, kurumu bağlama yetkisine sahip olduğunuzu beyan
@@ -57,7 +57,7 @@ function Terms() {
 
         <Section title="2. Hizmet tanımı">
           <p>
-            TedbirgeÂ® WebOS, Tedbirge Loop ve Tedbirge Off-Grid; taşıyıcı-bağımsız mesh
+            Tedbirge® WebOS, Tedbirge Loop ve Tedbirge Off-Grid; taşıyıcı-bağımsız mesh
             yönlendirme, şifreli tünel taşıma ve kullanım ölçüm bileşenlerinden oluşan yazılım
             ürünleridir. Community sürümü açık kaynak lisansıyla, Enterprise ve Operator paketleri
             ise abonelik karşılığı sunulur.

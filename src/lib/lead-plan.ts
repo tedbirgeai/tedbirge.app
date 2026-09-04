@@ -20,7 +20,7 @@ export type LeadPlan = {
   olusturuldu: string;
 };
 
-export const PLAN_SYSTEM_PROMPT = `Sen TedbirgeÂ® WebOS pilot planlama asistanısın. Verilen müşteri talebine göre kurum/izin/pilot süreci için gerçekçi bir takvim ve belge kontrol listesi üret.
+export const PLAN_SYSTEM_PROMPT = `Sen Tedbirge® WebOS pilot planlama asistanısın. Verilen müşteri talebine göre kurum/izin/pilot süreci için gerçekçi bir takvim ve belge kontrol listesi üret.
 
 KURALLAR:
 - Türkçe yaz. Kısa ve uygulanabilir maddeler.

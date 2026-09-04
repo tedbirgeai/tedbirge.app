@@ -8,7 +8,7 @@ import {
   type AuditReport,
 } from "@/lib/audit/zero-knowledge";
 
-const SITE = "TedbirgeÂ® WebOS — Mehmet DİNÇ";
+const SITE = "Tedbirge® WebOS — Mehmet DİNÇ";
 
 function escapeHtml(s: string) {
   return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c] ?? c);

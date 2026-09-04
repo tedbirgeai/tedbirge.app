@@ -21,7 +21,7 @@ export const BUSINESS_PLAN: BusinessPlanSection[] = [
       "Ürün: taşıyıcı-bağımsız, sıfır-bilgi iletişim overlay katmanı; fiziksel altyapı yatırımı gerektirmez.",
       "Pazar: afet & kamu, kritik altyapı, enerji/maden, kırsal bağlantı, kurumsal saha operasyonu.",
       "Farklılaşma: 9 fiziksel taşıyıcıyı tek yönetim düzleminde birleştirmek ve kesinti anında otomatik devretmek.",
-      "Rakip değil tamamlayıcı: telekom operatörü taşıyıcıdır; TedbirgeÂ® WebOS onun üzerinde dayanıklılık katmanıdır.",
+      "Rakip değil tamamlayıcı: telekom operatörü taşıyıcıdır; Tedbirge® WebOS onun üzerinde dayanıklılık katmanıdır.",
     ],
   },
   {

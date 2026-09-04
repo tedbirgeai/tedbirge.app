@@ -36,7 +36,7 @@ export function SitePage({ children, className = "" }: { children: ReactNode; cl
       <main className="flex-1">{children}</main>
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-6 py-6 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} Mehmet DİNÇ (TedbirgeÂ® WebOS)</span>
+          <span>© {new Date().getFullYear()} Mehmet DİNÇ (Tedbirge® WebOS)</span>
           {LEGAL_LINKS.map((l) => (
             <a key={l.href} href={l.href} className="hover:text-foreground">
               {l.label}
