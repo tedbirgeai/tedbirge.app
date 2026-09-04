@@ -7,7 +7,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { Check, CreditCard, Plus, Search, Trash2 } from "lucide-react";
+import { Check, Plus, Search, Trash2 } from "lucide-react";
 
 import { AppIcon } from "@/components/shell/app-icons";
 import { SubscriptionPanel } from "@/components/shell/SubscriptionPanel";
