@@ -33,12 +33,6 @@ export const Route = createFileRoute("/api/public/enroll")({
             headers: { "Content-Type": "application/json", ...CORS },
           });
         return storeGuard(async () => {}s;
-s{
-      }, CORS),
-}{
-        }, CORS);
-      },
-
         let parsed;
         try {
           parsed = Body.parse(await request.json());
@@ -137,7 +131,8 @@ s{
             queue: `${origin}/api/public/queue`,
           },
         });
-      }, CORS),
+        }, CORS);
+      },
     },
   },
 });

@@ -55,12 +55,6 @@ export const Route = createFileRoute("/api/public/telemetry")({
             headers: { "Content-Type": "application/json", ...CORS },
           });
         return storeGuard(async () => {}s;
-s{
-      }, CORS),
-}{
-        }, CORS);
-      },
-
         const licenseKey = request.headers.get("x-tedbirge-license")?.trim();
         if (!licenseKey || licenseKey.length < 16 || licenseKey.length > 128) {
           return json({ error: "missing_or_invalid_license" }, 401);
@@ -329,7 +323,8 @@ s{
           // Bölge profili: düğüm bu değeri kendi taşıyıcı kilidi için kullanır.
           region: parsed.region ?? "TR",
         });
-      }, CORS),
+        }, CORS);
+      },
     },
   },
 });
