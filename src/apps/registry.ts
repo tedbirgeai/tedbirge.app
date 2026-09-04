@@ -48,6 +48,7 @@ const DESKTOP_CAPS: Record<string, Capability[]> = {
   store: ["status.read"],
   computer: ["identity.read", "status.read"],
   profile: ["identity.read", "status.read"],
+  yonetim: ["identity.read", "status.read"],
   apps: ["status.read"],
   mesh: ["mesh.route", "status.read"],
   relay: ["mesh.route", "status.read"],

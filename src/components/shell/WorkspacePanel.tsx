@@ -15,6 +15,7 @@ import { AyarlarApp } from "@/components/shell/apps/AyarlarApp";
 import { SistemBilgisiApp } from "@/components/shell/apps/SistemBilgisiApp";
 import { PanelApp } from "@/components/shell/apps/PanelApp";
 import { ProfileApp } from "@/components/shell/apps/ProfileApp";
+import { YonetimPortaliApp } from "@/components/shell/apps/YonetimPortaliApp";
 
 import { WindowFrame } from "@/components/shell/WindowFrame";
 import { AppErrorBoundary } from "@/components/shell/AppErrorBoundary";
@@ -55,6 +56,7 @@ const WINDOW_TITLES: Record<string, string> = {
   settings: "Ayarlar",
   sysinfo: "Sistem Bilgisi",
   panel: "Panel — Lisans ve Saha",
+  yonetim: "Sistem Yönetim Portalı",
   profile: "Profil ve Hesap",
 
 };
@@ -366,6 +368,7 @@ function AppSurface({
   if (win.appId === "settings") return <AyarlarApp />;
   if (win.appId === "sysinfo") return <SistemBilgisiApp />;
   if (win.appId === "panel") return <PanelApp />;
+  if (win.appId === "yonetim") return <YonetimPortaliApp />;
   if (win.appId === "profile") return <ProfileApp onOpen={onLaunch} />;
 
   if (win.appId === "messenger") {

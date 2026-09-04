@@ -51,6 +51,7 @@ describe("yetenek kapısı", () => {
       "sysinfo",
       "transfer",
       "wallpaper",
+      "yonetim",
 
     ]);
     // Harici web hedefleri hiçbir yetenek istemez (çekirdeğe erişemez).
