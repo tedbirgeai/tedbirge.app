@@ -1,40 +1,57 @@
-# Alpine Linux tabanlı önyüklenebilir Tedbirge® WebOS ISO'su
+# Tedbirge® WebOS — Hazır ISO Dağıtımı (CI/CD + Doğrudan İndirme)
 
-## Sorularınızın yanıtı (mevcut durum)
+Son kullanıcı hiçbir şey derlemez. Docker, WSL, xorriso, bash yok. Tek akış:
+**ISO'yu indir → Rufus/BalenaEtcher ile USB'ye yaz → bilgisayarı USB'den başlat.**
 
-**1. Mimari kapsam.** Bugün üretilen ZIP paketi **yalnızca web dosyaları + kurulum betikleri**. İçinde Alpine'e özel embedded servis konfigürasyonu yok. Var olanlar:
-- `scripts/build-iso.sh` — `dist/` + `tedbirge-shell` ikilisini bir kök ağacına koyup `xorriso` ile veri ISO'su üretiyor. Bu **önyüklenemez** (çekirdek/initramfs/bootloader yok).
-- `scripts/build-bare-metal.sh` — systemd unit + OpenRC servis dosyası üretiyor (kısmen kiosk'a hazır).
-- `src/routes/api/public/iso.ts` — gerçek `.iso` yayında yoksa, canlı sunucudan paketi indiren kurulum kitini (.sh/.bat/.ps1) veriyor.
+```text
+GitHub Actions (Alpine + Docker runner)
+   → mkimage + apkovl → tedbirge-webos-x86_64.iso
+   → GitHub Releases (latest)
+        ↓
+"ISO İndir" butonu → /api/public/iso → en güncel .iso ikilisi
+        ↓
+USB → Önyükleme → GRUB menüsü: [Canlı Kiosk] / [Diske Kur]
+```
 
-**2. Kiosk launch.** Kısmen var: `boot.sh` içinde cog/chromium kiosk denemesi ve bir OpenRC servisi mevcut. Ancak Alpine için gereken `/etc/local.d` autostart, X/Wayland oturumu, `inittab` autologin ve nginx/httpd konfigürasyonu **yok**.
+## 1. Otomatik derleme hattı (GitHub Actions)
 
-**3. Eksik bileşenler.** Alpine ISO'su için gereken `mkimage` profili, apkovl (overlay) üretimi ve `/var/www/localhost/htdocs` dağıtımı henüz hiç yok. Aşağıdaki iş bunları ekliyor.
+`.github/workflows/build-iso.yml`
+- Tetik: `main`'e push, `v*` tag'i, ve elle çalıştırma (`workflow_dispatch`).
+- Adımlar: Bun ile web paketini derle → `alpine:latest` konteynerinde `alpine-sdk`, `xorriso`, `syslinux`, `grub-efi`, `mtools`, `dosfstools` kur → `aports` klonla → Tedbirge profilini kopyala → `mkimage.sh` çalıştır.
+- Çıktı: `tedbirge-webos-<sürüm>-x86_64.iso` + `SHA256SUMS`.
+- Tag derlemesinde `softprops/action-gh-release` ile GitHub Releases'a yüklenir; push derlemesinde `latest` ön-sürümü güncellenir. Ayrıca artifact olarak saklanır.
+- İmaj üretilmezse veya 100 MB altındaysa iş **başarısız** olur; sahte çıktı yayınlanmaz.
 
-## Yapılacak iş
+## 2. Alpine profili ve overlay
 
-### A. Alpine mkimage profili
-`alpine/mkimg.tedbirge.sh` — `aports/scripts` içine kopyalanacak profil: `linux-lts`, `openrc`, `busybox-initscripts`, `nginx`, `chromium`, `xorg-server`, `xf86-video-*`, `xinit`, `dbus`, `mesa-dri-gallium`, `font-dejaproject` paketlerini içeren, syslinux/grub-efi ile hem BIOS hem UEFI açılan canlı ISO.
-`alpine/genapkovl-tedbirge.sh` — apkovl üretici: aşağıdaki tüm konfigürasyonu ISO'ya gömer.
+`alpine/mkimg.tedbirge.sh` — canlı ISO profili: `linux-lts`, `openrc`, `nginx`, `chromium`, `xorg-server`, `xinit`, `dbus`, `mesa-dri-gallium`, `alpine-conf` (setup-disk için), `syslinux` + `grub-efi` (BIOS ve UEFI birlikte).
 
-### B. Web katmanı dağıtımı
-- Vite `dist/` çıktısı ISO içinde `/var/www/localhost/htdocs` altına açılır (apkovl içinde tar.gz olarak taşınır).
-- `nginx.conf`: 80 portu, SPA fallback (`try_files $uri /index.html`), Wasm için `application/wasm` MIME, COOP/COEP başlıkları (SharedArrayBuffer/kernel için zorunlu), `/kernel/*.wasm` uzun önbellek.
+`alpine/genapkovl-tedbirge.sh` — ISO'ya gömülen yapılandırma:
+- Web paketi `/var/www/localhost/htdocs` altına açılır.
+- `nginx.conf`: 80 portu, SPA fallback (`try_files $uri /index.html`), `application/wasm` MIME, COOP/COEP başlıkları, `/kernel/*` uzun önbellek.
+- `inittab` ile tty1'de otomatik oturum; `.xinitrc` ekran koruyucuyu kapatıp `chromium --kiosk --app=http://127.0.0.1/` başlatır. Chromium açılmazsa `cog` yedeği, o da yoksa başsız düğüm olarak devam eder ve adresi yazar.
+- OpenRC `default` seviyesine `nginx`, `dbus` ve mevcut `tedbirge-shell` servisi eklenir.
 
-### C. Kiosk açılış zinciri
-- `inittab`: tty1 üzerinde `kiosk` kullanıcısıyla autologin.
-- `/etc/profile.d/kiosk.sh`: tty1'de `startx` tetikler.
-- `.xinitrc`: ekran koruyucu/DPMS kapalı, `chromium --kiosk --app=http://127.0.0.1/ --noerrdialogs --disable-translate --disable-pinch --overscroll-history-navigation=0`.
-- OpenRC runlevel'leri: `nginx`, `dbus`, `tedbirge-shell` (mevcut OpenRC betiği yeniden kullanılır) `default` seviyeye eklenir.
-- Chromium yoksa/GPU yoksa `cog` (WPE webview) yedeği; ikisi de yoksa headless düğüm olarak devam eder ve konsola erişim adresini yazar.
+## 3. Önyükleme menüsü ve diske kurulum
 
-### D. Betik ve akış entegrasyonu
-- `scripts/build-alpine-iso.sh`: `bun run build` → apkovl üret → Docker/Alpine chroot içinde `mkimage.sh` çalıştır → `build/iso/tedbirge-webos-<sürüm>-x86_64.iso`. Ana makinede Alpine yoksa açık Türkçe hata verir, sahte ISO üretmez.
-- Mevcut `scripts/build-iso.sh` "veri ISO'su (önyüklenemez)" olarak etiketlenir; önyüklenebilir yol yeni betiğe yönlendirilir.
-- `ISO.md`: USB'ye yazma (dd/Rufus/balenaEtcher), QEMU ile deneme, kalıcı kurulum (`setup-alpine` + `setup-disk`) adımları Türkçe anlatılır.
-- `/api/public/iso.ts` davranışı korunur: gerçek imaj yayınlandığında akıtılır, yoksa kurulum kiti iner; kite Alpine ISO derleme adımı eklenir.
+`alpine/boot/grub.cfg` + `syslinux.cfg` — iki seçenek:
+1. **Tedbirge® WebOS (Canlı Kiosk)** — RAM'den çalışır, diske dokunmaz.
+2. **Tedbirge® WebOS (SSD/HDD'ye Kur)** — çekirdeğe `tedbirge.install=1` parametresi geçer.
+
+`alpine/install/tedbirge-kurulum.sh` (ISO içinde, `local.d` ile tetiklenir): parametre görülünce Türkçe tam ekran sihirbaz açılır — hedef disk seçimi, açık uyarı ve onay, sonra `setup-disk -m sys` ile kalıcı kurulum, apkovl kopyalanır, bootloader yazılır, yeniden başlatılır. Onay verilmezse canlı moda döner. Disk yoksa/yazılamazsa anlaşılır Türkçe hata verir.
+
+## 4. İndirme akışı (`src/routes/api/public/iso.ts`)
+
+- Rota tamamen sadeleşir: kurulum kiti (.zip/.bat/.sh/.ps1) üretimi **kaldırılır**.
+- Sıra: `VITE_ISO_DOWNLOAD_URL` tanımlıysa oraya; yoksa GitHub Releases `latest` API'sinden `.iso` varlığı bulunup 302 ile ona yönlendirilir; yayında ISO yoksa 503 + arayüzde “imaj henüz yayınlanmadı, sürüm hazırlanıyor” mesajı (sahte dosya yok).
+- `src/lib/iso-release.ts`: GitHub deposu/sürüm bilgisi tek doğruluk kaynağı olur.
+- `src/components/shell/BareMetalIso.tsx`: metin tek akışa indirgenir — indir, USB'ye yaz, başlat. Yerel derleme/WSL anlatımı kaldırılır; sürüm numarası, boyut ve SHA-256 gösterilir.
+- `scripts/build-iso.sh` yalnızca geliştirici aracı olarak kalır (etiketlenir); son kullanıcı akışında yer almaz.
+
+## 5. Belgeler
+`ISO.md` — indirme adresi, Rufus/BalenaEtcher/Ventoy ile USB yazma, UEFI/Secure Boot notu, canlı ve kurulum modu farkı, QEMU ile deneme. Tamamı Türkçe ve komut satırı gerektirmeyen dille.
 
 ## Teknik notlar
-- ISO derlemesi Linux ana makine + `alpine-sdk`/Docker gerektirir; Lovable sandbox'ında ISO **derlenmez**, dosyalar ve betikler repoya eklenir, çalıştırmayı siz veya bir CI işi yapar.
-- Kalıcı kurulum için `setup-alpine` sonrası apkovl `/etc/apk/protected_paths.d` ile korunur; diske kurulumda `lbu commit` yerine normal dosya sistemi kullanılır.
-- Uygulama kodu, Rust/Wasm çekirdeği, VFS ve pencere yöneticisi **değişmez**; bu iş yalnızca dağıtım/paketleme katmanı ekler.
+- ISO derlemesi bu ortamda **çalıştırılmaz**; workflow ve profil dosyaları depoya eklenir, ilk imaj GitHub Actions'ta üretilir. Depo `tedbirgeai/aetheris` üzerinde çalıştırılacaksa Actions izinlerinin (`contents: write`) açık olması gerekir.
+- Secure Boot imzalama kapsam dışıdır; kullanıcıya UEFI'de Secure Boot'u kapatması gerekebileceği belirtilir.
+- Uygulama kodu, Wasm çekirdeği, VFS ve pencere yöneticisi değişmez; iş yalnızca dağıtım katmanındadır.
