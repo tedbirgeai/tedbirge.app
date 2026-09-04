@@ -55,7 +55,11 @@ async function latestFromGithub(): Promise<Resolved | null> {
       const body = (await res.json()) as Release | Release[];
       const releases = Array.isArray(body) ? body : [body];
       for (const rel of releases) {
-        const asset = (rel.assets ?? []).find((a) => a.name.toLowerCase().endsWith(".iso"));
+        const isos = (rel.assets ?? []).filter((a) => a.name.toLowerCase().endsWith(".iso"));
+        // Sabit adlı imaj varsa o tercih edilir; yoksa ilk .iso varlığı.
+        const asset =
+          isos.find((a) => a.name.toLowerCase() === "tedbirge-webos-x86_64.iso") ?? isos[0];
+
         if (asset) {
           return {
             ready: true,
