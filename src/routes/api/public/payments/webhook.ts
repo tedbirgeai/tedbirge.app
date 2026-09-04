@@ -149,7 +149,7 @@ async function handleWebhook(req: Request, env: PaddleEnv) {
       await handleSubscriptionCanceled(event.data, env);
       break;
     default:
-      console.log("Unhandled event:", event.eventType);
+      console.warn("İşlenmeyen ödeme olayı:", event.eventType);
   }
 }
 
