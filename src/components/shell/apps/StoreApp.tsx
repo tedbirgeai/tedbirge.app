@@ -48,18 +48,20 @@ export function StoreApp({ onOpen }: { onOpen: (id: string) => void }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-
       <div className="shrink-0 border-b border-[var(--tb-border)] p-3">
-        <label className="flex items-center gap-2 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] px-3 py-2">
-          <Search className="h-4 w-4 shrink-0 text-[var(--tb-muted)]" aria-hidden />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Uygulama ara"
-            aria-label="Uygulama ara"
-            className="min-w-0 flex-1 bg-transparent text-[14px] text-[var(--tb-text)] outline-none"
-          />
-        </label>
+        {tab === "subscription" ? null : (
+          <label className="flex items-center gap-2 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] px-3 py-2">
+            <Search className="h-4 w-4 shrink-0 text-[var(--tb-muted)]" aria-hidden />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Uygulama ara"
+              aria-label="Uygulama ara"
+              className="min-w-0 flex-1 bg-transparent text-[14px] text-[var(--tb-text)] outline-none"
+            />
+          </label>
+        )}
+
         <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
           {TABS.map((t) => (
             <button
