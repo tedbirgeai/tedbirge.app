@@ -20,7 +20,7 @@ type TabId = "kurumsal" | "protokol" | "paketler" | "enerji" | "yasal";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "kurumsal", label: "Kurumsal" },
-  { id: "protokol", label: "Protokol" },
+  { id: "protokol", label: "Mimari Katmanlar" },
   { id: "paketler", label: "Paketler" },
   { id: "enerji", label: "Enerji" },
   { id: "yasal", label: "Yasal" },
