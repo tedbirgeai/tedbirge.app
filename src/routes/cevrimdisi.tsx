@@ -16,8 +16,11 @@ export const Route = createFileRoute("/cevrimdisi")({
         content: "İnternet kesildiğinde uygulama açık kalır; veriler bağlantı dönünce eşitlenir.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Tedbirge® WebOS" },
+      { property: "og:url", content: "https://tedbirge.app/cevrimdisi" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://tedbirge.app/cevrimdisi" }],
   }),
   component: OfflinePage,
 });

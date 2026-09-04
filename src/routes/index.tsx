@@ -20,6 +20,8 @@ export const Route = createFileRoute("/")({
           "Kesintisiz bağlantı, otomatik yedekleme ve çevrimdışı veri güvenliği. Tarayıcıdan 2 tıkla kurulan kurumsal ağ platformu.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Tedbirge® WebOS" },
+      { property: "og:url", content: "https://tedbirge.app/" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "https://tedbirge.app/" }],

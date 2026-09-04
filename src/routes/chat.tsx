@@ -18,6 +18,8 @@ export const Route = createFileRoute("/chat")({
           "Kesintide bile duran mesajlaşma: uçtan uca şifreli sohbet, dosya paylaşımı, sesli ve görüntülü arama.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Tedbirge® WebOS" },
+      { property: "og:url", content: "https://tedbirge.app/chat" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "https://tedbirge.app/chat" }],

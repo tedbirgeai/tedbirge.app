@@ -14,6 +14,7 @@ export const Route = createFileRoute("/ihracat-uyum")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESC },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Tedbirge® WebOS" },
       { property: "og:url", content: URL },
       { name: "twitter:card", content: "summary_large_image" },
     ],

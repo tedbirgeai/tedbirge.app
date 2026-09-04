@@ -13,6 +13,7 @@ export const Route = createFileRoute("/gizlilik")({
       { property: "og:title", content: "Gizlilik — tedbirge.app" },
       { property: "og:description", content: "Kişisel veri işleme, paylaşım ve haklarınız." },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Tedbirge® WebOS" },
       { property: "og:url", content: "https://tedbirge.app/gizlilik" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
