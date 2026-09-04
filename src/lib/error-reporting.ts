@@ -32,6 +32,42 @@ declare global {
   }
 }
 
+/** Cihazda tutulan son hata kayıtları (Sistem Bilgisi > Kayıtlar). */
+export type RuntimeLogEntry = { at: string; message: string; where?: string };
+
+const LOG_KEY = "tedbirge.runtime.log";
+const LOG_LIMIT = 50;
+
+export function readRuntimeLog(): RuntimeLogEntry[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(LOG_KEY);
+    const parsed = raw ? (JSON.parse(raw) as RuntimeLogEntry[]) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function clearRuntimeLog() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(LOG_KEY);
+  } catch {
+    /* depolama kapalıysa sessizce geçilir */
+  }
+}
+
+function appendRuntimeLog(entry: RuntimeLogEntry) {
+  if (typeof window === "undefined") return;
+  try {
+    const next = [entry, ...readRuntimeLog()].slice(0, LOG_LIMIT);
+    window.localStorage.setItem(LOG_KEY, JSON.stringify(next));
+  } catch {
+    /* depolama dolu veya kapalıysa kayıt atlanır */
+  }
+}
+
 export function reportRuntimeError(error: unknown, context: Record<string, unknown> = {}) {
   if (typeof window === "undefined") return;
   window.__lovableEvents?.captureException?.(
@@ -61,5 +97,10 @@ export function reportRuntimeError(error: unknown, context: Record<string, unkno
     message,
     stack: error instanceof Error ? error.stack : undefined,
     filename: window.location.pathname,
+  });
+  appendRuntimeLog({
+    at: new Date().toISOString(),
+    message,
+    where: window.location.pathname,
   });
 }
