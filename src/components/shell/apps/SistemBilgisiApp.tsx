@@ -7,22 +7,24 @@
  * yerini alır.
  */
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { WindowShell } from "@/components/shell/WindowShell";
-import { PROTOCOL_LAYERS, RAAS_TIERS } from "@/lib/protocol-layers";
+import { OS_LAYERS, RAAS_TIERS } from "@/lib/os-layers";
+import { readRuntimeLog, clearRuntimeLog, type RuntimeLogEntry } from "@/lib/error-reporting";
 import { BUILD_ID } from "@/lib/build-id";
 import { SITE_URL } from "@/lib/site";
 import { PanelEnergy } from "@/components/site/PanelEnergy";
 import { openPath } from "@/components/shell/OsLink";
 
-type TabId = "kurumsal" | "protokol" | "paketler" | "enerji" | "yasal";
+type TabId = "kurumsal" | "katmanlar" | "paketler" | "enerji" | "kayitlar" | "yasal";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "kurumsal", label: "Kurumsal" },
-  { id: "protokol", label: "Mimari Katmanlar" },
+  { id: "katmanlar", label: "Mimari Katmanlar" },
   { id: "paketler", label: "Paketler" },
   { id: "enerji", label: "Enerji" },
+  { id: "kayitlar", label: "Kayıtlar" },
   { id: "yasal", label: "Yasal" },
 ];
 
@@ -63,9 +65,10 @@ export function SistemBilgisiApp() {
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-24">
           {tab === "kurumsal" && <CorporateTab />}
-          {tab === "protokol" && <ProtocolTab />}
+          {tab === "katmanlar" && <LayersTab />}
           {tab === "paketler" && <TiersTab />}
           {tab === "enerji" && <PanelEnergy />}
+          {tab === "kayitlar" && <LogsTab />}
           {tab === "yasal" && <LegalTab />}
         </div>
       </div>
@@ -100,10 +103,10 @@ function CorporateTab() {
   );
 }
 
-function ProtocolTab() {
+function LayersTab() {
   return (
     <ul className="space-y-3">
-      {PROTOCOL_LAYERS.map((l) => (
+      {OS_LAYERS.map((l) => (
         <li key={l.n} className="rounded-2xl border border-[var(--tb-border)] p-4">
           <p className="font-osmono text-[11px] uppercase tracking-[0.2em] text-[var(--tb-muted)]">
             Katman {l.n}
@@ -131,6 +134,62 @@ function ProtocolTab() {
         </li>
       ))}
     </ul>
+  );
+}
+
+function LogsTab() {
+  const [rows, setRows] = useState<RuntimeLogEntry[]>([]);
+
+  const yenile = useCallback(() => setRows(readRuntimeLog()), []);
+  useEffect(yenile, [yenile]);
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[13px] leading-relaxed text-[var(--tb-muted)]">
+        Bu cihazda oluşan son sistem hataları burada tutulur. Diske kurulu sürümde aynı kayıtlar
+        <span className="font-osmono"> /var/log/tedbirge/ </span>
+        klasörüne de yazılır ve günlük olarak arşivlenir.
+      </p>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={yenile}
+          className="min-h-12 rounded-xl border border-[var(--tb-border)] px-4 text-[12px] text-[var(--tb-text)]"
+        >
+          Yenile
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            clearRuntimeLog();
+            yenile();
+          }}
+          className="min-h-12 rounded-xl border border-[var(--tb-border)] px-4 text-[12px] text-[var(--tb-muted)]"
+        >
+          Kayıtları temizle
+        </button>
+      </div>
+      {rows.length === 0 ? (
+        <p className="rounded-2xl border border-[var(--tb-border)] p-4 text-[13px] text-[var(--tb-muted)]">
+          Kayıt yok — sistem sorunsuz çalışıyor.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {rows.map((r, i) => (
+            <li
+              key={`${r.at}-${i}`}
+              className="rounded-2xl border border-[var(--tb-border)] p-3 text-[12px]"
+            >
+              <p className="font-osmono text-[11px] text-[var(--tb-muted)]">
+                {new Date(r.at).toLocaleString("tr-TR")}
+                {r.where ? ` · ${r.where}` : ""}
+              </p>
+              <p className="mt-1 break-words text-[13px] text-[var(--tb-text)]">{r.message}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
