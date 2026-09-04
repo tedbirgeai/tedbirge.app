@@ -1,5 +1,5 @@
 /**
- * DUVAR KÂĞIDI VE YÜZEY PARLAKLIĞI
+ * DUVAR KAĞIDI VE YÜZEY PARLAKLIĞI
  * ------------------------------------------------------------------
  * Seçim `localStorage`'da kalıcıdır ve yalnız CSS değişkenlerine yazılır;
  * React yeniden çizimi olmadan uygulanır. Her duvar kâğıdı önerdiği

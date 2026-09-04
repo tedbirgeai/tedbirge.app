@@ -1,5 +1,5 @@
 /**
- * TedbirgeÂ® WebOS — Onaylı Donanım Listesi (HCL).
+ * Tedbirge® WebOS — Onaylı Donanım Listesi (HCL).
  * ------------------------------------------------------------------
  * Yalnızca laboratuvarda veya sahada fiilen sürülen taşıyıcı donanımları
  * listelenir. "Doğrulandı" etiketi, ilgili köprü sürücüsünün (Web Serial /

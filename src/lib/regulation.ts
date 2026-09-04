@@ -1,12 +1,12 @@
 /**
- * TedbirgeÂ® WebOS — Regülasyon tek doğruluk kaynağı.
+ * Tedbirge® WebOS — Regülasyon tek doğruluk kaynağı.
  * Tüm uyum sayfaları (/mevzuat, /uyumluluk, /sertifikasyon, /turkiye-mevzuat,
  * /izinler, /ihracat-uyum) bant/limit verilerini buradan okur.
  */
 
 export const REG_VERSION = "v0.6a-turnkey";
 export const REG_REVIEWED = "2026-07";
-export const REG_VENDOR = "Mehmet DİNÇ (TedbirgeÂ® WebOS)";
+export const REG_VENDOR = "Mehmet DİNÇ (Tedbirge® WebOS)";
 
 export type RegionRow = {
   region: string;
@@ -261,7 +261,7 @@ export const REG_PILLARS: Pillar[] = [
 /** İndirilebilir uyum beyanının satırları. */
 export const DECLARATION_ROWS: Array<[string, string]> = [
   ["Beyan sahibi", REG_VENDOR + " · Türkiye"],
-  ["Ürün", "TedbirgeÂ® WebOS / Tedbirge Loop / Tedbirge Off-Grid — salt yazılım"],
+  ["Ürün", "Tedbirge® WebOS / Tedbirge Loop / Tedbirge Off-Grid — salt yazılım"],
   ["Sürüm", REG_VERSION],
   ["Donanım kapsamı", "Yok — hiçbir radyo, verici, anten veya şifreleme donanımı sevk edilmez"],
   ["Kriptografi", "AES-256-GCM · Ed25519 · SHA-256"],
@@ -288,7 +288,7 @@ export const DECLARATION_ROWS: Array<[string, string]> = [
 export const LIABILITY_5651 = {
   title: "5651 sayılı Kanun — Toplu Kullanım Sağlayıcı Sorumluluk Sınırlandırması",
   clauses: [
-    'TedbirgeÂ® WebOS üzerinden kurulan mesh ağı, kapalı devre ve izole bir haberleşme ortamıdır; genel internet erişimi (web, sosyal medya, e-posta) dağıtmaz. Bu nedenle düğüm işleten taraf, 5651 sayılı Kanun\'un 2/1-(e) maddesi anlamında "erişim sağlayıcı" sıfatını kendiliğinden kazanmaz.',
+    'Tedbirge® WebOS üzerinden kurulan mesh ağı, kapalı devre ve izole bir haberleşme ortamıdır; genel internet erişimi (web, sosyal medya, e-posta) dağıtmaz. Bu nedenle düğüm işleten taraf, 5651 sayılı Kanun\'un 2/1-(e) maddesi anlamında "erişim sağlayıcı" sıfatını kendiliğinden kazanmaz.',
     'Düğüm sahibi, ağı bir işyeri, kamu kurumu, kamp alanı veya benzeri bir mekânda üçüncü kişilerin kullanımına açar ve bu ağ üzerinden genel internete çıkış (exit node) etkinleştirilirse, 5651 sayılı Kanun\'un 7. maddesi uyarınca "toplu kullanım sağlayıcı" sıfatı doğar. Bu durumda iç IP dağıtım loglarının elektronik ortamda kendi sistemine kaydedilmesi yükümlülüğü münhasıran düğüm sahibine aittir.',
     "Tedbirge, opsiyonel bir log modülü sağlar; ancak logların tutulması, saklanması, doğruluğu, gizliliği ve talep hâlinde yetkili makamlara sunulması yükümlülüğü işleten tarafa aittir. Tedbirge bu verilere erişemez, kopyasını tutmaz ve yerine geçemez.",
     "Tedbirge, taşınan içeriği çözemez (uçtan uca şifreleme) ve içeriği kontrol etme, izleme veya hukuka aykırı içeriği araştırma yükümlülüğü altında değildir (5651 md. 6/2 kıyasen). Tedbirge'nin sorumluluğu, yazılımın belgelenen teknik işlevi ile sınırlıdır.",
@@ -382,7 +382,7 @@ export const CONTRACT_ANNEXES: ContractAnnex[] = [
     code: "EK-A",
     title: "Spektrum ve Donanım Kullanım Taahhüdü",
     scope:
-      "Bu ek, TedbirgeÂ® WebOS yazılımını işleten Müşteri/İşleten ile Tedbirge (Mehmet DİNÇ) arasındaki lisans sözleşmesinin ayrılmaz parçasıdır ve radyo spektrumu kullanımına ilişkin yükümlülükleri düzenler.",
+      "Bu ek, Tedbirge® WebOS yazılımını işleten Müşteri/İşleten ile Tedbirge (Mehmet DİNÇ) arasındaki lisans sözleşmesinin ayrılmaz parçasıdır ve radyo spektrumu kullanımına ilişkin yükümlülükleri düzenler.",
     refs: "5809 s. Elektronik Haberleşme Kanunu · BTK KEGY · Milli Frekans Planı · ETSI EN 300 220 · RED 2014/53/AB Md. 3(3)(i)",
     clauses: [
       {
@@ -417,20 +417,20 @@ export const CONTRACT_ANNEXES: ContractAnnex[] = [
       },
     ],
     signature:
-      "İşleten (unvan / ad-soyad, tarih, imza) — Tedbirge: Mehmet DİNÇ (TedbirgeÂ® WebOS), Türkiye",
+      "İşleten (unvan / ad-soyad, tarih, imza) — Tedbirge: Mehmet DİNÇ (Tedbirge® WebOS), Türkiye",
   },
   {
     id: "ek-b",
     code: "EK-B",
     title: "5651 Sorumluluk Devri ve Log Yükümlülüğü Beyanı",
     scope:
-      "Bu ek, TedbirgeÂ® WebOS düğümü üzerinden genel internete çıkış (exit node) etkinleştirilmesi hâlinde doğan yükümlülüklerin taraflar arasındaki dağılımını düzenler.",
+      "Bu ek, Tedbirge® WebOS düğümü üzerinden genel internete çıkış (exit node) etkinleştirilmesi hâlinde doğan yükümlülüklerin taraflar arasındaki dağılımını düzenler.",
     refs: "5651 s. Kanun md. 2/1-(e), 5, 7 · İnternet Toplu Kullanım Sağlayıcıları Hakkında Yönetmelik · 6698 s. KVKK",
     clauses: [
       {
         n: "B.1",
         h: "Varsayılan izole ağ statüsü",
-        p: "TedbirgeÂ® WebOS varsayılan yapılandırmasında kapalı devre, izole bir haberleşme ortamı kurar ve genel internet erişimi dağıtmaz. Bu yapılandırmada düğüm sahibi, 5651 sayılı Kanun anlamında erişim sağlayıcı veya toplu kullanım sağlayıcı sıfatını kendiliğinden kazanmaz.",
+        p: "Tedbirge® WebOS varsayılan yapılandırmasında kapalı devre, izole bir haberleşme ortamı kurar ve genel internet erişimi dağıtmaz. Bu yapılandırmada düğüm sahibi, 5651 sayılı Kanun anlamında erişim sağlayıcı veya toplu kullanım sağlayıcı sıfatını kendiliğinden kazanmaz.",
       },
       {
         n: "B.2",
@@ -464,7 +464,7 @@ export const CONTRACT_ANNEXES: ContractAnnex[] = [
       },
     ],
     signature:
-      "Müşteri / düğüm sahibi (unvan, ad-soyad, tarih, imza) — Tedbirge: Mehmet DİNÇ (TedbirgeÂ® WebOS)",
+      "Müşteri / düğüm sahibi (unvan, ad-soyad, tarih, imza) — Tedbirge: Mehmet DİNÇ (Tedbirge® WebOS)",
   },
   {
     id: "ek-c",
@@ -506,7 +506,7 @@ export const CONTRACT_ANNEXES: ContractAnnex[] = [
       },
     ],
     signature:
-      "Son Kullanıcı (kurum unvanı, yetkili ad-soyad, ülke, tarih, imza) — Tedbirge: Mehmet DİNÇ (TedbirgeÂ® WebOS)",
+      "Son Kullanıcı (kurum unvanı, yetkili ad-soyad, ülke, tarih, imza) — Tedbirge: Mehmet DİNÇ (Tedbirge® WebOS)",
   },
 ];
 
@@ -543,14 +543,14 @@ Konu: Verici içermeyen, lisanssız (ISM/SRD) bantları yöneten salt yazılım 
 Tarih: ..../..../20....
 
 1. BAŞVURU SAHİBİ
-Unvan: Mehmet DİNÇ (TedbirgeÂ® WebOS) — şahıs işletmesi
+Unvan: Mehmet DİNÇ (Tedbirge® WebOS) — şahıs işletmesi
 Vergi dairesi / VKN-TCKN: ...............................
 Adres: ...............................
 Tebligata esas e-posta / KEP: ...............................
 Telefon: ...............................
 
 2. ÜRÜNÜN TANIMI
-"TedbirgeÂ® WebOS", tek statik çalıştırılabilir dosya (binary) ve buna eşdeğer, kurulum gerektirmeyen tarayıcı uygulaması (PWA) biçiminde dağıtılan salt yazılım nitelikli bir haberleşme tünelleme ve yönlendirme katmanıdır. Ürün kapsamında:
+"Tedbirge® WebOS", tek statik çalıştırılabilir dosya (binary) ve buna eşdeğer, kurulum gerektirmeyen tarayıcı uygulaması (PWA) biçiminde dağıtılan salt yazılım nitelikli bir haberleşme tünelleme ve yönlendirme katmanıdır. Ürün kapsamında:
 a) Hiçbir radyo vericisi, alıcı, anten veya RF güç katı üretilmemekte, ithal edilmemekte ve satılmamaktadır; ürün 5809 sayılı Kanun'un 3'üncü maddesi anlamında "telsiz cihazı" niteliği taşımamaktadır.
 b) Yazılım, kullanıcının hâlihazırda sahip olduğu ve ilgili mevzuata göre tip onaylı/uygunluk değerlendirmesi yapılmış donanımın (Ethernet, Wi-Fi 2,4/5/6 GHz, 60 GHz, sub-GHz SRD modülleri, hücresel modem, uydu terminali, optik/FSO bağlantı) üzerinde çalışır. Donanıma ilişkin tip onayı ve piyasaya arz sorumluluğu ilgili cihaz üreticisi/ithalatçısına aittir.
 c) Hücresel ve uydu taşıyıcılar, kullanıcının yetkilendirilmiş işletmeciyle mevcut abonelik ilişkisi üzerinden kullanılır; başvuru sahibi elektronik haberleşme hizmeti sunmamakta, şebeke/altyapı işletmemekte ve abonelik ilişkisi kurmamaktadır. Bu nedenle 5809 sayılı Kanun'un 8'inci maddesi kapsamında işletmeci sıfatı bulunmadığı değerlendirilmektedir.
@@ -583,7 +583,7 @@ Kurumunuzca talep edilmesi hâlinde ürün teknik özeti, bölge profili (TR) sp
 
 
 Mehmet DİNÇ
-TedbirgeÂ® WebOS
+Tedbirge® WebOS
 İmza: ...............................`,
   },
   {
@@ -600,7 +600,7 @@ Konu: Lisanssız ISM/SRD bandında yürütülecek haberleşme süreklilik saha t
 Tarih: ..../..../20....
 
 1. BİLGİLENDİRMEDE BULUNAN
-Unvan: Mehmet DİNÇ (TedbirgeÂ® WebOS)
+Unvan: Mehmet DİNÇ (Tedbirge® WebOS)
 Adres: ............................... · E-posta: tedbirge34@gmail.com · Telefon: ...............................
 
 2. TESTİN AMACI
@@ -630,7 +630,7 @@ Test kapsamında yalnızca teknik telemetri (düğüm kimliği, sinyal seviyesi,
 Yukarıda ayrıntıları verilen saha testi faaliyeti hakkında Valiliğinizin bilgilendirilmesini, uygun görülmesi hâlinde ilgili birimlerin haberdar edilmesini ve varsa yerine getirmemiz gereken ilave tedbir/izin hususlarının tarafımıza bildirilmesini saygılarımla arz ederim.
 
 Mehmet DİNÇ
-TedbirgeÂ® WebOS
+Tedbirge® WebOS
 İmza: ...............................`,
   },
   {
@@ -648,12 +648,12 @@ Konu: Uçtan uca şifreli haberleşme taşıma katmanında veri sorumlusu / veri
 Tarih: ..../..../20....
 
 1. BAŞVURU SAHİBİ
-Unvan: Mehmet DİNÇ (TedbirgeÂ® WebOS) — şahıs işletmesi
+Unvan: Mehmet DİNÇ (Tedbirge® WebOS) — şahıs işletmesi
 VKN-TCKN: ............................... · Adres: ...............................
 Tebligata esas e-posta / KEP: ...............................
 
 2. FAALİYETİN NİTELİĞİ
-TedbirgeÂ® WebOS, kurumların ve son kullanıcıların kendi cihazları arasında doğrudan, uçtan uca şifreli bağlantı kuran bir yazılım katmanıdır. Mimarinin belirleyici özellikleri şunlardır:
+Tedbirge® WebOS, kurumların ve son kullanıcıların kendi cihazları arasında doğrudan, uçtan uca şifreli bağlantı kuran bir yazılım katmanıdır. Mimarinin belirleyici özellikleri şunlardır:
 a) Şifreleme anahtarları kullanıcı cihazında üretilir ve cihazdan hiçbir koşulda çıkmaz; başvuru sahibi haberleşme içeriğini teknik olarak çözemez.
 b) Mesajlar, sesli/görüntülü görüşmeler ve dosyalar cihazdan cihaza aktarılır; karşı taraf çevrimdışıyken yalnızca şifreli paket, sınırlı süreyle ve içeriği açılamaz biçimde kuyruklanır.
 c) Rehber, konum ve mesaj geçmişi sunucuya kopyalanmaz; cihazın yerel deposunda tutulur.
@@ -670,7 +670,7 @@ c) Yurt dışında konumlanan bulut/altyapı hizmet sağlayıcılarının kullan
 hususlarında Kurumunuzun yazılı görüşünün tarafımıza bildirilmesini saygılarımla arz ederim.
 
 Mehmet DİNÇ
-TedbirgeÂ® WebOS
+Tedbirge® WebOS
 İmza: ...............................`,
   },
   {
@@ -683,7 +683,7 @@ TedbirgeÂ® WebOS
 (Bulut hizmet sağlayıcısı / kurumsal BT güvenlik incelemesi için)
 
 Tarih: ..../..../20....
-Beyanda bulunan: Mehmet DİNÇ (TedbirgeÂ® WebOS)
+Beyanda bulunan: Mehmet DİNÇ (Tedbirge® WebOS)
 Muhatap kurum / sağlayıcı: ...............................
 
 1. KONUMLANDIRMA
@@ -709,7 +709,7 @@ Düğüm katmanı kaldırıldığında kurumun mimarisi ilk günkü hâline dön
 Tedbirge, kurumun bulut sözleşmesinin tarafı değildir ve sağlayıcı hizmet seviyesi taahhütlerini devralmaz. Düğüm katmanına ilişkin hizmet seviyesi, ayrı bir ek ile düzenlenir.
 
 Mehmet DİNÇ
-TedbirgeÂ® WebOS
+Tedbirge® WebOS
 İmza: ...............................`,
   },
   {
@@ -726,7 +726,7 @@ Konu: Afet ve acil durumlarda mevcut haberleşme sistemlerini tamamlayıcı, yed
 Tarih: ..../..../20....
 
 1. TALEPTE BULUNAN
-Unvan: Mehmet DİNÇ (TedbirgeÂ® WebOS) · Adres: ............................... · E-posta: ...............................
+Unvan: Mehmet DİNÇ (Tedbirge® WebOS) · Adres: ............................... · E-posta: ...............................
 
 2. GEREKÇE
 Afet anında ilk kaybedilen hizmet, veri bağlantısıdır. Mevcut telsiz ve uydu sistemleri kritik ekipler için çalışsa da, saha personelinin elindeki telefon ve tabletler bağlantısız kalmakta; durum raporu, fotoğraf, hasar tespiti ve konum bilgisi merkeze ulaşamamaktadır.
@@ -747,7 +747,7 @@ hususlarını saygılarımla arz ederim.
 Pilot faaliyeti ticari hizmet sunumu içermez; ölçüm sonuçları ve sınırlılıklar kurumunuza yazılı rapor olarak sunulur.
 
 Mehmet DİNÇ
-TedbirgeÂ® WebOS
+Tedbirge® WebOS
 İmza: ...............................`,
   },
 ];

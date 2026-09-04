@@ -973,7 +973,7 @@ export TEDBIRGE_CARRIER=auto`,
 }
 
 function downloadLicense(l: License) {
-  const content = `# TedbirgeÂ® WebOS lisans yapılandırması
+  const content = `# Tedbirge® WebOS lisans yapılandırması
 TEDBIRGE_LICENSE_KEY=${l.license_key}
 TEDBIRGE_LICENSE_PLAN=${l.plan}
 TEDBIRGE_NODE_LIMIT=${l.node_limit}

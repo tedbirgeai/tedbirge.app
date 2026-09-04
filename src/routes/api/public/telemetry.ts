@@ -5,7 +5,7 @@ import { corsHeaders } from "@/lib/cors";
 import { z } from "zod";
 
 /**
- * Gerçek TedbirgeÂ® WebOS düğümleri için telemetri/heartbeat alım uç noktası.
+ * Gerçek Tedbirge® WebOS düğümleri için telemetri/heartbeat alım uç noktası.
  * Kimlik doğrulama: X-Tedbirge-License başlığındaki lisans anahtarı.
  * İçerik taşınmaz; yalnızca ölçüm metrikleri kabul edilir.
  */

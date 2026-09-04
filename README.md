@@ -1,8 +1,8 @@
-# TedbirgeÂ® WebOS
+# Tedbirge® WebOS
 
-**Altyapıdan bağımsız bağlantı.** TedbirgeÂ® WebOS; Ethernet, Wi-Fi, hücresel, uydu, WiGig, FSO lazer, Wi-Fi HaLow, TVWS ve LoRa olmak üzere dokuz fiziksel taşıyıcıyı tek bir güvenli ağ geçidi altında birleştiren, kesinti anında otomatik devreye giren bağımsız bir mesh iletişim platformudur.
+**Altyapıdan bağımsız bağlantı.** Tedbirge® WebOS; Ethernet, Wi-Fi, hücresel, uydu, WiGig, FSO lazer, Wi-Fi HaLow, TVWS ve LoRa olmak üzere dokuz fiziksel taşıyıcıyı tek bir güvenli ağ geçidi altında birleştiren, kesinti anında otomatik devreye giren bağımsız bir mesh iletişim platformudur.
 
-Üretici / satıcı: **Mehmet DİNÇ (TedbirgeÂ® WebOS)** — Türkiye
+Üretici / satıcı: **Mehmet DİNÇ (Tedbirge® WebOS)** — Türkiye
 Canlı sürüm: <https://tedbirge.app>
 
 ---
@@ -11,7 +11,7 @@ Canlı sürüm: <https://tedbirge.app>
 
 | Modül | İşlev |
 | --- | --- |
-| **TedbirgeÂ® WebOS** | Çok taşıyıcılı ağ geçidi; taşıyıcı seçimi, sağlık ölçümü ve otomatik yedekleme (failover). |
+| **Tedbirge® WebOS** | Çok taşıyıcılı ağ geçidi; taşıyıcı seçimi, sağlık ölçümü ve otomatik yedekleme (failover). |
 | **Tedbirge Loop** | Düğümler arası mesh yönlendirme, çoklu atlama (multi-hop) ve topoloji keşfi. |
 | **Tedbirge Off-Grid** | Bağlantı yokken mesajları kuyruklayıp bağlantı geri geldiğinde teslim eden kopukluğa dayanıklı katman. |
 
@@ -51,9 +51,9 @@ npm run dev
 
 ## Kurucu
 
-**Mehmet DİNÇ** — Kurucu, TedbirgeÂ® WebOS
+**Mehmet DİNÇ** — Kurucu, Tedbirge® WebOS
 
-Mehmet DİNÇ; kritik altyapı kesintilerinde iletişimin sürdürülebilirliği üzerine çalışan, afet ve kamu güvenliği senaryolarına odaklanmış bir teknoloji girişimcisidir. TedbirgeÂ® WebOS'i, tek bir operatöre, tek bir frekansa veya tek bir omurgaya bağımlı kalmadan çalışan bağımsız bir iletişim katmanı ihtiyacından yola çıkarak kurmuştur.
+Mehmet DİNÇ; kritik altyapı kesintilerinde iletişimin sürdürülebilirliği üzerine çalışan, afet ve kamu güvenliği senaryolarına odaklanmış bir teknoloji girişimcisidir. Tedbirge® WebOS'i, tek bir operatöre, tek bir frekansa veya tek bir omurgaya bağımlı kalmadan çalışan bağımsız bir iletişim katmanı ihtiyacından yola çıkarak kurmuştur.
 
 Çalışmalarının merkezinde üç ilke yer alır: **bağımsızlık** (hiçbir tekil altyapıya bağımlı olmamak), **yasallık** (her bölgede lisanssız bant kurallarına ve veri koruma mevzuatına tam uyum) ve **sadelik** (sahadaki ekibin eğitim gerektirmeden kurup çalıştırabileceği bir sistem). Pilot uygulama alanı Türkiye/Sakarya olup, platform yasal sınırlar dahilinde küresel kullanım için tasarlanmıştır.
 
@@ -61,4 +61,4 @@ Mehmet DİNÇ; kritik altyapı kesintilerinde iletişimin sürdürülebilirliği
 
 ---
 
-© Mehmet DİNÇ (TedbirgeÂ® WebOS). Tüm hakları saklıdır.
+© Mehmet DİNÇ (Tedbirge® WebOS). Tüm hakları saklıdır.

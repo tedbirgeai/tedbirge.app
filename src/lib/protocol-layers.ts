@@ -1,5 +1,5 @@
 /**
- * TedbirgeÂ® WebOS — 7 katmanlı mimarinin tek doğruluk kaynağı.
+ * Tedbirge® WebOS — 7 katmanlı mimarinin tek doğruluk kaynağı.
  *
  * Buradaki metinler kullanıcı arayüzünde birebir kullanılır: kriptografik
  * uzun terimler (imza algoritmaları, anahtar türetme, karma fonksiyonları)
