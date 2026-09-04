@@ -174,6 +174,8 @@ export function ProfileApp({ onOpen }: { onOpen?: (id: string) => void }) {
         customData: { userId: user.id },
         successUrl: `${window.location.origin}/?checkout=success`,
       });
+      notifySubscriptionChanged();
+
     } catch (err) {
       notifyError(
         "Ödeme ekranı açılamadı",
