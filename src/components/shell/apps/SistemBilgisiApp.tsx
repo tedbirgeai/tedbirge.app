@@ -20,7 +20,7 @@ type TabId = "kurumsal" | "protokol" | "paketler" | "enerji" | "yasal";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "kurumsal", label: "Kurumsal" },
-  { id: "protokol", label: "Protokol" },
+  { id: "protokol", label: "Mimari Katmanlar" },
   { id: "paketler", label: "Paketler" },
   { id: "enerji", label: "Enerji" },
   { id: "yasal", label: "Yasal" },
@@ -91,7 +91,7 @@ function CorporateTab() {
       </p>
       <div>
         <Row k="Ürün" v="Tedbirge® WebOS" />
-        <Row k="Satıcı" v="Mehmet DİNÇ (Tedbirge Protokol)" />
+        <Row k="Satıcı" v="Mehmet DİNÇ (TedbirgeÂ® WebOS)" />
         <Row k="Sürüm" v={BUILD_ID} />
         <Row k="Adres" v={SITE_URL} />
         <Row k="İletişim" v="tedbirge34@gmail.com" />

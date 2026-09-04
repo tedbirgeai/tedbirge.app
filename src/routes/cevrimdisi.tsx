@@ -8,7 +8,7 @@ export const Route = createFileRoute("/cevrimdisi")({
       {
         name: "description",
         content:
-          "Bağlantı yokken Tedbirge Protokol önbellekten açılır. Saha modunda ne çalışır, ne çalışmaz burada.",
+          "Bağlantı yokken TedbirgeÂ® WebOS önbellekten açılır. Saha modunda ne çalışır, ne çalışmaz burada.",
       },
       { property: "og:title", content: "Çevrimdışı Mod — tedbirge.app" },
       {
@@ -43,7 +43,7 @@ function OfflinePage() {
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-6 px-5 py-16">
       <div>
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-          Tedbirge Protokol
+          TedbirgeÂ® WebOS
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
           {online ? "Bağlantı geri geldi" : "Çevrimdışı moddasınız"}

@@ -10,7 +10,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 import { announce } from "@/lib/shell/announce";
-import { reportLovableError } from "@/lib/lovable-error-reporting";
+import { reportRuntimeError } from "@/lib/error-reporting";
 
 type Props = {
   /** Kart başlığı; genelde uygulama adı. */
@@ -36,7 +36,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Kabuğu düşürmeden bildir.
     console.error("[web-os] pencere hatası:", error, info.componentStack);
-    reportLovableError(error, {
+    reportRuntimeError(error, {
       boundary: "tbos_app_error_boundary",
       app: this.props.appId ?? this.props.title ?? "bilinmiyor",
     });

@@ -10,7 +10,7 @@ export function AdminBusinessPlan() {
         </p>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Bu sekme yalnızca referans amaçlıdır; hiçbir kayıt oluşturmaz veya değiştirmez. İş planı;
-          7 katmanlı Tedbirge Protocol mimarisi ve Resilience-as-a-Service modeli esas alınarak
+          7 katmanlı TedbirgeÂ® WebOS mimarisi ve Resilience-as-a-Service modeli esas alınarak
           hazırlanmıştır.
         </p>
       </div>
