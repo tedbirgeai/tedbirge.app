@@ -6,8 +6,19 @@ set -u
 
 BETIK=/opt/tedbirge/setup-tedbirge-disk.sh
 
+clear 2>/dev/null || true
+echo "==============================================="
+echo "   TEDBIRGE(R) OS — Kurulum Yardimcisi"
+echo "==============================================="
+echo ""
+echo "Kurulum sihirbazi baslatiliyor..."
+echo "Iptal etmek isterseniz sorulara bos cevap verin."
+echo ""
+
 if [ ! -x "$BETIK" ]; then
   echo "! Kurulum betigi bulunamadi: $BETIK"
+  echo "  Cozum: ISO imaji eksik yazilmis olabilir. Imaji USB bellege"
+  echo "         yeniden yazip bilgisayari tekrar baslatin."
   read -r -p "Canli moda donmek icin Enter'a basin " _
   exec startx -- -nocursor
 fi
@@ -16,4 +27,11 @@ fi
 RC=$?
 
 # Kurulum iptal edildiyse ya da tamamlanmadiysa canli moda don.
-[ "$RC" = "0" ] || exec startx -- -nocursor
+if [ "$RC" != "0" ]; then
+  echo ""
+  echo "Kurulum tamamlanmadi. Canli (USB) moda donuluyor —"
+  echo "sistemi diske kurmadan da kullanmaya devam edebilirsiniz."
+  echo "Yeniden denemek icin konsola 'tedbirge-kur' yazin."
+  sleep 3
+  exec startx -- -nocursor
+fi
