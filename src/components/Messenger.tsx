@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@/components/shell/OsLink";
+import { DEV_PORTAL_URL } from "@/lib/site";
 import {
   FolderOpen,
   Lock,
