@@ -145,8 +145,9 @@ export function StoreApp({ onOpen }: { onOpen: (id: string) => void }) {
             Eşleşen uygulama yok.
           </p>
         ) : null}
-      </div>
+        </div>
       )}
-
+    </div>
   );
+
 }
