@@ -1,0 +1,94 @@
+name: Tedbirge WebOS ISO
+
+# Önyüklenebilir imaj tamamen bu hatta üretilir; son kullanıcı hiçbir şey derlemez.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "alpine/**"
+      - ".github/workflows/build-iso.yml"
+      - "package.json"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tedbirge-iso-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Web paketini derle
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Sürüm etiketi
+        id: ver
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            V="${GITHUB_REF_NAME#v}"
+          else
+            V="$(node -p "require('./package.json').version")+$(date -u +%Y%m%d)-$(echo "$GITHUB_SHA" | cut -c1-7)"
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Alpine ISO derle (Docker · mkimage)
+        run: |
+          docker run --rm --privileged \
+            -v "$PWD:/work" -w /work \
+            -e TEDBIRGE_VERSION="${{ steps.ver.outputs.version }}" \
+            alpine:3.20 sh /work/alpine/ci-build.sh
+
+      - name: İmajı doğrula (sahte çıktı yayınlanmaz)
+        run: |
+          ISO=$(ls -1 build/iso/*.iso 2>/dev/null | head -1 || true)
+          if [ -z "$ISO" ]; then
+            echo "::error::ISO üretilemedi."; exit 1
+          fi
+          SIZE=$(stat -c%s "$ISO")
+          if [ "$SIZE" -lt 104857600 ]; then
+            echo "::error::ISO beklenenden küçük ($SIZE bayt) — yayınlanmayacak."; exit 1
+          fi
+          (cd build/iso && sha256sum *.iso > SHA256SUMS)
+          echo "ISO=$ISO" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tedbirge-webos-iso
+          path: |
+            build/iso/*.iso
+            build/iso/SHA256SUMS
+
+      - name: Yayınla (sürüm etiketi)
+        if: github.event_name == 'release' || github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/iso/*.iso
+            build/iso/SHA256SUMS
+
+      - name: Yayınla (latest ön-sürüm)
+        if: github.event_name != 'release' && github.ref_type != 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Tedbirge® WebOS — güncel imaj"
+          prerelease: true
+          body: "Otomatik derleme · ${{ steps.ver.outputs.version }}"
+          files: |
+            build/iso/*.iso
+            build/iso/SHA256SUMS
