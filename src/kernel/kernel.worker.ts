@@ -127,7 +127,7 @@ function handle(buf: ArrayBuffer) {
       const view = new DataView(out);
       view.setUint8(0, mod ? 1 : 0);
       view.setUint8(1, mod ? mod.abi_version() : 0);
-      // Protokol sürümü ve etkin taşıma (0: postMessage, 1: paylaşımlı halka).
+      // Sürüm ve etkin taşıma (0: postMessage, 1: paylaşımlı halka).
       view.setUint8(2, IPC_PROTOCOL_VERSION);
       view.setUint8(3, ringIn && ringOut ? 1 : 0);
       reply(OP.HELLO_RESULT, frame.corrId, out);
