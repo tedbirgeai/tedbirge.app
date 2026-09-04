@@ -19,6 +19,12 @@ import { COMMUNITY_NODE_LIMIT, PLANS, type PlanKey } from "@/lib/paddle-catalog"
 import { notifyError, notifyOk } from "@/lib/shell/notify";
 import { describeNode } from "@/lib/node-runtime";
 import { useShell } from "@/shell/shell-context";
+import {
+  consumeCheckoutSuccess,
+  notifySubscriptionChanged,
+  onSubscriptionChanged,
+  scheduleSubscriptionRefresh,
+} from "@/lib/subscription-refresh";
 import { createPortalSession } from "@/utils/payments.functions";
 
 type SubRow = {
@@ -104,6 +110,15 @@ export function ProfileApp({ onOpen }: { onOpen?: (id: string) => void }) {
     void load();
   }, [authLoading, load]);
 
+  // Ödeme dönüşünde ve başka bir ekranda plan değiştiğinde kendini tazeler.
+  useEffect(() => onSubscriptionChanged(() => void load()), [load]);
+
+  useEffect(() => {
+    if (!consumeCheckoutSuccess()) return;
+    notifyOk("Ödeme alındı", "Lisansınız birkaç saniye içinde görünür.");
+    return scheduleSubscriptionRefresh(() => void load());
+  }, [load]);
+
   const activeSub = useMemo(
     () =>
       !!subscription &&
@@ -159,6 +174,8 @@ export function ProfileApp({ onOpen }: { onOpen?: (id: string) => void }) {
         customData: { userId: user.id },
         successUrl: `${window.location.origin}/?checkout=success`,
       });
+      notifySubscriptionChanged();
+
     } catch (err) {
       notifyError(
         "Ödeme ekranı açılamadı",

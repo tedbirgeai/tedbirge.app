@@ -6,12 +6,23 @@ export const resolvePaddlePrice = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const response = await gatewayFetch(
       data.environment,
-      `/prices?external_id=${encodeURIComponent(data.priceId)}`,
+      `/prices?status=active&external_id=${encodeURIComponent(data.priceId)}`,
     );
-    const result = (await response.json()) as { data?: Array<{ id: string }> };
-    if (!result.data?.length) throw new Error("Price not found");
-    return result.data[0].id;
+    const result = (await response.json()) as {
+      data?: Array<{ id: string; status?: string }>;
+    };
+    const active = (result.data ?? []).filter((p) => (p.status ?? "active") === "active");
+    if (active.length === 0) throw new Error(`Fiyat bulunamadı: ${data.priceId}`);
+    // Aynı kimlikte birden fazla etkin fiyat varsa hangisinin tahsil edileceği
+    // belirsizdir; sessizce ilkini seçmek yerine akış durdurulur.
+    if (active.length > 1) {
+      throw new Error(
+        `Fiyat kataloğu tutarsız: "${data.priceId}" için ${active.length} etkin kayıt var.`,
+      );
+    }
+    return active[0].id;
   });
+
 
 export const createPortalSession = createServerFn({ method: "POST" })
   .inputValidator(

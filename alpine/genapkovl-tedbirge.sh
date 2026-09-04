@@ -89,7 +89,11 @@ EOF
 makefile root:root 0755 "$tmp/opt/tedbirge/kiosk.sh" <<'EOF'
 #!/bin/sh
 # Kiosk görüntüleyici: Chromium > cog > başsız düğüm
+# Tüm çıktı üretim hata izine yazılır: /var/log/tedbirge/kiosk.log
 URL="http://127.0.0.1/"
+mkdir -p /var/log/tedbirge
+exec >>/var/log/tedbirge/kiosk.log 2>&1
+echo "--- kiosk baslangic $(date -u +%Y-%m-%dT%H:%M:%SZ) ---"
 for i in 1 2 3 4 5 6 7 8 9 10; do
   wget -q -O /dev/null "$URL" && break
   sleep 1
@@ -149,6 +153,33 @@ xset s noblank
 exec /opt/tedbirge/kiosk.sh
 EOF
 
+# ------------------------------------------------------------ hata izi (log)
+# Üretimde oluşan hatalar diskte kalıcı olarak tutulur; boyut sınırlıdır.
+mkdir -p "$tmp/etc/logrotate.d" "$tmp/etc/local.d" "$tmp/var/log/tedbirge"
+
+makefile root:root 0644 "$tmp/etc/logrotate.d/tedbirge" <<'EOF'
+/var/log/tedbirge/*.log {
+  daily
+  rotate 14
+  size 5M
+  missingok
+  notifempty
+  copytruncate
+  compress
+}
+EOF
+
+makefile root:root 0755 "$tmp/etc/local.d/tedbirge-log.start" <<'EOF'
+#!/bin/sh
+# Açılışta hata izi dizinini hazırlar ve sistem bilgisini kaydeder.
+mkdir -p /var/log/tedbirge
+{
+  echo "--- acilis $(date -u +%Y-%m-%dT%H:%M:%SZ) ---"
+  echo "surum: $(cat /etc/tedbirge-release 2>/dev/null | tr '\n' ' ')"
+  echo "cekirdek: $(uname -a)"
+} >>/var/log/tedbirge/sistem.log 2>&1
+EOF
+
 # ------------------------------------------------------- diske kurulum sihirbazı
 install -Dm755 "$PAYLOAD/install/tedbirge-kurulum.sh" "$tmp/opt/tedbirge/tedbirge-kurulum.sh"
 install -Dm755 "$PAYLOAD/install/setup-tedbirge-disk.sh" "$tmp/opt/tedbirge/setup-tedbirge-disk.sh"
@@ -180,6 +211,7 @@ rc_add dbus default
 rc_add networkmanager default
 rc_add nginx default
 rc_add local default
+rc_add crond default
 
 rc_add mount-ro shutdown
 rc_add killprocs shutdown
