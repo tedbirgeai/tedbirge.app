@@ -14,7 +14,7 @@ profile_tedbirge() {
 	syslinux_serial=""
 	kernel_flavors="lts"
 	kernel_addons=""
-	initfs_features="ata base bootchart cdrom squashfs ext4 mmc nvme scsi usb virtio"
+	initfs_features="ata base bootchart cdrom squashfs ext4 f2fs mmc nvme scsi usb virtio kms network"
 	grub_mod="all_video disk part_gpt part_msdos linux normal configfile search search_label efi_gop fat iso9660 cat echo ls test true help gzio"
 	boot_addons=""
 	apks="$apks
