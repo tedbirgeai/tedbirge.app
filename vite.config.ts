@@ -44,9 +44,11 @@ export default defineConfig({
     pages: [{ path: "/" }],
     prerender: { enabled: true, autoStaticPathsDiscovery: false },
   },
-  // Vercel üzerinde sunucu tarafı render eden çıktı üretilir; statik SPA
-  // yönlendirmesi eklenmez. Lovable içinde ortam kendi ön ayarını dayatır.
-  nitro: { preset: process.env.NITRO_PRESET ?? (process.env.VERCEL ? "vercel" : undefined) },
+  // Yayın hedefi Vercel'dir: sunucu tarafı render eden çıktı üretilir ve
+  // statik SPA yönlendirmesi eklenmez. Lovable içindeki derlemede ortam
+  // kendi ön ayarını dayattığı için bu değer orada yok sayılır.
+  nitro: { preset: process.env.NITRO_PRESET ?? "vercel" },
+
   vite: {
     // Varlık yolları her zaman köke göre çözülür.
     base: "/",
