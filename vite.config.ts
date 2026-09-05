@@ -33,6 +33,12 @@ const crossOriginIsolation = {
   },
 };
 
+// Vercel derlemesinde ön-render kapatılır: bu ortamda ön-render adımı
+// nitro'nun Vercel çıktı tanım dosyalarını (config.json / .vc-config.json)
+// üretmesini engelliyor ve yayın 404 veriyor. ISO ve yerel derlemelerde
+// ön-render açık kalır; bare-metal imaj dist/client/index.html'i kullanır.
+const IS_VERCEL_BUILD = !!process.env.VERCEL;
+
 export default defineConfig({
   tanstackStart: {
     // Sunucu girişini src/server.ts'ye yönlendirir (SSR hata sarmalayıcısı).
@@ -42,12 +48,15 @@ export default defineConfig({
     // sırasında bir kez üretilir (dist/client/index.html). Diğer rotalar
     // istek başına sunucuda render edilmeye devam eder.
     pages: [{ path: "/" }],
-    prerender: { enabled: true, autoStaticPathsDiscovery: false },
+    prerender: IS_VERCEL_BUILD
+      ? { enabled: false }
+      : { enabled: true, autoStaticPathsDiscovery: false },
   },
   // Yayın hedefi Vercel'dir: sunucu tarafı render eden çıktı üretilir ve
   // statik SPA yönlendirmesi eklenmez. Lovable içindeki derlemede ortam
   // kendi ön ayarını dayattığı için bu değer orada yok sayılır.
   nitro: { preset: process.env.NITRO_PRESET ?? "vercel" },
+
 
   vite: {
     // Varlık yolları her zaman köke göre çözülür.
