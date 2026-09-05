@@ -65,14 +65,9 @@ export default defineConfig({
     ? { preset: process.env.NITRO_PRESET ?? "vercel" }
     : {
         preset: process.env.NITRO_PRESET,
-        output: IS_ISO_BUILD
-          ? {
-              dir: "build-iso/web-out",
-              serverDir: "build-iso/web-out/server",
-              publicDir: "build-iso/web",
-            }
-          : { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" },
+        output: { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" },
       },
+
 
 
 
