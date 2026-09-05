@@ -41,6 +41,7 @@ fi
 
 # Kurulum imajı derlemesinde çekirdek ayrı çıktı klasörüne de kopyalanır.
 if [ "${TEDBIRGE_ISO:-0}" = "1" ]; then
+  rm -rf "$ROOT/build-iso/kernel/tedbirge_kernel.wasm"
   mkdir -p "$ROOT/build-iso/kernel"
   cp "$WASM" "$ROOT/build-iso/kernel/tedbirge_kernel.wasm"
   test -s "$ROOT/build-iso/kernel/tedbirge_kernel.wasm" || {
