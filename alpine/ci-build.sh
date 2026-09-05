@@ -36,13 +36,29 @@ apk update
 apk add --no-cache \
   alpine-sdk alpine-conf busybox-static apk-tools-static \
   xorriso squashfs-tools syslinux grub grub-efi mtools dosfstools \
-  git bash coreutils tar
+  git bash coreutils tar doas
+
+# abuild yardımcıları doas ile ayrıcalık yükseltir; konteynerde kural yoksa
+# "doas: not found / not permitted" hatası verir. Kuralı biz tanımlıyoruz.
+mkdir -p /etc/doas.d
+echo 'permit nopass :abuild' > /etc/doas.d/abuild.conf
+echo 'permit nopass root' >> /etc/doas.d/abuild.conf
 
 adduser -D -G abuild builder 2>/dev/null || true
 addgroup builder abuild 2>/dev/null || true
 mkdir -p /var/cache/distfiles
 chmod a+w /var/cache/distfiles
-su builder -c 'abuild-keygen -a -i -n'
+
+# İmza anahtarı: kurulum adımını (-i) root olarak biz yapıyoruz ki
+# abuild-keygen ayrıcalık yükseltmeye muhtaç olmasın.
+su builder -c 'abuild-keygen -a -n'
+mkdir -p /etc/apk/keys
+for k in /home/builder/.abuild/*.rsa.pub; do
+  [ -e "$k" ] || continue
+  cp "$k" /etc/apk/keys/
+done
+ls -l /etc/apk/keys
+
 
 # aports (mkimage altyapısı)
 git clone --depth 1 https://gitlab.alpinelinux.org/alpine/aports.git /home/builder/aports
