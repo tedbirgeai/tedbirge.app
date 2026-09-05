@@ -39,10 +39,10 @@ const crossOriginIsolation = {
 // ön-render açık kalır; bare-metal imaj açılış sayfasını statik sunar.
 const IS_VERCEL_BUILD = !!process.env.VERCEL;
 
-// Kurulum imajı derlemesi tamamen ayrı bir klasöre yazılır; yayın çıktısı
-// (dist/client, dist/server) hiç dokunulmadan kalır. İki mod aynı anda
-// etkin olamaz: Vercel ortamında imaj anahtarı yok sayılır.
-const IS_ISO_BUILD = !IS_VERCEL_BUILD && process.env.TEDBIRGE_ISO === "1";
+// Kurulum imajı derlemesi tek bir çıktı yolu kullanır (dist/client) ve
+// paketleme betiği sonucu build-iso/web altına taşıyıp kök dizini temizler.
+// Böylece ön-render, servis işçisi ve varlıklar hep aynı klasörde birleşir.
+
 
 export default defineConfig({
   tanstackStart: {
@@ -65,14 +65,9 @@ export default defineConfig({
     ? { preset: process.env.NITRO_PRESET ?? "vercel" }
     : {
         preset: process.env.NITRO_PRESET,
-        output: IS_ISO_BUILD
-          ? {
-              dir: "build-iso/web-out",
-              serverDir: "build-iso/web-out/server",
-              publicDir: "build-iso/web",
-            }
-          : { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" },
+        output: { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" },
       },
+
 
 
 
@@ -96,8 +91,8 @@ export default defineConfig({
         devOptions: { enabled: false },
         manifest: false,
         // Nitro yayınlanacak statik dosyaları dist/client altında sunar;
-        // kurulum imajı derlemesinde çıktı build-iso/web altına yazılır.
-        outDir: IS_ISO_BUILD ? "build-iso/web" : "dist/client",
+        // kurulum imajı derlemesi bu klasörü sonradan build-iso/web'e taşır.
+        outDir: "dist/client",
 
 
         workbox: {
