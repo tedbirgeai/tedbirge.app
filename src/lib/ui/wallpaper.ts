@@ -42,13 +42,43 @@ export type Wallpaper = {
 };
 
 export const WALLPAPERS: Wallpaper[] = [
-  { id: "aurora", label: "Tedbirge Işıltı", hint: "Sade tema gradyanı", src: null, theme: "crystal" },
-  { id: "ocean", label: "Okyanus — Yunuslar", hint: "Turkuaz su, gün ışığı", src: ocean, theme: "crystal" },
-  { id: "nature", label: "Doğa — Dağ ve Orman", hint: "Sisli vadi, gün doğumu", src: nature, theme: "soft" },
-  { id: "crystal", label: "Kristal Açık", hint: "Buzlu cam yüzeyler", src: crystal, theme: "crystal" },
+  {
+    id: "aurora",
+    label: "Tedbirge Işıltı",
+    hint: "Sade tema gradyanı",
+    src: null,
+    theme: "crystal",
+  },
+  {
+    id: "ocean",
+    label: "Okyanus — Yunuslar",
+    hint: "Turkuaz su, gün ışığı",
+    src: ocean,
+    theme: "crystal",
+  },
+  {
+    id: "nature",
+    label: "Doğa — Dağ ve Orman",
+    hint: "Sisli vadi, gün doğumu",
+    src: nature,
+    theme: "soft",
+  },
+  {
+    id: "crystal",
+    label: "Kristal Açık",
+    hint: "Buzlu cam yüzeyler",
+    src: crystal,
+    theme: "crystal",
+  },
   { id: "night", label: "Gece Cam", hint: "Koyu cam, düşük ışık", src: night, theme: "night" },
   { id: "neon", label: "Siberpunk Neon", hint: "Neon şehir, gece", src: neon, theme: "night" },
-  { id: "mesh", label: "Mesh Nebula", hint: "Ağ düğümleri, derin lacivert", src: mesh, theme: "night" },
+  {
+    id: "mesh",
+    label: "Mesh Nebula",
+    hint: "Ağ düğümleri, derin lacivert",
+    src: mesh,
+    theme: "night",
+  },
   { id: "dark", label: "Dark Minimal", hint: "Gürültüsüz koyu yüzey", src: dark, theme: "night" },
 ];
 

@@ -199,7 +199,9 @@ function TiersTab() {
       {RAAS_TIERS.map((t) => (
         <li key={t.key} className="rounded-2xl border border-[var(--tb-border)] p-4">
           <h3 className="text-[14px] font-semibold text-[var(--tb-text)]">{t.name}</h3>
-          <p className="mt-1 font-osmono text-[12px] text-[var(--tb-accent)]">{t.price} · {t.note}</p>
+          <p className="mt-1 font-osmono text-[12px] text-[var(--tb-accent)]">
+            {t.price} · {t.note}
+          </p>
           <p className="mt-2 text-[13px] leading-relaxed text-[var(--tb-muted)]">{t.for}</p>
           <ul className="mt-3 space-y-1 text-[12px] text-[var(--tb-text)]">
             {t.points.map((f) => (

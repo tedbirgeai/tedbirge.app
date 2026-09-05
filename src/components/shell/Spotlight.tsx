@@ -41,7 +41,9 @@ export function Spotlight({
     if (!open) return;
     setQuery("");
     setCursor(0);
-    listFiles().then(setFiles).catch(() => setFiles([]));
+    listFiles()
+      .then(setFiles)
+      .catch(() => setFiles([]));
     const t = window.setTimeout(() => input.current?.focus(), 20);
     return () => window.clearTimeout(t);
   }, [open]);

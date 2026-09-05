@@ -40,7 +40,9 @@ function download(name: string, mime: string, body: string) {
 function toCsv(rows: PortalLog[]): string {
   const head = "zaman;seviye;kaynak;mesaj";
   const body = rows
-    .map((r) => [fmt(r.at), LOG_LEVEL_LABEL[r.level], r.source, r.message.replace(/;/g, ",")].join(";"))
+    .map((r) =>
+      [fmt(r.at), LOG_LEVEL_LABEL[r.level], r.source, r.message.replace(/;/g, ",")].join(";"),
+    )
     .join("\n");
   return `${head}\n${body}\n`;
 }
@@ -219,9 +221,7 @@ export function LogsPanel() {
                       {fmt(l.at)} · {l.source}
                     </p>
                   </div>
-                  <Badge
-                    tone={l.level === "hata" ? "bad" : l.level === "uyari" ? "warn" : "muted"}
-                  >
+                  <Badge tone={l.level === "hata" ? "bad" : l.level === "uyari" ? "warn" : "muted"}>
                     {LOG_LEVEL_LABEL[l.level]}
                   </Badge>
                 </li>

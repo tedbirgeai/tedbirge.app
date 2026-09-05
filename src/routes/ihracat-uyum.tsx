@@ -125,12 +125,14 @@ function ExportCompliance() {
           </p>
         </div>
         <div className="flex gap-3">
-          <a href="/"
+          <a
+            href="/"
             className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
           >
             Spektrum matrisi
           </a>
-          <a href="/"
+          <a
+            href="/"
             className="rounded-sm bg-primary px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
           >
             Beyan başlat

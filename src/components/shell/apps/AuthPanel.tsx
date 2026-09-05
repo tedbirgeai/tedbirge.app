@@ -52,7 +52,9 @@ export function AuthPanel({ onSignedIn }: { onSignedIn?: () => void }) {
           },
         });
         if (error) throw error;
-        setInfo("Hesabınız oluşturuldu. E-posta doğrulaması gerekiyorsa gelen kutunuzu kontrol edin.");
+        setInfo(
+          "Hesabınız oluşturuldu. E-posta doğrulaması gerekiyorsa gelen kutunuzu kontrol edin.",
+        );
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu.");

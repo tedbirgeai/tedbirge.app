@@ -84,11 +84,13 @@ export function cancelTransfer(id: string) {
   cancelled.add(id);
   paused.delete(id);
   const t = transfers.get(id);
-  if (t && (t.status === "gonderiliyor" || t.status === "duraklatildi" || t.status === "aliniyor")) {
+  if (
+    t &&
+    (t.status === "gonderiliyor" || t.status === "duraklatildi" || t.status === "aliniyor")
+  ) {
     put({ ...t, status: "iptal", speed: 0 });
   }
 }
-
 
 function put(t: Transfer) {
   transfers.set(t.id, t);
@@ -177,7 +179,6 @@ export async function sendFileToPeer(peer: string, file: File): Promise<void> {
   }
 }
 
-
 let booted = false;
 
 /** Gelen dosya parçalarını dinlemeye başlar (fikirdaş / idempotent). */
@@ -236,6 +237,5 @@ export function bootFileTransfer() {
         put({ ...t, percent, speed });
       }
     }
-
   });
 }

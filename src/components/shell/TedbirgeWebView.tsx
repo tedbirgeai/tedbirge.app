@@ -17,7 +17,6 @@ import { gatewayAllowed, gatewayUrl } from "@/lib/shell/embed-strategy";
 import { useNetworkMode } from "@/lib/shell/network-mode";
 import type { EmbedPolicy } from "@/shell/web-apps";
 
-
 const SEARCH = (q: string) => `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(q)}`;
 
 export function TedbirgeWebView({
@@ -152,7 +151,6 @@ export function TedbirgeWebView({
           renderFailed={() => shellCard}
         />
       )}
-
     </div>
   );
 }
@@ -187,8 +185,6 @@ function OffgridCard({ label, url }: { label: string; url: string }) {
   );
 }
 
-
-
 /** Gömülemeyen hedeflerde pencere içinde çalışan yerel gezgin. */
 function WebShell({
   label,
@@ -220,8 +216,8 @@ function WebShell({
       />
       <p className="text-[17px] font-semibold text-[var(--tb-text)]">{label}</p>
       <p className="max-w-md font-osmono text-[12px] text-[var(--tb-muted)]">
-        Bu servis pencere içi gömmeyi kısıtlıyor. Aramanızı burada yapabilir ya da servisi
-        harici sekmede açabilirsiniz.
+        Bu servis pencere içi gömmeyi kısıtlıyor. Aramanızı burada yapabilir ya da servisi harici
+        sekmede açabilirsiniz.
       </p>
 
       <a

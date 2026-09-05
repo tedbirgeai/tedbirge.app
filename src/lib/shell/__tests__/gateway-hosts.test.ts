@@ -61,7 +61,10 @@ describe("Geçit otomatik devreye girer", () => {
   });
 
   it("pencere içi arama (lite.duckduckgo) geçit üzerinden koşar", () => {
-    const stages = buildStages({ url: "https://lite.duckduckgo.com/lite/?q=test", embed: "iframe" });
+    const stages = buildStages({
+      url: "https://lite.duckduckgo.com/lite/?q=test",
+      embed: "iframe",
+    });
     expect(stages.some((s) => s.src.startsWith("/api/public/gecit"))).toBe(true);
   });
 

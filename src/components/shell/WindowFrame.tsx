@@ -165,7 +165,12 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
       const box = snapBoxFor(cx, cy, d.rect);
       setSnap((prev) => {
         const same =
-          prev && box && prev.x === box.x && prev.y === box.y && prev.w === box.w && prev.h === box.h;
+          prev &&
+          box &&
+          prev.x === box.x &&
+          prev.y === box.y &&
+          prev.w === box.w &&
+          prev.h === box.h;
         if (same) return prev;
         if (box && !prev) haptic(6);
         return box;
@@ -242,13 +247,11 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
     [win.id],
   );
 
-
   const onResizeEnd = useCallback(() => {
     if (size.current?.raf) cancelAnimationFrame(size.current.raf);
     size.current = null;
     setDragging(false);
   }, []);
-
 
   if (win.minimized) return null;
 
@@ -294,7 +297,6 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
             onPointerDown={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
           >
-
             <button
               type="button"
               aria-label="Küçült"

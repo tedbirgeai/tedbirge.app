@@ -247,8 +247,6 @@ export const WEB_APPS: WebAppEntry[] = [
   },
 ];
 
-
-
 export function webApp(id: string): WebAppEntry | undefined {
   return WEB_APPS.find((a) => a.id === id);
 }

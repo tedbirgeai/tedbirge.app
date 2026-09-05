@@ -53,7 +53,6 @@ export function HealthCards({ refreshKey }: { refreshKey: number }) {
     }
   }, []);
 
-
   useEffect(() => {
     void load();
   }, [load, refreshKey]);

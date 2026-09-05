@@ -66,7 +66,6 @@ const violations = [];
 /** Live write-policy problems, keyed `table:policy` so DROP POLICY clears them. */
 const policyIssues = new Map();
 
-
 /** Effective grant/revoke state, replayed in migration order. */
 const grantState = new Map(); // `${table}:${role}` -> Set<privilege>
 
@@ -128,8 +127,7 @@ for (const { file, sql } of loadMigrations()) {
       // A RESTRICTIVE policy whose expressions are all `false` only removes
       // access; it never hands writes to a client role. Skip it.
       const isRestrictive = /\bAS\s+RESTRICTIVE\b/.test(restUpper);
-      const deniesEverything =
-        /\((\s*)FALSE(\s*)\)/.test(restUpper) && !/\bTRUE\b/.test(restUpper);
+      const deniesEverything = /\((\s*)FALSE(\s*)\)/.test(restUpper) && !/\bTRUE\b/.test(restUpper);
       if (isRestrictive && deniesEverything) {
         policyIssues.delete(`${table}:${name}`);
         continue;
@@ -164,7 +162,6 @@ for (const { file, sql } of loadMigrations()) {
         }
       }
     }
-
   }
 }
 

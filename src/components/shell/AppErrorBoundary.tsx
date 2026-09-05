@@ -60,7 +60,12 @@ export class AppErrorBoundary extends Component<Props, State> {
 
   render() {
     const { error, restarts } = this.state;
-    if (!error) return <div key={this.state.key} className="contents">{this.props.children}</div>;
+    if (!error)
+      return (
+        <div key={this.state.key} className="contents">
+          {this.props.children}
+        </div>
+      );
     const exhausted = restarts >= AUTO_RESTART_LIMIT;
     return (
       <div

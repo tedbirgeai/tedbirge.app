@@ -57,7 +57,13 @@ export function StatCard({
   );
 }
 
-export function Badge({ tone, children }: { tone: "ok" | "warn" | "bad" | "muted"; children: ReactNode }) {
+export function Badge({
+  tone,
+  children,
+}: {
+  tone: "ok" | "warn" | "bad" | "muted";
+  children: ReactNode;
+}) {
   const color =
     tone === "ok"
       ? "var(--tb-accent)"

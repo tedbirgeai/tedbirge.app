@@ -52,7 +52,6 @@ import { PanelCommerce } from "@/components/site/PanelCommerce";
 import { DiagnosticsPanel } from "@/components/site/DiagnosticsPanel";
 import { PanelEnergy } from "@/components/site/PanelEnergy";
 
-
 type Subscription = {
   id: string;
   paddle_subscription_id: string;
@@ -204,7 +203,6 @@ function MobileStationCard() {
     </div>
   );
 }
-
 
 const RADIO_CARRIERS = new Set(["lora", "halow", "tvws", "wifi", "wigig", "fso"]);
 
@@ -518,7 +516,6 @@ export function PanelApp() {
               >
                 Yönetim ekranı
               </button>
-
             )}
           </div>
         </header>

@@ -12,7 +12,6 @@ export const SITE_NAME = "Tedbirge® WebOS";
 /** Geliştirici portalı / SDK dokümantasyonu (harici). */
 export const DEV_PORTAL_URL = "https://tedbirge.dev";
 
-
 export function siteUrl(path = "/") {
   return `${SITE_URL}${path === "/" ? "" : path}`;
 }

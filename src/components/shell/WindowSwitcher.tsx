@@ -98,9 +98,7 @@ export function WindowSwitcher({ surface }: { surface: { current: HTMLElement | 
         const target = e.target as HTMLElement | null;
         const editable =
           target &&
-          (target.isContentEditable ||
-            target.tagName === "INPUT" ||
-            target.tagName === "TEXTAREA");
+          (target.isContentEditable || target.tagName === "INPUT" || target.tagName === "TEXTAREA");
         if (editable) return;
         e.preventDefault();
         undo();
@@ -180,9 +178,6 @@ export function WindowSwitcher({ surface }: { surface: { current: HTMLElement | 
 }
 
 /** Pencere kapatmayı geri alınabilir kılmak için ortak yardımcı. */
-export function rememberClosedWindow(
-  win: { id: string; title: string },
-  restore: () => void,
-) {
+export function rememberClosedWindow(win: { id: string; title: string }, restore: () => void) {
   pushUndo({ label: `${win.title} kapatıldı`, undo: restore });
 }

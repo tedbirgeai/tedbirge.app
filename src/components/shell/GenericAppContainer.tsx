@@ -31,15 +31,16 @@ export function GenericAppContainer({
   /** Tüm aşamalar tükendiğinde gösterilecek özel görünüm. */
   renderFailed?: (retry: () => void) => ReactNode;
 }) {
-  const stages = useMemo(() => buildStages({ url, embed, embedUrl, proxy }), [url, embed, embedUrl, proxy]);
+  const stages = useMemo(
+    () => buildStages({ url, embed, embedUrl, proxy }),
+    [url, embed, embedUrl, proxy],
+  );
   const [stage, setStage] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
-
-
 
   const current = stages[Math.min(stage, stages.length - 1)];
 
@@ -73,12 +74,13 @@ export function GenericAppContainer({
   if (failed) {
     if (renderFailed) return <>{renderFailed(retry)}</>;
     return (
-
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
         <span className="grid h-12 w-12 place-items-center rounded-full bg-amber-500/10 text-amber-500">
           <ShieldAlert className="h-6 w-6" aria-hidden />
         </span>
-        <p className="text-[15px] font-semibold text-[var(--tb-text)]">{label} şu an yanıt vermiyor</p>
+        <p className="text-[15px] font-semibold text-[var(--tb-text)]">
+          {label} şu an yanıt vermiyor
+        </p>
         <p className="max-w-sm font-osmono text-[12px] text-[var(--tb-muted)]">
           Bağlantı kurulamadı. Ağ döndüğünde içerik yine bu pencerede açılacak.
         </p>
@@ -99,7 +101,6 @@ export function GenericAppContainer({
         <div className="absolute inset-0 grid place-items-center gap-1 text-center font-osmono text-[12px] text-[var(--tb-muted)]">
           <span>{label} yükleniyor…</span>
         </div>
-
       ) : null}
       <iframe
         ref={frameRef}
@@ -136,4 +137,3 @@ function isBlankFrame(frame: HTMLIFrameElement | null): boolean {
     return false;
   }
 }
-

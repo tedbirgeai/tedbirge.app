@@ -74,12 +74,14 @@ function OfflinePage() {
         >
           Yeniden dene
         </button>
-        <a href="/"
+        <a
+          href="/"
           className="rounded-md border border-input px-4 py-2 text-sm font-medium text-foreground"
         >
           Saha portalı
         </a>
-        <a href="/"
+        <a
+          href="/"
           className="rounded-md border border-input px-4 py-2 text-sm font-medium text-foreground"
         >
           Ana sayfa

@@ -123,9 +123,9 @@ export function PanelCommerce({
             ) : (
               <div className="mt-3">
                 <p className="text-[13px] leading-relaxed text-[var(--tb-muted)]">
-                  Şu anda <strong className="text-[var(--tb-text)]">Community</strong> planındasınız:{" "}
-                  {COMMUNITY_NODE_LIMIT} düğüme kadar ücretsiz, topluluk desteği ve tam mesh
-                  yeteneği.
+                  Şu anda <strong className="text-[var(--tb-text)]">Community</strong>{" "}
+                  planındasınız: {COMMUNITY_NODE_LIMIT} düğüme kadar ücretsiz, topluluk desteği ve
+                  tam mesh yeteneği.
                 </p>
                 <button
                   type="button"

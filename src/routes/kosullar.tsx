@@ -57,10 +57,10 @@ function Terms() {
 
         <Section title="2. Hizmet tanımı">
           <p>
-            Tedbirge® WebOS, Tedbirge Loop ve Tedbirge Off-Grid; taşıyıcı-bağımsız mesh
-            yönlendirme, şifreli tünel taşıma ve kullanım ölçüm bileşenlerinden oluşan yazılım
-            ürünleridir. Community sürümü açık kaynak lisansıyla, Enterprise ve Operator paketleri
-            ise abonelik karşılığı sunulur.
+            Tedbirge® WebOS, Tedbirge Loop ve Tedbirge Off-Grid; taşıyıcı-bağımsız mesh yönlendirme,
+            şifreli tünel taşıma ve kullanım ölçüm bileşenlerinden oluşan yazılım ürünleridir.
+            Community sürümü açık kaynak lisansıyla, Enterprise ve Operator paketleri ise abonelik
+            karşılığı sunulur.
           </p>
         </Section>
 

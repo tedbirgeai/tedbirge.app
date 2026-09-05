@@ -7,16 +7,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Download,
-  FileUp,
-  FolderOpen,
-  Loader2,
-  Pencil,
-  Search,
-  Send,
-  Trash2,
-} from "lucide-react";
+import { Download, FileUp, FolderOpen, Loader2, Pencil, Search, Send, Trash2 } from "lucide-react";
 
 import { WindowEmpty } from "@/components/shell/WindowShell";
 import { ConfirmDialog } from "@/components/shell/ConfirmDialog";
@@ -80,9 +71,7 @@ function Preview({ entry }: { entry: VfsEntry }) {
     );
   }
   if (!url) {
-    return (
-      <p className="font-osmono text-[11px] text-[var(--tb-muted)]">Önizleme hazırlanıyor…</p>
-    );
+    return <p className="font-osmono text-[11px] text-[var(--tb-muted)]">Önizleme hazırlanıyor…</p>;
   }
   if (entry.mime.startsWith("image/")) {
     return <img src={url} alt={entry.name} className="max-h-56 w-full rounded-xl object-contain" />;
@@ -370,7 +359,9 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
                   onClick={() => {
                     const name = window.prompt("Yeni ad", current.name);
                     if (name && name.trim() !== current.name) {
-                      void renameFile(current.id, name).then(() => notifyOk("Yeniden adlandırıldı"));
+                      void renameFile(current.id, name).then(() =>
+                        notifyOk("Yeniden adlandırıldı"),
+                      );
                     }
                   }}
                 >
@@ -401,11 +392,7 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
                   <Download className="h-3.5 w-3.5" aria-hidden /> Dışa aktar
                 </button>
 
-                <button
-                  type="button"
-                  className={btn}
-                  onClick={() => setConfirmDelete(current.id)}
-                >
+                <button type="button" className={btn} onClick={() => setConfirmDelete(current.id)}>
                   <Trash2 className="h-3.5 w-3.5" aria-hidden /> Sil
                 </button>
               </div>

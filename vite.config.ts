@@ -12,7 +12,17 @@ import { COI_HEADERS, isIsolatedPath } from "./src/lib/coi-headers";
 // böylece SharedArrayBuffer halka tamponu önizlemede de test edilebilir.
 const crossOriginIsolation = {
   name: "tedbirge-cross-origin-isolation",
-  configureServer(server: { middlewares: { use: (fn: (req: { url?: string }, res: { setHeader: (k: string, v: string) => void }, next: () => void) => void) => void } }) {
+  configureServer(server: {
+    middlewares: {
+      use: (
+        fn: (
+          req: { url?: string },
+          res: { setHeader: (k: string, v: string) => void },
+          next: () => void,
+        ) => void,
+      ) => void;
+    };
+  }) {
     server.middlewares.use((req, res, next) => {
       const path = (req.url ?? "/").split("?")[0];
       if (isIsolatedPath(path)) {
@@ -66,7 +76,7 @@ export default defineConfig({
           // Çevrimdışı gezinmelerde masaüstü kabuğu açılır; "/cevrimdisi"
           // yalnız bilinçli açılan bilgi sayfası olarak kalır.
           navigateFallback: "/",
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+          maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
           navigateFallbackDenylist: [/^\/api\//, /^\/~oauth/],
           cleanupOutdatedCaches: true,
           clientsClaim: true,

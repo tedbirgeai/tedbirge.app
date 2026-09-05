@@ -122,8 +122,7 @@ export function ControlCenter({
 
       <label className="mt-2 block rounded-xl border border-[var(--tb-border)] px-3 py-2">
         <span className="flex items-center gap-2 font-osmono text-[11px] text-[var(--tb-muted)]">
-          <Sun className="h-3.5 w-3.5" aria-hidden /> Parlaklık · %
-          {Math.round(brightness * 100)}
+          <Sun className="h-3.5 w-3.5" aria-hidden /> Parlaklık · %{Math.round(brightness * 100)}
         </span>
         <input
           type="range"

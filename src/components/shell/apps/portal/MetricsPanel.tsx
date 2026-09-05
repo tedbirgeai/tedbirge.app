@@ -9,16 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import {
-  Activity,
-  Cpu,
-  Gauge,
-  HardDrive,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Trash2,
-} from "lucide-react";
+import { Activity, Cpu, Gauge, HardDrive, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -96,10 +87,7 @@ export function MetricsPanel() {
     };
   }, [nodes]);
 
-  const chart = useMemo(
-    () => history.map((h) => ({ ...h, t: clock(h.at) })),
-    [history],
-  );
+  const chart = useMemo(() => history.map((h) => ({ ...h, t: clock(h.at) })), [history]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),

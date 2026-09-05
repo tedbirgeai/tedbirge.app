@@ -62,7 +62,10 @@ function patchInfoPlist() {
   let changed = false;
   for (const [key, value] of IOS_PERMS) {
     if (xml.includes(`<key>${key}</key>`)) continue;
-    xml = xml.replace("</dict>\n</plist>", `\t<key>${key}</key>\n\t<string>${value}</string>\n</dict>\n</plist>`);
+    xml = xml.replace(
+      "</dict>\n</plist>",
+      `\t<key>${key}</key>\n\t<string>${value}</string>\n</dict>\n</plist>`,
+    );
     changed = true;
   }
   // Arka planda sessiz push ile uyandırma
@@ -121,7 +124,9 @@ patchInfoPlist();
 patchAndroidManifest();
 prepareAssets();
 
-tryRun('npx capacitor-assets generate --iconBackgroundColor "#0b141a" --splashBackgroundColor "#0b141a"');
+tryRun(
+  'npx capacitor-assets generate --iconBackgroundColor "#0b141a" --splashBackgroundColor "#0b141a"',
+);
 tryRun("npx cap sync");
 
 console.log(`

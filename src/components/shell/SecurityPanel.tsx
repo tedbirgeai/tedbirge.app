@@ -14,7 +14,6 @@ import { edgeHealthSnapshot } from "@/lib/mesh/edge-health";
 import { useTick } from "@/lib/shell/telemetry-store";
 import { listEvents, type EventRecord } from "@/lib/store/idb";
 
-
 function Section({
   icon,
   title,
@@ -101,15 +100,12 @@ export function SecurityPanel() {
                   .join(", ")
               : "yok"
           }
-          tone={
-            quarantine.some((e) => e.quarantined) ? "text-amber-400" : "text-emerald-400"
-          }
+          tone={quarantine.some((e) => e.quarantined) ? "text-amber-400" : "text-emerald-400"}
         />
         <p className="pt-1 text-[10px] leading-relaxed text-[var(--tb-muted)]">
           Arızalı hat kendiliğinden karantinaya alınır, düzeldikçe ceza erir — ağ kendini onarır.
         </p>
       </Section>
-
 
       <Section icon={<Fingerprint className="h-3.5 w-3.5" />} title="Cihaz kimliği">
         <Row k="DÜĞÜM KİMLİĞİ:" v={node.nodeId || "—"} />

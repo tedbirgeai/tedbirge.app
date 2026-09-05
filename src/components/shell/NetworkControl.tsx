@@ -10,7 +10,12 @@ import { useEffect, useRef } from "react";
 import { Globe, Radar, RadioTower, ShieldOff, Signal, Wifi } from "lucide-react";
 
 import { notify, notifyOk } from "@/lib/shell/notify";
-import { NETWORK_MODES, setNetworkMode, useNetworkMode, type NetworkModeId } from "@/lib/shell/network-mode";
+import {
+  NETWORK_MODES,
+  setNetworkMode,
+  useNetworkMode,
+  type NetworkModeId,
+} from "@/lib/shell/network-mode";
 import { pingNodePeers } from "@/lib/node-runtime";
 import { useShell } from "@/shell/shell-context";
 

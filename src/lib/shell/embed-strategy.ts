@@ -29,9 +29,7 @@ export function gatewayUrl(target: string): string {
 }
 
 /** Uygulamanın geçit üzerinden aktarılacak hedef adresi. */
-export function gatewayTarget(
-  app: Pick<WebAppEntry, "url" | "proxy">,
-): string | null {
+export function gatewayTarget(app: Pick<WebAppEntry, "url" | "proxy">): string | null {
   // Açık `proxy` tanımı önceliklidir; tanım yoksa hedefin kendisi izin
   // listesindeyse Geçit yine de otomatik denenir (kullanıcı elle
   // "Geçit Üzerinden Çalıştır" demek zorunda kalmaz).

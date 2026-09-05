@@ -92,4 +92,3 @@ export function ShellProvider({
 
   return <ShellContext.Provider value={value}>{children}</ShellContext.Provider>;
 }
-

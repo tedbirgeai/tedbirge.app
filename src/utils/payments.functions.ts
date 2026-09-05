@@ -23,7 +23,6 @@ export const resolvePaddlePrice = createServerFn({ method: "GET" })
     return active[0].id;
   });
 
-
 export const createPortalSession = createServerFn({ method: "POST" })
   .inputValidator(
     (data: { customerId: string; subscriptionId: string; environment: PaddleEnv }) => data,

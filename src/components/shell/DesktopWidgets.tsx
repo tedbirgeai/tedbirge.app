@@ -65,7 +65,6 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
     return () => window.removeEventListener("tedbirge:widgets-show", show);
   }, []);
 
-
   useEffect(() => {
     const read = () => {
       void storageUsage().then(setUsage);
@@ -133,7 +132,6 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
   };
 
   if (hidden) return null;
-
 
   return (
     <aside
@@ -218,7 +216,10 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
         type="button"
         onClick={() => {
           setFocusMode(!focus);
-          notifyOk(focus ? "Odak modu kapandı" : "Odak modu açık", "Bildirimler ve kartlar sadeleşir.");
+          notifyOk(
+            focus ? "Odak modu kapandı" : "Odak modu açık",
+            "Bildirimler ve kartlar sadeleşir.",
+          );
         }}
         aria-pressed={focus}
         className={`tbos-window pointer-events-auto wa-press flex items-center gap-2 rounded-2xl p-3 text-left ${

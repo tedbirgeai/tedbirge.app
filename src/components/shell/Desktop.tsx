@@ -56,9 +56,6 @@ export function Desktop({
     );
   };
 
-
-
-
   const newFolder = async () => {
     const name = `Yeni klasör ${new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
     try {
@@ -84,9 +81,14 @@ export function Desktop({
         notifyOk("Masaüstü kartları geri geldi");
       },
     },
-    { label: "Yenile", onSelect: () => { window.dispatchEvent(new Event("tedbirge:vfs-refresh")); notifyOk("Masaüstü yenilendi"); } },
+    {
+      label: "Yenile",
+      onSelect: () => {
+        window.dispatchEvent(new Event("tedbirge:vfs-refresh"));
+        notifyOk("Masaüstü yenilendi");
+      },
+    },
     { label: "Ayarlar", onSelect: () => onOpen("settings") },
-
   ];
 
   const items: MenuItem[] = menu?.appId
@@ -129,7 +131,6 @@ export function Desktop({
           {installed.map((id) => (catalogApp(id) ? renderIcon(id) : null))}
         </div>
       )}
-
 
       <DesktopWidgets onOpen={onOpen} />
 

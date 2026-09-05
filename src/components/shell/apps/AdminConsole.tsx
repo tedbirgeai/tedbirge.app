@@ -8,7 +8,6 @@ import { updateAiLeadStatus, rebuildLeadPlan } from "@/lib/leads.functions";
 import { OFFICIAL_DRAFTS } from "@/lib/regulation";
 import { AdminBusinessPlan } from "@/components/site/AdminBusinessPlan";
 
-
 type PilotRequest = {
   id: string;
   full_name: string;
