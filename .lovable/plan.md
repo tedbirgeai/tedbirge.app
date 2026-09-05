@@ -1,30 +1,27 @@
-# Geliştirici Portalını Ayrı Projeye Taşıma
+# Geliştirici Portalı: Tek Depo, İki Yayın
 
-Yeni bir Lovable projesi oluşturmak ve onu bir GitHub deposuna bağlamak, yalnızca sizin hesabınızdan yapılabilen bir işlem — ben bu projenin içinden yeni proje açamıyorum. Bunun yerine taşımayı sorunsuz hale getirecek hazırlığı burada yapıp, size adım adım kısa bir yol veriyorum.
+Seçilen yol: yeni bir Lovable projesi veya ikinci bir depo açılmayacak. Portal bu projede kalır, yayın tarafında ayrı bir site olarak `tedbirge.dev` adresinden yayına alınır.
 
-## Sizin yapacağınız (5 dakika)
+## Yapılacaklar
 
-1. Lovable ana sayfasında yeni bir proje oluşturun (adı: Tedbirge Geliştirici Portalı).
-2. Yeni projede GitHub bağlantısını açın ve mevcut depo olarak `tedbirgeai/tedbirge.dev` seçin.
-3. Yeni projenin sohbetine "portal dosyalarını buraya kur" yazın ve bu projedeki portal klasörünü kaynak olarak gösterin (@ ile bu projeyi etiketleyebilirsiniz).
+1. Portal klasörünü tek başına yayına hazır hale getirmek: giriş sayfası, kaynak dosyalar, ayarlar ve paket tanımının eksiksiz ve bağımsız çalıştığını doğrulamak.
+2. Portal için yayın ayar dosyası eklemek (kök klasör `portal`, çıktı `dist`), böylece yayın tarafında elle ayar yapmaya gerek kalmasın.
+3. Ana site ile portal arasındaki bağlantıları kontrol etmek: ana sitedeki geliştirici bağlantıları `tedbirge.dev` adresine, portaldaki bağlantılar `tedbirge.app` adresine gitsin.
+4. Portalın kendi başlık, açıklama ve paylaşım bilgilerini düzenlemek.
+5. Portalın derlemesini çalıştırıp hatasız çıktı verdiğini doğrulamak; ana sitenin derlemesinin bozulmadığını kontrol etmek.
+6. Kısa bir kurulum notu bırakmak: yayın panelinde ikinci siteyi eklerken hangi ayarların girileceği ve alan adının nasıl bağlanacağı.
 
-## Benim burada yapacağım hazırlık
+## Sizin yapacağınız (tek seferlik, 3 dakika)
 
-- Portal klasörünü tek başına çalışabilir bir proje olacak şekilde son kez gözden geçirmek: giriş sayfası, kaynak dosyalar, ayarlar ve paket tanımı.
-- Yayın için gerekli ayar dosyasını eklemek, böylece yeni depoda ek ayara gerek kalmadan yayına alınabilsin.
-- Kısa bir kurulum notu yazmak: hangi dosyanın nereye gittiği, yayın ayarları ve alan adı bağlama adımları.
+- Yayın panelinde "yeni site" ekleyip aynı depoyu seçin.
+- Kök klasör olarak `portal` yazın, çıktı klasörü `dist`.
+- Alan adı olarak `tedbirge.dev` bağlayın.
 
-## Alternatif: tek depo, iki yayın
-
-Yeni proje açmak istemezseniz, portal bu projede kalabilir ve yayın tarafında kök klasör olarak portal seçilerek `tedbirge.dev` adresinden yayına alınabilir. Bu durumda ikinci bir depo bağlamaya gerek kalmaz.
+Bundan sonra her değişiklik iki siteye de otomatik yansır.
 
 ## Teknik notlar
 
 - Portal içeriği: `portal/index.html`, `portal/src/{main,App,content,styles}`, `portal/package.json`, `portal/vite.config.ts`, `portal/tsconfig.json`.
-- Portal bağımsız bir Vite uygulaması; derleme çıktısı `dist`, derleme komutu `bun run build`.
-- Ana uygulama (SSR) etkilenmez; portal taşınırken kök projede hiçbir davranış değişmez.
-- Yayın tarafında kök dizin `portal`, çıktı `dist`, alan adı `tedbirge.dev`.
-
-## Sizden onay gereken nokta
-
-Yukarıdaki iki yoldan hangisini istiyorsunuz: ayrı proje + ayrı depo mu, yoksa tek depo içinden ikinci yayın mı?
+- Portal bağımsız bir Vite uygulaması; derleme komutu `bun run build`, çıktı `dist`.
+- Ana uygulamanın SSR yapısına dokunulmaz; portal ayrı bir derleme hedefidir.
+- Yayın kökü `portal` olduğu için ana sitenin derlemesi bu siteyi etkilemez.
