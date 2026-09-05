@@ -14,6 +14,7 @@ CRATES=(
   crates/tedbirge-compositor
   crates/tedbirge-installer
   crates/tedbirge-shell-native
+  crates/tedbirge-sysbridge
 )
 
 if [ "${1:-}" = "--test" ]; then
@@ -31,7 +32,7 @@ for c in "${CRATES[@]}"; do
   cargo build --release --manifest-path "$c/Cargo.toml"
 done
 
-for b in tedbirge-shell tedbirge-compositor tedbirge-install; do
+for b in tedbirge-shell tedbirge-compositor tedbirge-install tedbirge-sysbridge; do
   f=$(find_bin "$b" || true)
   [ -n "$f" ] && cp "$f" "$OUT/" && echo "✓ $OUT/$b"
 done

@@ -60,6 +60,16 @@ cp -r "$WORK/alpine/install" /home/builder/tedbirge/install
 cp "$WORK/scripts/setup-tedbirge-disk.sh" /home/builder/tedbirge/install/setup-tedbirge-disk.sh
 chmod +x /home/builder/tedbirge/install/*.sh
 cp -r "$WORK/alpine/boot" /home/builder/tedbirge/boot
+
+# Guc koprusu ikilisi (varsa) overlay'e tasinir; yoksa apkovl kabuk yedegini kurar.
+if [ -s "$WORK/build-iso/payload/bin/tedbirge-sysbridge" ]; then
+  mkdir -p /home/builder/tedbirge/bin
+  cp "$WORK/build-iso/payload/bin/tedbirge-sysbridge" /home/builder/tedbirge/bin/
+  chmod +x /home/builder/tedbirge/bin/tedbirge-sysbridge
+  echo "-- guc koprusu ikilisi paketlendi"
+else
+  echo "-- guc koprusu ikilisi yok; kabuk yedegi kullanilacak"
+fi
 chown -R builder:abuild /home/builder/tedbirge
 
 mkdir -p "$OUT" /home/builder/iso
