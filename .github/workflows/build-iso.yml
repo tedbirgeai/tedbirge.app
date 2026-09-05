@@ -118,6 +118,7 @@ jobs:
           tag_name: latest
           name: "Tedbirge® WebOS — güncel imaj"
           prerelease: true
+          overwrite_files: true
           body: "Otomatik derleme · ${{ steps.ver.outputs.version }} · tedbirgeai/tedbirge.app"
           files: |
             build/iso/*.iso
