@@ -88,7 +88,20 @@ if [ "$CLONED" != 1 ]; then
 fi
 
 echo "-- aports kaynağı hazır: $repo"
+
+# ISO9660 birim etiketi (volid) en fazla 32 karakter olabilir. Varsayılan
+# "alpine-<profil> <sürüm> <mimari>" bizim sürüm damgamızla 32'yi aşıyor ve
+# xorriso "Metin çok uzun" hatasıyla duruyor. Sabit kısa etikete çeviriyoruz.
+sed -i 's|-volid "alpine-${profile_abbrev:-$PROFILE} $RELEASE $ARCH"|-volid "TEDBIRGE_WEBOS"|g' \
+  /home/builder/aports/scripts/mkimg.base.sh
+if grep -q 'volid "alpine-' /home/builder/aports/scripts/mkimg.base.sh; then
+  echo "! volid yaması uygulanamadı (mkimg.base.sh beklenenden farklı)."
+  exit 1
+fi
+echo "-- ISO birim etiketi: TEDBIRGE_WEBOS"
+
 chown -R builder:abuild /home/builder/aports
+
 
 
 # Tedbirge profili + apkovl üreticisi
