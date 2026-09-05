@@ -36,8 +36,13 @@ const crossOriginIsolation = {
 // Vercel derlemesinde ön-render kapatılır: bu ortamda ön-render adımı
 // nitro'nun Vercel çıktı tanım dosyalarını (config.json / .vc-config.json)
 // üretmesini engelliyor ve yayın 404 veriyor. ISO ve yerel derlemelerde
-// ön-render açık kalır; bare-metal imaj dist/client/index.html'i kullanır.
+// ön-render açık kalır; bare-metal imaj açılış sayfasını statik sunar.
 const IS_VERCEL_BUILD = !!process.env.VERCEL;
+
+// Kurulum imajı derlemesi tamamen ayrı bir klasöre yazılır; yayın çıktısı
+// (dist/client, dist/server) hiç dokunulmadan kalır. İki mod aynı anda
+// etkin olamaz: Vercel ortamında imaj anahtarı yok sayılır.
+const IS_ISO_BUILD = !IS_VERCEL_BUILD && process.env.TEDBIRGE_ISO === "1";
 
 export default defineConfig({
   tanstackStart: {
@@ -45,23 +50,30 @@ export default defineConfig({
     // Üretim derlemesi bu girişten üretilir.
     server: { entry: "server" },
     // Bare-metal imajda kabuk statik sunulur: açılış sayfası derleme
-    // sırasında bir kez üretilir (dist/client/index.html). Diğer rotalar
-    // istek başına sunucuda render edilmeye devam eder.
+    // sırasında bir kez üretilir (index.html). Diğer rotalar istek
+    // başına sunucuda render edilmeye devam eder.
     pages: [{ path: "/" }],
     prerender: IS_VERCEL_BUILD
       ? { enabled: false }
       : { enabled: true, autoStaticPathsDiscovery: false },
   },
   // Yayın hedefi Vercel'dir: orada sunucu tarafı render eden Vercel çıktısı
-  // üretilir, statik SPA yönlendirmesi eklenmez. Diğer ortamlarda (ISO/CI)
-  // çıktı dist altına sabitlenir; ISO paketi dist/client'ı kullanır.
+  // üretilir, statik SPA yönlendirmesi eklenmez. Diğer ortamlarda çıktı
+  // dist altına sabitlenir; kurulum imajı derlemesi build-iso altına yazar.
   // Lovable derlemesinde ortam kendi ön ayarını ve dizinlerini dayatır.
   nitro: IS_VERCEL_BUILD
     ? { preset: process.env.NITRO_PRESET ?? "vercel" }
     : {
         preset: process.env.NITRO_PRESET,
-        output: { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" },
+        output: IS_ISO_BUILD
+          ? {
+              dir: "build-iso/web-out",
+              serverDir: "build-iso/web-out/server",
+              publicDir: "build-iso/web",
+            }
+          : { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" },
       },
+
 
 
 
