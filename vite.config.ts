@@ -39,10 +39,10 @@ const crossOriginIsolation = {
 // ön-render açık kalır; bare-metal imaj açılış sayfasını statik sunar.
 const IS_VERCEL_BUILD = !!process.env.VERCEL;
 
-// Kurulum imajı derlemesi tamamen ayrı bir klasöre yazılır; yayın çıktısı
-// (dist/client, dist/server) hiç dokunulmadan kalır. İki mod aynı anda
-// etkin olamaz: Vercel ortamında imaj anahtarı yok sayılır.
-const IS_ISO_BUILD = !IS_VERCEL_BUILD && process.env.TEDBIRGE_ISO === "1";
+// Kurulum imajı derlemesi tek bir çıktı yolu kullanır (dist/client) ve
+// paketleme betiği sonucu build-iso/web altına taşıyıp kök dizini temizler.
+// Böylece ön-render, servis işçisi ve varlıklar hep aynı klasörde birleşir.
+
 
 export default defineConfig({
   tanstackStart: {
