@@ -1,7 +1,7 @@
 #!/bin/sh
 # CI içinde (alpine konteynerinde) çalışır. Yerel makinede çalıştırmak gerekmez.
-# Girdi : /work/dist/client (derlenmiş web paketi; eski düzende /work/dist)
-# Çıktı : /work/build/iso/tedbirge-webos-<sürüm>-x86_64.iso
+# Girdi : /work/build-iso/web (kurulum imajına özel derlenmiş arayüz)
+# Çıktı : /work/build-iso/iso/tedbirge-webos-<sürüm>-x86_64.iso
 set -eu
 
 VERSION="${TEDBIRGE_VERSION:-1.0.0}"
@@ -10,8 +10,8 @@ OUT="$WORK/build-iso/iso"
 
 echo "== Tedbirge(R) WebOS ISO derlemesi · $VERSION =="
 
-# Sunucu tarafı render eden derleme statik dosyaları dist/client altına yazar;
-# açılış sayfası (index.html) ön-render ile aynı klasörde üretilir.
+# Kurulum imajı derlemesi arayüzü build-iso/web altına yazar; yayın çıktısı
+# (dist/client) yalnızca geriye dönük yedek olarak kabul edilir.
 if [ -f "$WORK/build-iso/web/index.html" ]; then
   WEBROOT="$WORK/build-iso/web"
 elif [ -f "$WORK/dist/client/index.html" ]; then

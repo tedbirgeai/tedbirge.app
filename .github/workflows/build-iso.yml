@@ -41,32 +41,30 @@ jobs:
           rustup target add wasm32-unknown-unknown
           rustc --version && cargo --version
 
-      - name: Rust Wasm çekirdeğini derle
-        run: |
-          mkdir -p public/kernel crates/public/kernel crates/tedbirge-kernel/public/kernel
-          bash scripts/build-kernel.sh
-          test -s public/kernel/tedbirge_kernel.wasm
-
-      - name: Web paketini derle
+      - name: Bağımsız imaj paketini derle (Wasm + arayüz)
+        env:
+          TEDBIRGE_ISO: "1"
         run: |
           bun install --frozen-lockfile
-          bun run build
+          bun run build:iso
 
-      - name: Web paketini doğrula
+      - name: İmaj paketini doğrula
         run: |
-          if [ ! -f dist/client/index.html ]; then
-            echo "::error::dist/client/index.html üretilmedi — ön-render adımı çalışmamış."
-            ls -la dist dist/client 2>/dev/null || true
+          if [ ! -s build-iso/web/index.html ]; then
+            echo "::error::build-iso/web/index.html üretilmedi — ön-render adımı çalışmamış."
+            ls -la build-iso build-iso/web 2>/dev/null || true
             exit 1
           fi
-          test -s dist/client/index.html
-          if [ ! -s dist/client/kernel/tedbirge_kernel.wasm ]; then
-            echo "::error::dist/client/kernel/tedbirge_kernel.wasm eksik — çekirdek derlemesi paketlenmemiş."
+          if [ ! -s build-iso/web/kernel/tedbirge_kernel.wasm ]; then
+            echo "::error::build-iso/web/kernel/tedbirge_kernel.wasm eksik — çekirdek paketlenmemiş."
             exit 1
           fi
-          echo "Paketlenecek dizin: dist/client"
-
-          du -sh dist/client
+          if [ -e dist ]; then
+            echo "::error::Yayın çıktısı (dist) imaj derlemesinde oluşmamalı — izolasyon bozulmuş."
+            exit 1
+          fi
+          echo "Paketlenecek dizin: build-iso/web"
+          du -sh build-iso/web
 
       - name: Sürüm etiketi
         id: ver
@@ -87,7 +85,7 @@ jobs:
 
       - name: İmajı doğrula (sahte çıktı yayınlanmaz)
         run: |
-          ISO=$(ls -1 build/iso/*.iso 2>/dev/null | head -1 || true)
+          ISO=$(ls -1 build-iso/iso/*.iso 2>/dev/null | head -1 || true)
           if [ -z "$ISO" ]; then
             echo "::error::ISO üretilemedi."; exit 1
           fi
@@ -96,26 +94,26 @@ jobs:
             echo "::error::ISO beklenenden küçük ($SIZE bayt) — yayınlanmayacak."; exit 1
           fi
           # Sabit indirme adı: bağlantı sürümden bağımsız çalışsın
-          mkdir -p build/iso
-          TARGET=build/iso/tedbirge-webos-x86_64.iso
+          mkdir -p build-iso/iso
+          TARGET=build-iso/iso/tedbirge-webos-x86_64.iso
           if [ "$ISO" != "$TARGET" ]; then cp "$ISO" "$TARGET"; fi
-          (cd build/iso && sha256sum *.iso > SHA256SUMS)
+          (cd build-iso/iso && sha256sum *.iso > SHA256SUMS)
           echo "ISO=$ISO" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v4
         with:
           name: tedbirge-webos-iso
           path: |
-            build/iso/*.iso
-            build/iso/SHA256SUMS
+            build-iso/iso/*.iso
+            build-iso/iso/SHA256SUMS
 
       - name: Yayınla (sürüm etiketi)
         if: github.event_name == 'release' || github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/iso/*.iso
-            build/iso/SHA256SUMS
+            build-iso/iso/*.iso
+            build-iso/iso/SHA256SUMS
 
       - name: Yayınla (latest ön-sürüm)
         if: github.event_name != 'release' && github.ref_type != 'tag'
@@ -127,5 +125,5 @@ jobs:
           overwrite_files: true
           body: "Otomatik derleme · ${{ steps.ver.outputs.version }} · tedbirgeai/tedbirge.app"
           files: |
-            build/iso/*.iso
-            build/iso/SHA256SUMS
+            build-iso/iso/*.iso
+            build-iso/iso/SHA256SUMS
