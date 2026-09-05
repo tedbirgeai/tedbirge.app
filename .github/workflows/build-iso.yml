@@ -37,10 +37,8 @@ jobs:
       - name: Rust Wasm çekirdeğini derle
         run: |
           rustup target add wasm32-unknown-unknown
-          mkdir -p public/kernel ../public/kernel ../../public/kernel
+          mkdir -p public/kernel
           bash scripts/build-kernel.sh
-          cp ../../public/kernel/*.wasm public/kernel/ 2>/dev/null || true
-          cp ../public/kernel/*.wasm public/kernel/ 2>/dev/null || true
           test -s public/kernel/tedbirge_kernel.wasm
 
       - name: Web paketini derle
@@ -75,14 +73,11 @@ jobs:
           if [ "$SIZE" -lt 104857600 ]; then
             echo "::error::ISO beklenenden küçük ($SIZE bayt) — yayınlanmayacak."; exit 1
           fi
-          # Sabit indirme adı: kaynak ve hedef aynıysa kopyalamayı atla
+          # Sabit indirme adı: bağlantı sürümden bağımsız çalışsın
           mkdir -p build/iso
-          TARGET="build/iso/tedbirge-webos-x86_64.iso"
-          if [ "$ISO" != "$TARGET" ]; then
-            cp "$ISO" "$TARGET"
-          fi
+          cp "$ISO" build/iso/tedbirge-webos-x86_64.iso
           (cd build/iso && sha256sum *.iso > SHA256SUMS)
-          echo "ISO=$TARGET" >> "$GITHUB_ENV"
+          echo "ISO=$ISO" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -106,7 +101,6 @@ jobs:
           tag_name: latest
           name: "Tedbirge® WebOS — güncel imaj"
           prerelease: true
-          overwrite: true
           body: "Otomatik derleme · ${{ steps.ver.outputs.version }} · tedbirgeai/tedbirge.app"
           files: |
             build/iso/*.iso
