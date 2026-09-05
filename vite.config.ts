@@ -95,8 +95,10 @@ export default defineConfig({
         filename: "sw.js",
         devOptions: { enabled: false },
         manifest: false,
-        // Nitro yayınlanacak statik dosyaları dist/client altında sunar.
-        outDir: "dist/client",
+        // Nitro yayınlanacak statik dosyaları dist/client altında sunar;
+        // kurulum imajı derlemesinde çıktı build-iso/web altına yazılır.
+        outDir: IS_ISO_BUILD ? "build-iso/web" : "dist/client",
+
 
         workbox: {
           // Uygulama kapalıyken bile bildirim gösteren push dinleyicisi.
