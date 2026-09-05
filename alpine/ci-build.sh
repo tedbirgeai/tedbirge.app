@@ -118,6 +118,21 @@ chown -R builder:abuild /home/builder/tedbirge
 mkdir -p "$OUT" /home/builder/iso
 chown -R builder:abuild /home/builder/iso
 
+# Paket listesi on-dogrulamasi: mkimage'a girmeden once olmayan paketleri bildir.
+PKGS=$(sed -n '/apks="\$apks/,/^[[:space:]]*"[[:space:]]*$/p' \
+  /home/builder/aports/scripts/mkimg.tedbirge.sh \
+  | sed -e '1d' -e '$d' -e 's/"//g')
+MISSING=""
+for p in $PKGS; do
+  apk policy "$p" >/dev/null 2>&1 || MISSING="$MISSING $p"
+done
+if [ -n "$MISSING" ]; then
+  echo "HATA: su paketler Alpine v3.20 depolarinda yok:$MISSING" >&2
+  exit 1
+fi
+echo "-- paket listesi dogrulandi ($(echo "$PKGS" | wc -w) paket)"
+
+
 su builder -c "cd /home/builder/aports/scripts && \
   TEDBIRGE_VERSION='$VERSION' TEDBIRGE_PAYLOAD=/home/builder/tedbirge \
   sh mkimage.sh \
