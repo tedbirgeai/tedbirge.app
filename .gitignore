@@ -34,3 +34,6 @@ dist-ssr
 # Rust çekirdeği derleme çıktısı
 crates/*/target/
 crates/target/
+
+# Kurulum imajı derleme çıktısı (yayın çıktısından bağımsız)
+build-iso/

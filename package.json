@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "kernel:build": "bash scripts/build-kernel.sh",
+    "build:iso": "bash scripts/build-iso-bundle.sh",
     "security:check": "node scripts/security-invariants.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
