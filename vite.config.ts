@@ -28,6 +28,11 @@ export default defineConfig({
     // Sunucu girişini src/server.ts'ye yönlendirir (SSR hata sarmalayıcısı).
     // Üretim derlemesi bu girişten üretilir.
     server: { entry: "server" },
+    // Bare-metal imajda kabuk statik sunulur: açılış sayfası derleme
+    // sırasında bir kez üretilir (dist/client/index.html). Diğer rotalar
+    // istek başına sunucuda render edilmeye devam eder.
+    pages: [{ path: "/" }],
+    prerender: { enabled: true, autoStaticPathsDiscovery: false },
   },
   // Vercel üzerinde sunucu tarafı render eden çıktı üretilir; statik SPA
   // yönlendirmesi eklenmez. Lovable içinde ortam kendi ön ayarını dayatır.
