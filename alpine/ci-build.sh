@@ -6,19 +6,21 @@ set -eu
 
 VERSION="${TEDBIRGE_VERSION:-1.0.0}"
 WORK=/work
-OUT="$WORK/build/iso"
+OUT="$WORK/build-iso/iso"
 
 echo "== Tedbirge(R) WebOS ISO derlemesi · $VERSION =="
 
 # Sunucu tarafı render eden derleme statik dosyaları dist/client altına yazar;
 # açılış sayfası (index.html) ön-render ile aynı klasörde üretilir.
-if [ -f "$WORK/dist/client/index.html" ]; then
+if [ -f "$WORK/build-iso/web/index.html" ]; then
+  WEBROOT="$WORK/build-iso/web"
+elif [ -f "$WORK/dist/client/index.html" ]; then
   WEBROOT="$WORK/dist/client"
 elif [ -f "$WORK/dist/index.html" ]; then
   WEBROOT="$WORK/dist"
 else
-  echo "! Web paketi bulunamadı: dist/client/index.html yok."
-  echo "  Önce 'bun run build' çalıştırın (ön-render açılış sayfasını üretir)."
+  echo "! Web paketi bulunamadı: build-iso/web/index.html yok."
+  echo "  Önce 'bun run build:iso' çalıştırın (ön-render açılış sayfasını üretir)."
   exit 1
 fi
 
