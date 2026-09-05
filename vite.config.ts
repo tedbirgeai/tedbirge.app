@@ -25,11 +25,16 @@ const crossOriginIsolation = {
 
 export default defineConfig({
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
+    // Sunucu girişini src/server.ts'ye yönlendirir (SSR hata sarmalayıcısı).
+    // Üretim derlemesi bu girişten üretilir.
     server: { entry: "server" },
   },
+  // Vercel üzerinde sunucu tarafı render eden çıktı üretilir; statik SPA
+  // yönlendirmesi eklenmez. Lovable içinde ortam kendi ön ayarını dayatır.
+  nitro: { preset: process.env.NITRO_PRESET ?? (process.env.VERCEL ? "vercel" : undefined) },
   vite: {
+    // Varlık yolları her zaman köke göre çözülür.
+    base: "/",
     // Her derleme için benzersiz damga: Ayarlar > Hakkında bölümünde görünür
     // ve sürüm kilidi bunu kullanır (eski paket kalıntısı kendiliğinden düşer).
     define: {
