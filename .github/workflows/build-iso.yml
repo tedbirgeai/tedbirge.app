@@ -46,6 +46,20 @@ jobs:
           bun install --frozen-lockfile
           bun run build
 
+      - name: Web paketini doğrula
+        run: |
+          if [ ! -f dist/client/index.html ]; then
+            echo "::error::dist/client/index.html üretilmedi — ön-render adımı çalışmamış."
+            ls -la dist dist/client 2>/dev/null || true
+            exit 1
+          fi
+          if [ ! -s dist/client/kernel/tedbirge_kernel.wasm ]; then
+            echo "::error::dist/client/kernel/tedbirge_kernel.wasm eksik — çekirdek derlemesi paketlenmemiş."
+            exit 1
+          fi
+          echo "Paketlenecek dizin: dist/client"
+          du -sh dist/client
+
       - name: Sürüm etiketi
         id: ver
         run: |
