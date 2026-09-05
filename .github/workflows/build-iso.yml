@@ -37,7 +37,7 @@ jobs:
       - name: Rust Wasm çekirdeğini derle
         run: |
           rustup target add wasm32-unknown-unknown
-          mkdir -p public/kernel
+          mkdir -p public/kernel crates/public/kernel crates/tedbirge-kernel/public/kernel
           bash scripts/build-kernel.sh
           test -s public/kernel/tedbirge_kernel.wasm
 
@@ -53,11 +53,13 @@ jobs:
             ls -la dist dist/client 2>/dev/null || true
             exit 1
           fi
+          test -s dist/client/index.html
           if [ ! -s dist/client/kernel/tedbirge_kernel.wasm ]; then
             echo "::error::dist/client/kernel/tedbirge_kernel.wasm eksik — çekirdek derlemesi paketlenmemiş."
             exit 1
           fi
           echo "Paketlenecek dizin: dist/client"
+
           du -sh dist/client
 
       - name: Sürüm etiketi
@@ -89,7 +91,8 @@ jobs:
           fi
           # Sabit indirme adı: bağlantı sürümden bağımsız çalışsın
           mkdir -p build/iso
-          cp "$ISO" build/iso/tedbirge-webos-x86_64.iso
+          TARGET=build/iso/tedbirge-webos-x86_64.iso
+          if [ "$ISO" != "$TARGET" ]; then cp "$ISO" "$TARGET"; fi
           (cd build/iso && sha256sum *.iso > SHA256SUMS)
           echo "ISO=$ISO" >> "$GITHUB_ENV"
 
@@ -115,6 +118,7 @@ jobs:
           tag_name: latest
           name: "Tedbirge® WebOS — güncel imaj"
           prerelease: true
+          overwrite_files: true
           body: "Otomatik derleme · ${{ steps.ver.outputs.version }} · tedbirgeai/tedbirge.app"
           files: |
             build/iso/*.iso

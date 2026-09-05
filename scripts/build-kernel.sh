@@ -27,12 +27,13 @@ if [ -z "$WASM" ]; then
   exit 1
 fi
 
-# Hedef dizinler kopyalamadan önce garanti edilir.
+# Hedef dizinler kopyalamadan önce garanti edilir (göreli ve mutlak yollar).
+mkdir -p public/kernel ../public/kernel ../../public/kernel
 mkdir -p "$ROOT/public/kernel"
-cp "$WASM" "$ROOT/public/kernel/tedbirge_kernel.wasm"
+cp "$WASM" ../../public/kernel/tedbirge_kernel.wasm
 
 # Boş ya da bozuk dosya sessizce geçmez.
-if [ ! -s "$ROOT/public/kernel/tedbirge_kernel.wasm" ]; then
+if ! test -s ../../public/kernel/tedbirge_kernel.wasm; then
   echo "! public/kernel/tedbirge_kernel.wasm boş." >&2
   exit 1
 fi
