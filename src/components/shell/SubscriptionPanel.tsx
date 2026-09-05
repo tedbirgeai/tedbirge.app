@@ -86,7 +86,9 @@ export function SubscriptionPanel({ onOpen }: { onOpen?: (id: string) => void })
       ]);
       if (subRes.error) throw new Error(subRes.error.message);
       setSub((subRes.data as SubRow | null) ?? null);
-      setNodeLimit((licRes.data as { node_limit: number } | null)?.node_limit ?? COMMUNITY_NODE_LIMIT);
+      setNodeLimit(
+        (licRes.data as { node_limit: number } | null)?.node_limit ?? COMMUNITY_NODE_LIMIT,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Abonelik bilgisi okunamadı.");
     } finally {
@@ -180,7 +182,7 @@ export function SubscriptionPanel({ onOpen }: { onOpen?: (id: string) => void })
                   : "Community (ücretsiz)"}
             </p>
             <p className="font-osmono text-[12px] text-[var(--tb-muted)]">
-              Durum: {active ? "Aktif" : (sub ? (STATUS_TR[sub.status] ?? sub.status) : "Ücretsiz")}
+              Durum: {active ? "Aktif" : sub ? (STATUS_TR[sub.status] ?? sub.status) : "Ücretsiz"}
               {sub?.cancel_at_period_end ? " · dönem sonunda durur" : ""}
             </p>
             <p className="font-osmono text-[12px] text-[var(--tb-muted)]">

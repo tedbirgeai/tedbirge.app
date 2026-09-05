@@ -37,7 +37,6 @@ function hostAllowed(host: string): boolean {
   return isGatewayHostAllowed(host);
 }
 
-
 /** Aktarılan HTML içinde bağlantıların geçitten geçmesini sağlar. */
 function rewriteHtml(html: string, target: URL): string {
   const base = `<base href="${target.origin}${target.pathname}">`;
@@ -80,7 +79,6 @@ export const Route = createFileRoute("/api/public/gecit")({
         if (rateLimited(target.hostname.toLowerCase())) {
           return new Response("çok fazla istek", { status: 429 });
         }
-
 
         /**
          * Dayanıklılık: ağır yüklenen hedeflerde (ör. coingecko) ilk
@@ -131,7 +129,6 @@ export const Route = createFileRoute("/api/public/gecit")({
             "X-Content-Type-Options": "nosniff",
             "Permissions-Policy": "geolocation=(), camera=(), microphone=(), payment=()",
           });
-
 
           if (type.includes("text/html")) {
             const text = await upstream.text();

@@ -102,7 +102,14 @@ export function OsLink({
 }) {
   if (LEGAL_PATHS.has(to)) {
     return (
-      <a href={to} className={className} title={title} style={style} aria-label={rest["aria-label"]} {...(rest.target ? { target: rest.target } : {})}>
+      <a
+        href={to}
+        className={className}
+        title={title}
+        style={style}
+        aria-label={rest["aria-label"]}
+        {...(rest.target ? { target: rest.target } : {})}
+      >
         {children}
       </a>
     );

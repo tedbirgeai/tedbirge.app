@@ -16,11 +16,7 @@ import { listTransfers, onTransferChange, type Transfer } from "@/lib/p2p/file-t
 import { notifyError, notifyOk } from "@/lib/shell/notify";
 import { formatUptime, useMemoryMb, useUptimeSec } from "@/lib/shell/telemetry-store";
 
-import {
-  NETWORK_MODES,
-  setNetworkMode,
-  useNetworkMode,
-} from "@/lib/shell/network-mode";
+import { NETWORK_MODES, setNetworkMode, useNetworkMode } from "@/lib/shell/network-mode";
 import { setVolume, useVolume } from "@/lib/ui/audio-gain";
 import { FONT_SCALES, setFontScale, useFontScale } from "@/lib/ui/font-scale";
 import { setTheme, THEMES, type ThemeId, getTheme } from "@/lib/ui/theme";
@@ -52,8 +48,7 @@ const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
   { id: "ayarlar", label: "Sistem Ayarları" },
 ];
 
-const card =
-  "rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel-solid)] p-4";
+const card = "rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel-solid)] p-4";
 const btn =
   "wa-press rounded-lg border border-[var(--tb-border)] px-3 py-2 font-osmono text-[12px] text-[var(--tb-text)]";
 
@@ -124,8 +119,7 @@ function SummaryTab() {
     void detectNativeHal().then(setHal);
   }, []);
 
-  const device =
-    typeof navigator === "undefined" ? "Bu cihaz" : navigator.platform || "Bu cihaz";
+  const device = typeof navigator === "undefined" ? "Bu cihaz" : navigator.platform || "Bu cihaz";
   const cores = typeof navigator === "undefined" ? 0 : (navigator.hardwareConcurrency ?? 0);
 
   return (
@@ -177,7 +171,6 @@ function SummaryTab() {
     </div>
   );
 }
-
 
 /* ------------------------------------------------------------------ */
 
@@ -481,8 +474,8 @@ function SettingsTab() {
           Hakkında · Cihaza kurulum
         </h3>
         <p className="mt-1 font-osmono text-[11.5px] leading-relaxed text-[var(--tb-muted)]">
-          Tedbirge® WebOS'i bir bilgisayara işletim sistemi olarak kurmak için
-          önyüklenebilir imajı indirin.
+          Tedbirge® WebOS'i bir bilgisayara işletim sistemi olarak kurmak için önyüklenebilir imajı
+          indirin.
         </p>
         <div className="mt-3">
           <BareMetalIsoButton />

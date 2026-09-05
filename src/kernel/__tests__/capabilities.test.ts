@@ -52,11 +52,12 @@ describe("yetenek kapısı", () => {
       "transfer",
       "wallpaper",
       "yonetim",
-
     ]);
     // Harici web hedefleri hiçbir yetenek istemez (çekirdeğe erişemez).
-    expect(listApps().filter((a) => a.kind === "web").every((a) => a.capabilities.length === 0)).toBe(
-      true,
-    );
+    expect(
+      listApps()
+        .filter((a) => a.kind === "web")
+        .every((a) => a.capabilities.length === 0),
+    ).toBe(true);
   });
 });

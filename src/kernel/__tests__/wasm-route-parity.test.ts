@@ -46,7 +46,7 @@ function solveNative(ex: Exports, request: ArrayBuffer) {
 
 function randomGraph(seed: number): Graph {
   let s = seed >>> 0;
-  const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 0xffffffff);
+  const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 0xffffffff;
   const nodes = Array.from({ length: 6 }, (_, i) => `node-${i}`);
   const edges = [];
   for (let i = 0; i < nodes.length; i += 1) {

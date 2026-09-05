@@ -16,13 +16,7 @@ import {
   writePrefs,
   type PortalPrefs,
 } from "@/lib/portal/db";
-import type {
-  LogLevel,
-  MetricSample,
-  PortalLog,
-  PortalNode,
-  PortalUser,
-} from "@/lib/portal/types";
+import type { LogLevel, MetricSample, PortalLog, PortalNode, PortalUser } from "@/lib/portal/types";
 
 export type NodeDraft = Omit<PortalNode, "id" | "lastSeen"> & { id?: string };
 export type UserDraft = Omit<PortalUser, "id" | "createdAt"> & { id?: string };
@@ -183,7 +177,9 @@ function seedHistory(nodes: PortalNode[]): MetricSample[] {
   return out;
 }
 
-type SetState = (partial: Partial<PortalState> | ((s: PortalState) => Partial<PortalState>)) => void;
+type SetState = (
+  partial: Partial<PortalState> | ((s: PortalState) => Partial<PortalState>),
+) => void;
 
 async function appendLog(
   set: SetState,

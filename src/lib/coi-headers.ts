@@ -15,7 +15,9 @@ export const ISOLATED_PREFIXES = ["/", "/chat"] as const;
 
 export function isIsolatedPath(pathname: string): boolean {
   if (pathname === "/") return true;
-  return ISOLATED_PREFIXES.some((p) => p !== "/" && (pathname === p || pathname.startsWith(`${p}/`)));
+  return ISOLATED_PREFIXES.some(
+    (p) => p !== "/" && (pathname === p || pathname.startsWith(`${p}/`)),
+  );
 }
 
 export const COI_HEADERS: Record<string, string> = {

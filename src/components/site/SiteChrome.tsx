@@ -19,7 +19,13 @@ const LEGAL_LINKS = [
   { href: "/yasal", label: "Sözleşme ekleri" },
 ];
 
-export function SitePage({ children, className = "" }: { children: ReactNode; className?: string }) {
+export function SitePage({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div className={`flex min-h-screen flex-col bg-background ${className}`}>
       <PaymentTestModeBanner />

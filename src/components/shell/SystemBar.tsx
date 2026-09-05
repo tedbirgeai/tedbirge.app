@@ -17,7 +17,6 @@ import { useUnreadNoticeCount } from "@/lib/shell/notifications";
 import { useClock, useMemoryMb } from "@/lib/shell/telemetry-store";
 import { useOnline } from "@/lib/pwa/offline-status";
 
-
 export function SystemBar({
   status,
   peers,
@@ -49,14 +48,12 @@ export function SystemBar({
   const clock = useClock();
   const memMb = useMemoryMb();
 
-
   // Pencere içi "Ağ modunu değiştir" kısayolu ağ panelini açar.
   useEffect(() => {
     const open = () => setNetwork(true);
     window.addEventListener("tedbirge:open-network", open);
     return () => window.removeEventListener("tedbirge:open-network", open);
   }, []);
-
 
   return (
     <header className="tbos-sysbar relative z-[80] grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-1.5">
@@ -82,7 +79,8 @@ export function SystemBar({
             title="Off-Grid Modu Aktif · Yerel VFS & Wasm Hazır"
             className="min-w-0 max-w-[46vw] shrink truncate rounded-full border border-[var(--tb-accent)] px-2 py-0.5 font-osmono text-[11px] text-[var(--tb-accent)] sm:max-w-none sm:shrink-0"
           >
-            Off-Grid<span className="hidden md:inline"> Modu Aktif · Yerel VFS &amp; Wasm Hazır</span>
+            Off-Grid
+            <span className="hidden md:inline"> Modu Aktif · Yerel VFS &amp; Wasm Hazır</span>
           </span>
         ) : null}
         <button
@@ -107,7 +105,6 @@ export function SystemBar({
             </span>
           </span>
         </button>
-
       </div>
 
       <NetworkControl open={network} onClose={() => setNetwork(false)} />
@@ -121,7 +118,6 @@ export function SystemBar({
         onPersonalize={onPersonalize}
         onNetwork={() => setNetwork(true)}
       />
-
 
       <div className="pointer-events-auto relative z-[90] flex shrink-0 items-center gap-0.5">
         {onSearch ? (
@@ -162,7 +158,6 @@ export function SystemBar({
         >
           {clock}
         </span>
-
 
         <button
           type="button"

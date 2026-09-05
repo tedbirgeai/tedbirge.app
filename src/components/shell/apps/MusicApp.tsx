@@ -41,26 +41,23 @@ export function MusicApp() {
   }, [refresh]);
 
   /** Kütüphaneden bir kaydı çalma listesine ekler ve çalar. */
-  const enqueue = useCallback(
-    async (entry: VfsEntry, play = true) => {
-      const url = await objectUrl(entry.id);
-      if (!url) return notifyError("Parça açılamadı", entry.name);
-      setTracks((prev) => {
-        const found = prev.findIndex((p) => p.id === entry.id);
-        if (found >= 0) {
-          if (play) setIndex(found);
-          return prev;
-        }
-        if (play) setIndex(prev.length);
-        return [...prev, { id: entry.id, name: entry.name, url }];
-      });
-      if (play) {
-        setPlaying(true);
-        setTab("oynatici");
+  const enqueue = useCallback(async (entry: VfsEntry, play = true) => {
+    const url = await objectUrl(entry.id);
+    if (!url) return notifyError("Parça açılamadı", entry.name);
+    setTracks((prev) => {
+      const found = prev.findIndex((p) => p.id === entry.id);
+      if (found >= 0) {
+        if (play) setIndex(found);
+        return prev;
       }
-    },
-    [],
-  );
+      if (play) setIndex(prev.length);
+      return [...prev, { id: entry.id, name: entry.name, url }];
+    });
+    if (play) {
+      setPlaying(true);
+      setTab("oynatici");
+    }
+  }, []);
 
   const add = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -145,7 +142,11 @@ export function MusicApp() {
               aria-label={playing ? "Duraklat" : "Çal"}
               className="wa-press flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tb-accent)] text-[var(--tb-on-accent,var(--tb-bg))]"
             >
-              {playing ? <Pause className="h-5 w-5" aria-hidden /> : <Play className="h-5 w-5" aria-hidden />}
+              {playing ? (
+                <Pause className="h-5 w-5" aria-hidden />
+              ) : (
+                <Play className="h-5 w-5" aria-hidden />
+              )}
             </button>
             <button
               type="button"

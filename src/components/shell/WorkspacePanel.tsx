@@ -58,7 +58,6 @@ const WINDOW_TITLES: Record<string, string> = {
   panel: "Panel — Lisans ve Saha",
   yonetim: "Sistem Yönetim Portalı",
   profile: "Profil ve Hesap",
-
 };
 
 /** Pencere başlığı: "computer" cihaz türüne göre adlandırılır. */
@@ -66,7 +65,6 @@ function windowTitle(id: string): string | undefined {
   if (id === "computer") return deviceScopeLabel();
   return WINDOW_TITLES[id];
 }
-
 
 /**
  * tOS MASAÜSTÜ (Web-OS Kabuğu)
@@ -87,8 +85,6 @@ export function WorkspacePanel() {
   const windows = useWindows();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [spotlight, setSpotlight] = useState(false);
-
-
 
   // Çevrimdışı güvence: dosyalar yer baskısında bile silinmesin.
   useEffect(() => {
@@ -121,7 +117,6 @@ export function WorkspacePanel() {
       console.warn(`[tbos] "${id}" AppRegistry'de kayıtlı değil.`);
     }
     openWindow(id, web ? web.label : (windowTitle(id) ?? catalogApp(id)?.label ?? id), fresh);
-
   }, []);
 
   /** Sağ tık menüsündeki "Yeni Pencerede Aç": var olan pencere yeniden kullanılmaz. */
@@ -168,15 +163,14 @@ export function WorkspacePanel() {
       <AppErrorBoundary title="Sistem çubuğu" appId="shell.systembar">
         <SystemBar
           status={status.text}
-        peers={status.directPeers}
-        rttMs={node.rttMs}
-        onSettings={() => launch("settings")}
-        onProfile={() => launch("profile")}
-        onPersonalize={() => launch("wallpaper")}
+          peers={status.directPeers}
+          rttMs={node.rttMs}
+          onSettings={() => launch("settings")}
+          onProfile={() => launch("profile")}
+          onPersonalize={() => launch("wallpaper")}
           onSearch={() => setSpotlight(true)}
         />
       </AppErrorBoundary>
-
 
       {/* Masaüstü yüzeyi: duvar kâğıdı, kısayollar ve pencereler. */}
       <div ref={surfaceRef} className="relative min-h-0 flex-1 overflow-hidden">
@@ -222,7 +216,6 @@ export function WorkspacePanel() {
       {isMobile && top ? (
         <MobileAppShell win={top} onLaunch={launch} onTransfer={() => launch("transfer")} />
       ) : null}
-
 
       <AppErrorBoundary title="Görev çubuğu" appId="shell.dock">
         <Dock

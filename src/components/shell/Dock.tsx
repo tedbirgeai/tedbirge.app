@@ -40,12 +40,13 @@ export function Dock({
   // uygulamalar arasında sırayla geçiş. Simge şeridi yatay kaydırılabilir
   // olduğu için jest oraya bağlanmaz; normal kaydırma bozulmaz.
   const swipe = useSwipeGesture((dir) => {
-    const order = [...windows]
-      .filter((w) => !w.minimized)
-      .sort((a, b) => a.id.localeCompare(b.id));
+    const order = [...windows].filter((w) => !w.minimized).sort((a, b) => a.id.localeCompare(b.id));
     if (order.length < 2) return;
     const top = [...windows].filter((w) => !w.minimized).sort((a, b) => b.z - a.z)[0];
-    const i = Math.max(0, order.findIndex((w) => w.id === top?.id));
+    const i = Math.max(
+      0,
+      order.findIndex((w) => w.id === top?.id),
+    );
     const step = dir === "left" ? 1 : -1;
     const next = order[(i + step + order.length) % order.length];
     if (next && next.id !== top?.id) focusWindow(next.id);

@@ -37,7 +37,11 @@ export function InstallAppCta({
   if (installed) return null;
 
   return (
-    <button type="button" onClick={() => void onClick()} className={`${base} ${styles} ${className}`}>
+    <button
+      type="button"
+      onClick={() => void onClick()}
+      className={`${base} ${styles} ${className}`}
+    >
       <Download className="h-4 w-4" aria-hidden />
       {label}
     </button>

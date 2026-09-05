@@ -41,7 +41,9 @@ function size(n: number) {
 
 function speedLabel(n: number) {
   if (!n) return "—";
-  return n < 1024 * 1024 ? `${(n / 1024).toFixed(0)} KB/sn` : `${(n / 1024 / 1024).toFixed(1)} MB/sn`;
+  return n < 1024 * 1024
+    ? `${(n / 1024).toFixed(0)} KB/sn`
+    : `${(n / 1024 / 1024).toFixed(1)} MB/sn`;
 }
 
 const STATUS: Record<Transfer["status"], string> = {
@@ -54,7 +56,8 @@ const STATUS: Record<Transfer["status"], string> = {
 };
 
 function Item({ t }: { t: Transfer }) {
-  const live = t.status === "gonderiliyor" || t.status === "aliniyor" || t.status === "duraklatildi";
+  const live =
+    t.status === "gonderiliyor" || t.status === "aliniyor" || t.status === "duraklatildi";
   return (
     <li className="rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel-solid)] p-3">
       <div className="flex items-center justify-between gap-3">

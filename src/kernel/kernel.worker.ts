@@ -192,4 +192,3 @@ self.onmessage = (e: MessageEvent<ArrayBuffer | RingInit>) => {
 
 // İlk fırsatta Wasm'ı ısıt: ilk rota isteği gecikmesin.
 void ensureWasm();
-

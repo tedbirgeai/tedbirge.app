@@ -89,7 +89,10 @@ export function ProfileApp({ onOpen }: { onOpen?: (id: string) => void }) {
           .select("id, plan, status, node_limit, license_key, current_period_end")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
-        supabase.from("devices").select("id", { count: "exact", head: true }).eq("status", "active"),
+        supabase
+          .from("devices")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "active"),
       ]);
 
       if (subRes.error) throw new Error(subRes.error.message);
@@ -175,7 +178,6 @@ export function ProfileApp({ onOpen }: { onOpen?: (id: string) => void }) {
         successUrl: `${window.location.origin}/?checkout=success`,
       });
       notifySubscriptionChanged();
-
     } catch (err) {
       notifyError(
         "Ödeme ekranı açılamadı",

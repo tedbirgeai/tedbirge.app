@@ -888,7 +888,9 @@ export default function Messenger() {
                             void remoteVideoRef.current?.play().then(() => setNeedsTap(false));
                           }}
                           className="absolute inset-0 z-10 grid place-items-center text-[12px] font-medium"
-                          style={{ background: "color-mix(in srgb, var(--tb-bg) 70%, transparent)" }}
+                          style={{
+                            background: "color-mix(in srgb, var(--tb-bg) 70%, transparent)",
+                          }}
                         >
                           Görüntüyü başlatmak için dokunun
                         </button>
@@ -1216,7 +1218,6 @@ export default function Messenger() {
           >
             Geliştirici Portalı
           </a>
-
         </span>
       </footer>
     </div>

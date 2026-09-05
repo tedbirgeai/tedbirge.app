@@ -141,7 +141,6 @@ export function setWindowBox(id: string, x: number, y: number, w: number, h: num
   emit();
 }
 
-
 export function toggleMaximize(id: string) {
   windows = windows.map((w) => (w.id === id ? { ...w, maximized: !w.maximized } : w));
   emit();

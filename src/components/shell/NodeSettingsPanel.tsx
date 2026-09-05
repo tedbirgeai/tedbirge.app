@@ -7,16 +7,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  Bell,
-  Cpu,
-  HardDrive,
-  KeyRound,
-  Palette,
-  Pencil,
-  RefreshCw,
-  Trash2,
-} from "lucide-react";
+import { Bell, Cpu, HardDrive, KeyRound, Palette, Pencil, RefreshCw, Trash2 } from "lucide-react";
 
 import { THEMES, getTheme, setTheme, type ThemeId } from "@/lib/ui/theme";
 import { composeIdentityLabel, getDeviceName, setDeviceName } from "@/lib/identity/device";
@@ -264,9 +255,7 @@ export function NodeSettingsPanel() {
                     if (aliasDraft.trim()) setAlias(aliasDraft);
                     setDeviceName(deviceDraft);
                     setEditing(false);
-                    setIdentity(
-                      composeIdentityLabel(getAlias(), getDeviceName()) || "Bu cihaz",
-                    );
+                    setIdentity(composeIdentityLabel(getAlias(), getDeviceName()) || "Bu cihaz");
                     void announceName();
                     setNotice("Kimliğiniz güncellendi ve eşlere duyuruldu.");
                   }}

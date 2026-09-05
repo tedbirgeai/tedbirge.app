@@ -82,15 +82,27 @@ export function useTelemetry(): Telemetry {
 }
 
 export function useClock(): string {
-  return useSyncExternalStore(subscribe, () => snapshot.clock, () => EMPTY.clock);
+  return useSyncExternalStore(
+    subscribe,
+    () => snapshot.clock,
+    () => EMPTY.clock,
+  );
 }
 
 export function useMemoryMb(): number | null {
-  return useSyncExternalStore(subscribe, () => snapshot.memMb, () => EMPTY.memMb);
+  return useSyncExternalStore(
+    subscribe,
+    () => snapshot.memMb,
+    () => EMPTY.memMb,
+  );
 }
 
 export function useUptimeSec(): number {
-  return useSyncExternalStore(subscribe, () => snapshot.uptimeSec, () => EMPTY.uptimeSec);
+  return useSyncExternalStore(
+    subscribe,
+    () => snapshot.uptimeSec,
+    () => EMPTY.uptimeSec,
+  );
 }
 
 /** Saniyeyi "01:02:03" biçiminde sabit genişlikli metne çevirir. */

@@ -33,3 +33,4 @@ dist-ssr
 
 # Rust çekirdeği derleme çıktısı
 crates/*/target/
+crates/target/

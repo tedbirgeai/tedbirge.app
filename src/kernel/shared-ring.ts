@@ -109,14 +109,16 @@ export class SharedRing {
   async waitForData(timeoutMs = 50): Promise<void> {
     const seen = Atomics.load(this.ctrl, SIGNAL);
     if (Atomics.load(this.ctrl, HEAD) !== Atomics.load(this.ctrl, TAIL)) return;
-    const waitAsync = (Atomics as unknown as {
-      waitAsync?: (
-        arr: Int32Array,
-        i: number,
-        v: number,
-        t: number,
-      ) => { async: boolean; value: Promise<string> | string };
-    }).waitAsync;
+    const waitAsync = (
+      Atomics as unknown as {
+        waitAsync?: (
+          arr: Int32Array,
+          i: number,
+          v: number,
+          t: number,
+        ) => { async: boolean; value: Promise<string> | string };
+      }
+    ).waitAsync;
     if (waitAsync) {
       const res = waitAsync(this.ctrl, SIGNAL, seen, timeoutMs);
       if (res.async) await res.value;

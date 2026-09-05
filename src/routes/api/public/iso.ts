@@ -120,8 +120,7 @@ export const Route = createFileRoute("/api/public/iso")({
         }
 
         return new Response(
-          "Tedbirge® WebOS kurulum imajı henüz yayınlanmadı. " +
-            `Güncel sürümler: ${info.page}`,
+          "Tedbirge® WebOS kurulum imajı henüz yayınlanmadı. " + `Güncel sürümler: ${info.page}`,
           {
             status: 503,
             headers: {

@@ -72,11 +72,7 @@ export function ContextMenu({
     >
       {items.map((it, i) =>
         it.kind === "sep" ? (
-          <span
-            key={`sep-${i}`}
-            aria-hidden
-            className="my-1 block h-px bg-[var(--tb-border)]"
-          />
+          <span key={`sep-${i}`} aria-hidden className="my-1 block h-px bg-[var(--tb-border)]" />
         ) : (
           <button
             key={it.label}

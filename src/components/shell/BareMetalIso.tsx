@@ -190,7 +190,9 @@ export function IsoGuideDialog({
               {i + 1}
             </span>
             <span className="min-w-0">
-              <span className="block text-[13.5px] font-medium text-[var(--tb-text)]">{s.tool}</span>
+              <span className="block text-[13.5px] font-medium text-[var(--tb-text)]">
+                {s.tool}
+              </span>
               <span className="block font-osmono text-[11.5px] leading-relaxed text-[var(--tb-muted)]">
                 {s.text}
               </span>

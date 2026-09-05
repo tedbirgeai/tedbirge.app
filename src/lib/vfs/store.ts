@@ -51,7 +51,6 @@ export type VfsEntry = {
 
 type VfsRecord = VfsEntry & { blob: Blob };
 
-
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 function openDb(): Promise<IDBDatabase> {
@@ -72,7 +71,10 @@ function openDb(): Promise<IDBDatabase> {
   return dbPromise;
 }
 
-function tx<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+function tx<T>(
+  mode: IDBTransactionMode,
+  run: (store: IDBObjectStore) => IDBRequest<T>,
+): Promise<T> {
   return openDb().then(
     (db) =>
       new Promise<T>((resolve, reject) => {
@@ -183,7 +185,6 @@ export async function deleteFile(id: string): Promise<void> {
   }
   emit();
 }
-
 
 const urls = new Map<string, string>();
 /**

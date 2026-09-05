@@ -23,12 +23,7 @@ import {
   primaryBtn,
 } from "@/components/shell/apps/portal/ui";
 import { usePortal } from "@/lib/portal/store";
-import {
-  PLAN_LABEL,
-  ROLE_LABEL,
-  USER_STATUS_LABEL,
-  type PortalUser,
-} from "@/lib/portal/types";
+import { PLAN_LABEL, ROLE_LABEL, USER_STATUS_LABEL, type PortalUser } from "@/lib/portal/types";
 
 const schema = z.object({
   name: z.string().trim().min(3, "Ad soyad en az 3 karakter olmalı."),
@@ -171,7 +166,9 @@ export function UsersPanel() {
   }
 
   function toggleSort(key: SortKey) {
-    setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
+    setSort((s) =>
+      s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" },
+    );
   }
 
   return (
@@ -302,7 +299,9 @@ export function UsersPanel() {
                       <tr key={u.id} className="border-t border-[var(--tb-border)]">
                         <td className="py-2 pr-3">
                           <span className="block font-medium text-[var(--tb-text)]">{u.name}</span>
-                          <span className="block text-[12px] text-[var(--tb-muted)]">{u.email}</span>
+                          <span className="block text-[12px] text-[var(--tb-muted)]">
+                            {u.email}
+                          </span>
                         </td>
                         <td className="py-2 pr-3">{ROLE_LABEL[u.role]}</td>
                         <td className="py-2 pr-3">{PLAN_LABEL[u.plan]}</td>
