@@ -15,19 +15,37 @@ import { bootAccessEngine } from "@/lib/access-tiers";
 import { ensureOfflineGrant } from "@/lib/offline-license";
 import { runOneTimePurge } from "@/lib/hard-reset";
 import { syncViewportUnits } from "@/lib/ui/viewport";
+import { safeBoot, installGlobalRuntimeGuards } from "@/lib/runtime-guard";
 import { CallHost } from "@/components/chat/CallHost";
 
 export function BackgroundServicesProvider({ children }: { children?: ReactNode }) {
   useEffect(() => {
+    // Hiçbir arka plan hatası ilk çizimi düşürmez; hepsi günlüğe yazılır.
+    const removeGuards = installGlobalRuntimeGuards();
+    let stopViewport: (() => void) | undefined;
+
     // Eski mükerrer kayıtları temizleyen tek seferlik sıfırlama; sayfa yenilenir.
-    if (runOneTimePurge()) return;
-    setupOfflineSupport();
-    bootNodeRuntime();
-    // Düğüm arka planda otomatik başlar; kullanıcı hiçbir butona basmaz.
-    void startNode();
-    bootAccessEngine();
-    void ensureOfflineGrant();
-    return syncViewportUnits();
+    let purged = false;
+    safeBoot("hard-reset", () => {
+      purged = runOneTimePurge();
+    });
+
+    if (!purged) {
+      safeBoot("offline-support", () => setupOfflineSupport());
+      safeBoot("node-runtime", () => bootNodeRuntime());
+      // Düğüm arka planda otomatik başlar; kullanıcı hiçbir butona basmaz.
+      safeBoot("node-start", () => startNode());
+      safeBoot("access-engine", () => bootAccessEngine());
+      safeBoot("offline-license", () => ensureOfflineGrant());
+      safeBoot("viewport", () => {
+        stopViewport = syncViewportUnits();
+      });
+    }
+
+    return () => {
+      stopViewport?.();
+      removeGuards();
+    };
   }, []);
 
   return (
