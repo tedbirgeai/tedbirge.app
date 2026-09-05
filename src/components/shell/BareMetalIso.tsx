@@ -31,8 +31,8 @@ const STEPS: ReadonlyArray<{ tool: string; text: string }> = [
     text: "Kurulum imajı İndirilenler klasörüne kaydedilir (bağlantı hızına göre birkaç dakika sürebilir).",
   },
   {
-    tool: "2 · USB'ye yaz",
-    text: "Rufus (GPT/UEFI), BalenaEtcher ya da Ventoy ile boş bir USB belleğe yazın.",
+    tool: "2 · USB'ye yaz (DD modu)",
+    text: "Rufus'ta yazma uyarısı çıkınca mutlaka “DD Image / DD kalıbı” seçin. ISO çıkarma modu açılışta “Mounting boot media failed” hatası verir. BalenaEtcher veya Ventoy de doğrudan çalışır.",
   },
   {
     tool: "3 · USB'den başlat",
