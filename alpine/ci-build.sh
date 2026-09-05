@@ -1,6 +1,6 @@
 #!/bin/sh
 # CI içinde (alpine konteynerinde) çalışır. Yerel makinede çalıştırmak gerekmez.
-# Girdi : /work/dist (derlenmiş web paketi)
+# Girdi : /work/dist/client (derlenmiş web paketi; eski düzende /work/dist)
 # Çıktı : /work/build/iso/tedbirge-webos-<sürüm>-x86_64.iso
 set -eu
 
@@ -10,7 +10,25 @@ OUT="$WORK/build/iso"
 
 echo "== Tedbirge(R) WebOS ISO derlemesi · $VERSION =="
 
-[ -f "$WORK/dist/index.html" ] || { echo "! dist/index.html yok — web paketi derlenmemiş"; exit 1; }
+# Sunucu tarafı render eden derleme statik dosyaları dist/client altına yazar;
+# açılış sayfası (index.html) ön-render ile aynı klasörde üretilir.
+if [ -f "$WORK/dist/client/index.html" ]; then
+  WEBROOT="$WORK/dist/client"
+elif [ -f "$WORK/dist/index.html" ]; then
+  WEBROOT="$WORK/dist"
+else
+  echo "! Web paketi bulunamadı: dist/client/index.html yok."
+  echo "  Önce 'bun run build' çalıştırın (ön-render açılış sayfasını üretir)."
+  exit 1
+fi
+
+if [ ! -s "$WEBROOT/kernel/tedbirge_kernel.wasm" ]; then
+  echo "! $WEBROOT/kernel/tedbirge_kernel.wasm yok — çekirdeksiz imaj yayınlanmaz."
+  echo "  Önce 'bash scripts/build-kernel.sh' çalıştırın."
+  exit 1
+fi
+
+echo "-- Web paketi kaynağı: $WEBROOT"
 
 apk update
 apk add --no-cache \
