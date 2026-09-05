@@ -12,9 +12,7 @@ cargo test --no-default-features --features std
 
 WASM=$(ls -1 ../target/wasm32-unknown-unknown/release/tedbirge_kernel.wasm \
             target/wasm32-unknown-unknown/release/tedbirge_kernel.wasm 2>/dev/null | head -n1)
-
-mkdir -p ../../public/kernel
-
-cp "$WASM" ../../public/kernel/tedbirge_kernel.wasm
+cp "$WASM" \ \
+   ../../public/kernel/tedbirge_kernel.wasm
 
 echo "✓ public/kernel/tedbirge_kernel.wasm güncellendi"
