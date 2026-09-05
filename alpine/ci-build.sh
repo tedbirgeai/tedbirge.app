@@ -61,8 +61,35 @@ ls -l /etc/apk/keys
 
 
 # aports (mkimage altyapısı)
-git clone --depth 1 https://gitlab.alpinelinux.org/alpine/aports.git /home/builder/aports
+# GitLab bazen 418 döndürüyor; yansılar sırayla denenir.
+APORTS_BRANCH="${APORTS_BRANCH:-3.20-stable}"
+CLONED=0
+for repo in \
+  "https://github.com/alpinelinux/aports.git" \
+  "https://gitlab.alpinelinux.org/alpine/aports.git" \
+  "https://git.alpinelinux.org/aports"
+do
+  for try in 1 2 3; do
+    echo "-- aports kaynağı deneniyor: $repo ($try)"
+    rm -rf /home/builder/aports
+    if git clone --depth 1 --branch "$APORTS_BRANCH" "$repo" /home/builder/aports 2>/dev/null \
+      || git clone --depth 1 "$repo" /home/builder/aports; then
+      CLONED=1
+      break
+    fi
+    sleep 5
+  done
+  [ "$CLONED" = 1 ] && break
+done
+
+if [ "$CLONED" != 1 ]; then
+  echo "! aports kaynağı indirilemedi (tüm yansılar başarısız)."
+  exit 1
+fi
+
+echo "-- aports kaynağı hazır: $repo"
 chown -R builder:abuild /home/builder/aports
+
 
 # Tedbirge profili + apkovl üreticisi
 cp "$WORK/alpine/mkimg.tedbirge.sh" /home/builder/aports/scripts/
