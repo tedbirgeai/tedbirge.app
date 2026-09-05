@@ -28,6 +28,8 @@ if [ -z "$WASM" ]; then
 fi
 
 # Hedef dizinler kopyalamadan önce garanti edilir (mutlak yol kullanılır).
+# Dizin adına dosya adı karışmaması için önce hedef dosya/dizin temizlenir.
+rm -rf "$ROOT/public/kernel/tedbirge_kernel.wasm"
 mkdir -p "$ROOT/public/kernel"
 cp "$WASM" "$ROOT/public/kernel/tedbirge_kernel.wasm"
 
