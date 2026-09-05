@@ -4,15 +4,37 @@
 # Gereken: cargo + wasm32-unknown-unknown hedefi + lld
 set -euo pipefail
 
-cd "$(dirname "$0")/../crates/tedbirge-kernel"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT/crates/tedbirge-kernel"
 
 # Faz C: varsayılan özellik `wasm` (no_std + alloc + dahili ayırıcı).
 cargo build --release --target wasm32-unknown-unknown
 cargo test --no-default-features --features std
 
-WASM=$(ls -1 ../target/wasm32-unknown-unknown/release/tedbirge_kernel.wasm \
-            target/wasm32-unknown-unknown/release/tedbirge_kernel.wasm 2>/dev/null | head -n1)
-cp "$WASM" \ \
-   ../../public/kernel/tedbirge_kernel.wasm
+# Çıktı, çalışma alanı köküne ya da paket dizinine düşebilir; ikisi de denenir.
+WASM=""
+for candidate in \
+  "../target/wasm32-unknown-unknown/release/tedbirge_kernel.wasm" \
+  "target/wasm32-unknown-unknown/release/tedbirge_kernel.wasm"; do
+  if [ -s "$candidate" ]; then
+    WASM="$candidate"
+    break
+  fi
+done
 
-echo "✓ public/kernel/tedbirge_kernel.wasm güncellendi"
+if [ -z "$WASM" ]; then
+  echo "! Wasm çıktısı bulunamadı — cargo derlemesi başarısız." >&2
+  exit 1
+fi
+
+# Hedef dizinler kopyalamadan önce garanti edilir.
+mkdir -p "$ROOT/public/kernel"
+cp "$WASM" "$ROOT/public/kernel/tedbirge_kernel.wasm"
+
+# Boş ya da bozuk dosya sessizce geçmez.
+if [ ! -s "$ROOT/public/kernel/tedbirge_kernel.wasm" ]; then
+  echo "! public/kernel/tedbirge_kernel.wasm boş." >&2
+  exit 1
+fi
+
+echo "✓ public/kernel/tedbirge_kernel.wasm güncellendi ($(wc -c < "$ROOT/public/kernel/tedbirge_kernel.wasm") bayt)"
