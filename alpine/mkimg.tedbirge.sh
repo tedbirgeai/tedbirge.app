@@ -34,13 +34,13 @@ profile_tedbirge() {
 		linux-firmware-iwlwifi linux-firmware-ath9k_htc linux-firmware-ath10k
 		linux-firmware-ath11k linux-firmware-rtlwifi linux-firmware-rtw88
 		linux-firmware-rtw89 linux-firmware-brcm linux-firmware-mediatek
-		linux-firmware-rtl_nic linux-firmware-other
+		linux-firmware-rtl_nic
 		bluez bluez-openrc
 		alsa-utils alsa-lib alsa-ucm-conf pipewire pipewire-alsa pipewire-pulse wireplumber
 		nvme-cli util-linux blkid lsblk findmnt
 		e2fsprogs f2fs-tools exfatprogs ntfs-3g dosfstools parted
 		syslinux grub grub-efi efibootmgr
-		zram-init util-linux-misc
+		zram-init
 		curl ca-certificates tzdata pciutils usbutils
 		"
 	apkovl="genapkovl-tedbirge.sh"
