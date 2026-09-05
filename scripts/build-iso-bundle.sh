@@ -49,10 +49,10 @@ test -s build-iso/web/kernel/tedbirge_kernel.wasm || {
   exit 1
 }
 
-# 4) Yayın çıktısıyla çakışma olmadığı teyit edilir
-if [ -e "$ROOT/dist" ] && [ "$(find "$ROOT/dist" -newer "$ROOT/build-iso/web/index.html" -print -quit 2>/dev/null)" != "" ]; then
-  echo "! Uyarı: dist altında imaj derlemesinden sonra değişen dosya görüldü."
-fi
+# 4) Yayın çıktısıyla çakışma kontrolü: imaj paketi dist altına yazmamalı.
+for f in build-iso/web/index.html build-iso/web/kernel/tedbirge_kernel.wasm; do
+  test -s "$f" || { echo "! $f eksik." >&2; exit 1; }
+done
 
 echo "✓ build-iso/web  ($(du -sh build-iso/web | cut -f1))"
 echo "✓ build-iso/kernel/tedbirge_kernel.wasm ($(wc -c < build-iso/kernel/tedbirge_kernel.wasm) bayt)"
