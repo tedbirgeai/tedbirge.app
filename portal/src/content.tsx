@@ -212,8 +212,12 @@ route_hops(target: u32) -> u32`}</code>
         <ol>
           <li>TypeScript çekirdeği daima hazır kaydedilir; kesinti olmaz.</li>
           <li>Tercih "wasm" ise modül arka planda indirilir ve ABI sürümü doğrulanır.</li>
-          <li>Modül yoksa, indirilemezse veya ABI uyuşmazsa sessizce TypeScript çekirdeğinde kalınır.</li>
-          <li>Hızlandırılmış çekirdek ısrarla arıza verirse denetleyici standart çekirdeğe iner.</li>
+          <li>
+            Modül yoksa, indirilemezse veya ABI uyuşmazsa sessizce TypeScript çekirdeğinde kalınır.
+          </li>
+          <li>
+            Hızlandırılmış çekirdek ısrarla arıza verirse denetleyici standart çekirdeğe iner.
+          </li>
         </ol>
         <h2>Derleme</h2>
         <pre>
