@@ -34,9 +34,15 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Rust araç zinciri
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
+          rustc --version && cargo --version
+
       - name: Rust Wasm çekirdeğini derle
         run: |
-          rustup target add wasm32-unknown-unknown
           mkdir -p public/kernel crates/public/kernel crates/tedbirge-kernel/public/kernel
           bash scripts/build-kernel.sh
           test -s public/kernel/tedbirge_kernel.wasm
