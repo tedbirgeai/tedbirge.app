@@ -1,0 +1,20 @@
+[package]
+name = "tedbirge-sysbridge"
+version = "0.1.0"
+edition = "2021"
+description = "Tedbirge OS — yerel güç köprüsü: kabuktan gelen kapat/yeniden başlat/uyku isteklerini ACPI sinyaline çevirir"
+
+[[bin]]
+name = "tedbirge-sysbridge"
+path = "src/main.rs"
+
+[lib]
+name = "tedbirge_sysbridge"
+path = "src/lib.rs"
+
+[dependencies]
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true

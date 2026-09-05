@@ -66,6 +66,39 @@ jobs:
           echo "Paketlenecek dizin: build-iso/web"
           du -sh build-iso/web
 
+      - name: Rust birim testleri (çekirdek · HAL · güç köprüsü)
+        run: cargo test --manifest-path crates/Cargo.toml --workspace --exclude tedbirge-kernel
+
+      - name: Güç köprüsünü derle (statik · musl)
+        run: |
+          rustup target add x86_64-unknown-linux-musl
+          sudo apt-get update && sudo apt-get install -y musl-tools
+          cargo build --release --target x86_64-unknown-linux-musl \
+            --manifest-path crates/tedbirge-sysbridge/Cargo.toml
+          BIN=crates/target/x86_64-unknown-linux-musl/release/tedbirge-sysbridge
+          [ -s "$BIN" ] || BIN=crates/tedbirge-sysbridge/target/x86_64-unknown-linux-musl/release/tedbirge-sysbridge
+          if [ ! -s "$BIN" ]; then
+            echo "::error::tedbirge-sysbridge ikilisi üretilemedi."; exit 1
+          fi
+          rm -rf build-iso/payload/bin/tedbirge-sysbridge
+          mkdir -p build-iso/payload/bin
+          cp "$BIN" build-iso/payload/bin/tedbirge-sysbridge
+          chmod +x build-iso/payload/bin/tedbirge-sysbridge
+          ls -l build-iso/payload/bin
+
+      - name: Donanım katmanı yapılandırmasını doğrula
+        run: |
+          for k in mesa-vulkan-intel linux-firmware-iwlwifi acpid zram-init pipewire nvme-cli; do
+            grep -q "$k" alpine/mkimg.tedbirge.sh || {
+              echo "::error::$k imaj paket listesinde yok."; exit 1; }
+          done
+          for k in tedbirge-bellek.start tedbirge-oom.start tedbirge-disk.start \
+                   tedbirge-sysbridge etc/acpi/PWRF ekran-duzeni.sh sys-api; do
+            grep -q "$k" alpine/genapkovl-tedbirge.sh || {
+              echo "::error::$k yapılandırma katmanında yok."; exit 1; }
+          done
+          echo "Donanım katmanı doğrulandı."
+
       - name: Sürüm etiketi
         id: ver
         run: |

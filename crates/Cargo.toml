@@ -12,6 +12,7 @@ members = [
   "tedbirge-compositor",
   "tedbirge-installer",
   "tedbirge-shell-native",
+  "tedbirge-sysbridge",
 ]
 
 [workspace.package]

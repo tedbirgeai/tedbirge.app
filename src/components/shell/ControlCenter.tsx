@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@/components/shell/OsLink";
-import { Focus, Moon, Sun, UserRound, Volume2, VolumeX, Wifi } from "lucide-react";
+import { Focus, Moon, Power, RotateCcw, Sun, UserRound, Volume2, VolumeX, Wifi } from "lucide-react";
 
 import { applySystemVolume, isSoundMuted, setSoundMuted, tapSound } from "@/lib/chat/sounds";
 import { notify } from "@/lib/shell/notify";
@@ -16,6 +16,12 @@ import { setFocusMode, useFocusMode } from "@/lib/shell/focus-mode";
 import { setVolume, useVolume } from "@/lib/ui/audio-gain";
 import { getTheme, setTheme, THEMES } from "@/lib/ui/theme";
 import { setBrightness, setNightLight, useWallpaper } from "@/lib/ui/wallpaper";
+import {
+  POWER_LABELS,
+  powerBridgeReady,
+  requestPower,
+  type PowerAction,
+} from "@/lib/shell/sysbridge";
 
 export function ControlCenter({
   open,
@@ -39,12 +45,15 @@ export function ControlCenter({
   const focus = useFocusMode();
   const [muted, setMuted] = useState(false);
   const [theme, setThemeState] = useState(getTheme());
+  // Güç köprüsü yalnız kurulu cihazda vardır; yoksa düğmeler gizlenir.
+  const [powerReady, setPowerReady] = useState(false);
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setMuted(isSoundMuted());
     setThemeState(getTheme());
+    void powerBridgeReady().then(setPowerReady);
     const onDown = (e: MouseEvent) => {
       if (box.current && !box.current.contains(e.target as Node)) onClose();
     };
@@ -208,6 +217,33 @@ export function ControlCenter({
         ))}
       </div>
 
+
+      {powerReady ? (
+        <div className="mt-2 rounded-xl border border-[var(--tb-border)] p-2">
+          <span className="font-osmono text-[11px] text-[var(--tb-muted)]">Güç</span>
+          <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+            {(["kapat", "yeniden-baslat", "uyku", "derin-uyku"] as PowerAction[]).map((a) => (
+              <button
+                key={a}
+                type="button"
+                onClick={async () => {
+                  notify(POWER_LABELS[a], "Veriler diske yazılıyor…");
+                  const r = await requestPower(a);
+                  if (!r.ok) notify("Uygulanamadı", r.message);
+                }}
+                className="wa-press flex min-h-[48px] items-center gap-2 rounded-lg border border-[var(--tb-border)] px-2 py-2 text-left font-osmono text-[11px] text-[var(--tb-text)]"
+              >
+                {a === "yeniden-baslat" ? (
+                  <RotateCcw className="h-4 w-4 text-[var(--tb-muted)]" aria-hidden />
+                ) : (
+                  <Power className="h-4 w-4 text-[var(--tb-muted)]" aria-hidden />
+                )}
+                {POWER_LABELS[a]}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <button
         type="button"
         onClick={() => {

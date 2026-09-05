@@ -71,3 +71,15 @@ tedbirge-shell --root /opt/tedbirge/dist --headless --state /var/tedbirge --prof
   önizleme ortamında yalnız betikler bulunur, imaj üretilmez.
 - Ağ portları: kabuk `8377/tcp`, mesh duyurusu `7946/udp`.
 
+
+## Donanım katmanı — ekran, bellek, güç, sürücüler
+
+| Alan | Karşılığı |
+| --- | --- |
+| Ekran kartı | Mesa (Intel/AMD/swrast Vulkan ICD'leri), VA-API/VDPAU, `libdrm`; `ekran-duzeni.sh` bağlı tüm çıkışları açar, GPU yoksa yazılım çizimine düşülür. |
+| Bellek | Açılışta ZRAM (RAM'in yarısı, zstd) + `sysctl` profili; boş bellek %5 altına inince OOM koruyucu en çok tüketen süreci durdurur. |
+| Güç | `tedbirge-sysbridge` (127.0.0.1:8378) — `sync` sonrası `/sys/power/state` ya da ACPI sinyali. Fiziksel güç tuşu ve kapak `acpid` üzerinden aynı yola bağlanır. |
+| Sürücüler | Wi-Fi (iwlwifi/ath/rtw/brcm/mediatek), Ethernet, Bluetooth, PipeWire + ALSA, libinput dokunmatik yüzey, NVMe/SATA/USB otomatik bağlama (`/media/<etiket>`, `nosuid,nodev`). |
+
+Kabuktaki Hızlı Kontrol Paneli güç düğmelerini yalnız köprü servisi yanıt verdiğinde gösterir;
+tarayıcı kolunda düğme çıkmaz, sahte başarı üretilmez.
