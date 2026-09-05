@@ -91,8 +91,8 @@ export default defineConfig({
         devOptions: { enabled: false },
         manifest: false,
         // Nitro yayınlanacak statik dosyaları dist/client altında sunar;
-        // kurulum imajı derlemesinde çıktı build-iso/web altına yazılır.
-        outDir: IS_ISO_BUILD ? "build-iso/web" : "dist/client",
+        // kurulum imajı derlemesi bu klasörü sonradan build-iso/web'e taşır.
+        outDir: "dist/client",
 
 
         workbox: {
