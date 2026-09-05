@@ -125,6 +125,15 @@ for (const { file, sql } of loadMigrations()) {
     if (policyMatch) {
       const [, name, table, rest] = policyMatch;
       const restUpper = rest.toUpperCase();
+      // A RESTRICTIVE policy whose expressions are all `false` only removes
+      // access; it never hands writes to a client role. Skip it.
+      const isRestrictive = /\bAS\s+RESTRICTIVE\b/.test(restUpper);
+      const deniesEverything =
+        /\((\s*)FALSE(\s*)\)/.test(restUpper) && !/\bTRUE\b/.test(restUpper);
+      if (isRestrictive && deniesEverything) {
+        policyIssues.delete(`${table}:${name}`);
+        continue;
+      }
       const forMatch = restUpper.match(/\bFOR\s+(ALL|SELECT|INSERT|UPDATE|DELETE)\b/);
       const command = forMatch ? forMatch[1] : "ALL";
       const isWrite = command === "ALL" || WRITE_WORDS.includes(command);
