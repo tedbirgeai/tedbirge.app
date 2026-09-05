@@ -27,15 +27,23 @@ if [ -z "$WASM" ]; then
   exit 1
 fi
 
-# Hedef dizinler kopyalamadan önce garanti edilir (göreli ve mutlak yollar).
-mkdir -p public/kernel ../public/kernel ../../public/kernel
+# Hedef dizinler kopyalamadan önce garanti edilir (mutlak yol kullanılır).
 mkdir -p "$ROOT/public/kernel"
-cp "$WASM" ../../public/kernel/tedbirge_kernel.wasm
+cp "$WASM" "$ROOT/public/kernel/tedbirge_kernel.wasm"
 
 # Boş ya da bozuk dosya sessizce geçmez.
-if ! test -s ../../public/kernel/tedbirge_kernel.wasm; then
+if ! test -s "$ROOT/public/kernel/tedbirge_kernel.wasm"; then
   echo "! public/kernel/tedbirge_kernel.wasm boş." >&2
   exit 1
+fi
+
+# Kurulum imajı derlemesinde çekirdek ayrı çıktı klasörüne de kopyalanır.
+if [ "${TEDBIRGE_ISO:-0}" = "1" ]; then
+  mkdir -p "$ROOT/build-iso/kernel"
+  cp "$WASM" "$ROOT/build-iso/kernel/tedbirge_kernel.wasm"
+  test -s "$ROOT/build-iso/kernel/tedbirge_kernel.wasm" || {
+    echo "! build-iso/kernel/tedbirge_kernel.wasm boş." >&2; exit 1; }
+  echo "✓ build-iso/kernel/tedbirge_kernel.wasm hazır"
 fi
 
 echo "✓ public/kernel/tedbirge_kernel.wasm güncellendi ($(wc -c < "$ROOT/public/kernel/tedbirge_kernel.wasm") bayt)"
