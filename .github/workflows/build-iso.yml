@@ -74,6 +74,7 @@ jobs:
             echo "::error::ISO beklenenden küçük ($SIZE bayt) — yayınlanmayacak."; exit 1
           fi
           # Sabit indirme adı: bağlantı sürümden bağımsız çalışsın
+          mkdir -p build/iso
           cp "$ISO" build/iso/tedbirge-webos-x86_64.iso
           (cd build/iso && sha256sum *.iso > SHA256SUMS)
           echo "ISO=$ISO" >> "$GITHUB_ENV"
