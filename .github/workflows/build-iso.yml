@@ -37,7 +37,7 @@ jobs:
       - name: Rust Wasm çekirdeğini derle
         run: |
           rustup target add wasm32-unknown-unknown
-          mkdir -p public/kernel
+          mkdir -p public/kernel crates/public/kernel crates/tedbirge-kernel/public/kernel
           bash scripts/build-kernel.sh
           test -s public/kernel/tedbirge_kernel.wasm
 
@@ -53,11 +53,13 @@ jobs:
             ls -la dist dist/client 2>/dev/null || true
             exit 1
           fi
+          test -s dist/client/index.html
           if [ ! -s dist/client/kernel/tedbirge_kernel.wasm ]; then
             echo "::error::dist/client/kernel/tedbirge_kernel.wasm eksik — çekirdek derlemesi paketlenmemiş."
             exit 1
           fi
           echo "Paketlenecek dizin: dist/client"
+
           du -sh dist/client
 
       - name: Sürüm etiketi
