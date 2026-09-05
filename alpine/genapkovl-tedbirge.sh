@@ -78,6 +78,15 @@ server {
         add_header Cache-Control "public, max-age=31536000, immutable" always;
     }
 
+    # Yerel güç köprüsü (kapat / yeniden başlat / uyku) — yalnız bu makine
+    location /sys-api/ {
+        proxy_pass http://127.0.0.1:8378/;
+        proxy_http_version 1.1;
+        allow 127.0.0.1;
+        allow ::1;
+        deny all;
+    }
+
     # Tek sayfalık uygulama: bilinmeyen yollar kabuğa düşer
     location / {
         try_files $uri $uri/ /index.html;
@@ -98,12 +107,23 @@ for i in 1 2 3 4 5 6 7 8 9 10; do
   wget -q -O /dev/null "$URL" && break
   sleep 1
 done
+# Ekran kartı tespiti: sürücü varsa donanım hızlandırma, yoksa yazılım çizimi.
+GPU_FLAGS="--use-gl=egl --enable-features=Vulkan,VaapiVideoDecoder,WebGPU --ignore-gpu-blocklist --enable-zero-copy"
+if [ ! -e /dev/dri/renderD128 ]; then
+  echo "GPU surucusu bulunamadi — yazilim cizimine dusuluyor."
+  GPU_FLAGS="--disable-gpu --use-gl=swiftshader"
+  LIBGL_ALWAYS_SOFTWARE=1
+  export LIBGL_ALWAYS_SOFTWARE
+fi
+echo "gpu: $(ls /dev/dri 2>/dev/null | tr '\n' ' ')"
+
 if command -v chromium >/dev/null 2>&1; then
+  # shellcheck disable=SC2086
   exec chromium \
     --kiosk --app="$URL" --start-fullscreen \
     --noerrdialogs --disable-infobars --disable-translate \
     --no-first-run --disable-pinch --overscroll-history-navigation=0 \
-    --password-store=basic --test-type
+    --password-store=basic --test-type $GPU_FLAGS
 elif command -v chromium-browser >/dev/null 2>&1; then
   exec chromium-browser --kiosk --app="$URL" --noerrdialogs --no-first-run
 elif command -v cog >/dev/null 2>&1; then
@@ -118,6 +138,8 @@ makefile root:root 0644 "$tmp/home/tedbirge/.xinitrc" <<'EOF'
 xset s off
 xset -dpms
 xset s noblank
+# Coklu monitor: bagli tum ciktilar en yuksek kendi cozunurluklerinde acilir.
+/opt/tedbirge/ekran-duzeni.sh 2>/dev/null || true
 exec /opt/tedbirge/kiosk.sh
 EOF
 
@@ -150,6 +172,8 @@ makefile root:root 0644 "$tmp/root/.xinitrc" <<'EOF'
 xset s off
 xset -dpms
 xset s noblank
+# Coklu monitor: bagli tum ciktilar en yuksek kendi cozunurluklerinde acilir.
+/opt/tedbirge/ekran-duzeni.sh 2>/dev/null || true
 exec /opt/tedbirge/kiosk.sh
 EOF
 
