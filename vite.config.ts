@@ -53,9 +53,16 @@ export default defineConfig({
       : { enabled: true, autoStaticPathsDiscovery: false },
   },
   // Yayın hedefi Vercel'dir: orada sunucu tarafı render eden Vercel çıktısı
-  // üretilir, statik SPA yönlendirmesi eklenmez. Diğer ortamlarda (ISO/CI ve
-  // Lovable) varsayılan çıktı korunur; ISO paketi dist/client'ı kullanır.
-  nitro: { preset: process.env.NITRO_PRESET ?? (IS_VERCEL_BUILD ? "vercel" : undefined) },
+  // üretilir, statik SPA yönlendirmesi eklenmez. Diğer ortamlarda (ISO/CI)
+  // çıktı dist altına sabitlenir; ISO paketi dist/client'ı kullanır.
+  // Lovable derlemesinde ortam kendi ön ayarını ve dizinlerini dayatır.
+  nitro: IS_VERCEL_BUILD
+    ? { preset: process.env.NITRO_PRESET ?? "vercel" }
+    : {
+        preset: process.env.NITRO_PRESET,
+        output: { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" },
+      },
+
 
 
 
