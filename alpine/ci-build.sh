@@ -133,14 +133,43 @@ if ! grep -q 'rootflags=size=' "$WORK/alpine/mkimg.tedbirge.sh"; then
 fi
 echo "-- acilis satiri etiketi, surucu listesi ve kok alani dogrulandi"
 
-# Canli sistemin gercek paket listesi (/etc/apk/world) arayuzu icermelidir.
-for p in nginx chromium xorg-server xinit mkinitfs grub-bios grub-efi; do
-  grep -qx "$p" "$WORK/alpine/genapkovl-tedbirge.sh" || {
+# Canli sistemin gercek paket listesini yalniz world heredoc'undan oku. Tum
+# dosyada grep yapmak, yorumdaki bir paket adini yanlislikla gecerli sayabilir.
+WORLD_PKGS=$(awk '
+  /makefile root:root 0644 .*\/etc\/apk\/world.*<<.EOF./ { inside=1; next }
+  inside && /^EOF$/ { exit }
+  inside { print }
+' "$WORK/alpine/genapkovl-tedbirge.sh")
+[ -n "$WORLD_PKGS" ] || {
+  echo "! Canli sistem paket listesi okunamadi." >&2
+  exit 1
+}
+for p in alpine-base openrc nginx chromium xorg-server xinit linux-lts mkinitfs grub-bios grub-efi; do
+  printf '%s\n' "$WORLD_PKGS" | grep -qx "$p" || {
     echo "! Canli sistem paket listesinde (world) '$p' yok; sistem paketsiz acilir." >&2
     exit 1
   }
 done
 echo "-- canli sistem paket listesi dogrulandi"
+
+# Donanim yoneticisi tek yigin olmalidir. NetworkManager ile eudev kullanilir;
+# mdev ve udev ayni anda acilirsa aygit olaylari yarisa girer.
+for service in udev udev-trigger udev-settle; do
+  grep -q "rc_add $service sysinit" "$WORK/alpine/genapkovl-tedbirge.sh" || {
+    echo "! eudev servisi etkin degil: $service" >&2; exit 1;
+  }
+done
+if grep -qE 'rc_add (mdev|hwdrivers) sysinit' "$WORK/alpine/genapkovl-tedbirge.sh"; then
+  echo "! mdev ve eudev ayni imajda etkinlestirilemez." >&2
+  exit 1
+fi
+
+# modules= listesi kadar initramfs ozellikleri de depolama yollarini tasimali.
+for feature in ata cdrom mmc nvme scsi usb virtio; do
+  grep -q "initfs_features=\"[^"]*\\b$feature\\b" "$WORK/alpine/mkimg.tedbirge.sh" || {
+    echo "! initramfs ozelliklerinde '$feature' yok." >&2; exit 1;
+  }
+done
 
 
 chown -R builder:abuild /home/builder/aports
