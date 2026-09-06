@@ -1,43 +1,99 @@
-# Tedbirge® WEBOS açılış ve kurulum zincirini sağlamlaştırma
+# Tedbirge® WebOS — Kurulum İmajı Fizibilite Raporu ve Tek Seferlik Plan
 
-## Hedef
+Bu belge yalnız rapor ve plandır. Hiçbir kod değiştirilmedi.
 
-Fotoğraftaki `switch_root` / `Attempted to kill init (exitcode=0x100)` çökmesini, yalnız görünen hatayı bastırmadan canlı sistemin kök dosya sistemi oluşturma zincirinde gidermek. Çalışan web arayüzü ve ürün işlevleri değişmeden kalacak.
+## 1. Hatanın gerçek nedeni (kanıtlanmış)
 
-Destek kapsamı: 64-bit Intel/AMD masaüstü ve dizüstüler; hem klasik BIOS hem UEFI; SATA, NVMe, eMMC ve USB önyükleme. ARM cihazlar ve Apple Silicon bu x86_64 imajının kapsamı dışındadır.
+Ekrandaki panik satırı: `Attempted to kill init! exitcode=0x00000100`, `Comm: switch_root`, 11,4 saniyede, Gigabyte H81M-S1.
 
-## Uygulama
+Bu tam olarak şu anlama gelir: açılış ortamı diski buldu, kök alanı hazırladı, sonra
+`/sbin/init` çalıştırılamadı ve devir işlemi 1 koduyla çıktı. Yani sorun disk, USB,
+sürücü listesi veya BIOS/UEFI değil — kök sistemin **hiç oluşmamış olması**.
 
-1. **Canlı açılışta eksik/yarım kök sistemi oluşmasını önle**
-   - Alpine diskless açılışında yüzlerce MB paketin RAM tabanlı köke kurulması sırasında oluşan alan baskısını azalt.
-   - Firmware’i iki kez kök sisteme kurmak yerine Alpine modloop üzerinden yükle; yalnız kullanıcı alanında gerçekten gereken grafik, ağ, ses ve kurulum paketlerini bırak.
-   - Kök tmpfs için sabit küçük tavan kullanmadan güvenli oransal alan tanımla; düşük RAM’de sessizce yarım kurulum yerine açık hata üret.
-   - `/sbin/init`, çalıştırıcı yükleyicisi, OpenRC ve zorunlu servis dosyalarının ISO içinde gerçekten bulunduğunu yayın öncesi doğrula.
+Neden oluşmuyor: seçtiğimiz Alpine "mkimage" yöntemi, kök sistemi imaj üretilirken
+kurmaz; **her açılışta, o bilgisayarın belleğinde, sıfırdan paket kurar**. Bizim
+paket listemiz 80'den fazla paket içeriyor (Chromium, Xorg, Mesa, PipeWire,
+NetworkManager, Bluetooth, GRUB…). Bu kurulum RAM'e sığmadığında ya da herhangi bir
+adımda yarıda kaldığında `/sbin/init` hiç oluşmaz ve çekirdek panikler.
 
-2. **Kalıcı disk kurulumunu BIOS ve UEFI için düzelt**
-   - GPT düzenine BIOS önyükleme bölümü + EFI bölümü + ext4 sistem bölümü koy.
-   - EFI bölümünü sistem kopyalanmadan önce doğru yere bağla; çalışma moduna göre UEFI veya BIOS kurulumu yap.
-   - Alpine kurulum aracına hedef diski açıkça ver; ikinci kez ve hatası gizlenerek çalışan GRUB kurulumunu kaldır.
-   - SATA/NVMe/eMMC bölüm adlarını, minimum disk alanını, disk görünürlüğünü ve her kritik kopya/bağlama/önyükleyici sonucunu doğrula.
-   - Kurulan sisteme yalnız temel Alpine değil, WebOS’un gerçek çalışma paketlerini ve etkin servislerini kalıcı olarak taşı; başarı mesajını ancak açılabilir sistem kontrolleri geçince göster.
+Doğrulananlar (bu tur yapıldı):
+- Listedeki paketlerin **tamamı** Alpine 3.20 deposunda mevcut → paket adı hatası yok.
+- Açılış satırı, etiket, sürücü listesi, initramfs özellikleri tutarlı → bu alanlarda eksik yok.
+- Yani şu ana kadarki tüm düzeltmeler doğru ama **yanlış katmanda** yapıldı; mimarinin
+  kendisi bu ürün için uygun değil.
 
-3. **Donanım uyumluluğunu koru**
-   - Intel/AMD grafik, yaygın Wi‑Fi/Ethernet, ses, ACPI, USB 2/3, SATA/AHCI, NVMe ve eMMC sürücülerini koru.
-   - Donanım hızlandırma bulunmazsa mevcut yazılım çizimi geri dönüşünü sürdür.
-   - Belleği yetersiz bilgisayarda grafik başlatmayı zorlayıp çekirdeği çökertmek yerine anlaşılır tanılama ve güvenli konsol geri dönüşü sağla.
+Kısacası: tek tek yama yaparak bu mimaride kalıcı çözüm elde edilemez. Her yeni
+bilgisayar farklı RAM/donanımla aynı sınıra çarpar.
 
-4. **Hatalı ISO’nun yayımlanmasını engelle**
-   - Üretilen ISO’da birim etiketi, boot parametreleri, paket deposu, apkovl, kernel/initramfs/modloop ve kurulum dosyalarını yapısal olarak denetle.
-   - QEMU’da en az BIOS+USB ve UEFI açılış senaryolarını çalıştır; `/sbin/init`, kurtarma kabuğu, kernel panic ve zaman aşımını kesin başarısızlık say.
-   - Canlı sistem servisleri başladı işaretine ek olarak, gerçek kurulum bağımlılıklarının ve WebOS paket dünyasının mevcut olduğunu kontrol et.
-   - Kontroller geçmeden Release varlığı oluşturma; sabit ISO adı ve SHA-256 çıktısını koru.
+## 2. Diğer işletim sistemleri bunu nasıl yapıyor (özet)
 
-5. **Doğrulama**
-   - Kabuk/YAML sözdizimi, paket listesi ve açılış invariant testleri.
-   - Mevcut uygulama güvenlik kontrolü, testleri ve derlemesi.
-   - Docker erişimi varsa gerçek Alpine `mkimage` üretimi; ardından BIOS ve UEFI QEMU smoke testleri.
-   - Sonuçta yeni ISO’nun yeniden indirilmesi gerektiğini sürüm/özet içinde açıkça belirt.
+| Sistem | Yöntem | Sonuç |
+|---|---|---|
+| Ubuntu (casper) | Kök sistem **imaj üretilirken** hazırlanır, tek sıkıştırılmış dosya (squashfs) olarak ISO'ya konur; açılışta yalnız bağlanır | Açılışta kurulum yok → panik sınıfı ortadan kalkar |
+| Debian live-build | Aynı model, `filesystem.squashfs` | En geniş donanım/firmware kapsaması |
+| Fedora (dracut + Anaconda) | Aynı model + olgun kurulum sihirbazı | Ağır ama tam donanımlı |
+| Arch (archiso) | `airootfs.sfs` önceden hazır | Kabuk betiği tabanlı, bize en yakın zihniyet |
+| ChromeOS / SteamOS | A/B iki tam sistem bölümü, salt-okunur, otomatik geri alma | Kiosk için en sağlam, ama güncelleme altyapısı gerektirir |
+| **Alpine mkimage (bizim mevcut yolumuz)** | **Kök sistemi her açılışta belleğe kurar** | **Tek istisna; bizim yaşadığımız hatanın kaynağı** |
 
-## Teknik not
+Ortak kural: ciddi ürünlerin hiçbiri açılışta paket kurmaz. Paketleme bir kez,
+derleme sırasında yapılır ve test edilir.
 
-Ekrandaki hata disk kurulum sihirbazından önce, canlı Alpine kökü hazırlanıp PID 1’e geçilirken oluşuyor. Bu nedenle yalnız GRUB veya USB yazma biçimini değiştirmek yeterli değil; paket/RAM kök kurulumu, init bütünlüğü, BIOS/UEFI disk kurulumu ve yayın testi birlikte düzeltilmeli.
+## 3. Önerilen çözüm (tek yol, tek seferde)
+
+**Debian live-build tabanlı, önceden pişmiş squashfs kök + kalıcı disk kurulumu.**
+
+Neden Debian:
+- Gigabyte/Intel gibi eski masaüstü donanımlarında firmware ve sürücü kapsaması en geniş olan seçenek.
+- Kök sistem CI'da bir kez kurulur, test edilir, imzalanır; kullanıcı bilgisayarında hiçbir kurulum çalışmaz.
+- BIOS ve UEFI açılışı, kalıcı kurulum ve GRUB tarafı olgun ve hazır.
+- Mevcut arayüz, nginx yapılandırması, kiosk betiği, güç köprüsü ve `/opt/tedbirge`
+  içeriğinin tamamı aynen taşınır — WebOS tarafında hiçbir şey yeniden yazılmaz.
+
+Alpine'da kalıp squashfs'e geçmek de teknik olarak mümkün, ancak sürücü/firmware
+kapsaması ve kalıcı kurulum araçları Debian kadar hazır değil; aynı emekle daha az
+garanti alırız.
+
+## 4. Yapılacaklar (sıra ile, tek pakette)
+
+1. **İmaj derleyicisi değişimi**
+   - `alpine/` altındaki mkimage profili, apkovl ve CI doğrulamaları emekliye ayrılır (silinmez, arşivlenir).
+   - Yeni `image/` klasörü: Debian live-build yapılandırması (paket listeleri, açılış menüsü, hooks).
+   - Kök sistem CI'da kurulur → squashfs'e sıkıştırılır → BIOS+UEFI hibrit ISO üretilir.
+
+2. **WebOS yerleşimi (mevcut içerik taşınır)**
+   - Arayüz paketi `/var/www/localhost/htdocs` yerine Debian yoluna, nginx yapılandırması aynı (COOP/COEP dahil).
+   - Kiosk zinciri: otomatik oturum → X → Chromium kiosk; GPU yoksa yazılım çizimine düşüş korunur.
+   - Güç köprüsü, ZRAM, ekran düzeni, günlük dosyaları ve otomatik disk bağlama betikleri aynen taşınır.
+
+3. **Kalıcı kurulum**
+   - Canlı sistemde `tedbirge-kur`: hedef disk seçimi, açık onay, GPT/EFI veya BIOS bölümleme,
+     squashfs'in diske açılması, GRUB kurulumu, kurulum sonrası doğrulama.
+   - Mevcut `scripts/setup-tedbirge-disk.sh` mantığı korunur, Debian araçlarına uyarlanır.
+
+4. **Otomatik açılış testi (CI kapısı)**
+   - QEMU ile: BIOS, UEFI (OVMF pflash), USB, SATA, 2 GB düşük bellek senaryoları.
+   - Başarı ölçütü seri porta yazılan `TEDBIRGE_BOOT_READY` satırıdır; başka hiçbir sinyal kabul edilmez.
+   - Ayrıca canlı sistemden **diske kurulum + kurulan sistemden yeniden açılış** testi otomatik koşar.
+     Bugün eksik olan asıl test budur.
+   - Testlerin hepsi geçmeden ISO yayınlanmaz.
+
+5. **Yayın**
+   - GitHub Releases'a ISO + SHA-256 özeti; indirme bağlantısı sitedeki kurulum kartına bağlanır.
+   - Kısa Türkçe kurulum kılavuzu (USB yazma, açılış sırası, kurulum adımları).
+
+## 5. Riskler ve dürüst beklenti
+
+- İlk çalışan ISO'ya kadar CI'da birkaç derleme turu gerekir; bu normaldir, ancak
+  artık hata sınıfı "her bilgisayarda başka türlü patlıyor" değil, "derleme çıktısı eksik" olur.
+- ISO boyutu Alpine'a göre büyür (yaklaşık 1,5–2,5 GB). Kiosk ürünü için kabul edilebilir.
+- Donanım testini yalnız QEMU yapar; sizin Gigabyte makinenizde ilk gerçek doğrulamayı
+  siz yaparsınız. O test geçtiğinde ürün teslim edilebilir sayılır.
+- Bu plan tek parça uygulanır: yarım geçiş yapılmaz, eski Alpine hattı yeni hat
+  testleri geçene kadar arşivde bekler.
+
+## 6. Karar noktası
+
+Onayınız gerekiyor: Debian live-build'e geçiş mi, yoksa Alpine'da kalıp yalnız
+"önceden pişmiş squashfs" modeline mi geçelim? Öneri Debian'dır; gerekçe donanım
+kapsaması ve kurulum araçlarının olgunluğudur.
