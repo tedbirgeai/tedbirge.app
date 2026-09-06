@@ -100,6 +100,18 @@ if grep -q 'volid "alpine-' /home/builder/aports/scripts/mkimg.base.sh; then
 fi
 echo "-- ISO birim etiketi: TEDBIRGE_WEBOS"
 
+# Etiket senkronizasyonu: acilis satiri ile imaj etiketi ayrisirsa canli ortam
+# "Mounting boot media failed" ile kurtarma kabuguna duser. Bu yuzden zorunlu kontrol.
+if ! grep -q 'alpine_dev=LABEL=TEDBIRGE_WEBOS' "$WORK/alpine/mkimg.tedbirge.sh"; then
+  echo "! Acilis satirindaki etiket ile ISO etiketi ayrisik (alpine_dev=LABEL=TEDBIRGE_WEBOS yok)."
+  exit 1
+fi
+if [ -d "$WORK/alpine/boot" ]; then
+  echo "! alpine/boot ikinci bir acilis menusu tanimliyor; tek kaynak mkimg.tedbirge.sh olmali."
+  exit 1
+fi
+echo "-- acilis satiri etiketi dogrulandi"
+
 chown -R builder:abuild /home/builder/aports
 
 
