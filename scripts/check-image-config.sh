@@ -24,6 +24,7 @@ for f in \
   image/config/includes.chroot/etc/systemd/system/tedbirge-installer.service \
   image/config/bootloaders/syslinux_common/live.cfg.in \
   image/config/bootloaders/grub-pc/grub.cfg \
+  image/config/bootloaders/isolinux/isolinux.cfg \
   scripts/verify-iso.sh \
   scripts/test-install-qemu.sh
 do
