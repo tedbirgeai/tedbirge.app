@@ -21,9 +21,10 @@ export const MAX_PER_PAGE = 16;
 export const MOBILE_COLS = 4;
 
 export function pageCapacity(width: number, height: number) {
-  const fit = Math.max(1, Math.floor((width - PAD * 2 + GAP) / (ICON_W + GAP)));
-  const cols = Math.min(MOBILE_COLS, fit);
+  // Telefonda sütun sayısı ölçüden bağımsız 4'tür; simgeler esner.
+  const cols = MOBILE_COLS;
   const rows = Math.max(1, Math.floor((height - PAD * 2 + GAP) / (ICON_H + GAP)));
+  void width;
   return { cols, perPage: Math.min(MAX_PER_PAGE, cols * rows) };
 }
 
@@ -89,7 +90,7 @@ export function DesktopPager({
               }}
             >
               <div
-                className="grid content-start justify-items-center gap-3"
+                className="grid content-start justify-items-center gap-3 [&_.tbos-desk-icon]:!w-full"
                 style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
               >
                 {items.map((id) => renderIcon(id))}
