@@ -58,9 +58,20 @@ uygun açılış bölümünü kendisi oluşturur.
 ## İmaj nasıl üretiliyor (teknik)
 
 İmaj GitHub Actions üzerinde otomatik derlenir: `.github/workflows/build-iso.yml`
-→ `alpine/ci-build.sh` → Alpine `mkimage` profili (`alpine/mkimg.tedbirge.sh`) +
-overlay (`alpine/genapkovl-tedbirge.sh`). Çıktı GitHub Releases alanına yüklenir ve
-`/api/public/iso` rotası her zaman en güncel dosyaya yönlendirir.
+→ `image/build.sh` (Debian bookworm live-build).
+
+Temel ilke: kök dosya sistemi **derleme sırasında bir kez** kurulur ve tek bir
+sıkıştırılmış dosyaya (squashfs) pişirilir. Kullanıcının bilgisayarı açılışta
+hiçbir paket kurmaz, yalnızca hazır kökü bağlar. Önceki Alpine hattı her açılışta
+paket kurduğu için `Attempted to kill init` paniği veriyordu; o hat
+`archive/alpine/` altına kaldırıldı.
+
+Yayın hattı imajı üretmeden önce yapılandırmayı (`scripts/check-image-config.sh`),
+ürettikten sonra ISO yapısını, BIOS+UEFI açılış kayıtlarını, beş QEMU açılış
+senaryosunu ve `scripts/test-install-qemu.sh` ile diske kurulum + kurulan
+sistemden yeniden açılışı doğrular. Bu denetimlerden biri bile geçmezse imaj
+yayınlanmaz. Çıktı GitHub Releases alanına yüklenir ve `/api/public/iso` rotası
+her zaman en güncel dosyaya yönlendirir.
 Depo: **tedbirgeai/tedbirge.app** — https://github.com/tedbirgeai/tedbirge.app/releases/latest
 
 Denemek için sanal makine:
