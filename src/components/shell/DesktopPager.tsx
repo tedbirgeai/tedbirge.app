@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import { ICON_H, ICON_W } from "@/components/shell/DesktopIcon";
+import { ICON_H } from "@/components/shell/DesktopIcon";
 import { PageDots } from "@/components/shell/PageDots";
 
 const GAP = 24;
@@ -17,9 +17,14 @@ const PAD = 24;
 export const MAX_PER_PAGE = 16;
 
 /** Ölçülen alana göre sayfa başına ikon kapasitesi (en çok 16). */
+/** Telefon yerleşimi kesin 4 sütundur (sayfa başına en çok 4×4 = 16 simge). */
+export const MOBILE_COLS = 4;
+
 export function pageCapacity(width: number, height: number) {
-  const cols = Math.max(1, Math.floor((width - PAD * 2 + GAP) / (ICON_W + GAP)));
+  // Telefonda sütun sayısı ölçüden bağımsız 4'tür; simgeler esner.
+  const cols = MOBILE_COLS;
   const rows = Math.max(1, Math.floor((height - PAD * 2 + GAP) / (ICON_H + GAP)));
+  void width;
   return { cols, perPage: Math.min(MAX_PER_PAGE, cols * rows) };
 }
 
@@ -79,14 +84,14 @@ export function DesktopPager({
           {pages.map((items, i) => (
             <div
               key={i}
-              className="tbos-pager-page h-full w-full shrink-0 p-6"
+              className="tbos-pager-page h-full w-full shrink-0 px-3 pt-40 pb-3"
               onPointerDown={(e) => {
                 if (e.target === e.currentTarget) onEmptyPointerDown();
               }}
             >
               <div
-                className="grid content-start justify-start gap-6"
-                style={{ gridTemplateColumns: `repeat(${cols}, ${ICON_W}px)` }}
+                className="grid content-start justify-items-center gap-3 [&_.tbos-desk-icon]:!w-full"
+                style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
               >
                 {items.map((id) => renderIcon(id))}
               </div>

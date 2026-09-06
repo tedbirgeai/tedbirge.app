@@ -27,6 +27,8 @@ import { Desktop } from "@/components/shell/Desktop";
 import { Spotlight } from "@/components/shell/Spotlight";
 import { pressFeedback } from "@/lib/chat/sounds";
 import { notify, notifyError, notifyOk } from "@/lib/shell/notify";
+import { popUndo } from "@/lib/shell/undo-stack";
+import { Onboarding } from "@/components/shell/Onboarding";
 import { objectUrl, readFile, requestPersistentStorage } from "@/lib/vfs/store";
 import { TransfersApp } from "@/components/shell/apps/TransfersApp";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
@@ -45,8 +47,14 @@ import { closeWindow, openWindow, useWindows, type WindowRecord } from "@/shell/
 /** Messenger ağır bir uygulamadır: yalnız penceresi açıldığında yüklenir. */
 const MessengerApp = lazy(() => import("@/components/Messenger"));
 
+/** Arama uygulaması sohbet kabuğunu "Aramalar" sekmesinde açar. */
+const CallsApp = lazy(() =>
+  import("@/components/chat/ChatApp").then((m) => ({ default: m.ChatApp })),
+);
+
 const WINDOW_TITLES: Record<string, string> = {
   messenger: "Sohbet — P2P Ses / Görüntü",
+  calls: "Arama",
   music: "Müzik",
   media: "Medya — Wasm Kum Havuzu Oynatıcı",
   files: "Dosyalar",
@@ -85,6 +93,8 @@ export function WorkspacePanel() {
   const windows = useWindows();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [spotlight, setSpotlight] = useState(false);
+  // Telefonda üstten aşağı çekme jestinin başlangıç noktası.
+  const pullStart = useRef<number | null>(null);
 
   // Çevrimdışı güvence: dosyalar yer baskısında bile silinmesin.
   useEffect(() => {
@@ -93,12 +103,29 @@ export function WorkspacePanel() {
     getFontScale();
   }, []);
 
-  // Evrensel arama kısayolu: Ctrl/Cmd + Boşluk.
+  // Evrensel arama: Ctrl/Cmd + K (Ctrl + Boşluk kısayolu korunur).
+  // Ctrl/Cmd + Z: son işlemi geri alır (pencere kapatma, küçültme…).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code === "Space" && (e.ctrlKey || e.metaKey)) {
+      const meta = e.ctrlKey || e.metaKey;
+      if (meta && (e.code === "Space" || e.key.toLowerCase() === "k")) {
         e.preventDefault();
         setSpotlight((v) => !v);
+        return;
+      }
+      if (meta && !e.shiftKey && e.key.toLowerCase() === "z") {
+        const target = e.target as HTMLElement | null;
+        const typing =
+          !!target &&
+          (target.isContentEditable ||
+            target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA");
+        if (typing) return;
+        const entry = popUndo();
+        if (!entry) return;
+        e.preventDefault();
+        void entry.undo();
+        notify("Geri alındı", entry.label);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -174,6 +201,24 @@ export function WorkspacePanel() {
 
       {/* Masaüstü yüzeyi: duvar kâğıdı, kısayollar ve pencereler. */}
       <div ref={surfaceRef} className="relative min-h-0 flex-1 overflow-hidden">
+        {/* Telefon: üstten aşağı çekince Hızlı Ayarlar (kontrol merkezi) açılır. */}
+        {isMobile ? (
+          <div
+            aria-hidden
+            className="absolute inset-x-0 top-0 z-[60] h-6 touch-pan-x"
+            onTouchStart={(e) => {
+              pullStart.current = e.touches[0]?.clientY ?? null;
+            }}
+            onTouchEnd={(e) => {
+              const y = e.changedTouches[0]?.clientY ?? 0;
+              if (pullStart.current != null && y - pullStart.current > 40) {
+                window.dispatchEvent(new Event("tedbirge:open-control"));
+              }
+              pullStart.current = null;
+            }}
+          />
+        ) : null}
+
         <AppErrorBoundary title="Masaüstü" appId="shell.desktop">
           <Desktop onOpen={launch} onOpenNew={launchNew} />
         </AppErrorBoundary>
@@ -230,6 +275,8 @@ export function WorkspacePanel() {
       <LiveRegion />
 
       <Spotlight open={spotlight} onClose={() => setSpotlight(false)} onLaunch={launch} />
+
+      <Onboarding />
 
       {/* Parlaklık ve gece ışığı filtresi tüm arayüzün üstünde durur. */}
       <div className="tbos-screen-filter" aria-hidden />
@@ -375,6 +422,21 @@ function AppSurface({
       >
         <div className="min-h-0 flex-1 overflow-auto [&>div]:h-full">
           <MessengerApp />
+        </div>
+      </Suspense>
+    );
+  }
+  if (win.appId === "calls") {
+    return (
+      <Suspense
+        fallback={
+          <div className="flex flex-1 items-center justify-center font-osmono text-[12px] text-[var(--tb-muted)]">
+            Arama yükleniyor…
+          </div>
+        }
+      >
+        <div className="min-h-0 flex-1 overflow-auto [&>div]:h-full">
+          <CallsApp initialApp="calls" />
         </div>
       </Suspense>
     );

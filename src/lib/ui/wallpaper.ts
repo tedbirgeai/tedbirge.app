@@ -70,7 +70,7 @@ export const WALLPAPERS: Wallpaper[] = [
     src: crystal,
     theme: "crystal",
   },
-  { id: "night", label: "Gece Cam", hint: "Koyu cam, düşük ışık", src: night, theme: "night" },
+  { id: "night", label: "Koyu Kristal", hint: "Varsayılan koyu cam", src: night, theme: "night" },
   { id: "neon", label: "Siberpunk Neon", hint: "Neon şehir, gece", src: neon, theme: "night" },
   {
     id: "mesh",
@@ -82,7 +82,7 @@ export const WALLPAPERS: Wallpaper[] = [
   { id: "dark", label: "Dark Minimal", hint: "Gürültüsüz koyu yüzey", src: dark, theme: "night" },
 ];
 
-export const DEFAULT_WALLPAPER: WallpaperId = "aurora";
+export const DEFAULT_WALLPAPER: WallpaperId = "night";
 
 function isWallpaper(v: string | null): v is WallpaperId {
   return !!v && WALLPAPERS.some((w) => w.id === v);

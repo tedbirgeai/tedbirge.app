@@ -147,6 +147,7 @@ import {
   unlockAudio,
   vibrate,
 } from "@/lib/chat/sounds";
+import type { ShellAppId } from "@/shell/apps";
 import { ShellProvider } from "@/shell/ShellProvider";
 import { useShell } from "@/shell/shell-context";
 import { getBrowserNodeId, getPersonId, type PeerInfo } from "@/lib/browser-node";
@@ -206,9 +207,9 @@ const UNREAD_TAB = "__unread";
 const FAV_TAB = "__fav";
 const GROUPS_TAB = "__groups";
 
-export function ChatApp() {
+export function ChatApp({ initialApp }: { initialApp?: ShellAppId } = {}) {
   return (
-    <ShellProvider>
+    <ShellProvider {...(initialApp ? { initialApp } : {})}>
       <ChatAppInner />
     </ShellProvider>
   );
