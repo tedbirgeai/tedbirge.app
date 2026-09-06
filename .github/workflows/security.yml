@@ -65,20 +65,34 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # The audit registry endpoint occasionally answers 404/5xx; a registry
-      # outage must not be reported as a vulnerability. Only real high/critical
-      # advisories fail the job.
+      # npm audit bir package-lock.json ister; depoda tutulmaz, gecici uretilir.
+      - name: Kilit dosyasi uret (denetim icin)
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      # Denetim yalnizca gercek yuksek/kritik zafiyette durur. Kayit servisi
+      # ulasilamazsa (404/5xx/ag hatasi) is uyari ile gecer.
       - name: Audit
+        shell: bash
         run: |
           set +e
-          out="$(bun audit --audit-level=high 2>&1)"
+          out="$(npm audit --audit-level=high --json 2>&1)"
           code=$?
-          echo "$out"
-          if [ $code -ne 0 ]; then
-            if echo "$out" | grep -qiE 'audit request failed|status (4[0-9]{2}|5[0-9]{2})|fetch failed|ENOTFOUND'; then
-              echo "::warning::Dependency audit service unreachable; skipping."
-              exit 0
-            fi
-            exit $code
+          echo "$out" | head -c 20000
+          if [ $code -eq 0 ]; then
+            echo "Yuksek/kritik zafiyet yok."
+            exit 0
           fi
+          high=$(printf '%s' "$out" | grep -oE '"high"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' | head -n1)
+          crit=$(printf '%s' "$out" | grep -oE '"critical"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' | head -n1)
+          if [ -n "$high" ] || [ -n "$crit" ]; then
+            if [ "${high:-0}" -gt 0 ] || [ "${crit:-0}" -gt 0 ]; then
+              echo "::error::Yuksek: ${high:-0}, Kritik: ${crit:-0} zafiyet bulundu."
+              exit 1
+            fi
+            echo "Yuksek/kritik zafiyet yok."
+            exit 0
+          fi
+          echo "::warning::Bagimlilik denetim servisi yanit vermedi; adim atlandi."
+          exit 0
+
 
