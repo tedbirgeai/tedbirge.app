@@ -65,5 +65,20 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # The audit registry endpoint occasionally answers 404/5xx; a registry
+      # outage must not be reported as a vulnerability. Only real high/critical
+      # advisories fail the job.
       - name: Audit
-        run: bun audit --audit-level=high
+        run: |
+          set +e
+          out="$(bun audit --audit-level=high 2>&1)"
+          code=$?
+          echo "$out"
+          if [ $code -ne 0 ]; then
+            if echo "$out" | grep -qiE 'audit request failed|status (4[0-9]{2}|5[0-9]{2})|fetch failed|ENOTFOUND'; then
+              echo "::warning::Dependency audit service unreachable; skipping."
+              exit 0
+            fi
+            exit $code
+          fi
+
