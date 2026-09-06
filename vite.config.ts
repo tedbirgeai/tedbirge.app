@@ -43,7 +43,6 @@ const IS_VERCEL_BUILD = !!process.env.VERCEL;
 // paketleme betiği sonucu build-iso/web altına taşıyıp kök dizini temizler.
 // Böylece ön-render, servis işçisi ve varlıklar hep aynı klasörde birleşir.
 
-
 export default defineConfig({
   tanstackStart: {
     // Sunucu girişini src/server.ts'ye yönlendirir (SSR hata sarmalayıcısı).
@@ -68,11 +67,6 @@ export default defineConfig({
         output: { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" },
       },
 
-
-
-
-
-
   vite: {
     // Varlık yolları her zaman köke göre çözülür.
     base: "/",
@@ -93,7 +87,6 @@ export default defineConfig({
         // Nitro yayınlanacak statik dosyaları dist/client altında sunar;
         // kurulum imajı derlemesi bu klasörü sonradan build-iso/web'e taşır.
         outDir: "dist/client",
-
 
         workbox: {
           // Uygulama kapalıyken bile bildirim gösteren push dinleyicisi.

@@ -8,7 +8,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@/components/shell/OsLink";
-import { Focus, Moon, Power, RotateCcw, Sun, UserRound, Volume2, VolumeX, Wifi } from "lucide-react";
+import {
+  Focus,
+  Moon,
+  Power,
+  RotateCcw,
+  Sun,
+  UserRound,
+  Volume2,
+  VolumeX,
+  Wifi,
+} from "lucide-react";
 
 import { applySystemVolume, isSoundMuted, setSoundMuted, tapSound } from "@/lib/chat/sounds";
 import { notify } from "@/lib/shell/notify";
@@ -216,7 +226,6 @@ export function ControlCenter({
           </button>
         ))}
       </div>
-
 
       {powerReady ? (
         <div className="mt-2 rounded-xl border border-[var(--tb-border)] p-2">

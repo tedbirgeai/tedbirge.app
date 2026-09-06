@@ -105,7 +105,6 @@ export async function startIsoDownload(): Promise<boolean> {
   return true;
 }
 
-
 export function useIsoDownload() {
   const [guide, setGuide] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -252,7 +251,6 @@ export function IsoGuideDialog({
         listesinde dosyayı “Sakla/İzin ver” ile onaylayın. USB'den açılış için BIOS/UEFI'de “Secure
         Boot” kapatılmalıdır.
       </p>
-
     </Shell>
   );
 }

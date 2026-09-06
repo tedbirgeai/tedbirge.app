@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 /**
  * Tedbirge — bildirim servis çalışanı eklentisi.
  * ------------------------------------------------------------------
