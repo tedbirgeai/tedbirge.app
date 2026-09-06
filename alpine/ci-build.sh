@@ -179,6 +179,10 @@ chown -R builder:abuild /home/builder/iso
 PKGS=$(sed -n '/apks="\$apks/,/^[[:space:]]*"[[:space:]]*$/p' \
   /home/builder/aports/scripts/mkimg.tedbirge.sh \
   | sed -e '1d' -e '$d' -e 's/"//g')
+[ -n "$PKGS" ] || {
+  echo "HATA: profil paket listesi cikartilamadi; bos imaj uretilmeyecek." >&2
+  exit 1
+}
 MISSING=""
 for p in $PKGS; do
   apk search -x "$p" 2>/dev/null | grep -q . || MISSING="$MISSING $p"
@@ -212,6 +216,12 @@ su builder -c "cd /home/builder/aports/scripts && \
     --repository https://dl-cdn.alpinelinux.org/alpine/v3.20/main \
     --repository https://dl-cdn.alpinelinux.org/alpine/v3.20/community \
     --profile tedbirge"
+
+set -- /home/builder/iso/*.iso
+[ -e "$1" ] || {
+  echo "HATA: mkimage tamamlandi ancak ISO dosyasi olusmadi." >&2
+  exit 1
+}
 
 for f in /home/builder/iso/*.iso; do
   [ -e "$f" ] || continue

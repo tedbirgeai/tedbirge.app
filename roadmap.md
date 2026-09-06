@@ -1,8 +1,8 @@
 # Teslim yol haritası
 
-- [ ] ISO üretim ve yapısal doğrulama hattını sağlamlaştır
-- [ ] BIOS/UEFI QEMU testlerini taşınabilir ve kesin sonuçlu yap
-- [ ] Canlı açılış kökü ve servis başarı işaretini doğrula
-- [ ] Kalıcı disk kurulumunu BIOS/UEFI için tutarlı hale getir
+- [x] ISO üretim ve yapısal doğrulama hattını sağlamlaştır
+- [x] BIOS/UEFI QEMU testlerini taşınabilir ve kesin sonuçlu yap
+- [x] Canlı açılış kökü ve servis başarı işaretini doğrula
+- [x] Kalıcı disk kurulumunu BIOS/UEFI için tutarlı hale getir
 - [ ] Testleri ve mevcut uygulama derlemesini doğrula
 - [ ] Yalnız başarılı paketin yayınlanmasını güvenceye al

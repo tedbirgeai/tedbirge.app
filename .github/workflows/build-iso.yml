@@ -129,6 +129,14 @@ jobs:
           xorriso -indev "$TARGET" -pvd_info 2>/dev/null | grep -q "Volume id.*TEDBIRGE_WEBOS" || {
             echo "::error::ISO birim etiketi TEDBIRGE_WEBOS değil."; exit 1;
           }
+          ELTORITO=$(xorriso -indev "$TARGET" -report_el_torito plain 2>&1)
+          printf '%s\n' "$ELTORITO"
+          printf '%s\n' "$ELTORITO" | grep -qiE 'El Torito|BIOS' || {
+            echo "::error::ISO içinde BIOS önyükleme kaydı yok."; exit 1;
+          }
+          printf '%s\n' "$ELTORITO" | grep -qiE 'UEFI|EFI' || {
+            echo "::error::ISO içinde UEFI önyükleme kaydı yok."; exit 1;
+          }
           for path in /boot /apks /boot/grub /boot/syslinux; do
             xorriso -indev "$TARGET" -find "$path" -maxdepth 1 -type f -print 2>/dev/null | grep -q . || {
               echo "::error::ISO içinde zorunlu önyükleme alanı yok: $path"; exit 1;
@@ -145,22 +153,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 ovmf
           ISO=build-iso/iso/tedbirge-webos-x86_64.iso
-          OVMF=""
+          OVMF_CODE=""
+          OVMF_VARS=""
           for candidate in \
             /usr/share/OVMF/OVMF_CODE_4M.fd \
             /usr/share/OVMF/OVMF_CODE.fd \
             /usr/share/edk2/ovmf/OVMF_CODE.fd; do
-            if [ -r "$candidate" ]; then OVMF="$candidate"; break; fi
+            if [ -r "$candidate" ]; then OVMF_CODE="$candidate"; break; fi
           done
-          if [ -z "$OVMF" ]; then
-            OVMF=$(find /usr/share -type f \( -name 'OVMF_CODE_4M.fd' -o -name 'OVMF_CODE.fd' \) -print -quit 2>/dev/null || true)
+          for candidate in \
+            /usr/share/OVMF/OVMF_VARS_4M.fd \
+            /usr/share/OVMF/OVMF_VARS.fd \
+            /usr/share/edk2/ovmf/OVMF_VARS.fd; do
+            if [ -r "$candidate" ]; then OVMF_VARS="$candidate"; break; fi
+          done
+          if [ -z "$OVMF_CODE" ]; then
+            OVMF_CODE=$(find /usr/share -type f \( -name 'OVMF_CODE_4M.fd' -o -name 'OVMF_CODE.fd' \) -print -quit 2>/dev/null || true)
           fi
-          if [ -z "$OVMF" ] || [ ! -r "$OVMF" ]; then
-            echo "::error::UEFI firmware dosyası ovmf paketi içinde bulunamadı."
+          if [ -z "$OVMF_VARS" ]; then
+            OVMF_VARS=$(find /usr/share -type f \( -name 'OVMF_VARS_4M.fd' -o -name 'OVMF_VARS.fd' \) -print -quit 2>/dev/null || true)
+          fi
+          if [ -z "$OVMF_CODE" ] || [ ! -r "$OVMF_CODE" ] || [ -z "$OVMF_VARS" ] || [ ! -r "$OVMF_VARS" ]; then
+            echo "::error::UEFI firmware CODE/VARS dosyaları ovmf paketi içinde bulunamadı."
             dpkg -L ovmf 2>/dev/null || true
             exit 1
           fi
-          echo "UEFI firmware: $OVMF"
+          cp "$OVMF_VARS" build-iso/OVMF_VARS.fd
+          echo "UEFI firmware: $OVMF_CODE"
           FAIL=0
 
           # Gercek sahadaki denetleyici/firmware bilesimleri tek tek denenir.
@@ -175,12 +194,14 @@ jobs:
           run_case() {
             NAME="$1"; MEM="$2"; shift 2
             LOG="build-iso/boot-$NAME.log"
+            ERR="build-iso/boot-$NAME.stderr.log"
             : > "$LOG"
+            : > "$ERR"
             echo "==== senaryo: $NAME (${MEM} MB) ===="
             qemu-system-x86_64 \
               -m "$MEM" -smp 2 -display none -no-reboot \
               -drive if=none,id=media,format=raw,readonly=on,file="$ISO" \
-              "$@" -serial file:"$LOG" &
+              "$@" -serial file:"$LOG" 2>"$ERR" &
             QPID=$!
 
             RESULT="timeout"
@@ -202,6 +223,10 @@ jobs:
             kill -9 "$QPID" 2>/dev/null || true
             wait "$QPID" 2>/dev/null || true
             tail -n 60 "$LOG" 2>/dev/null || true
+            if [ -s "$ERR" ]; then
+              echo "---- QEMU stderr ($NAME) ----"
+              cat "$ERR"
+            fi
 
             case "$RESULT" in
               ok) echo "$NAME testi gecti." ;;
@@ -218,7 +243,10 @@ jobs:
           # 3) Klasik IDE (eski masaustu, Gigabyte H81M gibi CSM acilisi)
           run_case ide-legacy 4096 -M pc -device ide-cd,bus=ide.0,drive=media -boot d
           # 4) UEFI firmware
-          run_case uefi 4096 -bios "$OVMF" -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media
+          run_case uefi 4096 \
+            -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
+            -drive if=pflash,format=raw,file=build-iso/OVMF_VARS.fd \
+            -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media
           # 5) Dusuk bellek tabani (2 GB) — canli kok bu esikte kurulabilmeli
           run_case dusuk-bellek 2048 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media
 
