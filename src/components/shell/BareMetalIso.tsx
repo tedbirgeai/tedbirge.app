@@ -228,10 +228,31 @@ export function IsoGuideDialog({
           </li>
         ))}
       </ol>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <a
+          href={ISO_DOWNLOAD_ROUTE}
+          className="wa-press inline-flex min-h-11 items-center rounded-xl border border-[var(--tb-accent)]/40 px-4 font-osmono text-[11.5px] text-[var(--tb-accent)]"
+        >
+          İndirme yarıda kaldıysa yeniden dene
+        </a>
+        {status?.url ? (
+          <a
+            href={status.url}
+            rel="noopener"
+            className="wa-press inline-flex min-h-11 items-center rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-[11.5px] text-[var(--tb-muted)]"
+          >
+            Doğrudan bağlantı
+          </a>
+        ) : null}
+      </div>
       <p className="mt-4 font-osmono text-[11px] leading-relaxed text-[var(--tb-muted)]">
-        Not: Bazı bilgisayarlarda USB'den açılış için BIOS/UEFI ayarlarından “Secure Boot”
-        kapatılmalıdır.
+        Not: Dosya yaklaşık 700 MB'tır. İndirme “Ağ sorunu” ile kesilirse tarayıcının İndirilenler
+        listesinden “Devam ettir” deyin ya da yukarıdaki düğmeyle yeniden başlatın. “Dosya yok”
+        uyarısı genelde antivirüs/Windows Defender karantinasından kaynaklanır; İndirilenler
+        listesinde dosyayı “Sakla/İzin ver” ile onaylayın. USB'den açılış için BIOS/UEFI'de “Secure
+        Boot” kapatılmalıdır.
       </p>
+
     </Shell>
   );
 }
