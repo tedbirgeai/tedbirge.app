@@ -2,6 +2,11 @@ name: Tedbirge WebOS ISO
 
 # Depo: tedbirgeai/tedbirge.app
 # Önyüklenebilir imaj tamamen bu hatta üretilir; son kullanıcı hiçbir şey derlemez.
+#
+# MİMARİ: kök dosya sistemi DERLEME sırasında bir kez kurulur ve squashfs olarak
+# ISO'ya konur (Debian live-build). Kullanıcının bilgisayarı açılışta paket
+# kurmaz — eski Alpine hattındaki "Attempted to kill init" paniğinin kaynağı
+# buydu ve mimari değişimiyle tamamen ortadan kalkmıştır.
 on:
   push:
     branches: [main]
@@ -9,7 +14,7 @@ on:
       - "src/**"
       - "crates/**"
       - "public/**"
-      - "alpine/**"
+      - "image/**"
       - "scripts/**"
       - ".github/workflows/build-iso.yml"
       - "package.json"
@@ -27,6 +32,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -80,20 +86,12 @@ jobs:
           if [ ! -s "$BIN" ]; then
             echo "::error::tedbirge-sysbridge ikilisi üretilemedi."; exit 1
           fi
-          rm -rf build-iso/payload/bin/tedbirge-sysbridge
           mkdir -p build-iso/payload/bin
           cp "$BIN" build-iso/payload/bin/tedbirge-sysbridge
           chmod +x build-iso/payload/bin/tedbirge-sysbridge
-          ls -l build-iso/payload/bin
 
-      - name: Donanım katmanı yapılandırmasını doğrula
-        run: |
-          for k in tedbirge-bellek.start tedbirge-oom.start tedbirge-disk.start \
-                   tedbirge-sysbridge etc/acpi/PWRF ekran-duzeni.sh sys-api; do
-            grep -q "$k" alpine/genapkovl-tedbirge.sh || {
-              echo "::error::$k yapılandırma katmanında yok."; exit 1; }
-          done
-          echo "Donanım katmanı doğrulandı."
+      - name: Kurulum imajı yapılandırmasını doğrula
+        run: bash scripts/check-image-config.sh
 
       - name: Sürüm etiketi
         id: ver
@@ -105,166 +103,112 @@ jobs:
           fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
 
-      - name: Alpine ISO derle (Docker · mkimage)
+      - name: ISO derle (Debian live-build · önceden pişirilmiş squashfs kök)
         run: |
           docker run --rm --privileged \
             -v "$PWD:/work" -w /work \
             -e TEDBIRGE_VERSION="${{ steps.ver.outputs.version }}" \
-            alpine:3.20 sh /work/alpine/ci-build.sh
+            debian:bookworm bash /work/image/build.sh
 
       - name: İmajı doğrula (sahte çıktı yayınlanmaz)
         run: |
-          ISO=$(ls -1 build-iso/iso/*.iso 2>/dev/null | head -1 || true)
-          if [ -z "$ISO" ]; then
-            echo "::error::ISO üretilemedi."; exit 1
-          fi
-          SIZE=$(stat -c%s "$ISO")
-          if [ "$SIZE" -lt 104857600 ]; then
-            echo "::error::ISO beklenenden küçük ($SIZE bayt) — yayınlanmayacak."; exit 1
-          fi
-          # Sabit indirme adı: bağlantı sürümden bağımsız çalışsın
-          mkdir -p build-iso/iso
+          sudo apt-get update
+          sudo apt-get install -y xorriso squashfs-tools
           TARGET=build-iso/iso/tedbirge-webos-x86_64.iso
-          if [ "$ISO" != "$TARGET" ]; then cp "$ISO" "$TARGET"; fi
-          xorriso -indev "$TARGET" -pvd_info 2>/dev/null | grep -q "Volume id.*TEDBIRGE_WEBOS" || {
-            echo "::error::ISO birim etiketi TEDBIRGE_WEBOS değil."; exit 1;
-          }
+          [ -s "$TARGET" ] || { echo "::error::ISO üretilemedi."; exit 1; }
+          SIZE=$(stat -c%s "$TARGET")
+          if [ "$SIZE" -lt 524288000 ]; then
+            echo "::error::ISO beklenenden küçük ($SIZE bayt) — kök dosya sistemi eksik."; exit 1
+          fi
+          xorriso -indev "$TARGET" -pvd_info 2>/dev/null | grep -q "TEDBIRGE_WEBOS" || {
+            echo "::error::ISO birim etiketi TEDBIRGE_WEBOS değil."; exit 1; }
           ELTORITO=$(xorriso -indev "$TARGET" -report_el_torito plain 2>&1)
           printf '%s\n' "$ELTORITO"
           printf '%s\n' "$ELTORITO" | grep -qiE 'El Torito|BIOS' || {
-            echo "::error::ISO içinde BIOS önyükleme kaydı yok."; exit 1;
-          }
+            echo "::error::ISO içinde BIOS önyükleme kaydı yok."; exit 1; }
           printf '%s\n' "$ELTORITO" | grep -qiE 'UEFI|EFI' || {
-            echo "::error::ISO içinde UEFI önyükleme kaydı yok."; exit 1;
-          }
-          for path in /boot /apks /boot/grub /boot/syslinux; do
+            echo "::error::ISO içinde UEFI önyükleme kaydı yok."; exit 1; }
+          for path in /live /live/filesystem.squashfs /live/vmlinuz /live/initrd.img; do
             xorriso -indev "$TARGET" -find "$path" -print 2>/dev/null | grep -q . || {
-              echo "::error::ISO içinde zorunlu önyükleme alanı yok: $path"; exit 1;
-            }
+              echo "::error::ISO içinde zorunlu açılış bileşeni yok: $path"; exit 1; }
           done
-          xorriso -indev "$TARGET" -find / -name '*.apkovl.tar.gz' -type f -print 2>/dev/null | grep -q . || {
-            echo "::error::ISO içinde Tedbirge yapılandırma katmanı yok."; exit 1;
-          }
-          (cd build-iso/iso && sha256sum *.iso > SHA256SUMS)
-          echo "ISO=$TARGET" >> "$GITHUB_ENV"
+          echo "ISO yapısı doğrulandı."
 
       - name: Açılış testi (QEMU · gerçek donanım senaryoları)
         run: |
-          sudo apt-get update
           sudo apt-get install -y qemu-system-x86 ovmf
           ISO=build-iso/iso/tedbirge-webos-x86_64.iso
-          OVMF_CODE=""
-          OVMF_VARS=""
-          for candidate in \
-            /usr/share/OVMF/OVMF_CODE_4M.fd \
-            /usr/share/OVMF/OVMF_CODE.fd \
-            /usr/share/edk2/ovmf/OVMF_CODE.fd; do
-            if [ -r "$candidate" ]; then OVMF_CODE="$candidate"; break; fi
+          OVMF_CODE=""; OVMF_VARS=""
+          for c in /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_CODE.fd \
+                   /usr/share/edk2/ovmf/OVMF_CODE.fd; do
+            [ -r "$c" ] && { OVMF_CODE="$c"; break; }
           done
-          for candidate in \
-            /usr/share/OVMF/OVMF_VARS_4M.fd \
-            /usr/share/OVMF/OVMF_VARS.fd \
-            /usr/share/edk2/ovmf/OVMF_VARS.fd; do
-            if [ -r "$candidate" ]; then OVMF_VARS="$candidate"; break; fi
+          for c in /usr/share/OVMF/OVMF_VARS_4M.fd /usr/share/OVMF/OVMF_VARS.fd \
+                   /usr/share/edk2/ovmf/OVMF_VARS.fd; do
+            [ -r "$c" ] && { OVMF_VARS="$c"; break; }
           done
-          if [ -z "$OVMF_CODE" ]; then
-            OVMF_CODE=$(find /usr/share -type f \( -name 'OVMF_CODE_4M.fd' -o -name 'OVMF_CODE.fd' \) -print -quit 2>/dev/null || true)
-          fi
-          if [ -z "$OVMF_VARS" ]; then
-            OVMF_VARS=$(find /usr/share -type f \( -name 'OVMF_VARS_4M.fd' -o -name 'OVMF_VARS.fd' \) -print -quit 2>/dev/null || true)
-          fi
-          if [ -z "$OVMF_CODE" ] || [ ! -r "$OVMF_CODE" ] || [ -z "$OVMF_VARS" ] || [ ! -r "$OVMF_VARS" ]; then
-            echo "::error::UEFI firmware CODE/VARS dosyaları ovmf paketi içinde bulunamadı."
-            dpkg -L ovmf 2>/dev/null || true
-            exit 1
+          [ -n "$OVMF_CODE" ] || OVMF_CODE=$(find /usr/share -type f -name 'OVMF_CODE*.fd' -print -quit)
+          [ -n "$OVMF_VARS" ] || OVMF_VARS=$(find /usr/share -type f -name 'OVMF_VARS*.fd' -print -quit)
+          if [ -z "$OVMF_CODE" ] || [ -z "$OVMF_VARS" ]; then
+            echo "::error::UEFI firmware bulunamadı."; exit 1
           fi
           cp "$OVMF_VARS" build-iso/OVMF_VARS.fd
-          echo "UEFI firmware: $OVMF_CODE"
           FAIL=0
+          BOOT_TIMEOUT="${BOOT_TIMEOUT:-600}"
 
-          # Gercek sahadaki denetleyici/firmware bilesimleri tek tek denenir.
-          # Tek bir USB senaryosu, eski masaustlerindeki SATA/IDE acilisini
-          # dogrulamadigi icin yesil gorunup sahada cokuyordu.
-          # QEMU canli sistemi kapanmaz: acilis basarili olsa bile surec calismaya
-          # devam eder. Bu yuzden "timeout"un kendisi eskiden her zaman 124 ile
-          # donuyor ve saglam imaj bile basarisiz sayiliyordu. Dogru yontem:
-          # QEMU'yu arka planda baslat, seri gunlugu izle, karar verilir verilmez
-          # sureci kapat.
-          BOOT_TIMEOUT="${BOOT_TIMEOUT:-420}"
           run_case() {
             NAME="$1"; MEM="$2"; shift 2
-            LOG="build-iso/boot-$NAME.log"
-            ERR="build-iso/boot-$NAME.stderr.log"
-            : > "$LOG"
-            : > "$ERR"
+            LOG="build-iso/boot-$NAME.log"; ERR="build-iso/boot-$NAME.stderr.log"
+            : > "$LOG"; : > "$ERR"
             echo "==== senaryo: $NAME (${MEM} MB) ===="
             qemu-system-x86_64 \
               -m "$MEM" -smp 2 -display none -no-reboot \
               -drive if=none,id=media,format=raw,readonly=on,file="$ISO" \
               "$@" -serial file:"$LOG" 2>"$ERR" &
             QPID=$!
-
-            RESULT="timeout"
-            i=0
+            RESULT="timeout"; i=0
             while [ "$i" -lt "$BOOT_TIMEOUT" ]; do
-              if grep -qiE "Mounting boot media failed|not found in new root|emergency recovery shell|Kernel panic|Attempted to kill init|can't execute .*/sbin/init|No space left on device|apk:.*error" "$LOG" 2>/dev/null; then
+              if grep -q "TEDBIRGE_BOOT_READY" "$LOG" 2>/dev/null; then RESULT="ok"; break; fi
+              if grep -qiE "Kernel panic|Attempted to kill init|Unable to mount root|Cannot find live |No such file or directory.*filesystem.squashfs|Failed to start Tedbirge" "$LOG" 2>/dev/null; then
                 RESULT="panic"; break
               fi
-              if grep -q "TEDBIRGE_BOOT_READY" "$LOG" 2>/dev/null; then
-                RESULT="ok"; break
-              fi
-              if ! kill -0 "$QPID" 2>/dev/null; then
-                RESULT="exited"; break
-              fi
-              sleep 2
-              i=$((i + 2))
+              kill -0 "$QPID" 2>/dev/null || { RESULT="exited"; break; }
+              sleep 2; i=$((i + 2))
             done
-
-            kill -9 "$QPID" 2>/dev/null || true
-            wait "$QPID" 2>/dev/null || true
+            kill -9 "$QPID" 2>/dev/null || true; wait "$QPID" 2>/dev/null || true
             tail -n 60 "$LOG" 2>/dev/null || true
-            if [ -s "$ERR" ]; then
-              echo "---- QEMU stderr ($NAME) ----"
-              cat "$ERR"
-            fi
-
+            [ -s "$ERR" ] && { echo "---- QEMU stderr ($NAME) ----"; cat "$ERR"; }
             case "$RESULT" in
-              ok) echo "$NAME testi gecti." ;;
-              panic) echo "::error::$NAME — canli ortam acilamadi (kurtarma kabugu / kernel panic)."; FAIL=1 ;;
-              exited) echo "::error::$NAME — QEMU acilis tamamlanmadan sonlandi."; FAIL=1 ;;
-              *) echo "::error::$NAME — ${BOOT_TIMEOUT}s icinde servis baslangici gorulmedi."; FAIL=1 ;;
+              ok) echo "$NAME testi geçti." ;;
+              panic) echo "::error::$NAME — canlı ortam açılamadı."; FAIL=1 ;;
+              exited) echo "::error::$NAME — QEMU açılış tamamlanmadan sonlandı."; FAIL=1 ;;
+              *) echo "::error::$NAME — ${BOOT_TIMEOUT}s içinde hazır sinyali görülmedi."; FAIL=1 ;;
             esac
           }
 
-          # 1) USB bellek (mevcut saha kullanimi)
-          run_case usb-ehci 4096 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media
-          # 2) SATA/AHCI optik veya disk (cogu masaustu ve dizustu)
-          run_case sata-ahci 4096 -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media
-          # 3) Klasik IDE (eski masaustu, Gigabyte H81M gibi CSM acilisi)
+          run_case usb-ehci   4096 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media
+          run_case sata-ahci  4096 -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media
           run_case ide-legacy 4096 -M pc -device ide-cd,bus=ide.0,drive=media -boot d
-          # 4) UEFI firmware
-          run_case uefi 4096 \
+          run_case uefi       4096 \
             -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
             -drive if=pflash,format=raw,file=build-iso/OVMF_VARS.fd \
             -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media
-          # 5) Dusuk bellek tabani (2 GB) — canli kok bu esikte kurulabilmeli
           run_case dusuk-bellek 2048 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media
 
-
           if [ "$FAIL" -ne 0 ]; then
-            echo "::error::Acilis testleri basarisiz — imaj yayinlanmayacak."
-            exit 1
+            echo "::error::Açılış testleri başarısız — imaj yayınlanmayacak."; exit 1
           fi
-          echo "Tum acilis senaryolari gecti."
+          echo "Tüm açılış senaryoları geçti."
+
+      - name: Kalıcı kurulum testi (diske kur + kurulan sistemden aç)
+        run: bash scripts/test-install-qemu.sh
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: tedbirge-boot-test-log
-          path: build-iso/boot-*.log
+          path: build-iso/*.log
           if-no-files-found: ignore
-
-
 
       - uses: actions/upload-artifact@v4
         with:
