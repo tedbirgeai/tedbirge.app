@@ -28,7 +28,7 @@ profile_tedbirge() {
 		chromium
 		xorg-server xf86-input-libinput xf86-video-fbdev xinit setxkbmap xset xrandr
 		mesa mesa-dri-gallium mesa-egl mesa-gl mesa-gles mesa-gbm
-		mesa-vulkan-swrast vulkan-loader
+		mesa-vulkan-intel mesa-vulkan-swrast vulkan-loader
 		libva libdrm
 		linux-firmware-i915 linux-firmware-amdgpu
 

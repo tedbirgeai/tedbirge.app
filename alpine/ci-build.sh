@@ -149,18 +149,30 @@ mkdir -p "$OUT" /home/builder/iso
 chown -R builder:abuild /home/builder/iso
 
 # Paket listesi on-dogrulamasi: mkimage'a girmeden once olmayan paketleri bildir.
+# `apk policy` bilinmeyen paket icin de sifir cikis kodu verebildiginden burada
+# kullanilmaz. Tam adla `apk search -x` gercek depo kaydini zorunlu kilar.
 PKGS=$(sed -n '/apks="\$apks/,/^[[:space:]]*"[[:space:]]*$/p' \
   /home/builder/aports/scripts/mkimg.tedbirge.sh \
   | sed -e '1d' -e '$d' -e 's/"//g')
 MISSING=""
 for p in $PKGS; do
-  apk policy "$p" >/dev/null 2>&1 || MISSING="$MISSING $p"
+  apk search -x "$p" 2>/dev/null | grep -q . || MISSING="$MISSING $p"
 done
 if [ -n "$MISSING" ]; then
   echo "HATA: su paketler Alpine v3.20 depolarinda yok:$MISSING" >&2
   exit 1
 fi
 echo "-- paket listesi dogrulandi ($(echo "$PKGS" | wc -w) paket)"
+
+# Donanim yetenekleri profil ile birlikte ve gercek depoya karsi denetlenir.
+# Boylece is akisi ile imaj profili zaman icinde birbirinden kopamaz.
+for p in mesa-vulkan-intel linux-firmware-intel acpid zram-init pipewire nvme-cli; do
+  echo "$PKGS" | tr ' ' '\n' | grep -qx "$p" || {
+    echo "HATA: zorunlu donanim paketi profilde yok: $p" >&2
+    exit 1
+  }
+done
+echo "-- donanim paketleri dogrulandi"
 
 
 su builder -c "cd /home/builder/aports/scripts && \
