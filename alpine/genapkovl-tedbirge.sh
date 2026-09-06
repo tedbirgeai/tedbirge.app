@@ -362,6 +362,29 @@ done
 exit 0
 EOF
 
+# ------------------------------------------------ kesin acilis basari sinyali
+# CI yalniz OpenRC'nin basladigini degil, WebOS dosyalari, init, kurulum araci
+# ve yerel web sunucusu birlikte hazir oldugunda bu benzersiz satiri kabul eder.
+makefile root:root 0755 "$tmp/etc/init.d/tedbirge-ready" <<'EOF'
+#!/sbin/openrc-run
+description="Tedbirge WebOS acilis butunluk denetimi"
+depend() {
+  need nginx
+  after local networkmanager
+}
+start() {
+  ebegin "Tedbirge WebOS butunluk denetimi"
+  [ -x /sbin/init ] || return 1
+  [ -s /var/www/localhost/htdocs/index.html ] || return 1
+  [ -x /opt/tedbirge/kiosk.sh ] || return 1
+  [ -x /opt/tedbirge/setup-tedbirge-disk.sh ] || return 1
+  wget -q -O /dev/null http://127.0.0.1/ || return 1
+  printf '%s\n' TEDBIRGE_BOOT_READY >/dev/ttyS0 2>/dev/null || true
+  touch /run/tedbirge-ready
+  eend 0
+}
+EOF
+
 # ----------------------------------------------------------------- servisler
 # /etc/apk/world canli sistemin GERCEK paket listesidir: acilista initramfs
 # yalnizca burada yazan paketleri RAM kokune kurar. Arayuz, tarayici, ag ve
@@ -465,6 +488,7 @@ rc_add networkmanager default
 rc_add nginx default
 rc_add local default
 rc_add crond default
+rc_add tedbirge-ready default
 
 rc_add mount-ro shutdown
 rc_add killprocs shutdown

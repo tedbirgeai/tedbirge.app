@@ -184,7 +184,13 @@ fi
 command -v setup-disk >/dev/null 2>&1 \
   || { umount -R "$MNT" 2>/dev/null; hata "Kurulum araci bulunamadi (setup-disk)." "ISO imaji eksik yazilmis olabilir; imaji Rufus/BalenaEtcher ile 'DD' kipinde yeniden yazip tekrar deneyin."; }
 
-if ! setup-disk -m sys -b "$DEV" "$MNT" 2>&1 | tee -a "$LOG"; then
+SETUP_LOG=/tmp/tedbirge-setup-disk.log
+if setup-disk -m sys -b "$DEV" "$MNT" >"$SETUP_LOG" 2>&1; then
+  cat "$SETUP_LOG" | tee -a "$LOG"
+else
+  SETUP_RC=$?
+  cat "$SETUP_LOG" | tee -a "$LOG"
+  kayit "setup-disk cikis kodu: $SETUP_RC"
   umount -R "$MNT" 2>/dev/null
   hata "Sistem dosyalari kopyalanamadi." "Disk dolmus veya ariza vermis olabilir; kayit dosyasindaki son satirlari kontrol edin: $LOG"
 fi
@@ -204,15 +210,18 @@ cp -a /etc/tedbirge-release "$MNT/etc/tedbirge-release" 2>/dev/null
 
 [ -s "$MNT$SRC_WWW/index.html" ] || hata "Arayuz dosyalari diske yazilamadi." "Imaji USB'ye 'DD' kipinde yeniden yazip kurulumu tekrarlayin."
 
-for d in dev proc sys; do mount --bind "/$d" "$MNT/$d" 2>/dev/null; done
+for d in dev proc sys; do
+  mkdir -p "$MNT/$d"
+  mount --bind "/$d" "$MNT/$d" || {
+    for u in dev proc sys; do umount "$MNT/$u" 2>/dev/null; done
+    umount -R "$MNT" 2>/dev/null
+    hata "Kurulum doğrulama alanı hazırlanamadı ($d)." "Bilgisayarı yeniden başlatıp kurulumu tekrar deneyin."
+  }
+done
 
-# Onyukleyici: UEFI ve BIOS ayri ayri kurulur, sonuc kesin olarak denetlenir.
-if [ "$UEFI" = "1" ]; then
-  KOMUT="grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=tedbirge --removable"
-else
-  KOMUT="grub-install --target=i386-pc --recheck $DEV"
-fi
-
+# setup-disk önyükleyiciyi çalışma kipine göre kurmuştur. Burada ikinci kez
+# grub-install çalıştırılmaz; yalnız WebOS servisleri etkinleştirilip üretilen
+# önyükleyici ve yapılandırma dosyaları doğrulanır.
 chroot "$MNT" /bin/sh -c "
   rc-update add nginx default
   rc-update add dbus default
@@ -220,11 +229,10 @@ chroot "$MNT" /bin/sh -c "
   rc-update add networkmanager default
   rc-update add local default
   rc-update add tedbirge-sysbridge default 2>/dev/null
-  $KOMUT
-  grub-mkconfig -o /boot/grub/grub.cfg
+  rc-update add tedbirge-ready default 2>/dev/null
 " >>"$LOG" 2>&1 \
   || { sync; for d in dev proc sys; do umount "$MNT/$d" 2>/dev/null; done; umount -R "$MNT" 2>/dev/null; \
-       hata "Onyukleyici kurulamadi — bilgisayar bu haliyle acilmaz." "BIOS/UEFI ayarlarinda 'Secure Boot' kapali ve disk modu 'AHCI' olmali. Ayrinti icin: $LOG"; }
+       hata "WebOS servisleri etkinlestirilemedi." "Kurulumu tekrar deneyin. Ayrinti icin: $LOG"; }
 
 # Onyukleyicinin gercekten olustugu dogrulanir; aksi halde basari bildirilmez.
 if [ "$UEFI" = "1" ]; then
