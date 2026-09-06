@@ -18,6 +18,7 @@ ln -sf /etc/nginx/sites-available/tedbirge.conf /etc/nginx/sites-enabled/tedbirg
 systemctl enable nginx.service
 systemctl enable tedbirge-sysbridge.service
 systemctl enable tedbirge-ready.service
+systemctl enable tedbirge-autoinstall.service
 systemctl enable tedbirge-kiosk.service
 systemctl enable NetworkManager.service || true
 systemctl enable acpid.service || true
