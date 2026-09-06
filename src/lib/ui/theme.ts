@@ -13,10 +13,10 @@ export type ThemeId = "crystal" | "soft" | "night";
 export const THEMES: ReadonlyArray<{ id: ThemeId; label: string; hint: string }> = [
   { id: "crystal", label: "Açık Kristal", hint: "Cam yüzey, yüksek okunabilirlik" },
   { id: "soft", label: "Açık Soft Minimal", hint: "Düşük kontrast, sade gri" },
-  { id: "night", label: "Gece Modu", hint: "Saha ve düşük ışık" },
+  { id: "night", label: "Koyu Kristal", hint: "Varsayılan cam görünüm, düşük ışık" },
 ];
 
-export const DEFAULT_THEME: ThemeId = "crystal";
+export const DEFAULT_THEME: ThemeId = "night";
 
 function isTheme(value: string | null | undefined): value is ThemeId {
   return value === "crystal" || value === "soft" || value === "night";

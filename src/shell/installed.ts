@@ -29,6 +29,13 @@ export const LOCAL_APPS: CatalogApp[] = [
     category: "sistem",
     builtin: true,
   },
+  {
+    id: "calls",
+    label: "Arama",
+    hint: "Sesli ve görüntülü arama, tuş takımı",
+    category: "sistem",
+    builtin: true,
+  },
   { id: "files", label: "Dosyalar", hint: "Dosya yöneticisi", category: "sistem", builtin: true },
   { id: "media", label: "Medya", hint: "Video oynatıcı", category: "sistem", builtin: true },
   { id: "music", label: "Müzik", hint: "Cihazdaki parçalar", category: "sistem", builtin: true },

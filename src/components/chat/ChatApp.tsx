@@ -206,9 +206,9 @@ const UNREAD_TAB = "__unread";
 const FAV_TAB = "__fav";
 const GROUPS_TAB = "__groups";
 
-export function ChatApp() {
+export function ChatApp({ initialApp }: { initialApp?: ShellAppId } = {}) {
   return (
-    <ShellProvider>
+    <ShellProvider {...(initialApp ? { initialApp } : {})}>
       <ChatAppInner />
     </ShellProvider>
   );
