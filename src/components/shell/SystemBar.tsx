@@ -164,7 +164,7 @@ export function SystemBar({
         <span
           title={diskBusy ? "Disk yazılıyor / okunuyor" : "Disk boşta"}
           aria-label={diskBusy ? "Disk etkin" : "Disk boşta"}
-          className="hidden shrink-0 items-center gap-1 px-1 font-osmono text-[11px] text-[var(--tb-muted)] sm:flex"
+          className="flex shrink-0 items-center gap-1 px-1 font-osmono text-[11px] text-[var(--tb-muted)]"
         >
           <HardDrive
             className={`h-4 w-4 ${diskBusy ? "text-[var(--tb-accent)]" : ""}`}
@@ -174,7 +174,7 @@ export function SystemBar({
         {battery ? (
           <span
             title={battery.charging ? "Şarj oluyor" : "Pil"}
-            className="hidden shrink-0 items-center gap-1 px-1 font-osmono text-[11px] text-[var(--tb-muted)] tabular-nums sm:flex"
+            className="flex shrink-0 items-center gap-1 px-1 font-osmono text-[11px] text-[var(--tb-muted)] tabular-nums"
           >
             {battery.charging ? (
               <BatteryCharging className="h-4 w-4 text-[var(--tb-accent)]" aria-hidden />
