@@ -65,7 +65,9 @@ grep -q 'unsquashfs' "$KUR"      || hata "Kurulum aracı hazır kök imajını k
 grep -q 'grub-install' "$KUR"    || hata "Kurulum aracı açılış yükleyicisi kurmuyor."
 grep -q 'systemd' "$KUR"         || hata "Kurulum sonrası init doğrulaması yok."
 grep -q 'lsblk -ndo PKNAME' "$KUR" || hata "Canlı USB üst aygıtı güvenilir biçimde saptanmıyor."
-grep -q 'update-initramfs.*|| hata' "$KUR" || hata "initramfs hatası sessizce geçiliyor."
+grep -q 'update-initramfs -u -k all' "$KUR" || hata "initramfs güncellemesi yok."
+grep -A2 'update-initramfs -u -k all' "$KUR" | grep -q '|| hata' \
+  || hata "initramfs hatası sessizce geçiliyor."
 grep -q 'DEBIAN_FRONTEND=noninteractive' "$KUR" || hata "Kurulum aracı etkileşimsiz kipte değil."
 grep -q 'timeout --foreground' "$KUR" || hata "Uzun kurulum adımlarında zaman aşımı koruması yok."
 grep -q 'stdbuf -oL' "$KUR" || hata "Kurulum kayıtları satır bazında akmıyor."
