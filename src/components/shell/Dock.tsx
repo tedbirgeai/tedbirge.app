@@ -13,7 +13,7 @@ import { House } from "lucide-react";
 import { AppIcon } from "@/components/shell/app-icons";
 import { ContextMenu } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
-import { catalogApp, useDesktopState } from "@/shell/installed";
+import { catalogApp } from "@/shell/installed";
 import { setDockSlot, swapDockSlots, useDockSlots } from "@/shell/dock-slots";
 import {
   closeWindow,
@@ -39,7 +39,6 @@ export function Dock({
   onLaunchNew: (id: string) => void;
   onStore: () => void;
 }) {
-  const { installed } = useDesktopState();
   const slots = useDockSlots();
   const compact = useIsCompact();
   const [menu, setMenu] = useState<{ x: number; y: number; appId: string } | null>(null);
@@ -51,7 +50,6 @@ export function Dock({
   const ids = Array.from(new Set(windows.map((w) => w.appId))).filter(
     (id) => id !== "store" && !slots.includes(id),
   );
-  void installed;
 
   // Alt tutamaç üzerinde sağa/sola kaydırma: açık uygulamalar arası geçiş.
   const swipe = useSwipeGesture((dir) => {
