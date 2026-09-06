@@ -1,0 +1,9 @@
+/var/log/tedbirge/*.log {
+  daily
+  rotate 14
+  size 5M
+  missingok
+  notifempty
+  copytruncate
+  compress
+}
