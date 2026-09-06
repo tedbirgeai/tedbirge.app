@@ -77,7 +77,9 @@ function triggerDownload(url: string) {
   const a = document.createElement("a");
   a.href = url;
   a.rel = "noopener";
-  a.download = "";
+  // Not: çapraz kaynak imzalı adreste `download` yok sayılır ve bazı
+  // tarayıcılar indirmeyi "Dosya yok" diye iptal eder. Sunucu zaten
+  // Content-Disposition gönderiyor.
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -86,6 +88,11 @@ function triggerDownload(url: string) {
 /**
  * Yayındaki hazır imajı indirir. İmaj yoksa hiçbir dosya üretilmez;
  * dürüst bilgi kartı açılır.
+ *
+ * İndirme her zaman kendi alan adımızdaki kalıcı rota üzerinden başlar:
+ * GitHub imzalı adresleri ~1 saatte geçersiz olur, büyük imajda indirme
+ * yarıda "Ağ sorunu" ile düşerdi. Kalıcı rota her denemede taze adres verir,
+ * böylece duraklat/devam et de çalışır.
  */
 export async function startIsoDownload(): Promise<boolean> {
   if (typeof document === "undefined") return false;
@@ -94,9 +101,10 @@ export async function startIsoDownload(): Promise<boolean> {
     openIsoFallback();
     return false;
   }
-  triggerDownload(status.url || ISO_DOWNLOAD_ROUTE);
+  triggerDownload(ISO_DOWNLOAD_ROUTE);
   return true;
 }
+
 
 export function useIsoDownload() {
   const [guide, setGuide] = useState(false);
@@ -113,7 +121,7 @@ export function useIsoDownload() {
         openIsoFallback();
         return;
       }
-      triggerDownload(info.url || ISO_DOWNLOAD_ROUTE);
+      triggerDownload(ISO_DOWNLOAD_ROUTE);
       setGuide(true);
     } finally {
       setBusy(false);
@@ -220,10 +228,31 @@ export function IsoGuideDialog({
           </li>
         ))}
       </ol>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <a
+          href={ISO_DOWNLOAD_ROUTE}
+          className="wa-press inline-flex min-h-11 items-center rounded-xl border border-[var(--tb-accent)]/40 px-4 font-osmono text-[11.5px] text-[var(--tb-accent)]"
+        >
+          İndirme yarıda kaldıysa yeniden dene
+        </a>
+        {status?.url ? (
+          <a
+            href={status.url}
+            rel="noopener"
+            className="wa-press inline-flex min-h-11 items-center rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-[11.5px] text-[var(--tb-muted)]"
+          >
+            Doğrudan bağlantı
+          </a>
+        ) : null}
+      </div>
       <p className="mt-4 font-osmono text-[11px] leading-relaxed text-[var(--tb-muted)]">
-        Not: Bazı bilgisayarlarda USB'den açılış için BIOS/UEFI ayarlarından “Secure Boot”
-        kapatılmalıdır.
+        Not: Dosya yaklaşık 700 MB'tır. İndirme “Ağ sorunu” ile kesilirse tarayıcının İndirilenler
+        listesinden “Devam ettir” deyin ya da yukarıdaki düğmeyle yeniden başlatın. “Dosya yok”
+        uyarısı genelde antivirüs/Windows Defender karantinasından kaynaklanır; İndirilenler
+        listesinde dosyayı “Sakla/İzin ver” ile onaylayın. USB'den açılış için BIOS/UEFI'de “Secure
+        Boot” kapatılmalıdır.
       </p>
+
     </Shell>
   );
 }
