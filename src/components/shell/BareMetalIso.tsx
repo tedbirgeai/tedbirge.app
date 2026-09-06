@@ -180,7 +180,8 @@ function Shell({
         {/* Yalnızca içerik kaydırılır; 1. madde asla üstten kırpılmaz. */}
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-1">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
