@@ -1,0 +1,12 @@
+[Unit]
+Description=Tedbirge guc koprusu (kapat / yeniden baslat / uyku)
+Before=nginx.service
+
+[Service]
+Type=simple
+ExecStart=/opt/tedbirge/tedbirge-sysbridge
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
