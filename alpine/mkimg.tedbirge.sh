@@ -30,7 +30,7 @@ profile_tedbirge() {
 		mesa mesa-dri-gallium mesa-egl mesa-gl mesa-gles mesa-gbm
 		mesa-vulkan-swrast vulkan-loader
 		libva libdrm
-		linux-firmware-i915
+		linux-firmware-i915 linux-firmware-amdgpu
 
 		dbus dbus-x11 acpid
 		font-dejavu
