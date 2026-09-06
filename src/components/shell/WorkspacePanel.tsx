@@ -199,6 +199,24 @@ export function WorkspacePanel() {
 
       {/* Masaüstü yüzeyi: duvar kâğıdı, kısayollar ve pencereler. */}
       <div ref={surfaceRef} className="relative min-h-0 flex-1 overflow-hidden">
+        {/* Telefon: üstten aşağı çekince Hızlı Ayarlar (kontrol merkezi) açılır. */}
+        {isMobile ? (
+          <div
+            aria-hidden
+            className="absolute inset-x-0 top-0 z-[60] h-6 touch-pan-x"
+            onTouchStart={(e) => {
+              pullStart.current = e.touches[0]?.clientY ?? null;
+            }}
+            onTouchEnd={(e) => {
+              const y = e.changedTouches[0]?.clientY ?? 0;
+              if (pullStart.current != null && y - pullStart.current > 40) {
+                window.dispatchEvent(new Event("tedbirge:open-control"));
+              }
+              pullStart.current = null;
+            }}
+          />
+        ) : null}
+
         <AppErrorBoundary title="Masaüstü" appId="shell.desktop">
           <Desktop onOpen={launch} onOpenNew={launchNew} />
         </AppErrorBoundary>
