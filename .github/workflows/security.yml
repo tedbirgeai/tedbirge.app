@@ -70,7 +70,11 @@ jobs:
           mkdir -p /tmp/audit
           cp package.json /tmp/audit/package.json
           cd /tmp/audit
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund --legacy-peer-deps
+          npm install --package-lock-only --package-lock=true --ignore-scripts --no-audit --no-fund --legacy-peer-deps
+          test -s package-lock.json || {
+            echo "::error::Denetim kilit dosyası üretilemedi."
+            exit 1
+          }
 
       # Yalnizca gercek yuksek/kritik zafiyette durur. Kayit servisi
       # ulasilamazsa (404/5xx/ag hatasi) is uyari ile gecer.
