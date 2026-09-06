@@ -123,7 +123,7 @@ export function Desktop({
         />
       ) : (
         <div
-          className="grid h-full grid-flow-col grid-rows-[repeat(auto-fill,100px)] justify-start gap-6 overflow-hidden p-6"
+          className="grid h-full grid-cols-6 content-start justify-items-center gap-6 overflow-y-auto p-6 pt-40 xl:grid-cols-7 2xl:grid-cols-8"
           onPointerDown={(e) => {
             if (e.target === e.currentTarget) setSelected(null);
           }}
@@ -131,6 +131,8 @@ export function Desktop({
           {installed.map((id) => (catalogApp(id) ? renderIcon(id) : null))}
         </div>
       )}
+
+      <ClockWidget />
 
       <DesktopWidgets onOpen={onOpen} />
 

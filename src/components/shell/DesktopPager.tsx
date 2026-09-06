@@ -17,8 +17,12 @@ const PAD = 24;
 export const MAX_PER_PAGE = 16;
 
 /** Ölçülen alana göre sayfa başına ikon kapasitesi (en çok 16). */
+/** Telefon yerleşimi kesin 4 sütundur (sayfa başına en çok 4×4 = 16 simge). */
+export const MOBILE_COLS = 4;
+
 export function pageCapacity(width: number, height: number) {
-  const cols = Math.max(1, Math.floor((width - PAD * 2 + GAP) / (ICON_W + GAP)));
+  const fit = Math.max(1, Math.floor((width - PAD * 2 + GAP) / (ICON_W + GAP)));
+  const cols = Math.min(MOBILE_COLS, fit);
   const rows = Math.max(1, Math.floor((height - PAD * 2 + GAP) / (ICON_H + GAP)));
   return { cols, perPage: Math.min(MAX_PER_PAGE, cols * rows) };
 }
@@ -79,14 +83,14 @@ export function DesktopPager({
           {pages.map((items, i) => (
             <div
               key={i}
-              className="tbos-pager-page h-full w-full shrink-0 p-6"
+              className="tbos-pager-page h-full w-full shrink-0 px-3 pt-40 pb-3"
               onPointerDown={(e) => {
                 if (e.target === e.currentTarget) onEmptyPointerDown();
               }}
             >
               <div
-                className="grid content-start justify-start gap-6"
-                style={{ gridTemplateColumns: `repeat(${cols}, ${ICON_W}px)` }}
+                className="grid content-start justify-items-center gap-3"
+                style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
               >
                 {items.map((id) => renderIcon(id))}
               </div>
