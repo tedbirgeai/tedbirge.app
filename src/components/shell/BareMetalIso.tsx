@@ -77,7 +77,9 @@ function triggerDownload(url: string) {
   const a = document.createElement("a");
   a.href = url;
   a.rel = "noopener";
-  a.download = "";
+  // Not: çapraz kaynak imzalı adreste `download` yok sayılır ve bazı
+  // tarayıcılar indirmeyi "Dosya yok" diye iptal eder. Sunucu zaten
+  // Content-Disposition gönderiyor.
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -86,6 +88,11 @@ function triggerDownload(url: string) {
 /**
  * Yayındaki hazır imajı indirir. İmaj yoksa hiçbir dosya üretilmez;
  * dürüst bilgi kartı açılır.
+ *
+ * İndirme her zaman kendi alan adımızdaki kalıcı rota üzerinden başlar:
+ * GitHub imzalı adresleri ~1 saatte geçersiz olur, büyük imajda indirme
+ * yarıda "Ağ sorunu" ile düşerdi. Kalıcı rota her denemede taze adres verir,
+ * böylece duraklat/devam et de çalışır.
  */
 export async function startIsoDownload(): Promise<boolean> {
   if (typeof document === "undefined") return false;
@@ -94,9 +101,10 @@ export async function startIsoDownload(): Promise<boolean> {
     openIsoFallback();
     return false;
   }
-  triggerDownload(status.url || ISO_DOWNLOAD_ROUTE);
+  triggerDownload(ISO_DOWNLOAD_ROUTE);
   return true;
 }
+
 
 export function useIsoDownload() {
   const [guide, setGuide] = useState(false);
