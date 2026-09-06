@@ -24,6 +24,7 @@ for f in \
   image/config/includes.chroot/etc/systemd/system/tedbirge-installer.service \
   image/config/bootloaders/syslinux_common/live.cfg.in \
   image/config/bootloaders/grub-pc/grub.cfg \
+  image/config/bootloaders/isolinux/isolinux.cfg \
   scripts/verify-iso.sh \
   scripts/test-install-qemu.sh
 do
@@ -45,6 +46,11 @@ grep -q "TEDBIRGE_WEBOS" image/build.sh || hata "ISO birim etiketi tanımlı de�
 grep -q "iso-hybrid" image/build.sh || hata "BIOS+UEFI hibrit imaj kipi seçilmemiş."
 grep -q "grub-efi" image/build.sh || hata "UEFI açılış yükleyicisi yapılandırılmamış."
 grep -q "rootdelay=" image/build.sh || hata "Yavaş USB/CD ortamı için rootdelay= tanımlı değil."
+# Menüde sonsuz bekleme (timeout 0) sistemin hiç açılmamasına yol açar.
+grep -qE '^timeout [1-9][0-9]*$' image/config/bootloaders/isolinux/isolinux.cfg \
+  || hata "BIOS menüsünde otomatik açılış zaman aşımı yok (timeout 0 = sonsuz bekleme)."
+grep -q 'set timeout=' image/config/bootloaders/grub-pc/grub.cfg \
+  || hata "UEFI menüsünde otomatik açılış zaman aşımı yok."
 grep -q "modules=loop,squashfs,overlay" image/build.sh || hata "Açılış satırında zorunlu modül listesi yok."
 MODS=image/config/includes.chroot/etc/initramfs-tools/modules
 for m in loop squashfs overlay isofs sr_mod usb_storage ahci nvme; do

@@ -55,4 +55,12 @@ done
 grep -q "tedbirge.install=1" "$TMP/live.cfg.txt" || fail "BIOS kurulum menüsü etkileşimli kurulumu başlatmıyor."
 grep -q "tedbirge.install=1" "$TMP/grub.cfg.txt" || fail "UEFI kurulum menüsü etkileşimli kurulumu başlatmıyor."
 
-echo "✓ ISO yapısı, Debian kökü ve BIOS/UEFI kurulum menüleri doğrulandı."
+# Menü sonsuz beklemeye düşerse sistem hiçbir zaman kendiliğinden açılmaz.
+xorriso -osirrox on -indev "$ISO" -extract /isolinux/isolinux.cfg "$TMP/isolinux.cfg.txt" >/dev/null 2>&1 \
+  || fail "BIOS önyükleyici yapılandırması ISO içinde yok."
+grep -qE '^timeout [1-9][0-9]*$' "$TMP/isolinux.cfg.txt" \
+  || fail "BIOS menüsü otomatik açılmıyor (timeout 0 = sonsuz bekleme)."
+grep -q 'set timeout=' "$TMP/grub.cfg.txt" \
+  || fail "UEFI menüsü otomatik açılmıyor."
+
+echo "✓ ISO yapısı, Debian kökü, BIOS/UEFI menüleri ve otomatik açılış zaman aşımı doğrulandı."
