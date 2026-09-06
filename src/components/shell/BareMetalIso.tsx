@@ -14,6 +14,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { HardDriveDownload, Info, Loader2, Smartphone, X } from "lucide-react";
 
 import {
