@@ -20,12 +20,32 @@ Bilgisayarınızda hiçbir şey derlemenize gerek yok. Yapmanız gereken üç ş
 
 Kurulum sihirbazı, siz büyük harflerle `EVET` yazana kadar hiçbir diske yazmaz.
 
+## Bilgisayar gereksinimleri
+
+| | En az | Önerilen |
+| --- | --- | --- |
+| Bellek (RAM) | 2 GB | 4 GB ve üzeri |
+| Disk (kalıcı kurulum için) | 8 GB | 32 GB ve üzeri |
+| İşlemci | 64‑bit (x86_64) | 2 çekirdek ve üzeri |
+
+Canlı kullanımda sistem tamamen bellekte çalışır; 2 GB'ın altındaki bilgisayarlarda
+açılış tamamlanmaz. Kalıcı kurulum yapılan bilgisayarda bu sınır geçerli değildir.
+
+Desteklenen açılış biçimleri: klasik BIOS (CSM) ve UEFI. Disk türleri: SATA, IDE,
+NVMe, eMMC ve USB. Kurulum sihirbazı bilgisayarın açılış biçimini kendisi tanır ve
+uygun açılış bölümünü kendisi oluşturur.
+
 ## Notlar
 
 - Bazı bilgisayarlarda USB'den açılış için BIOS/UEFI ayarlarından **Secure Boot** kapatılmalıdır.
+- Eski masaüstlerinde disk modu BIOS içinde **AHCI** seçilmelidir; "IDE/RAID" seçiliyken
+  bazı diskler görünmeyebilir.
 - Sistem açıldığında arayüz tam ekran kiosk modunda gelir; ağdaki diğer cihazlar da
   `http://<cihaz-ip>/` adresinden erişebilir.
 - Wi‑Fi ve ağ ayarları arayüz içindeki Ayarlar bölümünden yapılır.
+- Kurulum sırasında bir sorun çıkarsa kayıt dosyası kurulan sistemde
+  `/var/log/tedbirge/kurulum.log` içinde saklanır.
+
 
 ## İmaj nasıl üretiliyor (teknik)
 
