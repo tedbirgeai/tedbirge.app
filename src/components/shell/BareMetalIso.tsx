@@ -146,9 +146,11 @@ function Shell({
     return () => window.removeEventListener("keydown", onKey, true);
   }, [onClose]);
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[95] flex items-center justify-center overflow-y-auto bg-black/45 p-4"
+      className="fixed inset-0 z-[140] flex items-center justify-center overflow-y-auto bg-black/45 p-4"
       role="dialog"
       aria-modal="true"
       aria-label={title}
