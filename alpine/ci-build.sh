@@ -115,7 +115,6 @@ tar -czf /home/builder/tedbirge/htdocs.tar.gz -C "$WEBROOT" .
 cp -r "$WORK/alpine/install" /home/builder/tedbirge/install
 cp "$WORK/scripts/setup-tedbirge-disk.sh" /home/builder/tedbirge/install/setup-tedbirge-disk.sh
 chmod +x /home/builder/tedbirge/install/*.sh
-cp -r "$WORK/alpine/boot" /home/builder/tedbirge/boot
 
 # Guc koprusu ikilisi (varsa) overlay'e tasinir; yoksa apkovl kabuk yedegini kurar.
 if [ -s "$WORK/build-iso/payload/bin/tedbirge-sysbridge" ]; then
