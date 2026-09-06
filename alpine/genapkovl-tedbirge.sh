@@ -363,11 +363,86 @@ exit 0
 EOF
 
 # ----------------------------------------------------------------- servisler
+# /etc/apk/world canli sistemin GERCEK paket listesidir: acilista initramfs
+# yalnizca burada yazan paketleri RAM kokune kurar. Arayuz, tarayici, ag ve
+# kurulum araclari burada olmazsa sistem paketsiz acilir. Surucu yazilimlari
+# (linux-firmware) modloop icinden gelir; RAM kokune ikinci kez kurulmaz.
 mkdir -p "$tmp/etc/apk"
 makefile root:root 0644 "$tmp/etc/apk/world" <<'EOF'
 alpine-base
 alpine-conf
+openrc
+busybox-suid
+nginx
+chromium
+xorg-server
+xf86-input-libinput
+xf86-video-fbdev
+xinit
+setxkbmap
+xset
+xrandr
+mesa
+mesa-dri-gallium
+mesa-egl
+mesa-gl
+mesa-gles
+mesa-gbm
+mesa-vulkan-intel
+mesa-vulkan-swrast
+vulkan-loader
+libva
+libdrm
+dbus
+dbus-x11
+acpid
+font-dejavu
+eudev
+udev-init-scripts
+networkmanager
+networkmanager-wifi
+networkmanager-cli
+wireless-tools
+wpa_supplicant
+iw
+ethtool
+bluez
+bluez-openrc
+alsa-utils
+alsa-lib
+alsa-ucm-conf
+pipewire
+pipewire-alsa
+pipewire-pulse
+wireplumber
+nvme-cli
+util-linux
+blkid
+lsblk
+findmnt
+sfdisk
+e2fsprogs
+e2fsprogs-extra
+f2fs-tools
+exfatprogs
+ntfs-3g
+dosfstools
+parted
+syslinux
+grub
+grub-efi
+grub-bios
+efibootmgr
+mkinitfs
+zram-init
+logrotate
+curl
+ca-certificates
+tzdata
+pciutils
+usbutils
 EOF
+
 
 rc_add devfs sysinit
 rc_add dmesg sysinit

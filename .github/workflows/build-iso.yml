@@ -129,36 +129,64 @@ jobs:
           (cd build-iso/iso && sha256sum *.iso > SHA256SUMS)
           echo "ISO=$ISO" >> "$GITHUB_ENV"
 
-      - name: Açılış testi (QEMU · gerçek önyükleme)
+      - name: Açılış testi (QEMU · gerçek donanım senaryoları)
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 ovmf
           ISO=build-iso/iso/tedbirge-webos-x86_64.iso
-          LOG=build-iso/boot-test.log
-          # USB bellek benzeri baglama: canli ortam etikete gore kok bulmali.
-          timeout 420 qemu-system-x86_64 \
-            -m 4096 -smp 2 -display none -no-reboot \
-            -drive if=none,id=usbstick,format=raw,readonly=on,file="$ISO" \
-            -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=usbstick \
-            -serial file:"$LOG" || true
-          echo "---- açılış kaydı ----"
-          tail -n 120 "$LOG" || true
-          if grep -qiE "Mounting boot media failed|/sbin/init not found|emergency recovery shell|Kernel panic|Attempted to kill init" "$LOG"; then
-            echo "::error::Canlı ortam açılamadı — kurtarma kabuğuna düştü. İmaj yayınlanmayacak."
+          OVMF=/usr/share/OVMF/OVMF_CODE.fd
+          FAIL=0
+
+          # Gercek sahadaki denetleyici/firmware bilesimleri tek tek denenir.
+          # Tek bir USB senaryosu, eski masaustlerindeki SATA/IDE acilisini
+          # dogrulamadigi icin yesil gorunup sahada cokuyordu.
+          run_case() {
+            NAME="$1"; MEM="$2"; shift 2
+            LOG="build-iso/boot-$NAME.log"
+            echo "==== senaryo: $NAME (${MEM} MB) ===="
+            timeout 600 qemu-system-x86_64 \
+              -m "$MEM" -smp 2 -display none -no-reboot \
+              -drive if=none,id=media,format=raw,readonly=on,file="$ISO" \
+              "$@" -serial file:"$LOG"
+            RC=$?
+            tail -n 60 "$LOG" 2>/dev/null || true
+            if [ "$RC" -ne 0 ]; then
+              echo "::error::$NAME — QEMU hata/zaman asimi (cikis $RC)."; FAIL=1; return
+            fi
+            if grep -qiE "Mounting boot media failed|not found in new root|emergency recovery shell|Kernel panic|Attempted to kill init" "$LOG"; then
+              echo "::error::$NAME — canli ortam acilamadi (kurtarma kabugu / kernel panic)."; FAIL=1; return
+            fi
+            if ! grep -qiE "Welcome to Tedbirge|Starting nginx|OpenRC .* is starting up" "$LOG"; then
+              echo "::error::$NAME — acilis tamamlanmadi, servis baslangici gorulmedi."; FAIL=1; return
+            fi
+            echo "$NAME testi gecti."
+          }
+
+          # 1) USB bellek (mevcut saha kullanimi)
+          run_case usb-ehci 4096 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media
+          # 2) SATA/AHCI optik veya disk (cogu masaustu ve dizustu)
+          run_case sata-ahci 4096 -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media
+          # 3) Klasik IDE (eski masaustu, Gigabyte H81M gibi CSM acilisi)
+          run_case ide-legacy 4096 -M pc -device ide-cd,bus=ide.0,drive=media -boot d
+          # 4) UEFI firmware
+          run_case uefi 4096 -bios "$OVMF" -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media
+          # 5) Dusuk bellek tabani (2 GB) — canli kok bu esikte kurulabilmeli
+          run_case dusuk-bellek 2048 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media
+
+          if [ "$FAIL" -ne 0 ]; then
+            echo "::error::Acilis testleri basarisiz — imaj yayinlanmayacak."
             exit 1
           fi
-          if ! grep -qiE "Welcome to Tedbirge|Starting nginx|OpenRC .* is starting up" "$LOG"; then
-            echo "::error::Açılış tamamlanmadı — servis başlangıcı görülmedi."
-            exit 1
-          fi
-          echo "Açılış testi geçti."
+          echo "Tum acilis senaryolari gecti."
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: tedbirge-boot-test-log
-          path: build-iso/boot-test.log
+          path: build-iso/boot-*.log
           if-no-files-found: ignore
+
+
 
       - uses: actions/upload-artifact@v4
         with:

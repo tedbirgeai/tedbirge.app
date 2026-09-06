@@ -61,13 +61,39 @@ read -r -p "Baslamak icin Enter'a basin (iptal: Ctrl+C) " _
 
 [ "$(id -u)" = "0" ] || hata "Bu islem yonetici yetkisi ister." "Sistemi ISO uzerinden yeniden baslatip acilis menusunden 'Diske Kur' secenegini kullanin."
 
+# --- 0) Acilis bicimi ve canli ortam diski ---------------------------
+# UEFI mi klasik BIOS mu? Yanlis varsayim, onyukleyicinin sessizce
+# kurulamamasina ve "kuruldu ama acilmiyor" durumuna yol acar.
+if [ -d /sys/firmware/efi ]; then
+  UEFI=1
+  say "Acilis bicimi: UEFI"
+else
+  UEFI=0
+  say "Acilis bicimi: klasik BIOS"
+fi
+
+# Sistemin uzerinden calistigi USB/ISO diski hedef listesinden cikarilir;
+# aksi halde calisan kurulum ortami silinebilir.
+CANLI_DISK=""
+for kaynak in $(awk '$1 ~ /^\/dev\// {print $1}' /proc/mounts 2>/dev/null | sort -u); do
+  ad=$(basename "$kaynak")
+  kok=$(lsblk -nro PKNAME "/dev/$ad" 2>/dev/null | head -1)
+  [ -n "$kok" ] || kok="$ad"
+  case " $CANLI_DISK " in *" $kok "*) ;; *) CANLI_DISK="$CANLI_DISK $kok" ;; esac
+done
+
 # --- 1) Hedef disk secimi -------------------------------------------
 adim 1 "Kurulum yapilacak disk secimi"
-DISKS=$(lsblk -dnro NAME,SIZE,MODEL,TYPE,RM 2>/dev/null \
-  | awk '$4=="disk" && $5=="0" {printf "%s %s %s\n",$1,$2,$3}')
-
-[ -n "$DISKS" ] || DISKS=$(lsblk -dnro NAME,SIZE,MODEL,TYPE 2>/dev/null \
-  | awk '$4=="disk"{printf "%s %s %s\n",$1,$2,$3}')
+# Tum diskler listelenir (dahili SATA/NVMe/eMMC ve harici). Cikarilabilir
+# olanlar isaretlenir; canli ortamin kendi diski hic listelenmez.
+DISKS=$(lsblk -dnro NAME,SIZE,RM,TYPE,MODEL 2>/dev/null | awk -v canli=" $CANLI_DISK " '
+  $4=="disk" {
+    ad=$1
+    if (index(canli, " " ad " ") > 0) next
+    model=""
+    for (i=5; i<=NF; i++) model = model (i>5 ? " " : "") $i
+    printf "%s %s %s%s\n", ad, $2, ($3=="1" ? "(cikarilabilir) " : ""), model
+  }')
 
 [ -n "$DISKS" ] || hata "Kurulum yapilabilecek bir disk bulunamadi." "Bilgisayarinizda dahili bir SATA/NVMe disk oldugundan emin olun. BIOS'ta disk modunu 'AHCI' yapmak cogu durumda sorunu cozer."
 
@@ -88,6 +114,11 @@ else
   [ -n "$TARGET" ] || hata "Gecersiz secim." "Listedeki satir numaralarindan birini yazin (ornek: 1)."
 fi
 
+# Disk boyutu: 8 GB altinda kurulum tamamlanamaz.
+BOYUT_BLOK=$(cat "/sys/block/$TARGET/size" 2>/dev/null || echo 0)
+BOYUT_GB=$(( BOYUT_BLOK / 2097152 ))
+[ "$BOYUT_GB" -ge 8 ] 2>/dev/null || hata "Secilen disk cok kucuk (${BOYUT_GB} GB)." "En az 8 GB kapasiteli bir disk secin."
+
 say ""
 say "UYARI: /dev/$TARGET uzerindeki TUM VERILER SILINECEK."
 printf "Devam etmek icin buyuk harflerle EVET yazin: "
@@ -96,24 +127,37 @@ read -r ONAY
 
 DEV="/dev/$TARGET"
 case "$TARGET" in
-  nvme*|mmcblk*) P1="${DEV}p1"; P2="${DEV}p2" ;;
-  *)             P1="${DEV}1";  P2="${DEV}2"  ;;
+  nvme*|mmcblk*) PSEP="p" ;;
+  *)             PSEP=""  ;;
 esac
 
 # --- 2) Bolumleme ----------------------------------------------------
-adim 2 "Disk bolumleniyor (EFI + ext4)"
-say "  Bu adimda diskte iki bolum olusturulur: acilis bolumu ve sistem bolumu."
+adim 2 "Disk bolumleniyor (acilis + sistem)"
+say "  Bu adimda diskte acilis bolumu ve sistem bolumu olusturulur."
 umount "${DEV}"* 2>/dev/null
 swapoff -a 2>/dev/null
 
 wipefs -a "$DEV" >/dev/null 2>&1
 parted -s "$DEV" mklabel gpt || hata "Disk bolumlenemedi." "Disk yazma korumali olabilir. Fiziksel yazma korumasi anahtarini kapatin veya baska bir disk secin."
-parted -s "$DEV" mkpart ESP fat32 1MiB 513MiB || hata "Acilis (EFI) bolumu olusturulamadi." "Diskte kullanimda kalan bir bolum olabilir; bilgisayari yeniden baslatip tekrar deneyin."
-parted -s "$DEV" set 1 esp on
-parted -s "$DEV" mkpart tedbirge ext4 513MiB 100% || hata "Sistem bolumu olusturulamadi." "Diskin en az 8 GB bos alani oldugundan emin olun."
+
+if [ "$UEFI" = "1" ]; then
+  # 1: EFI sistem bolumu · 2: sistem
+  parted -s "$DEV" mkpart ESP fat32 1MiB 513MiB || hata "Acilis (EFI) bolumu olusturulamadi." "Diskte kullanimda kalan bir bolum olabilir; bilgisayari yeniden baslatip tekrar deneyin."
+  parted -s "$DEV" set 1 esp on
+  parted -s "$DEV" mkpart tedbirge ext4 513MiB 100% || hata "Sistem bolumu olusturulamadi." "Diskin en az 8 GB bos alani oldugundan emin olun."
+  P1="${DEV}${PSEP}1"; P2="${DEV}${PSEP}2"
+else
+  # Klasik BIOS + GPT: GRUB'un cekirdek parcasi icin ayri bir bolum sart.
+  parted -s "$DEV" mkpart bios_grub 1MiB 3MiB || hata "BIOS acilis bolumu olusturulamadi." "Diski cikarip yeniden takin ya da baska bir disk secin."
+  parted -s "$DEV" set 1 bios_grub on
+  parted -s "$DEV" mkpart tedbirge ext4 3MiB 100% || hata "Sistem bolumu olusturulamadi." "Diskin en az 8 GB bos alani oldugundan emin olun."
+  P1=""; P2="${DEV}${PSEP}2"
+fi
 sync; sleep 2
 
-mkfs.vfat -F32 -n TEDBIRGE_EFI "$P1" >/dev/null 2>&1 || hata "Acilis bolumu bicimlendirilemedi." "Diski cikarip yeniden takin ya da baska bir USB baglantisi deneyin."
+if [ -n "$P1" ]; then
+  mkfs.vfat -F32 -n TEDBIRGE_EFI "$P1" >/dev/null 2>&1 || hata "Acilis bolumu bicimlendirilemedi." "Diski cikarip yeniden takin ya da baska bir USB baglantisi deneyin."
+fi
 mkfs.ext4 -F -L TEDBIRGE "$P2" >/dev/null 2>&1 || hata "Sistem bolumu bicimlendirilemedi." "Disk ariza vermis olabilir; baska bir disk secmeyi deneyin."
 
 # --- 3) Sistemi diske yaz -------------------------------------------
@@ -122,44 +166,87 @@ say "  Bu adim birkac dakika surer. Bilgisayari kapatmayin."
 mkdir -p "$MNT"
 mount "$P2" "$MNT" || hata "Sistem bolumu baglanamadi." "Bilgisayari yeniden baslatip kurulumu bastan calistirin."
 
+# EFI bolumu kurulumdan ONCE baglanir: boylece hem onyukleyici dogru yere
+# yazilir hem de olusturulan fstab'da kalici bir kaydi olur.
+if [ -n "$P1" ]; then
+  mkdir -p "$MNT/boot/efi"
+  mount "$P1" "$MNT/boot/efi" || hata "Acilis bolumu baglanamadi." "Bilgisayari yeniden baslatip kurulumu bastan calistirin."
+fi
+
 export ERASE_DISKS=""
 export BOOTLOADER=grub
-export USE_EFI=1
-
-if command -v setup-disk >/dev/null 2>&1; then
-  if ! setup-disk -m sys "$MNT"; then
-    umount -R "$MNT" 2>/dev/null
-    hata "Sistem dosyalari kopyalanamadi." "Disk dolmus veya ariza vermis olabilir; kayit dosyasindaki son satirlari kontrol edin: $LOG"
-  fi
+if [ "$UEFI" = "1" ]; then
+  export USE_EFI=1
 else
+  unset USE_EFI
+fi
+
+command -v setup-disk >/dev/null 2>&1 \
+  || { umount -R "$MNT" 2>/dev/null; hata "Kurulum araci bulunamadi (setup-disk)." "ISO imaji eksik yazilmis olabilir; imaji Rufus/BalenaEtcher ile 'DD' kipinde yeniden yazip tekrar deneyin."; }
+
+if ! setup-disk -m sys -b "$DEV" "$MNT" 2>&1 | tee -a "$LOG"; then
   umount -R "$MNT" 2>/dev/null
-  hata "Kurulum araci bulunamadi (setup-disk)." "ISO imaji eksik yazilmis olabilir; imaji Rufus/BalenaEtcher ile yeniden yazip tekrar deneyin."
+  hata "Sistem dosyalari kopyalanamadi." "Disk dolmus veya ariza vermis olabilir; kayit dosyasindaki son satirlari kontrol edin: $LOG"
 fi
 
 # --- 4) WebOS dosya sistemi ve kiosk yapilandirmasi -----------------
 adim 4 "Tedbirge(R) OS arayuzu ve servisleri kopyalaniyor"
-mkdir -p "$MNT$SRC_WWW" "$MNT/opt/tedbirge" "$MNT/etc/nginx/http.d" "$MNT/etc/profile.d"
-cp -a "$SRC_WWW/." "$MNT$SRC_WWW/" 2>/dev/null
+mkdir -p "$MNT$SRC_WWW" "$MNT/opt/tedbirge" "$MNT/etc/nginx/http.d" "$MNT/etc/profile.d" "$MNT/root"
+cp -a "$SRC_WWW/." "$MNT$SRC_WWW/" || hata "Arayuz dosyalari kopyalanamadi." "Diskte yer kalmamis olabilir; daha buyuk bir disk secin."
 cp -a /opt/tedbirge/. "$MNT/opt/tedbirge/" 2>/dev/null
 cp -a /etc/nginx/http.d/tedbirge.conf "$MNT/etc/nginx/http.d/" 2>/dev/null
 cp -a /etc/profile.d/tedbirge-kiosk.sh "$MNT/etc/profile.d/" 2>/dev/null
 cp -a /etc/inittab "$MNT/etc/inittab" 2>/dev/null
 cp -a /root/.xinitrc "$MNT/root/.xinitrc" 2>/dev/null
+cp -a /etc/init.d/tedbirge-sysbridge "$MNT/etc/init.d/" 2>/dev/null
+cp -a /etc/local.d/. "$MNT/etc/local.d/" 2>/dev/null
+cp -a /etc/tedbirge-release "$MNT/etc/tedbirge-release" 2>/dev/null
 
-# EFI bolumu ve onyukleyici
-mkdir -p "$MNT/boot/efi"
-mount "$P1" "$MNT/boot/efi" 2>/dev/null
+[ -s "$MNT$SRC_WWW/index.html" ] || hata "Arayuz dosyalari diske yazilamadi." "Imaji USB'ye 'DD' kipinde yeniden yazip kurulumu tekrarlayin."
+
 for d in dev proc sys; do mount --bind "/$d" "$MNT/$d" 2>/dev/null; done
 
-chroot "$MNT" /bin/sh -c '
-  rc-update add nginx default 2>/dev/null
-  rc-update add dbus default 2>/dev/null
-  rc-update add tedbirge-shell default 2>/dev/null
-  grub-install --target=x86_64-efi --efi-directory=/boot/efi \
-    --bootloader-id=tedbirge --removable 2>/dev/null \
-    || grub-install --target=i386-pc '"$DEV"' 2>/dev/null
-  grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null
-' || say "  (uyari: onyukleyici adimi kismen tamamlandi — bilgisayar acilmazsa BIOS'ta 'UEFI' acilisini secin)"
+# Onyukleyici: UEFI ve BIOS ayri ayri kurulur, sonuc kesin olarak denetlenir.
+if [ "$UEFI" = "1" ]; then
+  KOMUT="grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=tedbirge --removable"
+else
+  KOMUT="grub-install --target=i386-pc --recheck $DEV"
+fi
+
+chroot "$MNT" /bin/sh -c "
+  rc-update add nginx default
+  rc-update add dbus default
+  rc-update add acpid default
+  rc-update add networkmanager default
+  rc-update add local default
+  rc-update add tedbirge-sysbridge default 2>/dev/null
+  $KOMUT
+  grub-mkconfig -o /boot/grub/grub.cfg
+" >>"$LOG" 2>&1 \
+  || { sync; for d in dev proc sys; do umount "$MNT/$d" 2>/dev/null; done; umount -R "$MNT" 2>/dev/null; \
+       hata "Onyukleyici kurulamadi — bilgisayar bu haliyle acilmaz." "BIOS/UEFI ayarlarinda 'Secure Boot' kapali ve disk modu 'AHCI' olmali. Ayrinti icin: $LOG"; }
+
+# Onyukleyicinin gercekten olustugu dogrulanir; aksi halde basari bildirilmez.
+if [ "$UEFI" = "1" ]; then
+  [ -s "$MNT/boot/efi/EFI/BOOT/BOOTX64.EFI" ] || [ -s "$MNT/boot/efi/EFI/tedbirge/grubx64.efi" ] \
+    || { for d in dev proc sys; do umount "$MNT/$d" 2>/dev/null; done; umount -R "$MNT" 2>/dev/null; \
+         hata "Acilis dosyasi olusmadi (EFI)." "BIOS/UEFI ayarlarindan 'Secure Boot' kapatip kurulumu tekrarlayin."; }
+else
+  [ -d "$MNT/boot/grub/i386-pc" ] \
+    || { for d in dev proc sys; do umount "$MNT/$d" 2>/dev/null; done; umount -R "$MNT" 2>/dev/null; \
+         hata "Acilis dosyalari olusmadi (BIOS)." "Diski degistirip kurulumu tekrarlayin. Ayrinti: $LOG"; }
+fi
+[ -s "$MNT/boot/grub/grub.cfg" ] \
+  || { for d in dev proc sys; do umount "$MNT/$d" 2>/dev/null; done; umount -R "$MNT" 2>/dev/null; \
+       hata "Acilis menusu olusturulamadi." "Kurulumu tekrarlayin; sorun surerse kaydi paylasin: $LOG"; }
+
+# Kurulan sistemde cekirdek ve baslangic dosyasi var mi? Yoksa disk acilmaz.
+ls "$MNT"/boot/vmlinuz-* >/dev/null 2>&1 \
+  || { for d in dev proc sys; do umount "$MNT/$d" 2>/dev/null; done; umount -R "$MNT" 2>/dev/null; \
+       hata "Cekirdek diske yazilamadi." "Imaji USB'ye 'DD' kipinde yeniden yazip kurulumu tekrarlayin."; }
+[ -x "$MNT/sbin/init" ] || [ -L "$MNT/sbin/init" ] \
+  || { for d in dev proc sys; do umount "$MNT/$d" 2>/dev/null; done; umount -R "$MNT" 2>/dev/null; \
+       hata "Sistem baslangic dosyasi eksik." "Imaji USB'ye 'DD' kipinde yeniden yazip kurulumu tekrarlayin."; }
 
 # Kurulum kaydi diske tasinir: hedef sistemde kalici hata izi olusur.
 mkdir -p "$MNT/var/log/tedbirge"
@@ -167,8 +254,8 @@ cp "$LOG" "$MNT/var/log/tedbirge/kurulum.log" 2>/dev/null || true
 
 sync
 for d in dev proc sys; do umount "$MNT/$d" 2>/dev/null; done
-umount "$MNT/boot/efi" 2>/dev/null
 umount -R "$MNT" 2>/dev/null
+
 
 # --- 5) Bitis -------------------------------------------------------
 say ""

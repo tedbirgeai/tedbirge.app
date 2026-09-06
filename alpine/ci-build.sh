@@ -116,7 +116,32 @@ if grep -qE 'unionfs_size=|tmpfs_size=' "$WORK/alpine/mkimg.tedbirge.sh"; then
   echo "  cekirdek 'Attempted to kill init' ile durur. Parametreyi kaldirin."
   exit 1
 fi
-echo "-- acilis satiri etiketi ve kok alani dogrulandi"
+# modules= bir izin listesidir. Depolama denetleyicisi eksikse acilis ortami
+# bulunamaz, kok yarim kalir ve switch_root "Attempted to kill init" verir.
+for m in ahci ata_piix nvme sr_mod mmc_block uhci_hcd virtio_blk virtio_scsi; do
+  grep -q "modules=[^\" ]*[,=]$m[,\" ]" "$WORK/alpine/mkimg.tedbirge.sh" || {
+    echo "! Acilis satirindaki modules= listesinde '$m' yok."
+    echo "  SATA/IDE/NVMe/eMMC/CD-ROM veya sanal disk denetleyicisi yuklenmez;"
+    echo "  eski masaustu ve dizustulerde acilis kernel panic ile durur."
+    exit 1
+  }
+done
+if ! grep -q 'rootflags=size=' "$WORK/alpine/mkimg.tedbirge.sh"; then
+  echo "! Canli kok icin rootflags=size= tanimli degil; varsayilan yarim RAM"
+  echo "  tavani masaustu paketlerinde kurulumu yarida keser."
+  exit 1
+fi
+echo "-- acilis satiri etiketi, surucu listesi ve kok alani dogrulandi"
+
+# Canli sistemin gercek paket listesi (/etc/apk/world) arayuzu icermelidir.
+for p in nginx chromium xorg-server xinit mkinitfs grub-bios grub-efi; do
+  grep -qx "$p" "$WORK/alpine/genapkovl-tedbirge.sh" || {
+    echo "! Canli sistem paket listesinde (world) '$p' yok; sistem paketsiz acilir." >&2
+    exit 1
+  }
+done
+echo "-- canli sistem paket listesi dogrulandi"
+
 
 chown -R builder:abuild /home/builder/aports
 
@@ -166,13 +191,16 @@ echo "-- paket listesi dogrulandi ($(echo "$PKGS" | wc -w) paket)"
 
 # Donanim yetenekleri profil ile birlikte ve gercek depoya karsi denetlenir.
 # Boylece is akisi ile imaj profili zaman icinde birbirinden kopamaz.
-for p in mesa-vulkan-intel linux-firmware-intel acpid zram-init pipewire nvme-cli; do
+# Not: surucu yazilimlari (linux-firmware) mkimage tarafindan modloop icine
+# konur; kok dosya sistemine ikinci kez kurulmaz.
+for p in mesa-vulkan-intel acpid zram-init pipewire nvme-cli linux-lts mkinitfs grub-bios sfdisk; do
   echo "$PKGS" | tr -s '[:space:]' '\n' | grep -qx "$p" || {
-    echo "HATA: zorunlu donanim paketi profilde yok: $p" >&2
+    echo "HATA: zorunlu donanim/kurulum paketi profilde yok: $p" >&2
     exit 1
   }
 done
 echo "-- donanim paketleri dogrulandi"
+
 
 
 su builder -c "cd /home/builder/aports/scripts && \
