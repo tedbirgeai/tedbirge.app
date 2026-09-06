@@ -133,14 +133,43 @@ if ! grep -q 'rootflags=size=' "$WORK/alpine/mkimg.tedbirge.sh"; then
 fi
 echo "-- acilis satiri etiketi, surucu listesi ve kok alani dogrulandi"
 
-# Canli sistemin gercek paket listesi (/etc/apk/world) arayuzu icermelidir.
-for p in nginx chromium xorg-server xinit mkinitfs grub-bios grub-efi; do
-  grep -qx "$p" "$WORK/alpine/genapkovl-tedbirge.sh" || {
+# Canli sistemin gercek paket listesini yalniz world heredoc'undan oku. Tum
+# dosyada grep yapmak, yorumdaki bir paket adini yanlislikla gecerli sayabilir.
+WORLD_PKGS=$(awk '
+  /makefile root:root 0644 .*\/etc\/apk\/world.*<<.EOF./ { inside=1; next }
+  inside && /^EOF$/ { exit }
+  inside { print }
+' "$WORK/alpine/genapkovl-tedbirge.sh")
+[ -n "$WORLD_PKGS" ] || {
+  echo "! Canli sistem paket listesi okunamadi." >&2
+  exit 1
+}
+for p in alpine-base openrc nginx chromium xorg-server xinit linux-lts mkinitfs grub-bios grub-efi; do
+  printf '%s\n' "$WORLD_PKGS" | grep -qx "$p" || {
     echo "! Canli sistem paket listesinde (world) '$p' yok; sistem paketsiz acilir." >&2
     exit 1
   }
 done
 echo "-- canli sistem paket listesi dogrulandi"
+
+# Donanim yoneticisi tek yigin olmalidir. NetworkManager ile eudev kullanilir;
+# mdev ve udev ayni anda acilirsa aygit olaylari yarisa girer.
+for service in udev udev-trigger udev-settle; do
+  grep -q "rc_add $service sysinit" "$WORK/alpine/genapkovl-tedbirge.sh" || {
+    echo "! eudev servisi etkin degil: $service" >&2; exit 1;
+  }
+done
+if grep -qE 'rc_add (mdev|hwdrivers) sysinit' "$WORK/alpine/genapkovl-tedbirge.sh"; then
+  echo "! mdev ve eudev ayni imajda etkinlestirilemez." >&2
+  exit 1
+fi
+
+# modules= listesi kadar initramfs ozellikleri de depolama yollarini tasimali.
+for feature in ata cdrom mmc nvme scsi usb virtio; do
+  grep -q "initfs_features=\"[^"]*\\b$feature\\b" "$WORK/alpine/mkimg.tedbirge.sh" || {
+    echo "! initramfs ozelliklerinde '$feature' yok." >&2; exit 1;
+  }
+done
 
 
 chown -R builder:abuild /home/builder/aports
@@ -179,6 +208,10 @@ chown -R builder:abuild /home/builder/iso
 PKGS=$(sed -n '/apks="\$apks/,/^[[:space:]]*"[[:space:]]*$/p' \
   /home/builder/aports/scripts/mkimg.tedbirge.sh \
   | sed -e '1d' -e '$d' -e 's/"//g')
+[ -n "$PKGS" ] || {
+  echo "HATA: profil paket listesi cikartilamadi; bos imaj uretilmeyecek." >&2
+  exit 1
+}
 MISSING=""
 for p in $PKGS; do
   apk search -x "$p" 2>/dev/null | grep -q . || MISSING="$MISSING $p"
@@ -212,6 +245,12 @@ su builder -c "cd /home/builder/aports/scripts && \
     --repository https://dl-cdn.alpinelinux.org/alpine/v3.20/main \
     --repository https://dl-cdn.alpinelinux.org/alpine/v3.20/community \
     --profile tedbirge"
+
+set -- /home/builder/iso/*.iso
+[ -e "$1" ] || {
+  echo "HATA: mkimage tamamlandi ancak ISO dosyasi olusmadi." >&2
+  exit 1
+}
 
 for f in /home/builder/iso/*.iso; do
   [ -e "$f" ] || continue
