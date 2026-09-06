@@ -124,7 +124,8 @@ export function Desktop({
         />
       ) : (
         <div
-          className="grid h-full grid-cols-6 content-start justify-items-center gap-6 overflow-y-auto p-6 pt-40 xl:grid-cols-7 2xl:grid-cols-8"
+          className="grid h-full content-start justify-start justify-items-start gap-5 overflow-y-auto p-4 pt-40"
+          style={{ gridTemplateColumns: "repeat(auto-fill, 92px)" }}
           onPointerDown={(e) => {
             if (e.target === e.currentTarget) setSelected(null);
           }}
