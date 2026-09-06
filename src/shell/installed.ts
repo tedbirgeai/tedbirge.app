@@ -110,6 +110,13 @@ export const LOCAL_APPS: CatalogApp[] = [
     category: "araclar",
     builtin: false,
   },
+  {
+    id: "news",
+    label: "Haberler",
+    hint: "Gündem ve teknoloji başlıkları",
+    category: "araclar",
+    builtin: true,
+  },
   { id: "mesh", label: "Ağ", hint: "Mesh durumu", category: "araclar", builtin: false },
   { id: "relay", label: "Röle", hint: "Taşıma ayarları", category: "araclar", builtin: false },
 ];

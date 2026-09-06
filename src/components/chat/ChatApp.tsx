@@ -1272,6 +1272,42 @@ function ChatAppInner() {
                   </div>
                 </li>
               ))}
+              {conversations.length === 0 && ready && (
+                <li className="px-4 py-6">
+                  <p className="text-sm" style={{ color: "var(--wa-text)" }}>
+                    Henüz sohbetiniz yok.
+                  </p>
+                  <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+                    Kişi ekleyerek, numara çevirerek ya da karekod ile eşleşerek başlayın.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setContactsOpen(true)}
+                      className="wa-press rounded-full px-3 py-1.5 text-[12px] font-semibold text-white"
+                      style={{ background: "var(--wa-accent)" }}
+                    >
+                      Kişi ekle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDialpadOpen(true)}
+                      className="wa-press rounded-full px-3 py-1.5 text-[12px]"
+                      style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
+                    >
+                      Numara ile başlat
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQrOpen(true)}
+                      className="wa-press rounded-full px-3 py-1.5 text-[12px]"
+                      style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
+                    >
+                      Karekod ile eşleş
+                    </button>
+                  </div>
+                </li>
+              )}
               {conversations.map((c) => {
                 const name = humanName(titleOf(c));
                 return (

@@ -36,6 +36,18 @@ export function StoreApp({ onOpen }: { onOpen: (id: string) => void }) {
   const [tab, setTab] = useState<Tab>("all");
   const [q, setQ] = useState("");
 
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of CATALOG) m.set(a.category, (m.get(a.category) ?? 0) + 1);
+    m.set("all", CATALOG.length);
+    return m;
+  }, []);
+
+  const featured = useMemo(
+    () => CATALOG.filter((a) => ["news", "messenger", "web.maps", "store"].includes(a.id)),
+    [],
+  );
+
   const list = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");
     return CATALOG.filter((a) => (tab === "all" ? true : a.category === tab)).filter((a) =>
@@ -75,6 +87,7 @@ export function StoreApp({ onOpen }: { onOpen: (id: string) => void }) {
               }`}
             >
               {t.label}
+              {t.id === "subscription" ? "" : ` ${counts.get(t.id) ?? 0}`}
             </button>
           ))}
         </div>
@@ -84,6 +97,31 @@ export function StoreApp({ onOpen }: { onOpen: (id: string) => void }) {
         <SubscriptionPanel onOpen={onOpen} />
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-1 content-start gap-2 overflow-y-auto p-3 sm:grid-cols-2">
+          {tab === "all" && q.trim() === "" ? (
+            <section className="col-span-full">
+              <h2 className="pb-2 font-osmono text-[11px] text-[var(--tb-muted)]">Öne çıkanlar</h2>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {featured.map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => onOpen(a.id)}
+                    className="wa-press flex w-32 shrink-0 flex-col items-start gap-2 rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel-solid)] p-3 text-left"
+                  >
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--tb-accent)_12%,transparent)] text-[var(--tb-accent)]">
+                      <AppIcon id={a.id} className="h-5 w-5" />
+                    </span>
+                    <span className="truncate text-[13px] font-semibold text-[var(--tb-text)]">
+                      {a.label}
+                    </span>
+                    <span className="line-clamp-2 font-osmono text-[10.5px] text-[var(--tb-muted)]">
+                      {a.hint}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
           {list.map((a) => {
             const on = installed.includes(a.id);
             return (
