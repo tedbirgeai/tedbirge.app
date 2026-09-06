@@ -10,15 +10,21 @@ Bilgisayarınızda hiçbir şey derlemenize gerek yok. Yapmanız gereken üç ş
    - **Ventoy**: `.iso` dosyasını Ventoy USB'sine kopyalamanız yeterli
 3. **Başlat** — Bilgisayarı USB'den açın (açılışta genelde F12, F9, Esc veya Del).
 
-## Açılış menüsü
+## Açılış ve kurulum
 
-| Seçenek | Ne yapar |
-| --- | --- |
-| **Tedbirge® WebOS (Canlı — Live Kiosk)** | Sistemi RAM üzerinden çalıştırır. Diskinize hiç dokunmaz; USB'yi çıkardığınızda iz kalmaz. |
-| **Tedbirge® WebOS (Diske Kur — Otomatik Kurulum)** | Türkçe kurulum sihirbazını açar; hedef diski seçip onayladıktan sonra sistemi kalıcı olarak kurar. |
-| **Kurtarma konsolu** | Sorun giderme için basit komut ekranı. |
+Bilgisayar USB'den açıldığında sistem doğrudan Tedbirge® WebOS ekranına gelir.
+Hiçbir kurulum adımı, paket indirmesi veya internet bağlantısı gerekmez —
+sistemin tamamı imajın içinde hazır olarak gelir.
 
-Kurulum sihirbazı, siz büyük harflerle `EVET` yazana kadar hiçbir diske yazmaz.
+Kalıcı kurulum için arayüzden konsolu açın ve şunu yazın:
+
+```
+sudo tedbirge-kur
+```
+
+Sihirbaz diskleri listeler; siz büyük harflerle `EVET` yazana kadar hiçbir diske
+yazmaz. Kurulum bittiğinde USB'yi çıkarıp yeniden başlatın.
+
 
 ## Bilgisayar gereksinimleri
 
