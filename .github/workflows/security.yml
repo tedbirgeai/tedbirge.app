@@ -58,41 +58,52 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: "22"
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      # Denetim, bun'in serdigi node_modules agacindan degil, temiz bir
+      # cozumlemeden yapilir; aksi halde npm mevcut agaci okuyup gercekte
+      # kurulmayan eski surumleri raporluyordu (sahte "yuksek" bulgular).
+      - name: Temiz cozumleme (denetim icin)
+        run: |
+          mkdir -p /tmp/audit
+          cp package.json /tmp/audit/package.json
+          cd /tmp/audit
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund --legacy-peer-deps
 
-      # npm audit bir package-lock.json ister; depoda tutulmaz, gecici uretilir.
-      - name: Kilit dosyasi uret (denetim icin)
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-
-      # Denetim yalnizca gercek yuksek/kritik zafiyette durur. Kayit servisi
+      # Yalnizca gercek yuksek/kritik zafiyette durur. Kayit servisi
       # ulasilamazsa (404/5xx/ag hatasi) is uyari ile gecer.
       - name: Audit
         shell: bash
+        working-directory: /tmp/audit
         run: |
           set +e
-          out="$(npm audit --audit-level=high --json 2>&1)"
-          code=$?
-          echo "$out" | head -c 20000
-          if [ $code -eq 0 ]; then
-            echo "Yuksek/kritik zafiyet yok."
-            exit 0
-          fi
-          high=$(printf '%s' "$out" | grep -oE '"high"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' | head -n1)
-          crit=$(printf '%s' "$out" | grep -oE '"critical"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' | head -n1)
-          if [ -n "$high" ] || [ -n "$crit" ]; then
-            if [ "${high:-0}" -gt 0 ] || [ "${crit:-0}" -gt 0 ]; then
-              echo "::error::Yuksek: ${high:-0}, Kritik: ${crit:-0} zafiyet bulundu."
-              exit 1
-            fi
-            echo "Yuksek/kritik zafiyet yok."
-            exit 0
-          fi
-          echo "::warning::Bagimlilik denetim servisi yanit vermedi; adim atlandi."
-          exit 0
+          npm audit --json --registry=https://registry.npmjs.org > audit.json 2>&1
+          node -e '
+            const fs = require("fs");
+            let d;
+            try { d = JSON.parse(fs.readFileSync("audit.json", "utf8")); } catch {
+              console.log("::warning::Bagimlilik denetim servisi yanit vermedi; adim atlandi.");
+              process.exit(0);
+            }
+            const m = d.metadata && d.metadata.vulnerabilities;
+            if (!m) {
+              console.log("::warning::Bagimlilik denetim servisi yanit vermedi; adim atlandi.");
+              process.exit(0);
+            }
+            console.log("Ozet:", JSON.stringify(m));
+            const bad = Object.entries(d.vulnerabilities || {})
+              .filter(([, v]) => v.severity === "high" || v.severity === "critical");
+            for (const [name, v] of bad) {
+              console.log(`${v.severity}: ${name} ${v.range || ""} (duzeltme: ${v.fixAvailable ? "var" : "yok"})`);
+            }
+            if (bad.length) {
+              console.log(`::error::Yuksek: ${m.high}, Kritik: ${m.critical} zafiyet bulundu.`);
+              process.exit(1);
+            }
+            console.log("Yuksek/kritik zafiyet yok.");
+          '
+
 
 
