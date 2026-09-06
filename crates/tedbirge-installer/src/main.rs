@@ -25,8 +25,13 @@ fn main() -> io::Result<()> {
 
     // Üretim Alpine imajında tek, denetlenmiş kurulum yolu kullanılır. Böylece
     // Rust prototipi ile BIOS/UEFI bölümleme mantığının ayrışması engellenir.
-    if !dry && args.is_empty() && std::path::Path::new("/opt/tedbirge/setup-tedbirge-disk.sh").is_file() {
-        let status = Command::new("/opt/tedbirge/setup-tedbirge-disk.sh").status()?;
+    if !dry {
+        let installer = "/opt/tedbirge/setup-tedbirge-disk.sh";
+        if !std::path::Path::new(installer).is_file() {
+            eprintln!("! Guvenli kurulum araci bulunamadi; diske dokunulmadi.");
+            std::process::exit(1);
+        }
+        let status = Command::new(installer).status()?;
         std::process::exit(status.code().unwrap_or(1));
     }
 
