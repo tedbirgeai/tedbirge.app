@@ -133,33 +133,49 @@ function Shell({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  // Nielsen #3 — kullanıcı kontrolü: ESC ile kapanış.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [onClose]);
+
   return (
     <div
-      className="fixed inset-0 z-[95] flex items-center justify-center bg-black/45 p-4 pt-16"
+      className="fixed inset-0 z-[95] flex items-center justify-center overflow-y-auto bg-black/45 p-4"
       role="dialog"
       aria-modal="true"
       aria-label={title}
       onClick={onClose}
     >
       <div
-        className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel-solid)] p-5 shadow-2xl"
+        className="my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel-solid)] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div>
+        {/* Sabit başlık çubuğu — içerik altında kayar, başlık hep görünür. */}
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--tb-border)] px-5 pb-3 pt-4">
+          <div className="min-w-0">
             <h2 className="text-[16px] font-semibold text-[var(--tb-text)]">{title}</h2>
             <p className="mt-1 font-osmono text-[11px] text-[var(--tb-muted)]">{subtitle}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
+            autoFocus
             aria-label="Kapat"
-            className="wa-press grid h-11 w-11 shrink-0 place-items-center rounded-full text-[var(--tb-muted)]"
+            title="Kapat"
+            className="wa-press -mr-2 -mt-1 grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[var(--tb-border)] text-[var(--tb-muted)] hover:text-[var(--tb-accent)]"
           >
             <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
-        {children}
+        {/* Yalnızca içerik kaydırılır; 1. madde asla üstten kırpılmaz. */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-1">{children}</div>
       </div>
     </div>
   );
