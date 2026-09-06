@@ -36,6 +36,7 @@ for path in \
   usr/lib/systemd/systemd \
   usr/bin/chromium \
   usr/sbin/nginx \
+  usr/bin/zstd \
   usr/local/sbin/tedbirge-kur \
   var/www/tedbirge/index.html \
   var/www/tedbirge/kernel/tedbirge_kernel.wasm \

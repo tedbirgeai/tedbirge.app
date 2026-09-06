@@ -6,6 +6,8 @@ ConditionKernelCommandLine=tedbirge.install=1
 
 [Service]
 Type=idle
+Environment=DEBIAN_FRONTEND=noninteractive
+Environment=APT_LISTCHANGES_FRONTEND=none
 ExecStart=/usr/local/sbin/tedbirge-kur
 StandardInput=tty-force
 StandardOutput=tty

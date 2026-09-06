@@ -61,6 +61,7 @@ ntfs-3g
 util-linux
 nvme-cli
 squashfs-tools
+zstd
 rsync
 grub-pc-bin
 grub-efi-amd64-bin

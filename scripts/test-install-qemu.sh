@@ -4,8 +4,11 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
+export DEBIAN_FRONTEND=noninteractive
+
 ISO=build-iso/iso/tedbirge-webos-x86_64.iso
 TIMEOUT="${INSTALL_TIMEOUT:-1500}"
+QEMU_STOP_TIMEOUT="${QEMU_STOP_TIMEOUT:-30}"
 
 [ -s "$ISO" ] || { echo "::error::ISO yok: $ISO"; exit 1; }
 command -v qemu-system-x86_64 >/dev/null || { echo "::error::qemu yok"; exit 1; }
@@ -32,16 +35,54 @@ izle() { # log, basari-deseni, hata-deseni, pid, sure
   return 1
 }
 
+qemu_temiz_kapat() { # pid, qmp-soketi
+  local pid="$1" soket="$2" i=0 rc=0
+  if ! kill -0 "$pid" 2>/dev/null; then
+    wait "$pid"; rc=$?
+    [ "$rc" = 0 ] || echo "::warning::QEMU kendiliginden $rc koduyla kapandi."
+    return "$rc"
+  fi
+
+  # QMP quit, emulatore kontrollu ve sifir cikis kodlu kapanis yaptirir.
+  python3 - "$soket" <<'PY' 2>/dev/null || true
+import socket, sys, time
+sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+sock.settimeout(3)
+sock.connect(sys.argv[1])
+sock.recv(4096)
+sock.sendall(b'{"execute":"qmp_capabilities"}\r\n')
+time.sleep(0.1)
+sock.sendall(b'{"execute":"quit"}\r\n')
+sock.close()
+PY
+  while kill -0 "$pid" 2>/dev/null && [ "$i" -lt "$QEMU_STOP_TIMEOUT" ]; do
+    sleep 1; i=$((i + 1))
+  done
+  if kill -0 "$pid" 2>/dev/null; then
+    echo "::error::QEMU kontrollu kapanisa ${QEMU_STOP_TIMEOUT}s icinde yanit vermedi."
+    kill -TERM "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+    return 1
+  fi
+  wait "$pid"; rc=$?
+  [ "$rc" = 0 ] || { echo "::error::QEMU kapanis kodu: $rc"; return 1; }
+  return 0
+}
+
 kurulum_senaryosu() {
   local mod="$1"; shift
   local disk="build-iso/kurulum-${mod}.qcow2"
   local log1="build-iso/kurulum-${mod}-asama1.log"
   local log2="build-iso/kurulum-${mod}-asama2.log"
-  rm -f "$disk" "$log1" "$log2"
-  qemu-img create -f qcow2 "$disk" 20G >/dev/null
+  local qmp1="build-iso/kurulum-${mod}-asama1.qmp"
+  local qmp2="build-iso/kurulum-${mod}-asama2.qmp"
+  rm -f "$disk" "$log1" "$log2" "$qmp1" "$qmp2"
+  timeout --foreground 60s stdbuf -oL -eL qemu-img create -f qcow2 "$disk" 20G >/dev/null \
+    || { echo "::error::$mod test diski olusturulamadi."; return 1; }
 
   echo "==== $mod 1. aşama: canlı sistemden diske kurulum ===="
   qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none -no-reboot \
+    -qmp unix:"$qmp1",server=on,wait=off \
     -kernel "$TMP/vmlinuz" -initrd "$TMP/initrd.img" \
     -append "boot=live components noeject rootdelay=5 live-media-timeout=20 console=ttyS0,115200 tedbirge.autoinstall=1 tedbirge.install-mode=$mod" \
     -drive if=none,id=media,format=raw,readonly=on,file="$ISO" \
@@ -50,7 +91,11 @@ kurulum_senaryosu() {
     -serial file:"$log1" 2>"build-iso/kurulum-${mod}-asama1.stderr.log" &
   local p1=$! rc
   izle "$log1" "TEDBIRGE_INSTALL_OK" "TEDBIRGE_INSTALL_FAIL|Kernel panic|Attempted to kill init" "$p1" "$TIMEOUT"; rc=$?
-  kill -9 "$p1" 2>/dev/null; wait "$p1" 2>/dev/null
+  if [ "$rc" = 0 ]; then
+    qemu_temiz_kapat "$p1" "$qmp1" || rc=4
+  else
+    qemu_temiz_kapat "$p1" "$qmp1" >/dev/null 2>&1 || true
+  fi
   tail -n 60 "$log1" 2>/dev/null
   [ "$rc" = 0 ] || { echo "::error::$mod diske kurulum testi başarısız (kod $rc)."; return 1; }
 
@@ -60,6 +105,7 @@ kurulum_senaryosu() {
   # Bazı OVMF sürümleri virtio diski açılış aygıtı olarak hiç görmez ve seri
   # porta tek satır yazmadan bekler; eski 15 dakikalık sahte "donma" buydu.
   qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none -no-reboot "$@" \
+    -qmp unix:"$qmp2",server=on,wait=off \
     -boot order=c,menu=off,strict=on \
     -device ahci,id=system-ahci \
     -drive if=none,id=system-disk,file="$disk",format=qcow2,cache=unsafe \
@@ -68,7 +114,11 @@ kurulum_senaryosu() {
     -serial file:"$log2" 2>"build-iso/kurulum-${mod}-asama2.stderr.log" &
   local p2=$!
   izle "$log2" "TEDBIRGE_BOOT_READY" "Kernel panic|Attempted to kill init|No bootable device|Operating System not found|grub rescue" "$p2" 300; rc=$?
-  kill -9 "$p2" 2>/dev/null; wait "$p2" 2>/dev/null
+  if [ "$rc" = 0 ]; then
+    qemu_temiz_kapat "$p2" "$qmp2" || rc=4
+  else
+    qemu_temiz_kapat "$p2" "$qmp2" >/dev/null 2>&1 || true
+  fi
   tail -n 60 "$log2" 2>/dev/null
   [ "$rc" = 0 ] || { echo "::error::$mod kurulu sistem açılış testi başarısız (kod $rc)."; return 1; }
   echo "✓ $mod kalıcı kurulum zinciri geçti."

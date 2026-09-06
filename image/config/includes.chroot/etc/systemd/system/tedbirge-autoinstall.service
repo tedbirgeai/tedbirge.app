@@ -7,6 +7,8 @@ ConditionKernelCommandLine=tedbirge.autoinstall=1
 [Service]
 Type=oneshot
 Environment=TEDBIRGE_AUTO=1
+Environment=DEBIAN_FRONTEND=noninteractive
+Environment=APT_LISTCHANGES_FRONTEND=none
 ExecStart=/usr/local/sbin/tedbirge-kur
 StandardOutput=journal+console
 StandardError=journal+console

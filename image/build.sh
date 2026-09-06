@@ -40,11 +40,13 @@ fi
 
 # ------------------------------------------------------------- araç zinciri
 export DEBIAN_FRONTEND=noninteractive
-apt-get update
-apt-get install -y --no-install-recommends \
+export APT_LISTCHANGES_FRONTEND=none
+APT_OPTS=(-y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold")
+timeout --foreground 10m stdbuf -oL -eL apt-get update
+timeout --foreground 20m stdbuf -oL -eL apt-get install "${APT_OPTS[@]}" --no-install-recommends \
   live-build debootstrap squashfs-tools xorriso isolinux syslinux-common \
   grub-pc-bin grub-efi-amd64-bin mtools dosfstools ca-certificates rsync \
-  file coreutils
+  file coreutils zstd
 
 # ---------------------------------------------------------- çalışma alanı
 rm -rf "$BUILD"
@@ -107,7 +109,7 @@ lb config \
   --bootappend-live "boot=live components noeject quiet loglevel=3 rootdelay=5 live-media-timeout=20 modules=loop,squashfs,overlay,iso9660 console=tty0 console=ttyS0,115200 hostname=tedbirge"
 
 # --------------------------------------------------------------- derleme
-lb build
+timeout --foreground 90m stdbuf -oL -eL lb build
 
 ISO=$(ls -1 "$BUILD"/*.iso "$BUILD"/*.hybrid.iso 2>/dev/null | head -1 || true)
 [ -n "$ISO" ] || { echo "! ISO üretilmedi." >&2; ls -la "$BUILD" >&2; exit 1; }
