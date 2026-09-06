@@ -10,11 +10,13 @@ profile_tedbirge() {
 	image_ext="iso"
 	arch="x86_64"
 	output_format="iso"
-	kernel_cmdline="unionfs_size=512M console=tty0 quiet"
+	# Acilis satiri tek kaynaktir: alpine/boot altinda ikinci bir menu dosyasi tutulmaz.
+	# TEDBIRGE_WEBOS etiketi alpine/ci-build.sh icindeki -volid yamasi ile birebir aynidir.
+	kernel_cmdline="modules=loop,squashfs,sd-mod,usb-storage,uas,xhci_hcd,ehci_hcd,ohci_hcd,iso9660,overlay,vfat,ext4 alpine_dev=LABEL=TEDBIRGE_WEBOS waitusb=10 rootwait rootdelay=7 unionfs_size=512M console=tty0 console=ttyS0,115200"
 	syslinux_serial=""
 	kernel_flavors="lts"
 	kernel_addons=""
-	initfs_features="ata base bootchart cdrom squashfs ext4 f2fs mmc nvme scsi usb virtio kms network"
+	initfs_features="ata base bootchart cdrom squashfs ext4 f2fs mmc nvme scsi usb virtio kms network keymap"
 	grub_mod="all_video disk part_gpt part_msdos linux normal configfile search search_label efi_gop fat iso9660 cat echo ls test true help gzio"
 	boot_addons=""
 	apks="$apks
