@@ -1,6 +1,6 @@
 /**
  * Çevrimdışı desteği: servis çalışanı yalnızca yayınlanmış üretim sitesinde kaydolur.
- * Lovable önizleme/iframe/dev ortamlarında kayıt reddedilir ve varsa eski kayıt silinir.
+ * Önizleme/iframe/geliştirme ortamlarında kayıt reddedilir ve varsa eski kayıt silinir.
  */
 
 const SW_URL = "/sw.js";

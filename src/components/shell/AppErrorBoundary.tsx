@@ -4,7 +4,7 @@
  * Web-OS kabuğu ile içindeki uygulamaları birbirinden yalıtır: bir iç
  * panel (ayarlar, güvenlik, ağ, video) çökerse masaüstü ayakta kalır,
  * yalnız o pencere hata kartına düşer ve tek tıkla yeniden başlatılır.
- * Hata sessizce yutulmaz; konsola ve Lovable hata kanalına iletilir.
+ * Hata sessizce yutulmaz; konsola ve sistem hata kanalına iletilir.
  */
 
 import { Component, type ErrorInfo, type ReactNode } from "react";

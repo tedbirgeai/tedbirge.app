@@ -14,6 +14,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { HardDriveDownload, Info, Loader2, Smartphone, X } from "lucide-react";
 
 import {
@@ -145,9 +146,11 @@ function Shell({
     return () => window.removeEventListener("keydown", onKey, true);
   }, [onClose]);
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[95] flex items-center justify-center overflow-y-auto bg-black/45 p-4"
+      className="fixed inset-0 z-[140] flex items-center justify-center overflow-y-auto bg-black/45 p-4"
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -177,7 +180,8 @@ function Shell({
         {/* Yalnızca içerik kaydırılır; 1. madde asla üstten kırpılmaz. */}
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-1">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
