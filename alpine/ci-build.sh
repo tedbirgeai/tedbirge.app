@@ -167,7 +167,7 @@ echo "-- paket listesi dogrulandi ($(echo "$PKGS" | wc -w) paket)"
 # Donanim yetenekleri profil ile birlikte ve gercek depoya karsi denetlenir.
 # Boylece is akisi ile imaj profili zaman icinde birbirinden kopamaz.
 for p in mesa-vulkan-intel linux-firmware-intel acpid zram-init pipewire nvme-cli; do
-  echo "$PKGS" | tr ' ' '\n' | grep -qx "$p" || {
+  echo "$PKGS" | tr -s '[:space:]' '\n' | grep -qx "$p" || {
     echo "HATA: zorunlu donanim paketi profilde yok: $p" >&2
     exit 1
   }
