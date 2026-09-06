@@ -6,7 +6,16 @@
  */
 
 import { useEffect, useState } from "react";
-import { Battery, BatteryCharging, Bell, HardDrive, Search, Settings, UserRound, Wifi } from "lucide-react";
+import {
+  Battery,
+  BatteryCharging,
+  Bell,
+  HardDrive,
+  Search,
+  Settings,
+  UserRound,
+  Wifi,
+} from "lucide-react";
 
 import { BareMetalIsoButton } from "@/components/shell/BareMetalIso";
 import { InstallSystemButton } from "@/components/shell/InstallSystemButton";

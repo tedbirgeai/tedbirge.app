@@ -1,0 +1,15 @@
+# Tedbirge(R) WebOS — canli acilis icin zorunlu cekirdek modulleri.
+# Bu moduller initramfs icine gomulur; eksik olurlarsa yeni kok baglanamaz
+# ve cekirdek switch_root asamasinda "Attempted to kill init" ile durur.
+loop
+squashfs
+overlay
+isofs
+sr_mod
+cdrom
+usb_storage
+uas
+ahci
+nvme
+virtio_blk
+virtio_scsi

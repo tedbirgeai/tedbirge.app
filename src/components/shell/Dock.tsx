@@ -13,7 +13,7 @@ import { House } from "lucide-react";
 import { AppIcon } from "@/components/shell/app-icons";
 import { ContextMenu } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
-import { catalogApp, useDesktopState } from "@/shell/installed";
+import { catalogApp } from "@/shell/installed";
 import { setDockSlot, swapDockSlots, useDockSlots } from "@/shell/dock-slots";
 import {
   closeWindow,
@@ -39,15 +39,15 @@ export function Dock({
   onLaunchNew: (id: string) => void;
   onStore: () => void;
 }) {
-  const { installed } = useDesktopState();
   const slots = useDockSlots();
   const compact = useIsCompact();
   const [menu, setMenu] = useState<{ x: number; y: number; appId: string } | null>(null);
   const [properties, setProperties] = useState<string | null>(null);
   const [dropSlot, setDropSlot] = useState<number | null>(null);
   const hidden = useRef<string[]>([]);
-  const extra = windows.filter((w) => !installed.includes(w.appId)).map((w) => w.appId);
-  const ids = Array.from(new Set([...installed, ...extra])).filter(
+  // Orta bölüm yalnızca O AN AÇIK pencereleri gösterir; kurulu tüm sistem
+  // uygulamaları alt çubuğa dizilmez (Nielsen #8 — sade arayüz).
+  const ids = Array.from(new Set(windows.map((w) => w.appId))).filter(
     (id) => id !== "store" && !slots.includes(id),
   );
 

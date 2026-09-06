@@ -117,9 +117,7 @@ export function WorkspacePanel() {
         const target = e.target as HTMLElement | null;
         const typing =
           !!target &&
-          (target.isContentEditable ||
-            target.tagName === "INPUT" ||
-            target.tagName === "TEXTAREA");
+          (target.isContentEditable || target.tagName === "INPUT" || target.tagName === "TEXTAREA");
         if (typing) return;
         const entry = popUndo();
         if (!entry) return;

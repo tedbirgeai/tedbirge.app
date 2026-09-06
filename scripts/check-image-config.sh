@@ -40,6 +40,12 @@ grep -q "TEDBIRGE_BOOT_READY" image/config/includes.chroot/opt/tedbirge/tedbirge
 grep -q "TEDBIRGE_WEBOS" image/build.sh || hata "ISO birim etiketi tanımlı değil."
 grep -q "iso-hybrid" image/build.sh || hata "BIOS+UEFI hibrit imaj kipi seçilmemiş."
 grep -q "grub-efi" image/build.sh || hata "UEFI açılış yükleyicisi yapılandırılmamış."
+grep -q "rootdelay=" image/build.sh || hata "Yavaş USB/CD ortamı için rootdelay= tanımlı değil."
+grep -q "modules=loop,squashfs,overlay" image/build.sh || hata "Açılış satırında zorunlu modül listesi yok."
+MODS=image/config/includes.chroot/etc/initramfs-tools/modules
+for m in loop squashfs overlay isofs sr_mod usb_storage ahci nvme; do
+  grep -qx "$m" "$MODS" || hata "initramfs modül listesinde '$m' yok: $MODS"
+done
 
 # 5) Kurulum aracı: güvenlik ve doğrulama kuralları
 KUR=image/install/tedbirge-kur
