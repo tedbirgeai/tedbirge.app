@@ -65,6 +65,10 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # npm audit bir package-lock.json ister; depoda tutulmaz, gecici uretilir.
+      - name: Kilit dosyasi uret (denetim icin)
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
       # Denetim yalnizca gercek yuksek/kritik zafiyette durur. Kayit servisi
       # ulasilamazsa (404/5xx/ag hatasi) is uyari ile gecer.
       - name: Audit
