@@ -11,6 +11,9 @@ MIN_BAYT=$((8 * 1024 * 1024 * 1024))
 OTO="${TEDBIRGE_AUTO:-0}"
 grep -q "tedbirge.autoinstall=1" /proc/cmdline 2>/dev/null && OTO=1
 SQUASH="/run/live/medium/live/filesystem.squashfs"
+LOG="/var/log/tedbirge/kurulum.log"
+mkdir -p "$(dirname "$LOG")"
+exec > >(tee -a "$LOG") 2>&1
 
 hata() {
   echo ""; echo "! $*" >&2
@@ -20,6 +23,19 @@ hata() {
   exit 1
 }
 baslik() { echo ""; echo "== $* =="; }
+
+KOK=/mnt/tedbirge
+P1=""; P2=""; BAGLI=0
+temizle() {
+  set +e
+  if [ "$BAGLI" = "1" ]; then
+    [ -d "$KOK/var/log/tedbirge" ] && cp "$LOG" "$KOK/var/log/tedbirge/kurulum.log" 2>/dev/null
+    for d in run sys proc dev/pts dev; do mountpoint -q "$KOK/$d" && umount -l "$KOK/$d"; done
+    [ -n "$P1" ] && mountpoint -q "$KOK/boot/efi" && umount -l "$KOK/boot/efi"
+    mountpoint -q "$KOK" && umount -l "$KOK"
+  fi
+}
+trap temizle EXIT INT TERM
 
 [ "$(id -u)" = "0" ] || hata "Bu araci yonetici olarak calistirin: sudo tedbirge-kur"
 
@@ -39,19 +55,32 @@ fi
 command -v unsquashfs >/dev/null 2>&1 || hata "unsquashfs bulunamadi."
 
 # UEFI mi BIOS mu?
-if [ -d /sys/firmware/efi ]; then MOD="UEFI"; else MOD="BIOS"; fi
+TEST_MOD=$(sed -n 's/.*tedbirge.install-mode=\([^ ]*\).*/\1/p' /proc/cmdline 2>/dev/null)
+if [ "$OTO" = "1" ] && [ "$TEST_MOD" = "uefi" ]; then
+  MOD="UEFI"
+elif [ -d /sys/firmware/efi ]; then
+  MOD="UEFI"
+else
+  MOD="BIOS"
+fi
 echo "Acilis kipi: $MOD"
 
 # ------------------------------------------------------------ disk secimi
 baslik "Kurulabilir diskler"
-CANLI=$(findmnt -n -o SOURCE /run/live/medium 2>/dev/null | sed 's/[0-9]*$//;s#/dev/##')
+KAYNAK=$(findmnt -n -o SOURCE /run/live/medium 2>/dev/null || true)
+CANLI=""
+if [ -n "$KAYNAK" ]; then
+  CANLI=$(lsblk -ndo PKNAME "$KAYNAK" 2>/dev/null | head -1)
+  [ -n "$CANLI" ] || CANLI=$(basename "$KAYNAK")
+fi
 lsblk -dnro NAME,SIZE,MODEL,TYPE | awk '$4=="disk"' | while read -r n s m t; do
   case "$n" in "$CANLI") continue ;; esac
   printf "  %-10s %-8s %s\n" "$n" "$s" "$m"
 done
 echo ""
 if [ "$OTO" = "1" ]; then
-  HEDEF=$(lsblk -dnro NAME,TYPE,SIZE | awk -v c="$CANLI" '$2=="disk" && $1!=c {print $1; exit}')
+  HEDEF=$(lsblk -bdnro NAME,TYPE,SIZE,RO | awk -v c="$CANLI" -v min="$MIN_BAYT" \
+    '$2=="disk" && $1!=c && $3>=min && $4==0 {print $1; exit}')
   echo "Gozetimsiz kurulum hedefi: $HEDEF"
 else
   read -r -p "Hedef disk adi (ornek: sda) [bos = iptal]: " HEDEF
@@ -81,7 +110,7 @@ fi
 
 # --------------------------------------------------------------- bolumleme
 baslik "Disk hazirlaniyor"
-for m in $(findmnt -nr -o TARGET --source "$DEV"* 2>/dev/null); do umount -f "$m" 2>/dev/null; done
+while read -r m; do [ -n "$m" ] && umount -f "$m" 2>/dev/null; done < <(lsblk -lnpo NAME "$DEV" | while read -r d; do findmnt -nr -o TARGET --source "$d" 2>/dev/null; done)
 swapoff -a 2>/dev/null || true
 wipefs -a "$DEV" >/dev/null 2>&1 || true
 
@@ -114,9 +143,9 @@ mkfs.ext4 -F -L TEDBIRGE "$P2" >/dev/null || hata "Sistem bolumu bicimlendirilem
 
 # ------------------------------------------------------------ sistem kopyasi
 baslik "Sistem diske yaziliyor (birkac dakika surer)"
-KOK=/mnt/tedbirge
 mkdir -p "$KOK"
 mount "$P2" "$KOK" || hata "Sistem bolumu baglanamadi."
+BAGLI=1
 unsquashfs -f -d "$KOK" "$SQUASH" >/dev/null || hata "Sistem imaji acilamadi."
 
 if [ -n "$P1" ]; then
@@ -124,8 +153,12 @@ if [ -n "$P1" ]; then
   mount "$P1" "$KOK/boot/efi" || hata "EFI bolumu baglanamadi."
 fi
 for d in dev dev/pts proc sys run; do
-  mkdir -p "$KOK/$d"; mount --bind "/$d" "$KOK/$d" 2>/dev/null
+  mkdir -p "$KOK/$d"
+  mount --rbind "/$d" "$KOK/$d" || hata "Sistem dizini baglanamadi: /$d"
+  mount --make-rslave "$KOK/$d" || hata "Sistem baglama guvenligi ayarlanamadi: /$d"
 done
+[ -e /etc/resolv.conf ] && cp -L /etc/resolv.conf "$KOK/etc/resolv.conf" \
+  || hata "Ag cozucu ayari hedefe kopyalanamadi."
 
 # --------------------------------------------------------------- fstab
 KOK_UUID=$(blkid -s UUID -o value "$P2")
@@ -151,7 +184,7 @@ else
   chroot "$KOK" grub-install --target=i386-pc --recheck "$DEV" \
     || hata "BIOS acilis yukleyici kurulamadi."
 fi
-chroot "$KOK" update-initramfs -u -k all >/dev/null 2>&1 || true
+chroot "$KOK" update-initramfs -u -k all || hata "Acilis diski guncellenemedi."
 chroot "$KOK" update-grub || hata "Acilis menusu olusturulamadi."
 
 # -------------------------------------------------------- kurulum dogrulama
@@ -168,9 +201,8 @@ fi
 [ -s "$KOK/var/www/tedbirge/index.html" ] || hata "Arayuz dosyalari kopyalanmadi."
 
 sync
-for d in run sys proc dev/pts dev; do umount -l "$KOK/$d" 2>/dev/null; done
-[ -n "$P1" ] && umount -l "$KOK/boot/efi" 2>/dev/null
-umount -l "$KOK" 2>/dev/null
+temizle
+BAGLI=0
 sync
 
 echo ""

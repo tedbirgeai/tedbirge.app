@@ -1,0 +1,12 @@
+label tedbirge-live-@FLAVOUR@
+	menu label ^Tedbirge WebOS - Canli Baslat
+	menu default
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE@
+
+label tedbirge-install-@FLAVOUR@
+	menu label ^Tedbirge WebOS - SSD/HDD'ye Kur
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE@ tedbirge.install=1

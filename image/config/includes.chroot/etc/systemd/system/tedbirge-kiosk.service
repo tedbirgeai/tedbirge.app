@@ -4,6 +4,8 @@ After=nginx.service systemd-user-sessions.service
 Wants=nginx.service
 Conflicts=getty@tty1.service
 After=getty@tty1.service
+ConditionKernelCommandLine=!tedbirge.install=1
+ConditionKernelCommandLine=!tedbirge.autoinstall=1
 
 [Service]
 Type=simple

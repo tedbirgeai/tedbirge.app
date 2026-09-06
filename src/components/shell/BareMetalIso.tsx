@@ -37,7 +37,7 @@ const STEPS: ReadonlyArray<{ tool: string; text: string }> = [
   },
   {
     tool: "3 · USB'den başlat",
-    text: "Açılış menüsünde “Canlı Kiosk” hemen çalıştırır, “SSD/HDD'ye Kur” bilgisayara kalıcı kurar.",
+    text: "Açılış menüsünde “Tedbirge WebOS — Canlı Başlat” hemen çalıştırır, “SSD/HDD'ye Kur” bilgisayara kalıcı kurar.",
   },
 ];
 
@@ -227,6 +227,16 @@ export function IsoGuideDialog({
           </li>
         ))}
       </ol>
+      {status?.sha256 ? (
+        <div className="mt-4 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] p-3">
+          <span className="block text-[12px] font-medium text-[var(--tb-text)]">
+            Doğrulanmış Debian imajı
+          </span>
+          <code className="mt-1 block break-all font-osmono text-[10px] leading-relaxed text-[var(--tb-muted)]">
+            SHA-256: {status.sha256}
+          </code>
+        </div>
+      ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <a
           href={ISO_DOWNLOAD_ROUTE}

@@ -5,13 +5,8 @@
  * Releases alanına yüklenir. Son kullanıcı hiçbir şey derlemez:
  * "ISO İndir" düğmesi doğrudan hazır ikili dosyayı indirir.
  *
- * `VITE_ISO_DOWNLOAD_URL` tanımlıysa (CDN/ayna) o adres önceliklidir.
+ * İndirme kararı yalnız sunucunun doğruladığı yayın manifestine göre verilir.
  */
-
-const RAW = (import.meta.env["VITE_ISO_DOWNLOAD_URL"] as string | undefined) ?? "";
-
-/** Elle yapılandırılmış doğrudan imaj adresi (varsa). */
-export const ISO_DOWNLOAD_URL = RAW.trim();
 
 /** İmajın yayınlandığı GitHub deposu. */
 export const ISO_GITHUB_REPO = (
@@ -34,12 +29,10 @@ export type IsoStatus = {
   size: number;
   version: string;
   page: string;
+  sha256: string;
+  distribution: string;
+  commit: string;
 };
-
-/** Yapılandırılmış doğrudan adres var mı? */
-export function hasRemoteIso(): boolean {
-  return ISO_DOWNLOAD_URL.length > 0;
-}
 
 /** Yayındaki imajın durumunu sorar; hata olursa "hazır değil" döner. */
 export async function fetchIsoStatus(): Promise<IsoStatus> {
@@ -50,6 +43,9 @@ export async function fetchIsoStatus(): Promise<IsoStatus> {
     size: 0,
     version: "",
     page: ISO_RELEASES_PAGE,
+    sha256: "",
+    distribution: "",
+    commit: "",
   };
   try {
     const res = await fetch(ISO_STATUS_ROUTE, { headers: { Accept: "application/json" } });
