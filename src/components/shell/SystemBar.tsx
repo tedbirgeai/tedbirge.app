@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Bell, Search, Settings, UserRound, Wifi } from "lucide-react";
+import { Battery, BatteryCharging, Bell, HardDrive, Search, Settings, UserRound, Wifi } from "lucide-react";
 
 import { BareMetalIsoButton } from "@/components/shell/BareMetalIso";
 import { InstallSystemButton } from "@/components/shell/InstallSystemButton";
@@ -16,6 +16,7 @@ import { NotificationsPanel } from "@/components/shell/NotificationsPanel";
 import { useUnreadNoticeCount } from "@/lib/shell/notifications";
 import { useClock, useMemoryMb } from "@/lib/shell/telemetry-store";
 import { useOnline } from "@/lib/pwa/offline-status";
+import { useBattery, useDiskActivity } from "@/lib/shell/device-status";
 
 export function SystemBar({
   status,
@@ -47,12 +48,22 @@ export function SystemBar({
   // Saat ve bellek tek paylaşımlı 1 sn zamanlayıcıdan gelir (titreme yok).
   const clock = useClock();
   const memMb = useMemoryMb();
+  const battery = useBattery();
+  const diskBusy = useDiskActivity();
 
   // Pencere içi "Ağ modunu değiştir" kısayolu ağ panelini açar.
   useEffect(() => {
     const open = () => setNetwork(true);
+    const control = () => {
+      setNetwork(false);
+      setControl(true);
+    };
     window.addEventListener("tedbirge:open-network", open);
-    return () => window.removeEventListener("tedbirge:open-network", open);
+    window.addEventListener("tedbirge:open-control", control);
+    return () => {
+      window.removeEventListener("tedbirge:open-network", open);
+      window.removeEventListener("tedbirge:open-control", control);
+    };
   }, []);
 
   return (
@@ -124,8 +135,8 @@ export function SystemBar({
           <button
             type="button"
             onClick={onSearch}
-            aria-label="Evrensel arama (Ctrl + Boşluk)"
-            title="Evrensel arama · Ctrl + Boşluk"
+            aria-label="Evrensel arama (Ctrl + K)"
+            title="Evrensel arama · Ctrl + K"
             className="wa-press grid min-h-12 min-w-12 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
           >
             <Search className="h-4 w-4" aria-hidden />
@@ -150,6 +161,29 @@ export function SystemBar({
             </span>
           ) : null}
         </button>
+        <span
+          title={diskBusy ? "Disk yazılıyor / okunuyor" : "Disk boşta"}
+          aria-label={diskBusy ? "Disk etkin" : "Disk boşta"}
+          className="hidden shrink-0 items-center gap-1 px-1 font-osmono text-[11px] text-[var(--tb-muted)] sm:flex"
+        >
+          <HardDrive
+            className={`h-4 w-4 ${diskBusy ? "text-[var(--tb-accent)]" : ""}`}
+            aria-hidden
+          />
+        </span>
+        {battery ? (
+          <span
+            title={battery.charging ? "Şarj oluyor" : "Pil"}
+            className="hidden shrink-0 items-center gap-1 px-1 font-osmono text-[11px] text-[var(--tb-muted)] tabular-nums sm:flex"
+          >
+            {battery.charging ? (
+              <BatteryCharging className="h-4 w-4 text-[var(--tb-accent)]" aria-hidden />
+            ) : (
+              <Battery className="h-4 w-4" aria-hidden />
+            )}
+            {battery.percent}%
+          </span>
+        ) : null}
         <InstallSystemButton compact />
         <BareMetalIsoButton compact />
         <span
