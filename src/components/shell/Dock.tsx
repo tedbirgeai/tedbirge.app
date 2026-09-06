@@ -1,19 +1,30 @@
 /**
- * DOCK (Görev Çubuğu)
+ * DOCK (Alt Görev Çubuğu)
  * ------------------------------------------------------------------
- * Alt kısımda cam yüzeyli şerit: kurulu uygulamalar sabit simge olarak
- * durur, açık pencereler simgenin altında nokta ile işaretlenir.
- * Küçültülmüş pencere kendi simgesine tıklanınca geri gelir. Simgeye
- * sağ tıklandığında tarayıcı menüsü değil, işletim sistemi menüsü açılır.
+ * Cam yüzeyli sabit şerit. Solda her koşulda görünen Anasayfa düğmesi,
+ * yanında üç kişiselleştirilebilir uygulama yuvası (sürükle-bırak),
+ * ardından kurulu uygulamalar ve açık pencere göstergeleri, sağda
+ * Mağaza. Tüm dokunma hedefleri en az 48×48 px'dir.
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { House } from "lucide-react";
 
 import { AppIcon } from "@/components/shell/app-icons";
 import { ContextMenu } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
 import { catalogApp, useDesktopState } from "@/shell/installed";
-import { closeWindow, focusWindow, restoreWindow, type WindowRecord } from "@/shell/windows";
+import { setDockSlot, swapDockSlots, useDockSlots } from "@/shell/dock-slots";
+import {
+  closeWindow,
+  focusWindow,
+  minimizeAll,
+  restoreMany,
+  restoreWindow,
+  type WindowRecord,
+} from "@/shell/windows";
+import { pushUndo } from "@/lib/shell/undo-stack";
+import { notify } from "@/lib/shell/notify";
 import { useIsCompact } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
@@ -29,16 +40,18 @@ export function Dock({
   onStore: () => void;
 }) {
   const { installed } = useDesktopState();
+  const slots = useDockSlots();
   const compact = useIsCompact();
   const [menu, setMenu] = useState<{ x: number; y: number; appId: string } | null>(null);
   const [properties, setProperties] = useState<string | null>(null);
+  const [dropSlot, setDropSlot] = useState<number | null>(null);
+  const hidden = useRef<string[]>([]);
   const extra = windows.filter((w) => !installed.includes(w.appId)).map((w) => w.appId);
-  // Mağaza sağdaki sabit düğmede duruyor; şeritte ikinci kez gösterilmez.
-  const ids = Array.from(new Set([...installed, ...extra])).filter((id) => id !== "store");
+  const ids = Array.from(new Set([...installed, ...extra])).filter(
+    (id) => id !== "store" && !slots.includes(id),
+  );
 
-  // Alt tutamaç (home indicator) üzerinde sağa/sola kaydırma: açık
-  // uygulamalar arasında sırayla geçiş. Simge şeridi yatay kaydırılabilir
-  // olduğu için jest oraya bağlanmaz; normal kaydırma bozulmaz.
+  // Alt tutamaç üzerinde sağa/sola kaydırma: açık uygulamalar arası geçiş.
   const swipe = useSwipeGesture((dir) => {
     const order = [...windows].filter((w) => !w.minimized).sort((a, b) => a.id.localeCompare(b.id));
     if (order.length < 2) return;
@@ -52,57 +65,129 @@ export function Dock({
     if (next && next.id !== top?.id) focusWindow(next.id);
   });
 
+  /** Anasayfa: tüm pencereleri toplar; ikinci dokunuş geri getirir. */
+  const goHome = () => {
+    if (hidden.current.length) {
+      restoreMany(hidden.current);
+      hidden.current = [];
+      return;
+    }
+    const ids = minimizeAll();
+    hidden.current = ids;
+    if (ids.length) {
+      pushUndo({ label: "Pencereler küçültüldü", undo: () => restoreMany(ids) });
+      notify("Ana ekran", "Açık uygulamalar alt çubuğa toplandı.");
+    }
+  };
+
+  const activate = (id: string) => {
+    const win = windows.find((w) => w.appId === id);
+    if (!win) return onLaunch(id);
+    if (win.minimized) return restoreWindow(win.id);
+    if (compact) return closeWindow(win.id);
+    focusWindow(win.id);
+  };
+
+  const renderItem = (id: string, opts?: { slot?: number }) => {
+    const app = catalogApp(id);
+    const win = windows.find((w) => w.appId === id);
+    const label = app?.label ?? win?.title ?? id;
+    const slot = opts?.slot;
+    return (
+      <button
+        key={slot != null ? `slot-${slot}` : id}
+        type="button"
+        title={`${label}${slot != null ? " · sürükleyerek değiştirin" : ""}`}
+        aria-label={label}
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData("text/tbos-app", id);
+          if (slot != null) e.dataTransfer.setData("text/tbos-slot", String(slot));
+          e.dataTransfer.effectAllowed = "move";
+        }}
+        onDragOver={
+          slot != null
+            ? (e) => {
+                e.preventDefault();
+                setDropSlot(slot);
+              }
+            : undefined
+        }
+        onDragLeave={slot != null ? () => setDropSlot(null) : undefined}
+        onDrop={
+          slot != null
+            ? (e) => {
+                e.preventDefault();
+                setDropSlot(null);
+                const from = e.dataTransfer.getData("text/tbos-slot");
+                const app = e.dataTransfer.getData("text/tbos-app");
+                if (from) swapDockSlots(Number(from), slot);
+                else if (app) setDockSlot(slot, app);
+              }
+            : undefined
+        }
+        onClick={() => activate(id)}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setMenu({ x: e.clientX, y: e.clientY - 8, appId: id });
+        }}
+        className={`tbos-dock-item group relative grid min-h-12 min-w-12 shrink-0 place-items-center rounded-xl px-2 py-1.5 ${
+          dropSlot === slot && slot != null ? "tbos-dock-item--drop" : ""
+        }`}
+      >
+        <AppIcon id={id} className="h-5 w-5" />
+        <span className="mt-0.5 hidden max-w-16 truncate font-osmono text-[10px] text-[var(--tb-muted)] sm:block">
+          {label}
+        </span>
+        <span
+          aria-hidden
+          className={`mt-0.5 block h-1 w-1 rounded-full ${
+            win ? "bg-[var(--tb-accent)]" : "bg-transparent"
+          } ${win?.minimized ? "opacity-40" : ""}`}
+        />
+      </button>
+    );
+  };
+
   return (
     <div
       className="pointer-events-none relative z-[95] flex shrink-0 flex-col items-center px-2 pb-2"
       onContextMenu={(e) => e.preventDefault()}
     >
-      <div className="tbos-dock pointer-events-auto flex max-w-full items-end gap-1 overflow-x-auto px-2 py-1.5">
-        {ids.map((id) => {
-          const app = catalogApp(id);
-          const win = windows.find((w) => w.appId === id);
-          const label = app?.label ?? win?.title ?? id;
-          return (
-            <button
-              key={id}
-              type="button"
-              title={label}
-              aria-label={label}
-              onClick={() => {
-                if (!win) return onLaunch(id);
-                if (win.minimized) return restoreWindow(win.id);
-                // Mobil: önde duran uygulamaya tekrar dokunmak ana ekrana döndürür.
-                if (compact) return closeWindow(win.id);
-                focusWindow(win.id);
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setMenu({ x: e.clientX, y: e.clientY - 8, appId: id });
-              }}
-              className="tbos-dock-item group relative grid shrink-0 place-items-center rounded-xl px-2 py-1.5"
-            >
-              <AppIcon id={id} className="h-5 w-5" />
-              <span className="mt-0.5 hidden max-w-16 truncate font-osmono text-[10px] text-[var(--tb-muted)] sm:block">
-                {label}
-              </span>
-              <span
-                aria-hidden
-                className={`mt-0.5 block h-1 w-1 rounded-full ${
-                  win ? "bg-[var(--tb-accent)]" : "bg-transparent"
-                } ${win?.minimized ? "opacity-40" : ""}`}
-              />
-            </button>
-          );
-        })}
+      <div className="tbos-dock pointer-events-auto flex max-w-full items-end gap-3 px-2 py-1.5">
+        {/* Sol alt köşe: her koşulda sabit Anasayfa düğmesi. */}
+        <button
+          type="button"
+          onClick={goHome}
+          title="Anasayfa · tüm pencereleri topla"
+          aria-label="Anasayfa"
+          className="tbos-dock-item tbos-dock-home grid min-h-12 min-w-12 shrink-0 place-items-center rounded-xl px-2 py-1.5 text-[var(--tb-accent)]"
+        >
+          <House className="h-5 w-5" aria-hidden />
+          <span className="mt-0.5 hidden font-osmono text-[10px] sm:block">Ana</span>
+          <span className="mt-0.5 block h-1 w-1" aria-hidden />
+        </button>
 
-        <span className="mx-1 h-8 w-px shrink-0 bg-[var(--tb-border)]" />
+        {/* Üç sabit, kişiselleştirilebilir yuva. */}
+        <div className="flex shrink-0 items-end gap-3">
+          {slots.map((id, i) => renderItem(id, { slot: i }))}
+        </div>
+
+        <span className="mx-0.5 h-8 w-px shrink-0 bg-[var(--tb-border)]" />
+
+        <div className="flex min-w-0 items-end gap-3 overflow-x-auto">
+          {ids.map((id) => renderItem(id))}
+        </div>
+
+        <span className="mx-0.5 h-8 w-px shrink-0 bg-[var(--tb-border)]" />
 
         <button
           type="button"
           onClick={onStore}
           title="Tedbirge Mağaza"
-          className="tbos-dock-item grid shrink-0 place-items-center rounded-xl px-2 py-1.5 text-[var(--tb-accent)]"
+          aria-label="Tedbirge Mağaza"
+          className="tbos-dock-item grid min-h-12 min-w-12 shrink-0 place-items-center rounded-xl px-2 py-1.5 text-[var(--tb-accent)]"
         >
           <AppIcon id="store" className="h-5 w-5" />
           <span className="mt-0.5 hidden font-osmono text-[10px] sm:block">Mağaza</span>
@@ -113,7 +198,7 @@ export function Dock({
       {/* Alt tutamaç: yatay kaydırma ile uygulamalar arası geçiş. */}
       <div
         aria-hidden
-        className="pointer-events-auto mt-1 flex h-5 w-40 max-w-[60%] items-center justify-center touch-pan-y"
+        className="pointer-events-auto mt-1 flex h-5 w-40 max-w-[60%] touch-pan-y items-center justify-center"
         {...swipe}
       >
         <span className="block h-1 w-24 rounded-full bg-[var(--tb-border)]" />
