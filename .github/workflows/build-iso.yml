@@ -32,7 +32,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # ISO derleme + acilis testi + BIOS/UEFI kalici kurulum zinciri en kotu
+    # durumda ~100 dakika surer; 120 dakika sinira cok yakindi.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
 
