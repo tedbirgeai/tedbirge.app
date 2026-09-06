@@ -64,6 +64,9 @@ grep -q 'tedbirge.install=1' image/config/bootloaders/syslinux_common/live.cfg.i
   || hata "BIOS menüsünde etkileşimli kurulum seçeneği yok."
 grep -q 'tedbirge.install=1' image/config/bootloaders/grub-pc/grub.cfg \
   || hata "UEFI menüsünde etkileşimli kurulum seçeneği yok."
+grep -q 'ConditionKernelCommandLine=!tedbirge.install=1' \
+  image/config/includes.chroot/etc/systemd/system/tedbirge-kiosk.service \
+  || hata "Kurulum kipinde kiosk servisi devre dışı bırakılmıyor."
 
 # 6) Kabuk sözdizimi
 for s in image/build.sh image/install/tedbirge-kur scripts/test-install-qemu.sh \

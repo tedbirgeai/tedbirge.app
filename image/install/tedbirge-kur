@@ -11,6 +11,9 @@ MIN_BAYT=$((8 * 1024 * 1024 * 1024))
 OTO="${TEDBIRGE_AUTO:-0}"
 grep -q "tedbirge.autoinstall=1" /proc/cmdline 2>/dev/null && OTO=1
 SQUASH="/run/live/medium/live/filesystem.squashfs"
+LOG="/var/log/tedbirge/kurulum.log"
+mkdir -p "$(dirname "$LOG")"
+exec > >(tee -a "$LOG") 2>&1
 
 hata() {
   echo ""; echo "! $*" >&2
@@ -26,6 +29,7 @@ P1=""; P2=""; BAGLI=0
 temizle() {
   set +e
   if [ "$BAGLI" = "1" ]; then
+    [ -d "$KOK/var/log/tedbirge" ] && cp "$LOG" "$KOK/var/log/tedbirge/kurulum.log" 2>/dev/null
     for d in run sys proc dev/pts dev; do mountpoint -q "$KOK/$d" && umount -l "$KOK/$d"; done
     [ -n "$P1" ] && mountpoint -q "$KOK/boot/efi" && umount -l "$KOK/boot/efi"
     mountpoint -q "$KOK" && umount -l "$KOK"
