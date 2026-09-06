@@ -140,26 +140,49 @@ jobs:
           # Gercek sahadaki denetleyici/firmware bilesimleri tek tek denenir.
           # Tek bir USB senaryosu, eski masaustlerindeki SATA/IDE acilisini
           # dogrulamadigi icin yesil gorunup sahada cokuyordu.
+          # QEMU canli sistemi kapanmaz: acilis basarili olsa bile surec calismaya
+          # devam eder. Bu yuzden "timeout"un kendisi eskiden her zaman 124 ile
+          # donuyor ve saglam imaj bile basarisiz sayiliyordu. Dogru yontem:
+          # QEMU'yu arka planda baslat, seri gunlugu izle, karar verilir verilmez
+          # sureci kapat.
+          BOOT_TIMEOUT="${BOOT_TIMEOUT:-420}"
           run_case() {
             NAME="$1"; MEM="$2"; shift 2
             LOG="build-iso/boot-$NAME.log"
+            : > "$LOG"
             echo "==== senaryo: $NAME (${MEM} MB) ===="
-            timeout 600 qemu-system-x86_64 \
+            qemu-system-x86_64 \
               -m "$MEM" -smp 2 -display none -no-reboot \
               -drive if=none,id=media,format=raw,readonly=on,file="$ISO" \
-              "$@" -serial file:"$LOG"
-            RC=$?
+              "$@" -serial file:"$LOG" &
+            QPID=$!
+
+            RESULT="timeout"
+            i=0
+            while [ "$i" -lt "$BOOT_TIMEOUT" ]; do
+              if grep -qiE "Mounting boot media failed|not found in new root|emergency recovery shell|Kernel panic|Attempted to kill init" "$LOG" 2>/dev/null; then
+                RESULT="panic"; break
+              fi
+              if grep -qiE "Welcome to Tedbirge|Starting nginx|OpenRC .* is starting up" "$LOG" 2>/dev/null; then
+                RESULT="ok"; break
+              fi
+              if ! kill -0 "$QPID" 2>/dev/null; then
+                RESULT="exited"; break
+              fi
+              sleep 2
+              i=$((i + 2))
+            done
+
+            kill -9 "$QPID" 2>/dev/null || true
+            wait "$QPID" 2>/dev/null || true
             tail -n 60 "$LOG" 2>/dev/null || true
-            if [ "$RC" -ne 0 ]; then
-              echo "::error::$NAME — QEMU hata/zaman asimi (cikis $RC)."; FAIL=1; return
-            fi
-            if grep -qiE "Mounting boot media failed|not found in new root|emergency recovery shell|Kernel panic|Attempted to kill init" "$LOG"; then
-              echo "::error::$NAME — canli ortam acilamadi (kurtarma kabugu / kernel panic)."; FAIL=1; return
-            fi
-            if ! grep -qiE "Welcome to Tedbirge|Starting nginx|OpenRC .* is starting up" "$LOG"; then
-              echo "::error::$NAME — acilis tamamlanmadi, servis baslangici gorulmedi."; FAIL=1; return
-            fi
-            echo "$NAME testi gecti."
+
+            case "$RESULT" in
+              ok) echo "$NAME testi gecti." ;;
+              panic) echo "::error::$NAME — canli ortam acilamadi (kurtarma kabugu / kernel panic)."; FAIL=1 ;;
+              exited) echo "::error::$NAME — QEMU acilis tamamlanmadan sonlandi."; FAIL=1 ;;
+              *) echo "::error::$NAME — ${BOOT_TIMEOUT}s icinde servis baslangici gorulmedi."; FAIL=1 ;;
+            esac
           }
 
           # 1) USB bellek (mevcut saha kullanimi)
@@ -172,6 +195,7 @@ jobs:
           run_case uefi 4096 -bios "$OVMF" -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media
           # 5) Dusuk bellek tabani (2 GB) — canli kok bu esikte kurulabilmeli
           run_case dusuk-bellek 2048 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media
+
 
           if [ "$FAIL" -ne 0 ]; then
             echo "::error::Acilis testleri basarisiz — imaj yayinlanmayacak."
