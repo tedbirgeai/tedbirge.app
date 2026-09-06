@@ -133,6 +133,36 @@ jobs:
           (cd build-iso/iso && sha256sum *.iso > SHA256SUMS)
           echo "ISO=$ISO" >> "$GITHUB_ENV"
 
+      - name: Açılış testi (QEMU · gerçek önyükleme)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 ovmf
+          ISO=build-iso/iso/tedbirge-webos-x86_64.iso
+          LOG=build-iso/boot-test.log
+          # USB bellek benzeri baglama: canli ortam etikete gore kok bulmali.
+          timeout 420 qemu-system-x86_64 \
+            -m 2048 -smp 2 -display none -no-reboot \
+            -drive if=none,id=usbstick,format=raw,readonly=on,file="$ISO" \
+            -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=usbstick \
+            -serial file:"$LOG" || true
+          echo "---- açılış kaydı ----"
+          tail -n 120 "$LOG" || true
+          if grep -qiE "Mounting boot media failed|/sbin/init not found|emergency recovery shell" "$LOG"; then
+            echo "::error::Canlı ortam açılamadı — kurtarma kabuğuna düştü. İmaj yayınlanmayacak."
+            exit 1
+          fi
+          if ! grep -qiE "Welcome to Tedbirge|Starting nginx|OpenRC .* is starting up" "$LOG"; then
+            echo "::error::Açılış tamamlanmadı — servis başlangıcı görülmedi."
+            exit 1
+          fi
+          echo "Açılış testi geçti."
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tedbirge-boot-test-log
+          path: build-iso/boot-test.log
+
       - uses: actions/upload-artifact@v4
         with:
           name: tedbirge-webos-iso
