@@ -46,10 +46,12 @@ export function Dock({
   const [properties, setProperties] = useState<string | null>(null);
   const [dropSlot, setDropSlot] = useState<number | null>(null);
   const hidden = useRef<string[]>([]);
-  const extra = windows.filter((w) => !installed.includes(w.appId)).map((w) => w.appId);
-  const ids = Array.from(new Set([...installed, ...extra])).filter(
+  // Orta bölüm yalnızca O AN AÇIK pencereleri gösterir; kurulu tüm sistem
+  // uygulamaları alt çubuğa dizilmez (Nielsen #8 — sade arayüz).
+  const ids = Array.from(new Set(windows.map((w) => w.appId))).filter(
     (id) => id !== "store" && !slots.includes(id),
   );
+  void installed;
 
   // Alt tutamaç üzerinde sağa/sola kaydırma: açık uygulamalar arası geçiş.
   const swipe = useSwipeGesture((dir) => {
