@@ -20,6 +20,7 @@ import {
   Map as MapIcon,
   MessageCircle,
   MonitorSmartphone,
+  Phone,
   Music,
   Network,
   NotebookPen,
@@ -42,6 +43,7 @@ import { webApp } from "@/shell/web-apps";
 
 const MAP: Record<string, ComponentType<{ className?: string }>> = {
   messenger: MessageCircle,
+  calls: Phone,
   files: FolderOpen,
   media: PlayCircle,
   music: Music,
