@@ -10,15 +10,21 @@ Bilgisayarınızda hiçbir şey derlemenize gerek yok. Yapmanız gereken üç ş
    - **Ventoy**: `.iso` dosyasını Ventoy USB'sine kopyalamanız yeterli
 3. **Başlat** — Bilgisayarı USB'den açın (açılışta genelde F12, F9, Esc veya Del).
 
-## Açılış menüsü
+## Açılış ve kurulum
 
-| Seçenek | Ne yapar |
-| --- | --- |
-| **Tedbirge® WebOS (Canlı — Live Kiosk)** | Sistemi RAM üzerinden çalıştırır. Diskinize hiç dokunmaz; USB'yi çıkardığınızda iz kalmaz. |
-| **Tedbirge® WebOS (Diske Kur — Otomatik Kurulum)** | Türkçe kurulum sihirbazını açar; hedef diski seçip onayladıktan sonra sistemi kalıcı olarak kurar. |
-| **Kurtarma konsolu** | Sorun giderme için basit komut ekranı. |
+Bilgisayar USB'den açıldığında sistem doğrudan Tedbirge® WebOS ekranına gelir.
+Hiçbir kurulum adımı, paket indirmesi veya internet bağlantısı gerekmez —
+sistemin tamamı imajın içinde hazır olarak gelir.
 
-Kurulum sihirbazı, siz büyük harflerle `EVET` yazana kadar hiçbir diske yazmaz.
+Kalıcı kurulum için arayüzden konsolu açın ve şunu yazın:
+
+```
+sudo tedbirge-kur
+```
+
+Sihirbaz diskleri listeler; siz büyük harflerle `EVET` yazana kadar hiçbir diske
+yazmaz. Kurulum bittiğinde USB'yi çıkarıp yeniden başlatın.
+
 
 ## Bilgisayar gereksinimleri
 
@@ -52,9 +58,20 @@ uygun açılış bölümünü kendisi oluşturur.
 ## İmaj nasıl üretiliyor (teknik)
 
 İmaj GitHub Actions üzerinde otomatik derlenir: `.github/workflows/build-iso.yml`
-→ `alpine/ci-build.sh` → Alpine `mkimage` profili (`alpine/mkimg.tedbirge.sh`) +
-overlay (`alpine/genapkovl-tedbirge.sh`). Çıktı GitHub Releases alanına yüklenir ve
-`/api/public/iso` rotası her zaman en güncel dosyaya yönlendirir.
+→ `image/build.sh` (Debian bookworm live-build).
+
+Temel ilke: kök dosya sistemi **derleme sırasında bir kez** kurulur ve tek bir
+sıkıştırılmış dosyaya (squashfs) pişirilir. Kullanıcının bilgisayarı açılışta
+hiçbir paket kurmaz, yalnızca hazır kökü bağlar. Önceki Alpine hattı her açılışta
+paket kurduğu için `Attempted to kill init` paniği veriyordu; o hat
+`archive/alpine/` altına kaldırıldı.
+
+Yayın hattı imajı üretmeden önce yapılandırmayı (`scripts/check-image-config.sh`),
+ürettikten sonra ISO yapısını, BIOS+UEFI açılış kayıtlarını, beş QEMU açılış
+senaryosunu ve `scripts/test-install-qemu.sh` ile diske kurulum + kurulan
+sistemden yeniden açılışı doğrular. Bu denetimlerden biri bile geçmezse imaj
+yayınlanmaz. Çıktı GitHub Releases alanına yüklenir ve `/api/public/iso` rotası
+her zaman en güncel dosyaya yönlendirir.
 Depo: **tedbirgeai/tedbirge.app** — https://github.com/tedbirgeai/tedbirge.app/releases/latest
 
 Denemek için sanal makine:

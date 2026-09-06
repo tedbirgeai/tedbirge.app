@@ -1,0 +1,19 @@
+#!/bin/sh
+# Yedek guc koprusu — yalniz 127.0.0.1:8378 dinler.
+# Derlenmis Rust ikilisi paketlendiyse bu dosya onun tarafindan degistirilir.
+while :; do
+  req=$(nc -l -p 8378 -s 127.0.0.1 -w 5 2>/dev/null <<'RESP'
+HTTP/1.1 200 OK
+Content-Type: application/json
+Connection: close
+
+{"durum":"OK","mesaj":"alindi"}
+RESP
+)
+  case "$req" in
+    *"POST /guc/kapat"*)          sync; poweroff ;;
+    *"POST /guc/yeniden-baslat"*) sync; reboot ;;
+    *"POST /guc/uyku"*)           sync; echo mem  > /sys/power/state 2>/dev/null ;;
+    *"POST /guc/derin-uyku"*)     sync; echo disk > /sys/power/state 2>/dev/null ;;
+  esac
+done

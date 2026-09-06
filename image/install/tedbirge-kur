@@ -1,0 +1,187 @@
+#!/bin/bash
+# Tedbirge(R) WebOS — kalici disk kurulumu (Debian canli sistem uzerinde).
+# ------------------------------------------------------------------
+# Model: canli sistemin ONCEDEN PISIRILMIS koku (squashfs) hedefe acilir.
+# Hedef bilgisayarda paket kurulumu YAPILMAZ; internet gerekmez.
+set -uo pipefail
+
+MIN_BAYT=$((8 * 1024 * 1024 * 1024))
+# Gozetimsiz kurulum: cekirdek satirinda tedbirge.autoinstall=1 varsa veya
+# TEDBIRGE_AUTO=1 verilmisse soru sorulmaz (CI kurulum testi bunu kullanir).
+OTO="${TEDBIRGE_AUTO:-0}"
+grep -q "tedbirge.autoinstall=1" /proc/cmdline 2>/dev/null && OTO=1
+SQUASH="/run/live/medium/live/filesystem.squashfs"
+
+hata() {
+  echo ""; echo "! $*" >&2
+  if [ "${OTO:-0}" = "1" ]; then
+    for t in /dev/console /dev/ttyS0; do printf 'TEDBIRGE_INSTALL_FAIL %s\n' "$*" > "$t" 2>/dev/null; done
+  fi
+  exit 1
+}
+baslik() { echo ""; echo "== $* =="; }
+
+[ "$(id -u)" = "0" ] || hata "Bu araci yonetici olarak calistirin: sudo tedbirge-kur"
+
+clear 2>/dev/null || true
+echo "==============================================="
+echo "   TEDBIRGE(R) WebOS — Diske Kurulum"
+echo "==============================================="
+echo ""
+echo "Bu islem secilen diskteki TUM VERIYI SILER."
+echo ""
+
+# --------------------------------------------------------- kaynak dogrulama
+if [ ! -s "$SQUASH" ]; then
+  SQUASH=$(find /run/live/medium /lib/live/mount/medium /cdrom -name 'filesystem.squashfs' 2>/dev/null | head -1)
+fi
+[ -s "$SQUASH" ] || hata "Sistem imaji bulunamadi. USB bellegi cikarmadan tekrar deneyin."
+command -v unsquashfs >/dev/null 2>&1 || hata "unsquashfs bulunamadi."
+
+# UEFI mi BIOS mu?
+if [ -d /sys/firmware/efi ]; then MOD="UEFI"; else MOD="BIOS"; fi
+echo "Acilis kipi: $MOD"
+
+# ------------------------------------------------------------ disk secimi
+baslik "Kurulabilir diskler"
+CANLI=$(findmnt -n -o SOURCE /run/live/medium 2>/dev/null | sed 's/[0-9]*$//;s#/dev/##')
+lsblk -dnro NAME,SIZE,MODEL,TYPE | awk '$4=="disk"' | while read -r n s m t; do
+  case "$n" in "$CANLI") continue ;; esac
+  printf "  %-10s %-8s %s\n" "$n" "$s" "$m"
+done
+echo ""
+if [ "$OTO" = "1" ]; then
+  HEDEF=$(lsblk -dnro NAME,TYPE,SIZE | awk -v c="$CANLI" '$2=="disk" && $1!=c {print $1; exit}')
+  echo "Gozetimsiz kurulum hedefi: $HEDEF"
+else
+  read -r -p "Hedef disk adi (ornek: sda) [bos = iptal]: " HEDEF
+fi
+[ -n "${HEDEF:-}" ] || hata "Kurulum iptal edildi."
+HEDEF="${HEDEF#/dev/}"
+DEV="/dev/$HEDEF"
+
+[ -b "$DEV" ] || hata "Boyle bir disk yok: $DEV"
+[ "$HEDEF" != "$CANLI" ] || hata "Canli USB bellege kurulum yapilamaz."
+BOYUT=$(blockdev --getsize64 "$DEV")
+[ "$BOYUT" -ge "$MIN_BAYT" ] || hata "Disk cok kucuk (en az 8 GB gerekir)."
+KIMLIK=$(lsblk -dnro MAJ:MIN "$DEV")
+
+echo ""
+echo "SECILEN DISK: $DEV ($(numfmt --to=iec "$BOYUT"))"
+echo "Bu diskteki her sey silinecek."
+if [ "$OTO" = "1" ]; then
+  ONAY=EVET
+else
+  read -r -p "Devam etmek icin buyuk harfle EVET yazin: " ONAY
+fi
+[ "$ONAY" = "EVET" ] || hata "Kurulum iptal edildi."
+
+[ -b "$DEV" ] || hata "Disk artik bagli degil."
+[ "$(lsblk -dnro MAJ:MIN "$DEV")" = "$KIMLIK" ] || hata "Disk kimligi degisti; guvenlik icin durduruldu."
+
+# --------------------------------------------------------------- bolumleme
+baslik "Disk hazirlaniyor"
+for m in $(findmnt -nr -o TARGET --source "$DEV"* 2>/dev/null); do umount -f "$m" 2>/dev/null; done
+swapoff -a 2>/dev/null || true
+wipefs -a "$DEV" >/dev/null 2>&1 || true
+
+case "$HEDEF" in
+  nvme*|mmcblk*|loop*) P1="${DEV}p1"; P2="${DEV}p2" ;;
+  *)                   P1="${DEV}1";  P2="${DEV}2"  ;;
+esac
+
+if [ "$MOD" = "UEFI" ]; then
+  parted -s "$DEV" mklabel gpt \
+    mkpart ESP fat32 1MiB 513MiB set 1 esp on \
+    mkpart tedbirge ext4 513MiB 100% || hata "Bolumleme basarisiz."
+else
+  parted -s "$DEV" mklabel msdos \
+    mkpart primary ext4 1MiB 100% set 1 boot on || hata "Bolumleme basarisiz."
+  P2="$P1"; P1=""
+fi
+
+sync
+command -v partprobe >/dev/null 2>&1 && partprobe "$DEV" 2>/dev/null
+command -v udevadm >/dev/null 2>&1 && udevadm settle --timeout=15 2>/dev/null
+BEKLE=0
+while { [ -n "$P1" ] && [ ! -b "$P1" ]; } || [ ! -b "$P2" ]; do
+  [ "$BEKLE" -lt 20 ] || hata "Yeni disk bolumleri gorulemedi."
+  sleep 1; BEKLE=$((BEKLE + 1))
+done
+
+[ -n "$P1" ] && { mkfs.vfat -F32 -n TBGEFI "$P1" >/dev/null || hata "EFI bolumu bicimlendirilemedi."; }
+mkfs.ext4 -F -L TEDBIRGE "$P2" >/dev/null || hata "Sistem bolumu bicimlendirilemedi."
+
+# ------------------------------------------------------------ sistem kopyasi
+baslik "Sistem diske yaziliyor (birkac dakika surer)"
+KOK=/mnt/tedbirge
+mkdir -p "$KOK"
+mount "$P2" "$KOK" || hata "Sistem bolumu baglanamadi."
+unsquashfs -f -d "$KOK" "$SQUASH" >/dev/null || hata "Sistem imaji acilamadi."
+
+if [ -n "$P1" ]; then
+  mkdir -p "$KOK/boot/efi"
+  mount "$P1" "$KOK/boot/efi" || hata "EFI bolumu baglanamadi."
+fi
+for d in dev dev/pts proc sys run; do
+  mkdir -p "$KOK/$d"; mount --bind "/$d" "$KOK/$d" 2>/dev/null
+done
+
+# --------------------------------------------------------------- fstab
+KOK_UUID=$(blkid -s UUID -o value "$P2")
+{
+  echo "UUID=$KOK_UUID / ext4 errors=remount-ro,noatime 0 1"
+  if [ -n "$P1" ]; then
+    echo "UUID=$(blkid -s UUID -o value "$P1") /boot/efi vfat umask=0077 0 1"
+  fi
+  echo "tmpfs /tmp tmpfs defaults,nosuid,nodev 0 0"
+} > "$KOK/etc/fstab"
+
+# Canli acilis bilesenleri kalici sistemde kapatilir.
+rm -f "$KOK/etc/systemd/system/multi-user.target.wants/live-config.service" 2>/dev/null
+sed -i 's/^#\?GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet console=tty0 console=ttyS0,115200"/' \
+  "$KOK/etc/default/grub" 2>/dev/null || true
+
+# ------------------------------------------------------------ acilis yukleyici
+baslik "Acilis yukleyici kuruluyor ($MOD)"
+if [ "$MOD" = "UEFI" ]; then
+  chroot "$KOK" grub-install --target=x86_64-efi --efi-directory=/boot/efi \
+    --bootloader-id=Tedbirge --recheck --removable || hata "UEFI acilis yukleyici kurulamadi."
+else
+  chroot "$KOK" grub-install --target=i386-pc --recheck "$DEV" \
+    || hata "BIOS acilis yukleyici kurulamadi."
+fi
+chroot "$KOK" update-initramfs -u -k all >/dev/null 2>&1 || true
+chroot "$KOK" update-grub || hata "Acilis menusu olusturulamadi."
+
+# -------------------------------------------------------- kurulum dogrulama
+baslik "Kurulum dogrulaniyor"
+[ -x "$KOK/usr/lib/systemd/systemd" ] || hata "Kurulan sistemde init yok."
+ls "$KOK"/boot/vmlinuz-* >/dev/null 2>&1 || hata "Kurulan sistemde cekirdek yok."
+ls "$KOK"/boot/initrd.img-* >/dev/null 2>&1 || hata "Kurulan sistemde acilis diski yok."
+[ -s "$KOK/boot/grub/grub.cfg" ] || hata "Acilis menusu olusmadi."
+if [ -n "$P1" ]; then
+  ls "$KOK"/boot/efi/EFI/BOOT/BOOTX64.EFI >/dev/null 2>&1 \
+    || ls "$KOK"/boot/efi/EFI/Tedbirge/grubx64.efi >/dev/null 2>&1 \
+    || hata "EFI acilis dosyasi olusmadi."
+fi
+[ -s "$KOK/var/www/tedbirge/index.html" ] || hata "Arayuz dosyalari kopyalanmadi."
+
+sync
+for d in run sys proc dev/pts dev; do umount -l "$KOK/$d" 2>/dev/null; done
+[ -n "$P1" ] && umount -l "$KOK/boot/efi" 2>/dev/null
+umount -l "$KOK" 2>/dev/null
+sync
+
+echo ""
+echo "==============================================="
+echo "  KURULUM TAMAMLANDI"
+echo "==============================================="
+echo "USB bellegi cikarip bilgisayari yeniden baslatin."
+if [ "$OTO" = "1" ]; then
+  for t in /dev/console /dev/ttyS0; do printf 'TEDBIRGE_INSTALL_OK\n' > "$t" 2>/dev/null; done
+  poweroff -f 2>/dev/null || halt -f
+  exit 0
+fi
+read -r -p "Simdi yeniden baslatmak icin Enter, iptal icin Ctrl+C " _
+reboot
