@@ -5,4 +5,4 @@
 - [x] Canlı açılış kökü ve servis başarı işaretini doğrula
 - [x] Kalıcı disk kurulumunu BIOS/UEFI için tutarlı hale getir
 - [x] Testleri ve mevcut uygulama derlemesini doğrula
-- [ ] Yalnız başarılı paketin yayınlanmasını güvenceye al
+- [x] Yalnız başarılı paketin yayınlanmasını güvenceye al
