@@ -43,6 +43,7 @@ describe("yetenek kapısı", () => {
       "mesh",
       "messenger",
       "music",
+      "news",
       "panel",
       "profile",
       "relay",

@@ -15,6 +15,7 @@ import { notifyOk } from "@/lib/shell/notify";
 import { useTick } from "@/lib/shell/telemetry-store";
 import { onVfsChange, storageUsage, type StorageUsage } from "@/lib/vfs/store";
 import { useShell } from "@/shell/shell-context";
+import { NewsCard } from "@/components/shell/NewsCard";
 
 const POS_KEY = "tedbirge:widgets:pos";
 const HIDE_KEY = "tedbirge:widgets:hidden";
@@ -239,6 +240,7 @@ export function DesktopWidgets({ onOpen }: { onOpen: (id: string) => void }) {
           </span>
         </span>
       </button>
+      <NewsCard onOpen={onOpen} />
     </aside>
   );
 }

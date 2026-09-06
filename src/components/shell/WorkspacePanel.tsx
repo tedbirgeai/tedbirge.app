@@ -4,6 +4,7 @@ import { ArrowLeft, X } from "lucide-react";
 import { MusicApp } from "@/components/shell/apps/MusicApp";
 import { MediaApp } from "@/components/shell/apps/MediaApp";
 import { FilesApp } from "@/components/shell/apps/FilesApp";
+import { NewsApp } from "@/components/shell/apps/NewsApp";
 import { StoreApp } from "@/components/shell/apps/StoreApp";
 import { ComputerApp } from "@/components/shell/apps/ComputerApp";
 import { AppsDialog } from "@/components/shell/AppsDialog";
@@ -439,6 +440,7 @@ function AppSurface({
       </Suspense>
     );
   }
+  if (win.appId === "news") return <NewsApp />;
   if (win.appId === "store") return <StoreApp onOpen={onLaunch} />;
   if (win.appId === "transfer") return <TransfersApp />;
   if (win.appId === "computer")

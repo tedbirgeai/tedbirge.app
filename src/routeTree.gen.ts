@@ -29,6 +29,7 @@ import { Route as ApiPublicPingRouteImport } from './routes/api/public/ping'
 import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
 import { Route as ApiPublicIsoRouteImport } from './routes/api/public/iso'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
+import { Route as ApiPublicHaberlerRouteImport } from './routes/api/public/haberler'
 import { Route as ApiPublicGecitRouteImport } from './routes/api/public/gecit'
 import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -134,6 +135,11 @@ const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
   path: '/api/public/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHaberlerRoute = ApiPublicHaberlerRouteImport.update({
+  id: '/api/public/haberler',
+  path: '/api/public/haberler',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicGecitRoute = ApiPublicGecitRouteImport.update({
   id: '/api/public/gecit',
   path: '/api/public/gecit',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/api/translate': typeof ApiTranslateRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/gecit': typeof ApiPublicGecitRoute
+  '/api/public/haberler': typeof ApiPublicHaberlerRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/iso': typeof ApiPublicIsoRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/api/translate': typeof ApiTranslateRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/gecit': typeof ApiPublicGecitRoute
+  '/api/public/haberler': typeof ApiPublicHaberlerRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/iso': typeof ApiPublicIsoRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/api/translate': typeof ApiTranslateRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/gecit': typeof ApiPublicGecitRoute
+  '/api/public/haberler': typeof ApiPublicHaberlerRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/iso': typeof ApiPublicIsoRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
@@ -253,6 +262,7 @@ export interface FileRouteTypes {
     | '/api/translate'
     | '/api/public/enroll'
     | '/api/public/gecit'
+    | '/api/public/haberler'
     | '/api/public/health'
     | '/api/public/iso'
     | '/api/public/openapi.json'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
     | '/api/translate'
     | '/api/public/enroll'
     | '/api/public/gecit'
+    | '/api/public/haberler'
     | '/api/public/health'
     | '/api/public/iso'
     | '/api/public/openapi.json'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/api/translate'
     | '/api/public/enroll'
     | '/api/public/gecit'
+    | '/api/public/haberler'
     | '/api/public/health'
     | '/api/public/iso'
     | '/api/public/openapi.json'
@@ -332,6 +344,7 @@ export interface RootRouteChildren {
   ApiTranslateRoute: typeof ApiTranslateRoute
   ApiPublicEnrollRoute: typeof ApiPublicEnrollRoute
   ApiPublicGecitRoute: typeof ApiPublicGecitRoute
+  ApiPublicHaberlerRoute: typeof ApiPublicHaberlerRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicIsoRoute: typeof ApiPublicIsoRoute
   ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
@@ -486,6 +499,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/haberler': {
+      id: '/api/public/haberler'
+      path: '/api/public/haberler'
+      fullPath: '/api/public/haberler'
+      preLoaderRoute: typeof ApiPublicHaberlerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/gecit': {
       id: '/api/public/gecit'
       path: '/api/public/gecit'
@@ -532,6 +552,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTranslateRoute: ApiTranslateRoute,
   ApiPublicEnrollRoute: ApiPublicEnrollRoute,
   ApiPublicGecitRoute: ApiPublicGecitRoute,
+  ApiPublicHaberlerRoute: ApiPublicHaberlerRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicIsoRoute: ApiPublicIsoRoute,
   ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
