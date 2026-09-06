@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import { ICON_H, ICON_W } from "@/components/shell/DesktopIcon";
+import { ICON_H } from "@/components/shell/DesktopIcon";
 import { PageDots } from "@/components/shell/PageDots";
 
 const GAP = 24;
