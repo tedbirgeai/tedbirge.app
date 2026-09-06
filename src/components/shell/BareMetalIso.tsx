@@ -121,7 +121,7 @@ export function useIsoDownload() {
         openIsoFallback();
         return;
       }
-      triggerDownload(info.url || ISO_DOWNLOAD_ROUTE);
+      triggerDownload(ISO_DOWNLOAD_ROUTE);
       setGuide(true);
     } finally {
       setBusy(false);
