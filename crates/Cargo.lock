@@ -35,3 +35,7 @@ dependencies = [
  "tedbirge-hal-linux",
  "tedbirge-kernel",
 ]
+
+[[package]]
+name = "tedbirge-sysbridge"
+version = "0.1.0"
