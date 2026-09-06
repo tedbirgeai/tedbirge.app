@@ -118,12 +118,20 @@ fi
 BOYUT_BLOK=$(cat "/sys/block/$TARGET/size" 2>/dev/null || echo 0)
 BOYUT_GB=$(( BOYUT_BLOK / 2097152 ))
 [ "$BOYUT_GB" -ge 8 ] 2>/dev/null || hata "Secilen disk cok kucuk (${BOYUT_GB} GB)." "En az 8 GB kapasiteli bir disk secin."
+DISK_KIMLIK=$(lsblk -dnro MAJ:MIN "/dev/$TARGET" 2>/dev/null)
+[ -n "$DISK_KIMLIK" ] || hata "Secilen diskin kimligi okunamadi." "Diski cikarip yeniden takin ve kurulumu yeniden baslatin."
 
 say ""
 say "UYARI: /dev/$TARGET uzerindeki TUM VERILER SILINECEK."
 printf "Devam etmek icin buyuk harflerle EVET yazin: "
 read -r ONAY
 [ "$ONAY" = "EVET" ] || hata "Onaylanmadi — hicbir diske dokunulmadi." "Devam etmek isterseniz onay sorusuna buyuk harflerle EVET yazin."
+
+# Onay beklenirken USB aygit numaralari degismis olabilir. Fiziksel hedefin
+# ayni blok aygiti oldugunu silmeden hemen once yeniden dogrula.
+[ -b "/dev/$TARGET" ] || hata "Secilen disk artik bagli degil." "Diski yeniden takin ve kurulumu bastan baslatin."
+[ "$(lsblk -dnro MAJ:MIN "/dev/$TARGET" 2>/dev/null)" = "$DISK_KIMLIK" ] \
+  || hata "Disk kimligi secimden sonra degisti; guvenlik icin durduruldu." "Harici diskleri sabit tutup kurulumu yeniden baslatin."
 
 DEV="/dev/$TARGET"
 case "$TARGET" in
@@ -153,7 +161,15 @@ else
   parted -s "$DEV" mkpart tedbirge ext4 3MiB 100% || hata "Sistem bolumu olusturulamadi." "Diskin en az 8 GB bos alani oldugundan emin olun."
   P1=""; P2="${DEV}${PSEP}2"
 fi
-sync; sleep 2
+sync
+command -v partprobe >/dev/null 2>&1 && partprobe "$DEV" 2>/dev/null
+command -v udevadm >/dev/null 2>&1 && udevadm settle --timeout=15 2>/dev/null
+BEKLE=0
+while { [ -n "$P1" ] && [ ! -b "$P1" ]; } || [ ! -b "$P2" ]; do
+  [ "$BEKLE" -lt 15 ] || hata "Yeni disk bolumleri isletim sistemi tarafindan gorulemedi." "Diski cikarip yeniden takin veya baska bir baglanti noktasi deneyin."
+  sleep 1
+  BEKLE=$((BEKLE + 1))
+done
 
 if [ -n "$P1" ]; then
   mkfs.vfat -F32 -n TEDBIRGE_EFI "$P1" >/dev/null 2>&1 || hata "Acilis bolumu bicimlendirilemedi." "Diski cikarip yeniden takin ya da baska bir USB baglantisi deneyin."

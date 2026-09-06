@@ -166,7 +166,8 @@ fi
 
 # modules= listesi kadar initramfs ozellikleri de depolama yollarini tasimali.
 for feature in ata cdrom mmc nvme scsi usb virtio; do
-  grep -q "initfs_features=\"[^"]*\\b$feature\\b" "$WORK/alpine/mkimg.tedbirge.sh" || {
+  FEATURES=$(sed -n 's/^[[:space:]]*initfs_features="\([^"]*\)".*/\1/p' "$WORK/alpine/mkimg.tedbirge.sh")
+  printf '%s\n' "$FEATURES" | tr ' ' '\n' | grep -qx "$feature" || {
     echo "! initramfs ozelliklerinde '$feature' yok." >&2; exit 1;
   }
 done

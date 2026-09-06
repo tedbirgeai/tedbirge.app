@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# FAZ 5 — Gerçek önyüklenebilir Tedbirge OS imajı (x86_64)
+# GELISTIRICI PROTOTIPI — yayin imaji degildir.
+# Son kullanici ISO'su yalniz alpine/ci-build.sh ve build-iso.yml ile uretilir.
 # ------------------------------------------------------------------
 # Katmanlar:
 #   1. Linux çekirdeği (ana makineden ya da KERNEL= ile verilen bzImage)
@@ -201,8 +202,12 @@ if need xorriso; then
   [ -f "$BOOT/isolinux/isolinux.bin" ] && ISOARGS+=(-b isolinux/isolinux.bin -c isolinux/boot.cat \
       -no-emul-boot -boot-load-size 4 -boot-info-table)
   [ -f "$BOOT/EFI/BOOT/BOOTX64.EFI" ] && ISOARGS+=(-eltorito-alt-boot -e EFI/BOOT/BOOTX64.EFI -no-emul-boot)
+  [ -f "$BOOT/isolinux/isolinux.bin" ] || { echo "! BIOS yukleyicisi eksik; ISO uretilmedi"; exit 1; }
+  [ -f "$BOOT/EFI/BOOT/BOOTX64.EFI" ] || { echo "! UEFI yukleyicisi eksik; ISO uretilmedi"; exit 1; }
+  [ -f "$BOOT/vmlinuz" ] || { echo "! Linux cekirdegi eksik; ISO uretilmedi"; exit 1; }
+  [ -f "$BOOT/initramfs.img" ] || { echo "! initramfs eksik; ISO uretilmedi"; exit 1; }
   xorriso "${ISOARGS[@]}" "$BOOT" >/dev/null
-  echo "✓ $OUT/$NAME.iso (hibrit BIOS+UEFI)"
+  echo "✓ $OUT/$NAME.iso (gelistirici prototipi · BIOS+UEFI)"
 else
   warn "xorriso yok — .iso üretilmedi"
 fi

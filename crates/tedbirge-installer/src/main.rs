@@ -5,6 +5,7 @@
 //!   tedbirge-install --device sda --yes
 
 use std::io::{self, Write};
+use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use tedbirge_installer::{apply, candidates, plan};
@@ -21,6 +22,18 @@ fn main() -> io::Result<()> {
     let dry = args.iter().any(|a| a == "--dry-run");
     let yes = args.iter().any(|a| a == "--yes");
     let source = arg(&args, "--source").unwrap_or_else(|| "/opt/tedbirge".into());
+
+    // Üretim Alpine imajında tek, denetlenmiş kurulum yolu kullanılır. Böylece
+    // Rust prototipi ile BIOS/UEFI bölümleme mantığının ayrışması engellenir.
+    if !dry {
+        let installer = "/opt/tedbirge/setup-tedbirge-disk.sh";
+        if !std::path::Path::new(installer).is_file() {
+            eprintln!("! Guvenli kurulum araci bulunamadi; diske dokunulmadi.");
+            std::process::exit(1);
+        }
+        let status = Command::new(installer).status()?;
+        std::process::exit(status.code().unwrap_or(1));
+    }
 
     println!("Tedbirge® WebOS kurulumu");
     println!("------------------------");

@@ -5,7 +5,7 @@ Bilgisayarınızda hiçbir şey derlemenize gerek yok. Yapmanız gereken üç ş
 1. **İndir** — Uygulamadaki “Kurulum İmajını İndir (.iso)” düğmesine basın.
    Doğrudan yayınlanmış hazır imaj iner.
 2. **USB'ye yaz** — Boş bir USB bellek takın ve şu araçlardan birini kullanın:
-   - **Rufus** (Windows): imajı seçin → bölüm şeması GPT/UEFI → Başlat
+   - **Rufus** (Windows): imajı seçin → Başlat → sorulduğunda **DD Image / DD kalıbı** seçin
    - **BalenaEtcher** (Windows/macOS/Linux): Flash from file → hedefi seçin → Flash
    - **Ventoy**: `.iso` dosyasını Ventoy USB'sine kopyalamanız yeterli
 3. **Başlat** — Bilgisayarı USB'den açın (açılışta genelde F12, F9, Esc veya Del).
@@ -38,6 +38,8 @@ uygun açılış bölümünü kendisi oluşturur.
 ## Notlar
 
 - Bazı bilgisayarlarda USB'den açılış için BIOS/UEFI ayarlarından **Secure Boot** kapatılmalıdır.
+- Rufus'ta “ISO çıkarma” kipini kullanmayın; canlı ortamın etiketi ve paket deposu korunması
+  için **DD Image / DD kalıbı** gereklidir.
 - Eski masaüstlerinde disk modu BIOS içinde **AHCI** seçilmelidir; "IDE/RAID" seçiliyken
   bazı diskler görünmeyebilir.
 - Sistem açıldığında arayüz tam ekran kiosk modunda gelir; ağdaki diğer cihazlar da

@@ -12,7 +12,7 @@ use std::process::Command;
 use tedbirge_hal_linux::storage::{block_devices, BlockDevice};
 
 pub const ESP_MB: u64 = 512;
-pub const MIN_DISK_BYTES: u64 = 4 * 1024 * 1024 * 1024;
+pub const MIN_DISK_BYTES: u64 = 8 * 1024 * 1024 * 1024;
 
 /// Kuruluma uygun diskler: yeterince büyük ve canlı ortamın kendisi değil.
 pub fn candidates(live_device: Option<&str>) -> Vec<BlockDevice> {
