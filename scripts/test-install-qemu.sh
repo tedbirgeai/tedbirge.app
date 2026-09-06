@@ -41,12 +41,12 @@ kurulum_senaryosu() {
   qemu-img create -f qcow2 "$disk" 20G >/dev/null
 
   echo "==== $mod 1. aşama: canlı sistemden diske kurulum ===="
-  qemu-system-x86_64 -m 4096 -smp 2 -display none -no-reboot \
+  qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none -no-reboot \
     -kernel "$TMP/vmlinuz" -initrd "$TMP/initrd.img" \
     -append "boot=live components noeject rootdelay=5 live-media-timeout=20 console=ttyS0,115200 tedbirge.autoinstall=1 tedbirge.install-mode=$mod" \
     -drive if=none,id=media,format=raw,readonly=on,file="$ISO" \
     -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media \
-    -drive file="$disk",format=qcow2,if=virtio \
+    -drive file="$disk",format=qcow2,if=virtio,cache=unsafe \
     -serial file:"$log1" 2>"build-iso/kurulum-${mod}-asama1.stderr.log" &
   local p1=$! rc
   izle "$log1" "TEDBIRGE_INSTALL_OK" "TEDBIRGE_INSTALL_FAIL|Kernel panic|Attempted to kill init" "$p1" "$TIMEOUT"; rc=$?
@@ -54,12 +54,20 @@ kurulum_senaryosu() {
   tail -n 60 "$log1" 2>/dev/null
   [ "$rc" = 0 ] || { echo "::error::$mod diske kurulum testi başarısız (kod $rc)."; return 1; }
 
-  echo "==== $mod 2. aşama: kurulan sistemden açılış ===="
-  qemu-system-x86_64 -m 4096 -smp 2 -display none -no-reboot "$@" \
-    -drive file="$disk",format=qcow2,if=virtio \
+  echo "==== $mod 2. aşama: kurulan sistemden SATA açılışı ===="
+  # Kurulumda virtio yalnızca TCG altında kopyalamayı hızlandırır. Yeniden açılış
+  # gerçek dizüstü/masaüstü bilgisayarlar gibi AHCI/SATA üzerinden yapılır.
+  # Bazı OVMF sürümleri virtio diski açılış aygıtı olarak hiç görmez ve seri
+  # porta tek satır yazmadan bekler; eski 15 dakikalık sahte "donma" buydu.
+  qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none -no-reboot "$@" \
+    -boot order=c,menu=off,strict=on \
+    -device ahci,id=system-ahci \
+    -drive if=none,id=system-disk,file="$disk",format=qcow2,cache=unsafe \
+    -device ide-hd,bus=system-ahci.0,drive=system-disk,bootindex=0 \
+    -debugcon file:"build-iso/kurulum-${mod}-firmware.log" -global isa-debugcon.iobase=0x402 \
     -serial file:"$log2" 2>"build-iso/kurulum-${mod}-asama2.stderr.log" &
   local p2=$!
-  izle "$log2" "TEDBIRGE_BOOT_READY" "Kernel panic|Attempted to kill init|No bootable device|Operating System not found|grub rescue" "$p2" 900; rc=$?
+  izle "$log2" "TEDBIRGE_BOOT_READY" "Kernel panic|Attempted to kill init|No bootable device|Operating System not found|grub rescue" "$p2" 300; rc=$?
   kill -9 "$p2" 2>/dev/null; wait "$p2" 2>/dev/null
   tail -n 60 "$log2" 2>/dev/null
   [ "$rc" = 0 ] || { echo "::error::$mod kurulu sistem açılış testi başarısız (kod $rc)."; return 1; }
