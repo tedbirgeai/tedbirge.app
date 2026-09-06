@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as YasalRouteImport } from './routes/yasal'
 import { Route as SohbetRouteImport } from './routes/sohbet'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as KosullarRouteImport } from './routes/kosullar'
 import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
 import { Route as IadeRouteImport } from './routes/iade'
@@ -41,6 +42,11 @@ const YasalRoute = YasalRouteImport.update({
 const SohbetRoute = SohbetRouteImport.update({
   id: '/sohbet',
   path: '/sohbet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KosullarRoute = KosullarRouteImport.update({
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/kosullar': typeof KosullarRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sohbet': typeof SohbetRoute
   '/yasal': typeof YasalRoute
   '/api/chat': typeof ApiChatRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/kosullar': typeof KosullarRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sohbet': typeof SohbetRoute
   '/yasal': typeof YasalRoute
   '/api/chat': typeof ApiChatRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/kosullar': typeof KosullarRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sohbet': typeof SohbetRoute
   '/yasal': typeof YasalRoute
   '/api/chat': typeof ApiChatRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/iade'
     | '/ihracat-uyum'
     | '/kosullar'
+    | '/sitemap.xml'
     | '/sohbet'
     | '/yasal'
     | '/api/chat'
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/iade'
     | '/ihracat-uyum'
     | '/kosullar'
+    | '/sitemap.xml'
     | '/sohbet'
     | '/yasal'
     | '/api/chat'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/iade'
     | '/ihracat-uyum'
     | '/kosullar'
+    | '/sitemap.xml'
     | '/sohbet'
     | '/yasal'
     | '/api/chat'
@@ -313,6 +325,7 @@ export interface RootRouteChildren {
   IadeRoute: typeof IadeRoute
   IhracatUyumRoute: typeof IhracatUyumRoute
   KosullarRoute: typeof KosullarRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SohbetRoute: typeof SohbetRoute
   YasalRoute: typeof YasalRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -345,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/sohbet'
       fullPath: '/sohbet'
       preLoaderRoute: typeof SohbetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kosullar': {
@@ -505,6 +525,7 @@ const rootRouteChildren: RootRouteChildren = {
   IadeRoute: IadeRoute,
   IhracatUyumRoute: IhracatUyumRoute,
   KosullarRoute: KosullarRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SohbetRoute: SohbetRoute,
   YasalRoute: YasalRoute,
   ApiChatRoute: ApiChatRoute,

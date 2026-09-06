@@ -1,16 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow, noarchive, nosnippet, noimageindex"
-        }
-      ]
-    }
-  ]
+  "installCommand": "npm install"
 }

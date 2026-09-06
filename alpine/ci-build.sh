@@ -100,6 +100,18 @@ if grep -q 'volid "alpine-' /home/builder/aports/scripts/mkimg.base.sh; then
 fi
 echo "-- ISO birim etiketi: TEDBIRGE_WEBOS"
 
+# Etiket senkronizasyonu: acilis satiri ile imaj etiketi ayrisirsa canli ortam
+# "Mounting boot media failed" ile kurtarma kabuguna duser. Bu yuzden zorunlu kontrol.
+if ! grep -q 'alpine_dev=LABEL=TEDBIRGE_WEBOS' "$WORK/alpine/mkimg.tedbirge.sh"; then
+  echo "! Acilis satirindaki etiket ile ISO etiketi ayrisik (alpine_dev=LABEL=TEDBIRGE_WEBOS yok)."
+  exit 1
+fi
+if [ -d "$WORK/alpine/boot" ]; then
+  echo "! alpine/boot ikinci bir acilis menusu tanimliyor; tek kaynak mkimg.tedbirge.sh olmali."
+  exit 1
+fi
+echo "-- acilis satiri etiketi dogrulandi"
+
 chown -R builder:abuild /home/builder/aports
 
 
@@ -115,7 +127,6 @@ tar -czf /home/builder/tedbirge/htdocs.tar.gz -C "$WEBROOT" .
 cp -r "$WORK/alpine/install" /home/builder/tedbirge/install
 cp "$WORK/scripts/setup-tedbirge-disk.sh" /home/builder/tedbirge/install/setup-tedbirge-disk.sh
 chmod +x /home/builder/tedbirge/install/*.sh
-cp -r "$WORK/alpine/boot" /home/builder/tedbirge/boot
 
 # Guc koprusu ikilisi (varsa) overlay'e tasinir; yoksa apkovl kabuk yedegini kurar.
 if [ -s "$WORK/build-iso/payload/bin/tedbirge-sysbridge" ]; then
