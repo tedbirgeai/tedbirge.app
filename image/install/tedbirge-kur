@@ -6,9 +6,19 @@
 set -uo pipefail
 
 MIN_BAYT=$((8 * 1024 * 1024 * 1024))
+# Gozetimsiz kurulum: cekirdek satirinda tedbirge.autoinstall=1 varsa veya
+# TEDBIRGE_AUTO=1 verilmisse soru sorulmaz (CI kurulum testi bunu kullanir).
+OTO="${TEDBIRGE_AUTO:-0}"
+grep -q "tedbirge.autoinstall=1" /proc/cmdline 2>/dev/null && OTO=1
 SQUASH="/run/live/medium/live/filesystem.squashfs"
 
-hata() { echo ""; echo "! $*" >&2; exit 1; }
+hata() {
+  echo ""; echo "! $*" >&2
+  if [ "${OTO:-0}" = "1" ]; then
+    for t in /dev/console /dev/ttyS0; do printf 'TEDBIRGE_INSTALL_FAIL %s\n' "$*" > "$t" 2>/dev/null; done
+  fi
+  exit 1
+}
 baslik() { echo ""; echo "== $* =="; }
 
 [ "$(id -u)" = "0" ] || hata "Bu araci yonetici olarak calistirin: sudo tedbirge-kur"
@@ -40,7 +50,12 @@ lsblk -dnro NAME,SIZE,MODEL,TYPE | awk '$4=="disk"' | while read -r n s m t; do
   printf "  %-10s %-8s %s\n" "$n" "$s" "$m"
 done
 echo ""
-read -r -p "Hedef disk adi (ornek: sda) [bos = iptal]: " HEDEF
+if [ "$OTO" = "1" ]; then
+  HEDEF=$(lsblk -dnro NAME,TYPE,SIZE | awk -v c="$CANLI" '$2=="disk" && $1!=c {print $1; exit}')
+  echo "Gozetimsiz kurulum hedefi: $HEDEF"
+else
+  read -r -p "Hedef disk adi (ornek: sda) [bos = iptal]: " HEDEF
+fi
 [ -n "${HEDEF:-}" ] || hata "Kurulum iptal edildi."
 HEDEF="${HEDEF#/dev/}"
 DEV="/dev/$HEDEF"
@@ -54,7 +69,11 @@ KIMLIK=$(lsblk -dnro MAJ:MIN "$DEV")
 echo ""
 echo "SECILEN DISK: $DEV ($(numfmt --to=iec "$BOYUT"))"
 echo "Bu diskteki her sey silinecek."
-read -r -p "Devam etmek icin buyuk harfle EVET yazin: " ONAY
+if [ "$OTO" = "1" ]; then
+  ONAY=EVET
+else
+  read -r -p "Devam etmek icin buyuk harfle EVET yazin: " ONAY
+fi
 [ "$ONAY" = "EVET" ] || hata "Kurulum iptal edildi."
 
 [ -b "$DEV" ] || hata "Disk artik bagli degil."
@@ -159,5 +178,10 @@ echo "==============================================="
 echo "  KURULUM TAMAMLANDI"
 echo "==============================================="
 echo "USB bellegi cikarip bilgisayari yeniden baslatin."
+if [ "$OTO" = "1" ]; then
+  for t in /dev/console /dev/ttyS0; do printf 'TEDBIRGE_INSTALL_OK\n' > "$t" 2>/dev/null; done
+  poweroff -f 2>/dev/null || halt -f
+  exit 0
+fi
 read -r -p "Simdi yeniden baslatmak icin Enter, iptal icin Ctrl+C " _
 reboot
