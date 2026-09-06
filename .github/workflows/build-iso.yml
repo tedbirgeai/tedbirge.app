@@ -80,7 +80,9 @@ jobs:
       - name: Güç köprüsünü derle (statik · musl)
         run: |
           rustup target add x86_64-unknown-linux-musl
-          sudo apt-get update && sudo apt-get install -y musl-tools
+          export DEBIAN_FRONTEND=noninteractive
+          sudo -E apt-get update
+          sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" musl-tools zstd
           cargo build --release --target x86_64-unknown-linux-musl \
             --manifest-path crates/tedbirge-sysbridge/Cargo.toml
           BIN=crates/target/x86_64-unknown-linux-musl/release/tedbirge-sysbridge
@@ -116,13 +118,15 @@ jobs:
 
       - name: İmajı doğrula (sahte çıktı yayınlanmaz)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y xorriso squashfs-tools
+          export DEBIAN_FRONTEND=noninteractive
+          sudo -E apt-get update
+          sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" xorriso squashfs-tools zstd
           bash scripts/verify-iso.sh build-iso/iso/tedbirge-webos-x86_64.iso
 
       - name: Açılış testi (QEMU · gerçek donanım senaryoları)
         run: |
-          sudo apt-get install -y qemu-system-x86 ovmf
+          export DEBIAN_FRONTEND=noninteractive
+          sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" qemu-system-x86 ovmf zstd
           ISO=build-iso/iso/tedbirge-webos-x86_64.iso
           OVMF_CODE=""; OVMF_VARS=""
           for c in /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_CODE.fd \

@@ -10,6 +10,10 @@
 # =====================================================================
 set -u
 
+export DEBIAN_FRONTEND=noninteractive
+export APT_LISTCHANGES_FRONTEND=none
+export UCF_FORCE_CONFFOLD=1
+
 MNT=/mnt/tedbirge
 SRC_WWW=/var/www/localhost/htdocs
 LOG_DIR=/var/log/tedbirge
