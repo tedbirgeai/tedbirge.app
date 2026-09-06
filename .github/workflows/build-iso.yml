@@ -153,7 +153,7 @@ jobs:
             RESULT="timeout"; i=0
             while [ "$i" -lt "$BOOT_TIMEOUT" ]; do
               if grep -q "TEDBIRGE_BOOT_READY" "$LOG" 2>/dev/null; then RESULT="ok"; break; fi
-              if grep -qiE "Kernel panic|Attempted to kill init|Unable to mount root|Cannot find live |No such file or directory.*filesystem.squashfs|Failed to start Tedbirge" "$LOG" 2>/dev/null; then
+              if grep -qiE "Kernel panic|Attempted to kill init|Unable to mount root|Cannot find live |No such file or directory.*filesystem.squashfs|Failed to start Tedbirge|No bootable device|Boot failed" "$LOG" 2>/dev/null; then
                 RESULT="panic"; break
               fi
               kill -0 "$QPID" 2>/dev/null || { RESULT="exited"; break; }
@@ -170,14 +170,15 @@ jobs:
             esac
           }
 
-          run_case usb-ehci   4096 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media
-          run_case sata-ahci  4096 -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media
-          run_case ide-legacy 4096 -M pc -device ide-cd,bus=ide.0,drive=media -boot d
+          run_case usb-ehci   4096 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media,bootindex=0
+          run_case sata-ahci  4096 -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media,bootindex=0
+          run_case ide-legacy 4096 -M pc -device ide-cd,bus=ide.0,drive=media,bootindex=0 -boot d
           run_case uefi       4096 \
             -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
             -drive if=pflash,format=raw,file=build-iso/OVMF_VARS.fd \
-            -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media
-          run_case dusuk-bellek 2048 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media
+            -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media,bootindex=0
+          run_case dusuk-bellek 2048 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media,bootindex=0
+
 
           if [ "$FAIL" -ne 0 ]; then
             echo "::error::Açılış testleri başarısız — imaj yayınlanmayacak."; exit 1
