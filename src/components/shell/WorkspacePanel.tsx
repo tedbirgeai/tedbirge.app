@@ -93,6 +93,8 @@ export function WorkspacePanel() {
   const windows = useWindows();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [spotlight, setSpotlight] = useState(false);
+  // Telefonda üstten aşağı çekme jestinin başlangıç noktası.
+  const pullStart = useRef<number | null>(null);
 
   // Çevrimdışı güvence: dosyalar yer baskısında bile silinmesin.
   useEffect(() => {
