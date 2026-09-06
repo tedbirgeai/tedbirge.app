@@ -87,7 +87,6 @@ jobs:
             echo "skip=0" >> "$GITHUB_OUTPUT"
           fi
 
-
       # Yalnizca gercek yuksek/kritik zafiyette durur. Kayit servisi
       # ulasilamazsa (404/5xx/ag hatasi) is uyari ile gecer.
       - name: Audit
@@ -122,6 +121,3 @@ jobs:
             }
             console.log("Yuksek/kritik zafiyet yok.");
           '
-
-
-
