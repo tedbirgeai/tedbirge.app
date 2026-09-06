@@ -1,0 +1,15 @@
+[Unit]
+Description=Tedbirge gozetimsiz disk kurulumu (yalnizca tedbirge.autoinstall=1)
+After=tedbirge-ready.service
+Requires=tedbirge-ready.service
+ConditionKernelCommandLine=tedbirge.autoinstall=1
+
+[Service]
+Type=oneshot
+Environment=TEDBIRGE_AUTO=1
+ExecStart=/usr/local/sbin/tedbirge-kur
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target
