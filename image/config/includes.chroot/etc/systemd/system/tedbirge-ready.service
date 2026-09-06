@@ -1,0 +1,12 @@
+[Unit]
+Description=Tedbirge WebOS acilis butunluk denetimi
+After=nginx.service
+Wants=nginx.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/tedbirge/tedbirge-ready.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
