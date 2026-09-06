@@ -110,7 +110,13 @@ if [ -d "$WORK/alpine/boot" ]; then
   echo "! alpine/boot ikinci bir acilis menusu tanimliyor; tek kaynak mkimg.tedbirge.sh olmali."
   exit 1
 fi
-echo "-- acilis satiri etiketi dogrulandi"
+if grep -qE 'unionfs_size=|tmpfs_size=' "$WORK/alpine/mkimg.tedbirge.sh"; then
+  echo "! Acilis satirinda kok dosya sistemi tavani var (unionfs_size/tmpfs_size)."
+  echo "  Bu tavan canli kok kurulumunu yarida keser: /sbin/init olusmaz ve"
+  echo "  cekirdek 'Attempted to kill init' ile durur. Parametreyi kaldirin."
+  exit 1
+fi
+echo "-- acilis satiri etiketi ve kok alani dogrulandi"
 
 chown -R builder:abuild /home/builder/aports
 

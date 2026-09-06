@@ -141,13 +141,13 @@ jobs:
           LOG=build-iso/boot-test.log
           # USB bellek benzeri baglama: canli ortam etikete gore kok bulmali.
           timeout 420 qemu-system-x86_64 \
-            -m 2048 -smp 2 -display none -no-reboot \
+            -m 4096 -smp 2 -display none -no-reboot \
             -drive if=none,id=usbstick,format=raw,readonly=on,file="$ISO" \
             -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=usbstick \
             -serial file:"$LOG" || true
           echo "---- açılış kaydı ----"
           tail -n 120 "$LOG" || true
-          if grep -qiE "Mounting boot media failed|/sbin/init not found|emergency recovery shell" "$LOG"; then
+          if grep -qiE "Mounting boot media failed|/sbin/init not found|emergency recovery shell|Kernel panic|Attempted to kill init" "$LOG"; then
             echo "::error::Canlı ortam açılamadı — kurtarma kabuğuna düştü. İmaj yayınlanmayacak."
             exit 1
           fi
