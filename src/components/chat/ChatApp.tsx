@@ -147,6 +147,7 @@ import {
   unlockAudio,
   vibrate,
 } from "@/lib/chat/sounds";
+import type { ShellAppId } from "@/shell/apps";
 import { ShellProvider } from "@/shell/ShellProvider";
 import { useShell } from "@/shell/shell-context";
 import { getBrowserNodeId, getPersonId, type PeerInfo } from "@/lib/browser-node";
