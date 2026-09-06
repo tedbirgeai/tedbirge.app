@@ -23,6 +23,10 @@ izle() { # log, basari-deseni, hata-deseni, pid, sure
     grep -qE "$ok" "$log" 2>/dev/null && return 0
     grep -qiE "$bad" "$log" 2>/dev/null && return 2
     kill -0 "$pid" 2>/dev/null || return 3
+    # Uzun beklemede iş akışı kaydı sessiz kalmasın (canlı ilerleme).
+    if [ $((i % 60)) -eq 0 ] && [ "$i" -gt 0 ]; then
+      echo "... ${i}s bekleniyor (son satır: $(tail -n 1 "$log" 2>/dev/null))"
+    fi
     sleep 3; i=$((i + 3))
   done
   return 1
@@ -62,7 +66,8 @@ kurulum_senaryosu() {
   echo "✓ $mod kalıcı kurulum zinciri geçti."
 }
 
-kurulum_senaryosu bios
+HATA=0
+kurulum_senaryosu bios || HATA=1
 
 OVMF_CODE="${OVMF_CODE:-}"; OVMF_VARS="${OVMF_VARS:-}"
 [ -n "$OVMF_CODE" ] || OVMF_CODE=$(find /usr/share -type f -name 'OVMF_CODE*.fd' -print -quit)
@@ -71,6 +76,13 @@ OVMF_CODE="${OVMF_CODE:-}"; OVMF_VARS="${OVMF_VARS:-}"
 cp "$OVMF_VARS" build-iso/kurulum-OVMF_VARS.fd
 kurulum_senaryosu uefi \
   -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
-  -drive if=pflash,format=raw,file=build-iso/kurulum-OVMF_VARS.fd
+  -drive if=pflash,format=raw,file=build-iso/kurulum-OVMF_VARS.fd || HATA=1
+
+# Onceden bu betik senaryolar basarisiz olsa bile 0 ile cikiyordu; hatali imaj
+# yayinlanabiliyordu. Artik tek bir basarisiz senaryo bile is akisini durdurur.
+if [ "$HATA" -ne 0 ]; then
+  echo "::error::Kalıcı kurulum zinciri başarısız — imaj yayınlanmayacak."
+  exit 1
+fi
 
 echo "Kalıcı kurulum zinciri baştan sona doğrulandı."
