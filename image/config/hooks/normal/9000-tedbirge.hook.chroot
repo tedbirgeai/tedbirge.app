@@ -1,0 +1,48 @@
+#!/bin/sh
+# Tedbirge(R) WebOS — kök dosya sistemi son ayarları (DERLEME sırasında çalışır).
+set -e
+
+echo "-- Tedbirge yapilandirmasi uygulaniyor"
+
+# Dosya izinleri
+chmod 0755 /opt/tedbirge/kiosk.sh /opt/tedbirge/ekran-duzeni.sh \
+           /opt/tedbirge/tedbirge-ready.sh /opt/tedbirge/tedbirge-sysbridge \
+           /usr/local/sbin/tedbirge-kur
+mkdir -p /var/log/tedbirge /var/lib/tedbirge/chromium /media
+
+# nginx: yalnizca Tedbirge sitesi etkin
+rm -f /etc/nginx/sites-enabled/default
+ln -sf /etc/nginx/sites-available/tedbirge.conf /etc/nginx/sites-enabled/tedbirge.conf
+
+# Servisler
+systemctl enable nginx.service
+systemctl enable tedbirge-sysbridge.service
+systemctl enable tedbirge-ready.service
+systemctl enable tedbirge-kiosk.service
+systemctl enable NetworkManager.service || true
+systemctl enable acpid.service || true
+systemctl set-default graphical.target
+
+# Konsol karsilama
+cat > /etc/motd <<'EOF'
+Tedbirge(R) WebOS — arayuz: http://127.0.0.1/
+Diske kalici kurulum: sudo tedbirge-kur
+EOF
+
+# ZRAM: RAM'in yarisi kadar sikistirilmis takas
+cat > /etc/default/zramswap <<'EOF'
+ALGO=zstd
+PERCENT=50
+PRIORITY=100
+EOF
+
+# Butunluk denetimi: derleme burada durursa hatali imaj hic uretilmez.
+for f in /var/www/tedbirge/index.html /var/www/tedbirge/kernel/tedbirge_kernel.wasm \
+         /usr/local/sbin/tedbirge-kur /opt/tedbirge/kiosk.sh \
+         /etc/systemd/system/tedbirge-kiosk.service; do
+  [ -s "$f" ] || { echo "! Zorunlu dosya yok: $f" >&2; exit 1; }
+done
+command -v chromium >/dev/null 2>&1 || { echo "! chromium kurulamadi" >&2; exit 1; }
+[ -x /usr/lib/systemd/systemd ] || { echo "! systemd yok — init olusmaz" >&2; exit 1; }
+
+echo "-- Tedbirge yapilandirmasi tamam"
