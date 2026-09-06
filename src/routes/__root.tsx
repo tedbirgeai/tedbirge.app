@@ -91,6 +91,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Tedbirge® WebOS: taşıyıcı-bağımsız, sıfır-bilgi P2P ağ işletim sistemi. İnternet kesilse de çalışan mesh haberleşme ve veri taşıma katmanı.",
       },
       { name: "author", content: "Tedbirge" },
+      { name: "robots", content: "noindex, nofollow, noarchive, nosnippet, noimageindex" },
+      { name: "googlebot", content: "noindex, nofollow, noarchive, nosnippet, noimageindex" },
       { property: "og:title", content: "Tedbirge® WebOS — tedbirge.app" },
       {
         property: "og:description",
