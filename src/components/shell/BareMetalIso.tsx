@@ -37,7 +37,7 @@ const STEPS: ReadonlyArray<{ tool: string; text: string }> = [
   },
   {
     tool: "3 · USB'den başlat",
-    text: "Açılış menüsünde “Canlı Kiosk” hemen çalıştırır, “SSD/HDD'ye Kur” bilgisayara kalıcı kurar.",
+    text: "Açılış menüsünde “Tedbirge WebOS — Canlı Başlat” hemen çalıştırır, “SSD/HDD'ye Kur” bilgisayara kalıcı kurar.",
   },
 ];
 

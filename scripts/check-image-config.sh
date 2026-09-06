@@ -21,6 +21,10 @@ for f in \
   image/config/includes.chroot/opt/tedbirge/tedbirge-ready.sh \
   image/config/includes.chroot/etc/systemd/system/tedbirge-kiosk.service \
   image/config/includes.chroot/etc/systemd/system/tedbirge-ready.service \
+  image/config/includes.chroot/etc/systemd/system/tedbirge-installer.service \
+  image/config/bootloaders/syslinux_common/live.cfg.in \
+  image/config/bootloaders/grub-pc/grub.cfg \
+  scripts/verify-iso.sh \
   scripts/test-install-qemu.sh
 do
   [ -s "$f" ] || hata "Zorunlu dosya yok: $f"
@@ -54,9 +58,16 @@ grep -q 'MIN_BAYT' "$KUR"        || hata "Kurulum aracında en küçük disk den
 grep -q 'unsquashfs' "$KUR"      || hata "Kurulum aracı hazır kök imajını kullanmıyor."
 grep -q 'grub-install' "$KUR"    || hata "Kurulum aracı açılış yükleyicisi kurmuyor."
 grep -q 'systemd' "$KUR"         || hata "Kurulum sonrası init doğrulaması yok."
+grep -q 'lsblk -ndo PKNAME' "$KUR" || hata "Canlı USB üst aygıtı güvenilir biçimde saptanmıyor."
+grep -q 'update-initramfs.*|| hata' "$KUR" || hata "initramfs hatası sessizce geçiliyor."
+grep -q 'tedbirge.install=1' image/config/bootloaders/syslinux_common/live.cfg.in \
+  || hata "BIOS menüsünde etkileşimli kurulum seçeneği yok."
+grep -q 'tedbirge.install=1' image/config/bootloaders/grub-pc/grub.cfg \
+  || hata "UEFI menüsünde etkileşimli kurulum seçeneği yok."
 
 # 6) Kabuk sözdizimi
 for s in image/build.sh image/install/tedbirge-kur scripts/test-install-qemu.sh \
+         scripts/verify-iso.sh \
          image/config/hooks/normal/9000-tedbirge.hook.chroot \
          image/config/includes.chroot/opt/tedbirge/kiosk.sh \
          image/config/includes.chroot/opt/tedbirge/tedbirge-ready.sh; do

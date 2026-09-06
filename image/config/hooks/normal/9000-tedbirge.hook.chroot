@@ -19,6 +19,7 @@ systemctl enable nginx.service
 systemctl enable tedbirge-sysbridge.service
 systemctl enable tedbirge-ready.service
 systemctl enable tedbirge-autoinstall.service
+systemctl enable tedbirge-installer.service
 systemctl enable tedbirge-kiosk.service
 systemctl enable NetworkManager.service || true
 systemctl enable acpid.service || true
@@ -40,7 +41,9 @@ EOF
 # Butunluk denetimi: derleme burada durursa hatali imaj hic uretilmez.
 for f in /var/www/tedbirge/index.html /var/www/tedbirge/kernel/tedbirge_kernel.wasm \
          /usr/local/sbin/tedbirge-kur /opt/tedbirge/kiosk.sh \
-         /etc/systemd/system/tedbirge-kiosk.service; do
+         /etc/systemd/system/tedbirge-kiosk.service \
+         /etc/systemd/system/tedbirge-installer.service \
+         /etc/tedbirge-release /etc/tedbirge-image.json; do
   [ -s "$f" ] || { echo "! Zorunlu dosya yok: $f" >&2; exit 1; }
 done
 command -v chromium >/dev/null 2>&1 || { echo "! chromium kurulamadi" >&2; exit 1; }

@@ -108,31 +108,15 @@ jobs:
           docker run --rm --privileged \
             -v "$PWD:/work" -w /work \
             -e TEDBIRGE_VERSION="${{ steps.ver.outputs.version }}" \
+            -e TEDBIRGE_COMMIT="$GITHUB_SHA" \
+            -e TEDBIRGE_BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             debian:bookworm bash /work/image/build.sh
 
       - name: İmajı doğrula (sahte çıktı yayınlanmaz)
         run: |
           sudo apt-get update
           sudo apt-get install -y xorriso squashfs-tools
-          TARGET=build-iso/iso/tedbirge-webos-x86_64.iso
-          [ -s "$TARGET" ] || { echo "::error::ISO üretilemedi."; exit 1; }
-          SIZE=$(stat -c%s "$TARGET")
-          if [ "$SIZE" -lt 524288000 ]; then
-            echo "::error::ISO beklenenden küçük ($SIZE bayt) — kök dosya sistemi eksik."; exit 1
-          fi
-          xorriso -indev "$TARGET" -pvd_info 2>/dev/null | grep -q "TEDBIRGE_WEBOS" || {
-            echo "::error::ISO birim etiketi TEDBIRGE_WEBOS değil."; exit 1; }
-          ELTORITO=$(xorriso -indev "$TARGET" -report_el_torito plain 2>&1)
-          printf '%s\n' "$ELTORITO"
-          printf '%s\n' "$ELTORITO" | grep -qiE 'El Torito|BIOS' || {
-            echo "::error::ISO içinde BIOS önyükleme kaydı yok."; exit 1; }
-          printf '%s\n' "$ELTORITO" | grep -qiE 'UEFI|EFI' || {
-            echo "::error::ISO içinde UEFI önyükleme kaydı yok."; exit 1; }
-          for path in /live /live/filesystem.squashfs /live/vmlinuz /live/initrd.img; do
-            xorriso -indev "$TARGET" -find "$path" -print 2>/dev/null | grep -q . || {
-              echo "::error::ISO içinde zorunlu açılış bileşeni yok: $path"; exit 1; }
-          done
-          echo "ISO yapısı doğrulandı."
+          bash scripts/verify-iso.sh build-iso/iso/tedbirge-webos-x86_64.iso
 
       - name: Açılış testi (QEMU · gerçek donanım senaryoları)
         run: |
@@ -203,6 +187,37 @@ jobs:
       - name: Kalıcı kurulum testi (diske kur + kurulan sistemden aç)
         run: bash scripts/test-install-qemu.sh
 
+      - name: Haber ve WebOS içerik kontrolü
+        run: |
+          node - <<'NODE'
+          const endpoints = [
+            'https://tedbirge.app/api/public/haberler',
+            'https://tedbirge-app.lovable.app/api/public/haberler',
+          ];
+          let ok = false;
+          for (const endpoint of endpoints) {
+            try {
+              const response = await fetch(endpoint, { signal: AbortSignal.timeout(20000) });
+              const body = await response.json();
+              const items = Array.isArray(body) ? body : body.items;
+              if (response.ok && Array.isArray(items) && items.length > 0) {
+                console.log(`Haber kaynağı doğrulandı: ${endpoint} (${items.length} kayıt)`);
+                ok = true;
+                break;
+              }
+            } catch (error) {
+              console.warn(`Haber kaynağı yanıt vermedi: ${endpoint}`, error.message);
+            }
+          }
+          if (!ok) throw new Error('Hiçbir doğrulanmış haber kaynağı kayıt döndürmedi.');
+          NODE
+
+      - name: Yayın kimliğini onayla
+        run: |
+          MANIFEST=build-iso/iso/TEDBIRGE-ISO-MANIFEST.json
+          node -e 'const fs=require("fs"); const p=process.argv[1]; const m=JSON.parse(fs.readFileSync(p)); m.validated=true; fs.writeFileSync(p, JSON.stringify(m)+"\n")' "$MANIFEST"
+          cat "$MANIFEST"
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -216,6 +231,7 @@ jobs:
           path: |
             build-iso/iso/*.iso
             build-iso/iso/SHA256SUMS
+            build-iso/iso/TEDBIRGE-ISO-MANIFEST.json
 
       - name: Yayınla (sürüm etiketi)
         if: github.event_name == 'release' || github.ref_type == 'tag'
@@ -224,6 +240,7 @@ jobs:
           files: |
             build-iso/iso/*.iso
             build-iso/iso/SHA256SUMS
+            build-iso/iso/TEDBIRGE-ISO-MANIFEST.json
 
       - name: Yayınla (latest ön-sürüm)
         if: github.event_name != 'release' && github.ref_type != 'tag'
@@ -237,3 +254,4 @@ jobs:
           files: |
             build-iso/iso/*.iso
             build-iso/iso/SHA256SUMS
+            build-iso/iso/TEDBIRGE-ISO-MANIFEST.json

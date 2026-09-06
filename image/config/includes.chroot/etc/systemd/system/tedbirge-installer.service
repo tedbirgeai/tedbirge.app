@@ -1,0 +1,20 @@
+[Unit]
+Description=Tedbirge etkileşimli disk kurulumu
+After=systemd-user-sessions.service
+Conflicts=getty@tty1.service
+ConditionKernelCommandLine=tedbirge.install=1
+
+[Service]
+Type=idle
+ExecStart=/usr/local/sbin/tedbirge-kur
+StandardInput=tty-force
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

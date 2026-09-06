@@ -5,10 +5,9 @@
  * üretilip GitHub Releases'a yüklenen en güncel `.iso` dosyasına
  * yönlendirir.
  *
- * Sıra:
- *   1) VITE_ISO_DOWNLOAD_URL (CDN/ayna) tanımlıysa oraya 302
- *   2) GitHub Releases `latest` içindeki .iso varlığına 302
- *   3) Hiçbiri yoksa 503 — sahte dosya ya da kurulum betiği ÜRETİLMEZ
+ * Yalnız aynı yayındaki doğrulanmış Debian manifesti, özeti ve dosya
+ * boyutu birbiriyle eşleşen imaj kabul edilir. Eski Alpine varlıkları
+ * veya doğrulanmamış CDN adresleri hiçbir zaman kullanıcıya sunulmaz.
  *
  * `?durum=1` ile aynı bilgi JSON olarak döner (arayüz bunu kullanır).
  */
@@ -17,6 +16,19 @@ import { createFileRoute } from "@tanstack/react-router";
 
 type Asset = { name: string; browser_download_url: string; size: number };
 type Release = { tag_name?: string; name?: string; assets?: Asset[] };
+type Manifest = {
+  schema?: number;
+  product?: string;
+  distribution?: string;
+  codename?: string;
+  architecture?: string;
+  version?: string;
+  commit?: string;
+  asset?: string;
+  sha256?: string;
+  size?: number;
+  validated?: boolean;
+};
 
 type Resolved = {
   ready: boolean;
@@ -25,6 +37,9 @@ type Resolved = {
   size: number;
   version: string;
   page: string;
+  sha256: string;
+  distribution: string;
+  commit: string;
 };
 
 function repo(): string {
@@ -55,21 +70,48 @@ async function latestFromGithub(): Promise<Resolved | null> {
       const body = (await res.json()) as Release | Release[];
       const releases = Array.isArray(body) ? body : [body];
       for (const rel of releases) {
-        const isos = (rel.assets ?? []).filter((a) => a.name.toLowerCase().endsWith(".iso"));
-        // Sabit adlı imaj varsa o tercih edilir; yoksa ilk .iso varlığı.
-        const asset =
-          isos.find((a) => a.name.toLowerCase() === "tedbirge-webos-x86_64.iso") ?? isos[0];
+        const assets = rel.assets ?? [];
+        const manifestAsset = assets.find((a) => a.name === "TEDBIRGE-ISO-MANIFEST.json");
+        const sumsAsset = assets.find((a) => a.name === "SHA256SUMS");
+        if (!manifestAsset || !sumsAsset) continue;
 
-        if (asset) {
-          return {
-            ready: true,
-            url: asset.browser_download_url,
-            name: asset.name,
-            size: asset.size ?? 0,
-            version: rel.tag_name ?? rel.name ?? "",
-            page,
-          };
-        }
+        const [manifestResponse, sumsResponse] = await Promise.all([
+          fetch(manifestAsset.browser_download_url, { headers }),
+          fetch(sumsAsset.browser_download_url, { headers }),
+        ]);
+        if (!manifestResponse.ok || !sumsResponse.ok) continue;
+        const manifest = (await manifestResponse.json()) as Manifest;
+        const sums = await sumsResponse.text();
+        const asset = assets.find((a) => a.name === manifest.asset);
+        const expectedLine = `${manifest.sha256}  ${manifest.asset}`;
+        const valid =
+          manifest.schema === 1 &&
+          manifest.product === "Tedbirge WebOS" &&
+          manifest.distribution === "Debian" &&
+          manifest.codename === "bookworm" &&
+          manifest.architecture === "x86_64" &&
+          manifest.validated === true &&
+          typeof manifest.commit === "string" &&
+          manifest.commit !== "unknown" &&
+          typeof manifest.sha256 === "string" &&
+          /^[a-f0-9]{64}$/.test(manifest.sha256) &&
+          typeof manifest.size === "number" &&
+          manifest.size >= 524_288_000 &&
+          asset?.size === manifest.size &&
+          sums.split(/\r?\n/).includes(expectedLine);
+        if (!valid || !asset) continue;
+
+        return {
+          ready: true,
+          url: asset.browser_download_url,
+          name: asset.name,
+          size: asset.size,
+          version: manifest.version ?? rel.tag_name ?? rel.name ?? "",
+          page,
+          sha256: manifest.sha256 ?? "",
+          distribution: "Debian bookworm",
+          commit: manifest.commit ?? "",
+        };
       }
     } catch {
       /* ağ hatası: bir sonraki adrese geçilir */
@@ -80,19 +122,20 @@ async function latestFromGithub(): Promise<Resolved | null> {
 
 async function resolve(): Promise<Resolved> {
   const page = `https://github.com/${repo()}/releases/latest`;
-  const direct = (process.env["VITE_ISO_DOWNLOAD_URL"] ?? "").trim();
-  if (direct) {
-    return {
-      ready: true,
-      url: direct,
-      name: direct.split("/").pop() || "tedbirge-webos-x86_64.iso",
-      size: 0,
-      version: "",
-      page,
-    };
-  }
   const github = await latestFromGithub();
-  return github ?? { ready: false, url: "", name: "", size: 0, version: "", page };
+  return (
+    github ?? {
+      ready: false,
+      url: "",
+      name: "",
+      size: 0,
+      version: "doğrulanıyor",
+      page,
+      sha256: "",
+      distribution: "",
+      commit: "",
+    }
+  );
 }
 
 export const Route = createFileRoute("/api/public/iso")({
@@ -107,7 +150,7 @@ export const Route = createFileRoute("/api/public/iso")({
             status: 200,
             headers: {
               "Content-Type": "application/json; charset=utf-8",
-              "Cache-Control": "public, max-age=300",
+              "Cache-Control": "no-store",
             },
           });
         }

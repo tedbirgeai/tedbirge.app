@@ -17,6 +17,8 @@ set -euo pipefail
 
 WORK="${WORK:-/work}"
 VERSION="${TEDBIRGE_VERSION:-1.0.0}"
+COMMIT="${TEDBIRGE_COMMIT:-${GITHUB_SHA:-unknown}}"
+BUILD_TIME="${TEDBIRGE_BUILD_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
 BUILD="$WORK/build-iso/live"
 OUT="$WORK/build-iso/iso"
 VOLID="TEDBIRGE_WEBOS"
@@ -72,8 +74,16 @@ mkdir -p config/includes.chroot/etc
 cat > config/includes.chroot/etc/tedbirge-release <<EOF
 NAME="Tedbirge(R) WebOS"
 VERSION=$VERSION
+ID=tedbirge-webos
+ID_LIKE=debian
+DEBIAN_CODENAME=bookworm
+BUILD_COMMIT=$COMMIT
+BUILD_TIME=$BUILD_TIME
 VARIANT="live-kiosk"
 HTTP_PORT=80
+EOF
+cat > config/includes.chroot/etc/tedbirge-image.json <<EOF
+{"product":"Tedbirge WebOS","distribution":"Debian","codename":"bookworm","version":"$VERSION","commit":"$COMMIT","built_at":"$BUILD_TIME","architecture":"x86_64"}
 EOF
 
 chmod +x config/hooks/normal/*.hook.chroot
@@ -104,6 +114,17 @@ ISO=$(ls -1 "$BUILD"/*.iso "$BUILD"/*.hybrid.iso 2>/dev/null | head -1 || true)
 
 TARGET="$OUT/tedbirge-webos-x86_64.iso"
 cp "$ISO" "$TARGET"
-(cd "$OUT" && sha256sum tedbirge-webos-x86_64.iso > SHA256SUMS)
+SAFE_VERSION=$(printf '%s' "$VERSION" | tr -c 'A-Za-z0-9._+-' '-')
+VERSIONED="tedbirge-webos-${SAFE_VERSION}-x86_64.iso"
+cp "$TARGET" "$OUT/$VERSIONED"
+(
+  cd "$OUT"
+  sha256sum tedbirge-webos-x86_64.iso "$VERSIONED" > SHA256SUMS
+  SHA=$(sha256sum tedbirge-webos-x86_64.iso | awk '{print $1}')
+  SIZE=$(stat -c%s tedbirge-webos-x86_64.iso)
+  cat > TEDBIRGE-ISO-MANIFEST.json <<EOF
+{"schema":1,"product":"Tedbirge WebOS","distribution":"Debian","codename":"bookworm","architecture":"x86_64","version":"$VERSION","commit":"$COMMIT","built_at":"$BUILD_TIME","asset":"tedbirge-webos-x86_64.iso","sha256":"$SHA","size":$SIZE,"validated":false}
+EOF
+)
 
 echo "✓ ISO hazır: $TARGET ($(du -h "$TARGET" | cut -f1))"
