@@ -12,7 +12,10 @@ profile_tedbirge() {
 	output_format="iso"
 	# Acilis satiri tek kaynaktir: alpine/boot altinda ikinci bir menu dosyasi tutulmaz.
 	# TEDBIRGE_WEBOS etiketi alpine/ci-build.sh icindeki -volid yamasi ile birebir aynidir.
-	kernel_cmdline="modules=loop,squashfs,sd-mod,usb-storage,uas,xhci_hcd,ehci_hcd,ohci_hcd,iso9660,overlay,vfat,ext4 alpine_dev=LABEL=TEDBIRGE_WEBOS waitusb=10 rootwait rootdelay=7 unionfs_size=512M console=tty0 console=ttyS0,115200"
+	# DIKKAT: unionfs_size/tmpfs_size ile kok dosya sistemi SINIRLANMAZ. Canli kok
+	# bellekte kurulur; 512M gibi bir tavan paket kurulumunu yarida keser ve
+	# /sbin/init olusmadigi icin cekirdek "Attempted to kill init" ile durur.
+	kernel_cmdline="modules=loop,squashfs,sd-mod,usb-storage,uas,xhci_hcd,ehci_hcd,ohci_hcd,iso9660,overlay,vfat,ext4 alpine_dev=LABEL=TEDBIRGE_WEBOS waitusb=10 rootwait rootdelay=7 console=tty0 console=ttyS0,115200"
 	syslinux_serial=""
 	kernel_flavors="lts"
 	kernel_addons=""
