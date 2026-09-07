@@ -236,8 +236,10 @@ jobs:
       - name: Yayın kimliğini onayla (${{ matrix.edition }})
         run: |
           MANIFEST="build-iso/iso/TEDBIRGE-ISO-MANIFEST-${{ matrix.edition }}.json"
+          sudo chown "$(id -u):$(id -g)" "$MANIFEST"
           node -e 'const fs=require("fs"); const p=process.argv[1]; const m=JSON.parse(fs.readFileSync(p)); m.validated=true; fs.writeFileSync(p, JSON.stringify(m)+"\n")' "$MANIFEST"
           cat "$MANIFEST"
+
 
       - uses: actions/upload-artifact@v4
         if: always()
