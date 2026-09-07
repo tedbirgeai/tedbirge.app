@@ -16,11 +16,37 @@ export const ISO_GITHUB_REPO = (
 /** Sürüm sayfası (kullanıcıya gösterilen bağlantı). */
 export const ISO_RELEASES_PAGE = `https://github.com/${ISO_GITHUB_REPO}/releases/latest`;
 
+/** İki ürün sürümü: masaüstü/dizüstü ve tablet/2'si 1 arada. */
+export type IsoEdition = "workstation" | "touch";
+
+export const ISO_EDITIONS: ReadonlyArray<{
+  id: IsoEdition;
+  title: string;
+  subtitle: string;
+}> = [
+  {
+    id: "workstation",
+    title: "Masaüstü & Dizüstü",
+    subtitle: "Workstation — klavye/fare odaklı; klasik PC ve laptop için",
+  },
+  {
+    id: "touch",
+    title: "Tablet & 2'si 1 Arada",
+    subtitle: "Touch & Mobile — dokunmatik ekran, kalem ve ekran döndürme destekli",
+  },
+];
+
 /** İndirme rotası: sunucu en güncel imaja yönlendirir. */
 export const ISO_DOWNLOAD_ROUTE = "/api/public/iso";
 
-/** İmaj durumunu soran hafif uç nokta. */
-export const ISO_STATUS_ROUTE = "/api/public/iso?durum=1";
+/** Sürüme özel indirme/durum adresleri. */
+export function isoDownloadRoute(edition: IsoEdition): string {
+  return `${ISO_DOWNLOAD_ROUTE}?surum=${edition}`;
+}
+
+export function isoStatusRoute(edition: IsoEdition): string {
+  return `${ISO_DOWNLOAD_ROUTE}?durum=1&surum=${edition}`;
+}
 
 export type IsoStatus = {
   ready: boolean;
@@ -32,10 +58,11 @@ export type IsoStatus = {
   sha256: string;
   distribution: string;
   commit: string;
+  edition: string;
 };
 
 /** Yayındaki imajın durumunu sorar; hata olursa "hazır değil" döner. */
-export async function fetchIsoStatus(): Promise<IsoStatus> {
+export async function fetchIsoStatus(edition: IsoEdition = "workstation"): Promise<IsoStatus> {
   const bos: IsoStatus = {
     ready: false,
     url: "",
@@ -46,9 +73,12 @@ export async function fetchIsoStatus(): Promise<IsoStatus> {
     sha256: "",
     distribution: "",
     commit: "",
+    edition,
   };
   try {
-    const res = await fetch(ISO_STATUS_ROUTE, { headers: { Accept: "application/json" } });
+    const res = await fetch(isoStatusRoute(edition), {
+      headers: { Accept: "application/json" },
+    });
     if (!res.ok) return bos;
     const data = (await res.json()) as Partial<IsoStatus>;
     return { ...bos, ...data, ready: Boolean(data.ready) };
