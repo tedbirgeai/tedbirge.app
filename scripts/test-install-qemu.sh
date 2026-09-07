@@ -7,8 +7,8 @@ cd "$(dirname "$0")/.."
 export DEBIAN_FRONTEND=noninteractive
 
 ISO="${1:-${TEDBIRGE_ISO:-build-iso/iso/tedbirge-webos-workstation-x86_64.iso}}"
-STALL="${INSTALL_STALL:-420}"   # ilerlemesizlik siniri (saniye)
-QEMU_STOP_TIMEOUT="${QEMU_STOP_TIMEOUT:-60}"
+STALL="${INSTALL_STALL:-180}"   # ilerlemesizlik siniri (saniye)
+QEMU_STOP_TIMEOUT="${QEMU_STOP_TIMEOUT:-15}"
 
 [ -s "$ISO" ] || { echo "::error::ISO yok: $ISO"; exit 1; }
 command -v qemu-system-x86_64 >/dev/null || { echo "::error::qemu yok"; exit 1; }
@@ -94,7 +94,7 @@ kurulum_senaryosu() {
     || { echo "::error::$mod test diski olusturulamadi."; return 1; }
 
   echo "==== $mod 1. aşama: canlı sistemden diske kurulum ===="
-  qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none \
+  stdbuf -oL -eL qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none \
     -no-reboot -action shutdown=poweroff \
     -qmp unix:"$qmp1",server=on,wait=off \
     -kernel "$TMP/vmlinuz" -initrd "$TMP/initrd.img" \
@@ -119,13 +119,13 @@ kurulum_senaryosu() {
   # gerçek dizüstü/masaüstü bilgisayarlar gibi AHCI/SATA üzerinden yapılır.
   # Bazı OVMF sürümleri virtio diski açılış aygıtı olarak hiç görmez ve seri
   # porta tek satır yazmadan bekler; eski 15 dakikalık sahte "donma" buydu.
-  qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none \
+  stdbuf -oL -eL qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none \
     -no-reboot -action shutdown=poweroff "$@" \
     -qmp unix:"$qmp2",server=on,wait=off \
-    -boot order=c,menu=off,strict=on \
+    -boot order=c,menu=on \
     -device ahci,id=system-ahci \
     -drive if=none,id=system-disk,file="$disk",format=qcow2,cache=unsafe \
-    -device ide-hd,bus=system-ahci.0,drive=system-disk,bootindex=0 \
+    -device ide-hd,bus=system-ahci.0,drive=system-disk,bootindex=1 \
     -debugcon file:"build-iso/kurulum-${mod}-firmware.log" -global isa-debugcon.iobase=0x402 \
     -serial file:"$log2" 2>"build-iso/kurulum-${mod}-asama2.stderr.log" &
   local p2=$!
@@ -137,7 +137,16 @@ kurulum_senaryosu() {
   fi
 
   tail -n 60 "$log2" 2>/dev/null
-  [ "$rc" = 0 ] || { echo "::error::$mod kurulu sistem açılış testi başarısız (kod $rc)."; return 1; }
+  if [ "$rc" != 0 ]; then
+    # Sessiz acilis hatasi bir daha kor nokta kalmasin: firmware ve emulator
+    # kayitlarinin son satirlari da hata ciktisina basilir.
+    echo "---- $mod UEFI/BIOS firmware kaydi (son 40 satir) ----"
+    tail -n 40 "build-iso/kurulum-${mod}-firmware.log" 2>/dev/null || echo "(firmware kaydi yok)"
+    echo "---- $mod emulator hata kaydi (son 40 satir) ----"
+    tail -n 40 "build-iso/kurulum-${mod}-asama2.stderr.log" 2>/dev/null || echo "(kayit yok)"
+    echo "::error::$mod kurulu sistem açılış testi başarısız (kod $rc)."
+    return 1
+  fi
   echo "✓ $mod kalıcı kurulum zinciri geçti."
 }
 

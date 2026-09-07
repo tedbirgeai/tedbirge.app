@@ -305,10 +305,27 @@ SWAP_UUID=""
 
 # Canli acilis bilesenleri kalici sistemde kapatilir.
 rm -f "$KOK/etc/systemd/system/multi-user.target.wants/live-config.service" 2>/dev/null
-CEKIRDEK_SATIRI="quiet console=tty0 console=ttyS0,115200"
+CEKIRDEK_SATIRI="console=tty0 console=ttyS0,115200n8 quiet"
 [ -n "$SWAP_UUID" ] && CEKIRDEK_SATIRI="$CEKIRDEK_SATIRI resume=UUID=$SWAP_UUID"
-sed -i "s|^#\?GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$CEKIRDEK_SATIRI\"|" \
-  "$KOK/etc/default/grub" 2>/dev/null || true
+
+# /etc/default/grub anahtarlari: varsa degistirilir, yoksa eklenir. GRUB'un
+# kendi ciktisi da seri porta verilir; aksi halde acilis hatasinda kayit bos
+# kalir ve sorun kor noktada kalir (CI'de tam olarak bu yasandi).
+grub_ayar() { # anahtar, deger
+  local dosya="$KOK/etc/default/grub"
+  touch "$dosya"
+  if grep -q "^#\?$1=" "$dosya"; then
+    sed -i "s|^#\?$1=.*|$1=$2|" "$dosya"
+  else
+    printf '%s=%s\n' "$1" "$2" >> "$dosya"
+  fi
+}
+grub_ayar GRUB_CMDLINE_LINUX_DEFAULT "\"$CEKIRDEK_SATIRI\""
+grub_ayar GRUB_TERMINAL "\"console serial\""
+grub_ayar GRUB_SERIAL_COMMAND "\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\""
+grub_ayar GRUB_TIMEOUT "3"
+grub_ayar GRUB_TIMEOUT_STYLE "menu"
+
 
 # ------------------------------------ kalici sistem icin tasınabilir initramfs
 # Kurulan sistem baska bir bilgisayara tasinabilir (disk baska makineye
@@ -356,16 +373,31 @@ else
     grub-install --target=i386-pc --recheck --no-floppy "$DEV" < /dev/null \
     || hata "BIOS acilis yukleyici kurulamadi."
 fi
-# Sert zaman asimi: ilerleme denetimine ek olarak islem hicbir kosulda
-# belirlenen sureyi asamaz; bu adim kilitlenirse mevcut acilis diskiyle devam
-# edilir ve alttaki dogrulama acilis dosyasi yoksa kurulumu durdurur.
-uzun_adim "Acilis diski guncelleniyor" timeout 90s \
+# UEFI: bazi firmware'ler yalnizca tasinabilir yolu (EFI/BOOT/BOOTX64.EFI)
+# okur. grub-install --removable bunu genelde yazar; yazmadiysa elle kopyalanir.
+if [ "$MOD" = "UEFI" ]; then
+  if [ ! -s "$KOK/boot/efi/EFI/BOOT/BOOTX64.EFI" ]; then
+    KAYNAK=$(ls "$KOK"/boot/efi/EFI/*/grubx64.efi 2>/dev/null | head -1)
+    [ -n "$KAYNAK" ] || hata "UEFI acilis dosyasi (grubx64.efi) uretilmedi."
+    mkdir -p "$KOK/boot/efi/EFI/BOOT"
+    cp "$KAYNAK" "$KOK/boot/efi/EFI/BOOT/BOOTX64.EFI" \
+      || hata "Tasinabilir UEFI acilis dosyasi olusturulamadi."
+  fi
+  # ESP'deki koprü menü: GRUB kendi yapilandirmasini kok bolumden okur.
+  mkdir -p "$KOK/boot/efi/EFI/BOOT"
+  printf 'search --no-floppy --fs-uuid --set=root %s\nset prefix=($root)/boot/grub\nconfigfile ($root)/boot/grub/grub.cfg\n' \
+    "$KOK_UUID" > "$KOK/boot/efi/EFI/BOOT/grub.cfg"
+fi
+
+# Bu iki adim acilisin kendisidir; basarisiz olurlarsa kurulan sistem sessizce
+# acilmaz. Bu yuzden ARTIK yutulmuyor, kurulum aninda durduruluyor.
+uzun_adim "Acilis diski guncelleniyor" timeout 300s \
   chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-initramfs -u -k all < /dev/null \
-  || true
-uzun_adim "Acilis menusu olusturuluyor" timeout 60s chroot "$KOK" "${CHROOT_ENV[@]}" \
+  || hata "Acilis diski (initramfs) uretilemedi."
+uzun_adim "Acilis menusu olusturuluyor" timeout 120s chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-grub < /dev/null \
-  || true
+  || hata "Acilis menusu (grub.cfg) uretilemedi."
 # Hizmet engelleyici yalnizca kurulum surecine ozeldir.
 rm -f "$KOK/usr/sbin/policy-rc.d"
 
@@ -376,10 +408,15 @@ baslik "Kurulum dogrulaniyor"
 ls "$KOK"/boot/vmlinuz-* >/dev/null 2>&1 || hata "Kurulan sistemde cekirdek yok."
 ls "$KOK"/boot/initrd.img-* >/dev/null 2>&1 || hata "Kurulan sistemde acilis diski yok."
 [ -s "$KOK/boot/grub/grub.cfg" ] || hata "Acilis menusu olusmadi."
+# Menü gercekten BU diske mi ait? Eski (canli imajdan gelen) bir grub.cfg
+# kalirsa sistem sessizce acilmaz; bu iki denetim onu yakalar.
+grep -q "$KOK_UUID" "$KOK/boot/grub/grub.cfg" \
+  || hata "Acilis menusu kurulan diskin kimligini icermiyor (eski menu kalmis)."
+grep -q "console=ttyS0" "$KOK/boot/grub/grub.cfg" \
+  || hata "Acilis menusunde seri konsol parametresi yok."
 if [ -n "$P1" ]; then
-  ls "$KOK"/boot/efi/EFI/BOOT/BOOTX64.EFI >/dev/null 2>&1 \
-    || ls "$KOK"/boot/efi/EFI/Tedbirge/grubx64.efi >/dev/null 2>&1 \
-    || hata "EFI acilis dosyasi olusmadi."
+  [ -s "$KOK/boot/efi/EFI/BOOT/BOOTX64.EFI" ] \
+    || hata "Tasinabilir EFI acilis dosyasi (BOOTX64.EFI) olusmadi."
 fi
 [ -s "$KOK/var/www/tedbirge/index.html" ] || hata "Arayuz dosyalari kopyalanmadi."
 if [ -n "$SWAP_UUID" ]; then

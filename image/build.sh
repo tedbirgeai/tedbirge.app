@@ -150,6 +150,16 @@ timeout --foreground 90m stdbuf -oL -eL lb build
 ISO=$(ls -1 "$BUILD"/*.iso "$BUILD"/*.hybrid.iso 2>/dev/null | head -1 || true)
 [ -n "$ISO" ] || { echo "! ISO üretilmedi." >&2; ls -la "$BUILD" >&2; exit 1; }
 
+# UEFI güvencesi: taşınabilir açılış yolu ISO içinde gerçekten var mı? Yoksa
+# imaj bazı bilgisayarlarda hiç açılmaz — bu yüzden derleme burada durur.
+if command -v xorriso >/dev/null 2>&1; then
+  if ! xorriso -indev "$ISO" -find /EFI/BOOT -name 'BOOTX64.EFI' 2>/dev/null | grep -qi 'bootx64.efi'; then
+    echo "! ISO içinde /EFI/BOOT/BOOTX64.EFI yok — UEFI açılışı garanti edilemez." >&2
+    exit 1
+  fi
+  echo "-- UEFI taşınabilir açılış dosyası doğrulandı"
+fi
+
 BASENAME="tedbirge-webos-$EDITION-x86_64"
 TARGET="$OUT/$BASENAME.iso"
 cp "$ISO" "$TARGET"

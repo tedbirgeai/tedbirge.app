@@ -95,16 +95,21 @@ grep -q 'grub-install' "$KUR"    || hata "Kurulum aracı açılış yükleyicisi
 grep -q 'systemd' "$KUR"         || hata "Kurulum sonrası init doğrulaması yok."
 grep -q 'lsblk -ndo PKNAME' "$KUR" || hata "Canlı USB üst aygıtı güvenilir biçimde saptanmıyor."
 grep -q 'update-initramfs -u -k all' "$KUR" || hata "initramfs güncellemesi yok."
-grep -B2 'update-initramfs -u -k all' "$KUR" | grep -q 'timeout 90s' \
-  || hata "initramfs güncellemesi 90 saniyelik sert zaman aşımıyla korunmuyor."
-grep -A1 'update-initramfs -u -k all' "$KUR" | grep -q '|| true' \
-  || hata "initramfs kilitlenmesi fail-safe olarak geçilmiyor."
+grep -B2 'update-initramfs -u -k all' "$KUR" | grep -q 'timeout 300s' \
+  || hata "initramfs güncellemesi sert zaman aşımıyla (300s) korunmuyor."
+grep -A2 'update-initramfs -u -k all' "$KUR" | grep -q 'hata "Acilis diski' \
+  || hata "initramfs hatası kurulumu durdurmuyor (fail-safe yutuluyor)."
 grep -q 'boot/initrd.img-' "$KUR" \
-  || hata "fail-safe sonrası initramfs varlığı doğrulanmıyor."
-grep -B1 'update-grub' "$KUR" | grep -q 'timeout 60s' \
-  || hata "update-grub 60 saniyelik sert zaman aşımıyla korunmuyor."
-grep -A1 'update-grub' "$KUR" | grep -q '|| true' \
-  || hata "update-grub kilitlenmesi fail-safe olarak geçilmiyor."
+  || hata "initramfs varlığı doğrulanmıyor."
+grep -B1 'update-grub' "$KUR" | grep -q 'timeout 120s' \
+  || hata "update-grub sert zaman aşımıyla (120s) korunmuyor."
+grep -A2 'update-grub < /dev/null' "$KUR" | grep -q 'hata "Acilis menusu' \
+  || hata "update-grub hatası kurulumu durdurmuyor."
+grep -q 'GRUB_TERMINAL' "$KUR" || hata "GRUB seri konsol çıktısı yapılandırılmıyor."
+grep -q 'GRUB_SERIAL_COMMAND' "$KUR" || hata "GRUB seri port hızı tanımlanmıyor."
+grep -q 'EFI/BOOT/BOOTX64.EFI' "$KUR" || hata "Taşınabilir UEFI açılış dosyası garanti edilmiyor."
+grep -q 'Acilis menusu kurulan diskin kimligini' "$KUR" \
+  || hata "grub.cfg'nin kurulan diske ait olduğu doğrulanmıyor."
 grep -q 'DEBIAN_FRONTEND=noninteractive' "$KUR" || hata "Kurulum aracı etkileşimsiz kipte değil."
 grep -q 'UDEV_DISABLE=1' "$KUR" || hata "udev beklemeleri devre dışı bırakılmıyor."
 grep -q 'surec_ilerlemesi' "$KUR" || hata "Uzun kurulum adımlarında aktivite (kilitlenme) denetimi yok."
