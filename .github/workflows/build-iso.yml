@@ -198,7 +198,9 @@ jobs:
           fi
           echo "Tüm açılış senaryoları geçti."
 
-      - name: Kalıcı kurulum testi (diske kur + kurulan sistemden aç)
+      - name: Kalıcı kurulum testi (diske kur + kurulan sistemden aç · ${{ matrix.edition }})
+        env:
+          TEDBIRGE_ISO: build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso
         run: bash scripts/test-install-qemu.sh
 
       - name: Haber ve WebOS içerik kontrolü
@@ -226,26 +228,26 @@ jobs:
           if (!ok) throw new Error('Hiçbir doğrulanmış haber kaynağı kayıt döndürmedi.');
           NODE
 
-      - name: Yayın kimliğini onayla
+      - name: Yayın kimliğini onayla (${{ matrix.edition }})
         run: |
-          MANIFEST=build-iso/iso/TEDBIRGE-ISO-MANIFEST.json
+          MANIFEST="build-iso/iso/TEDBIRGE-ISO-MANIFEST-${{ matrix.edition }}.json"
           node -e 'const fs=require("fs"); const p=process.argv[1]; const m=JSON.parse(fs.readFileSync(p)); m.validated=true; fs.writeFileSync(p, JSON.stringify(m)+"\n")' "$MANIFEST"
           cat "$MANIFEST"
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: tedbirge-boot-test-log
+          name: tedbirge-boot-test-log-${{ matrix.edition }}
           path: build-iso/*.log
           if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v4
         with:
-          name: tedbirge-webos-iso
+          name: tedbirge-webos-iso-${{ matrix.edition }}
           path: |
             build-iso/iso/*.iso
-            build-iso/iso/SHA256SUMS
-            build-iso/iso/TEDBIRGE-ISO-MANIFEST.json
+            build-iso/iso/SHA256SUMS-${{ matrix.edition }}
+            build-iso/iso/TEDBIRGE-ISO-MANIFEST-${{ matrix.edition }}.json
 
       - name: Yayınla (sürüm etiketi)
         if: github.event_name == 'release' || github.ref_type == 'tag'
@@ -253,8 +255,8 @@ jobs:
         with:
           files: |
             build-iso/iso/*.iso
-            build-iso/iso/SHA256SUMS
-            build-iso/iso/TEDBIRGE-ISO-MANIFEST.json
+            build-iso/iso/SHA256SUMS-${{ matrix.edition }}
+            build-iso/iso/TEDBIRGE-ISO-MANIFEST-${{ matrix.edition }}.json
 
       - name: Yayınla (latest ön-sürüm)
         if: github.event_name != 'release' && github.ref_type != 'tag'
@@ -264,8 +266,8 @@ jobs:
           name: "Tedbirge® WebOS — güncel imaj"
           prerelease: true
           overwrite_files: true
-          body: "Otomatik derleme · ${{ steps.ver.outputs.version }} · tedbirgeai/tedbirge.app"
+          body: "Otomatik derleme · ${{ steps.ver.outputs.version }} · ${{ matrix.edition }} · tedbirgeai/tedbirge.app"
           files: |
             build-iso/iso/*.iso
-            build-iso/iso/SHA256SUMS
-            build-iso/iso/TEDBIRGE-ISO-MANIFEST.json
+            build-iso/iso/SHA256SUMS-${{ matrix.edition }}
+            build-iso/iso/TEDBIRGE-ISO-MANIFEST-${{ matrix.edition }}.json
