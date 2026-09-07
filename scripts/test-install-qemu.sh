@@ -117,12 +117,15 @@ kurulum_senaryosu() {
   echo "==== $mod 2. aşama: kurulan sistemden SATA açılışı ===="
   # Kurulumda virtio yalnızca TCG altında kopyalamayı hızlandırır. Yeniden açılış
   # gerçek dizüstü/masaüstü bilgisayarlar gibi AHCI/SATA üzerinden yapılır.
-  # Bazı OVMF sürümleri virtio diski açılış aygıtı olarak hiç görmez ve seri
-  # porta tek satır yazmadan bekler; eski 15 dakikalık sahte "donma" buydu.
+  # NOT: UEFI'de "-boot order=c,menu=on" firmware'i acilis yoneticisi ekraninda
+  # sonsuz bekletebilir (seri porta tek satir bile dusmez). Bu yuzden acilis
+  # sirasi yalnizca BIOS'ta verilir; UEFI'de bootindex yeterlidir.
+  local BOOTARG=(-boot order=c)
+  [ "$mod" = "uefi" ] && BOOTARG=()
   stdbuf -oL -eL qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none \
     -no-reboot -action shutdown=poweroff "$@" \
     -qmp unix:"$qmp2",server=on,wait=off \
-    -boot order=c,menu=on \
+    ${BOOTARG[@]+"${BOOTARG[@]}"} \
     -device ahci,id=system-ahci \
     -drive if=none,id=system-disk,file="$disk",format=qcow2,cache=unsafe \
     -device ide-hd,bus=system-ahci.0,drive=system-disk,bootindex=1 \
@@ -138,15 +141,17 @@ kurulum_senaryosu() {
 
   tail -n 60 "$log2" 2>/dev/null
   if [ "$rc" != 0 ]; then
-    # Sessiz acilis hatasi bir daha kor nokta kalmasin: firmware ve emulator
-    # kayitlarinin son satirlari da hata ciktisina basilir.
+    # Sessiz acilis hatasi bir daha kor nokta kalmasin: firmware, emulator ve
+    # diskin acilis bolumu (ESP) icerigi hata ciktisina basilir.
     echo "---- $mod UEFI/BIOS firmware kaydi (son 40 satir) ----"
     tail -n 40 "build-iso/kurulum-${mod}-firmware.log" 2>/dev/null || echo "(firmware kaydi yok)"
     echo "---- $mod emulator hata kaydi (son 40 satir) ----"
     tail -n 40 "build-iso/kurulum-${mod}-asama2.stderr.log" 2>/dev/null || echo "(kayit yok)"
+    esp_denetle "$disk"
     echo "::error::$mod kurulu sistem açılış testi başarısız (kod $rc)."
     return 1
   fi
+
   echo "✓ $mod kalıcı kurulum zinciri geçti."
 }
 
