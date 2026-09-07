@@ -94,7 +94,8 @@ kurulum_senaryosu() {
     || { echo "::error::$mod test diski olusturulamadi."; return 1; }
 
   echo "==== $mod 1. aşama: canlı sistemden diske kurulum ===="
-  qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none -no-reboot \
+  qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none \
+    -no-reboot -action shutdown=poweroff \
     -qmp unix:"$qmp1",server=on,wait=off \
     -kernel "$TMP/vmlinuz" -initrd "$TMP/initrd.img" \
     -append "boot=live components noeject rootdelay=5 live-media-timeout=20 console=ttyS0,115200 tedbirge.autoinstall=1 tedbirge.install-mode=$mod" \
@@ -105,10 +106,11 @@ kurulum_senaryosu() {
   local p1=$! rc
   izle "$log1" "TEDBIRGE_INSTALL_OK" "TEDBIRGE_INSTALL_FAIL|Kernel panic|Attempted to kill init" "$p1" "$STALL"; rc=$?
   if [ "$rc" = 0 ]; then
-    qemu_temiz_kapat "$p1" "$qmp1" || rc=4
+    qemu_temiz_kapat "$p1" "$qmp1" 1 || rc=4
   else
-    qemu_temiz_kapat "$p1" "$qmp1" >/dev/null 2>&1 || true
+    qemu_temiz_kapat "$p1" "$qmp1" 0 >/dev/null 2>&1 || true
   fi
+
   tail -n 60 "$log1" 2>/dev/null
   [ "$rc" = 0 ] || { echo "::error::$mod diske kurulum testi başarısız (kod $rc)."; return 1; }
 
