@@ -54,7 +54,7 @@ timeout --foreground 10m stdbuf -oL -eL apt-get update
 timeout --foreground 20m stdbuf -oL -eL apt-get install "${APT_OPTS[@]}" --no-install-recommends \
   live-build debootstrap squashfs-tools xorriso isolinux syslinux-common \
   grub-pc-bin grub-efi-amd64-bin mtools dosfstools ca-certificates rsync \
-  file coreutils zstd
+  file coreutils zstd python3
 
 # ---------------------------------------------------------- çalışma alanı
 rm -rf "$BUILD"
@@ -164,7 +164,7 @@ chmod +x config/hooks/normal/*.hook.chroot
 lb config \
   --distribution bookworm \
   --architectures amd64 \
-  --archive-areas "main contrib non-free-firmware" \
+  --archive-areas "main contrib non-free non-free-firmware" \
   --binary-images iso-hybrid \
   --bootloaders "syslinux,grub-efi" \
   --debian-installer none \
