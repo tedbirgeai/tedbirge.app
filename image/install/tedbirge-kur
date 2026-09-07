@@ -305,10 +305,27 @@ SWAP_UUID=""
 
 # Canli acilis bilesenleri kalici sistemde kapatilir.
 rm -f "$KOK/etc/systemd/system/multi-user.target.wants/live-config.service" 2>/dev/null
-CEKIRDEK_SATIRI="quiet console=tty0 console=ttyS0,115200"
+CEKIRDEK_SATIRI="console=tty0 console=ttyS0,115200n8 quiet"
 [ -n "$SWAP_UUID" ] && CEKIRDEK_SATIRI="$CEKIRDEK_SATIRI resume=UUID=$SWAP_UUID"
-sed -i "s|^#\?GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$CEKIRDEK_SATIRI\"|" \
-  "$KOK/etc/default/grub" 2>/dev/null || true
+
+# /etc/default/grub anahtarlari: varsa degistirilir, yoksa eklenir. GRUB'un
+# kendi ciktisi da seri porta verilir; aksi halde acilis hatasinda kayit bos
+# kalir ve sorun kor noktada kalir (CI'de tam olarak bu yasandi).
+grub_ayar() { # anahtar, deger
+  local dosya="$KOK/etc/default/grub"
+  touch "$dosya"
+  if grep -q "^#\?$1=" "$dosya"; then
+    sed -i "s|^#\?$1=.*|$1=$2|" "$dosya"
+  else
+    printf '%s=%s\n' "$1" "$2" >> "$dosya"
+  fi
+}
+grub_ayar GRUB_CMDLINE_LINUX_DEFAULT "\"$CEKIRDEK_SATIRI\""
+grub_ayar GRUB_TERMINAL "\"console serial\""
+grub_ayar GRUB_SERIAL_COMMAND "\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\""
+grub_ayar GRUB_TIMEOUT "3"
+grub_ayar GRUB_TIMEOUT_STYLE "menu"
+
 
 # ------------------------------------ kalici sistem icin tasınabilir initramfs
 # Kurulan sistem baska bir bilgisayara tasinabilir (disk baska makineye
