@@ -183,14 +183,31 @@ kurulum_senaryosu() {
 HATA=0
 kurulum_senaryosu bios || HATA=1
 
+# UEFI firmware secimi DETERMINISTIK olmali: rastgele bulunan bir dosya
+# "secboot/ms" surumu olabilir (imzasiz GRUB reddedilir, seri porta tek satir
+# dusmez) ya da CODE 4M iken VARS 2M olup firmware hic baslamaz.
 OVMF_CODE="${OVMF_CODE:-}"; OVMF_VARS="${OVMF_VARS:-}"
-[ -n "$OVMF_CODE" ] || OVMF_CODE=$(find /usr/share -type f -name 'OVMF_CODE*.fd' -print -quit)
-[ -n "$OVMF_VARS" ] || OVMF_VARS=$(find /usr/share -type f -name 'OVMF_VARS*.fd' -print -quit)
-[ -r "$OVMF_CODE" ] && [ -r "$OVMF_VARS" ] || { echo "::error::UEFI firmware bulunamadı"; exit 1; }
+if [ -z "$OVMF_CODE" ] || [ -z "$OVMF_VARS" ]; then
+  for c in /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_CODE.fd \
+           /usr/share/ovmf/OVMF_CODE.fd /usr/share/edk2-ovmf/x64/OVMF_CODE.fd; do
+    [ -r "$c" ] || continue
+    v="${c/CODE/VARS}"
+    [ -r "$v" ] || continue
+    OVMF_CODE="$c"; OVMF_VARS="$v"; break
+  done
+fi
+[ -r "${OVMF_CODE:-}" ] && [ -r "${OVMF_VARS:-}" ] \
+  || { echo "::error::UEFI firmware (guvenli onyukleme kapali OVMF) bulunamadı"; exit 1; }
+case "$OVMF_CODE" in *secboot*|*.ms.*) echo "::error::Guvenli onyuklemeli OVMF secildi: $OVMF_CODE"; exit 1;; esac
+echo "UEFI firmware: $OVMF_CODE + $OVMF_VARS"
+# Her kosuda TEMIZ degisken deposu: onceki asamadan kalan gecersiz acilis
+# kaydi firmware'i bekletebilir.
+rm -f build-iso/kurulum-OVMF_VARS.fd
 cp "$OVMF_VARS" build-iso/kurulum-OVMF_VARS.fd
 kurulum_senaryosu uefi \
   -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
   -drive if=pflash,format=raw,file=build-iso/kurulum-OVMF_VARS.fd || HATA=1
+
 
 # Onceden bu betik senaryolar basarisiz olsa bile 0 ile cikiyordu; hatali imaj
 # yayinlanabiliyordu. Artik tek bir basarisiz senaryo bile is akisini durdurur.
