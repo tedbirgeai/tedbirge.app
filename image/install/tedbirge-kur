@@ -329,6 +329,14 @@ if [ -n "$P1" ]; then
     || hata "EFI acilis dosyasi olusmadi."
 fi
 [ -s "$KOK/var/www/tedbirge/index.html" ] || hata "Arayuz dosyalari kopyalanmadi."
+if [ -n "$SWAP_UUID" ]; then
+  grep -q "UUID=$SWAP_UUID" "$KOK/etc/fstab" || hata "Takas bolumu fstab'a yazilamadi."
+  grep -q "RESUME=UUID=$SWAP_UUID" "$KOK/etc/initramfs-tools/conf.d/resume" \
+    || hata "Derin uyku (resume) tanimi yazilamadi."
+  grep -q "resume=UUID=$SWAP_UUID" "$KOK/boot/grub/grub.cfg" \
+    || echo "! Uyari: acilis menusunde resume parametresi gorulemedi."
+  echo "Derin uyku (S4) etkin — takas bolumu UUID=$SWAP_UUID"
+fi
 
 sync
 temizle
