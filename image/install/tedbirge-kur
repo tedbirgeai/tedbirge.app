@@ -392,12 +392,12 @@ grep -q '^GRUB_DISABLE_OS_PROBER=' "$KOK/etc/default/grub" 2>/dev/null \
 baslik "Acilis yukleyici kuruluyor ($MOD)"
 # --no-floppy: disket modulu yoklamasi QEMU/sanal ortamda sonsuz bekleyebilir.
 if [ "$MOD" = "UEFI" ]; then
-  uzun_adim "UEFI acilis yukleyicisi kuruluyor" timeout 300s chroot "$KOK" "${CHROOT_ENV[@]}" \
+  uzun_adim "UEFI acilis yukleyicisi kuruluyor" timeout 900s chroot "$KOK" "${CHROOT_ENV[@]}" \
     grub-install --target=x86_64-efi --efi-directory=/boot/efi \
     --bootloader-id=Tedbirge --recheck --removable --no-nvram --no-floppy < /dev/null \
     || hata "UEFI acilis yukleyici kurulamadi."
 else
-  uzun_adim "BIOS acilis yukleyicisi kuruluyor" timeout 300s chroot "$KOK" "${CHROOT_ENV[@]}" \
+  uzun_adim "BIOS acilis yukleyicisi kuruluyor" timeout 900s chroot "$KOK" "${CHROOT_ENV[@]}" \
     grub-install --target=i386-pc --recheck --no-floppy "$DEV" < /dev/null \
     || hata "BIOS acilis yukleyici kurulamadi."
 fi
@@ -419,11 +419,11 @@ fi
 
 # Bu iki adim acilisin kendisidir; basarisiz olurlarsa kurulan sistem sessizce
 # acilmaz. Bu yuzden ARTIK yutulmuyor, kurulum aninda durduruluyor.
-uzun_adim "Acilis diski guncelleniyor" timeout 300s \
+uzun_adim "Acilis diski guncelleniyor" timeout 1800s \
   chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-initramfs -u -k all < /dev/null \
   || hata "Acilis diski (initramfs) uretilemedi."
-uzun_adim "Acilis menusu olusturuluyor" timeout 120s chroot "$KOK" "${CHROOT_ENV[@]}" \
+uzun_adim "Acilis menusu olusturuluyor" timeout 600s chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-grub < /dev/null \
   || hata "Acilis menusu (grub.cfg) uretilemedi."
 # Hizmet engelleyici yalnizca kurulum surecine ozeldir.
