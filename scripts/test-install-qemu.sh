@@ -119,7 +119,8 @@ kurulum_senaryosu() {
   # gerçek dizüstü/masaüstü bilgisayarlar gibi AHCI/SATA üzerinden yapılır.
   # Bazı OVMF sürümleri virtio diski açılış aygıtı olarak hiç görmez ve seri
   # porta tek satır yazmadan bekler; eski 15 dakikalık sahte "donma" buydu.
-  qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none -no-reboot "$@" \
+  qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none \
+    -no-reboot -action shutdown=poweroff "$@" \
     -qmp unix:"$qmp2",server=on,wait=off \
     -boot order=c,menu=off,strict=on \
     -device ahci,id=system-ahci \
@@ -130,10 +131,11 @@ kurulum_senaryosu() {
   local p2=$!
   izle "$log2" "TEDBIRGE_BOOT_READY" "Kernel panic|Attempted to kill init|No bootable device|Operating System not found|grub rescue" "$p2" "$STALL"; rc=$?
   if [ "$rc" = 0 ]; then
-    qemu_temiz_kapat "$p2" "$qmp2" || rc=4
+    qemu_temiz_kapat "$p2" "$qmp2" 1 || rc=4
   else
-    qemu_temiz_kapat "$p2" "$qmp2" >/dev/null 2>&1 || true
+    qemu_temiz_kapat "$p2" "$qmp2" 0 >/dev/null 2>&1 || true
   fi
+
   tail -n 60 "$log2" 2>/dev/null
   [ "$rc" = 0 ] || { echo "::error::$mod kurulu sistem açılış testi başarısız (kod $rc)."; return 1; }
   echo "✓ $mod kalıcı kurulum zinciri geçti."
