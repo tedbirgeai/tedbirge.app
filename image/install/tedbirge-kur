@@ -163,32 +163,74 @@ while read -r m; do [ -n "$m" ] && umount -f "$m" 2>/dev/null; done < <(lsblk -l
 swapoff -a 2>/dev/null || true
 wipefs -a "$DEV" >/dev/null 2>&1 || true
 
+# --- takas (swap) bolumu olcusu: derin uyku (S4) icin RAM kadar yer gerekir.
+# Kucuk disklerde kurulum kilitlenmesin diye olcu dinamik kisitlanir; yer
+# yetmezse takas bolumu olusturulmaz, kurulum kayit birakip devam eder.
+RAM_MIB=$(awk '/^MemTotal:/ {printf "%d", ($2/1024)+1}' /proc/meminfo 2>/dev/null || echo 0)
+DISK_MIB=$((BOYUT / 1048576))
+SWAP_MIB=$((RAM_MIB + 256))            # hibernasyon imaji icin kucuk pay
+[ "$SWAP_MIB" -gt 16384 ] && SWAP_MIB=16384
+CEILING=$((DISK_MIB / 4))              # diskin en fazla dortte biri
+[ "$SWAP_MIB" -gt "$CEILING" ] && SWAP_MIB="$CEILING"
+KOK_ALT_SINIR=6144                     # sistem bolumune en az 6 GiB kalmali
+BASLANGIC=513
+[ "$MOD" = "UEFI" ] || BASLANGIC=1
+if [ "$SWAP_MIB" -lt 512 ] || [ $((DISK_MIB - BASLANGIC - SWAP_MIB)) -lt "$KOK_ALT_SINIR" ]; then
+  echo "! Diskte derin uyku icin yeterli yer yok; takas bolumu olusturulmuyor (RAM ${RAM_MIB} MiB, disk ${DISK_MIB} MiB)."
+  SWAP_MIB=0
+else
+  echo "Takas bolumu: ${SWAP_MIB} MiB (RAM ${RAM_MIB} MiB) — derin uyku destegi acik."
+fi
+KOK_SON=$((DISK_MIB - SWAP_MIB - 1))
+
 case "$HEDEF" in
-  nvme*|mmcblk*|loop*) P1="${DEV}p1"; P2="${DEV}p2" ;;
-  *)                   P1="${DEV}1";  P2="${DEV}2"  ;;
+  nvme*|mmcblk*|loop*) EK="p" ;;
+  *)                   EK=""  ;;
 esac
 
 if [ "$MOD" = "UEFI" ]; then
-  parted -s "$DEV" mklabel gpt \
-    mkpart ESP fat32 1MiB 513MiB set 1 esp on \
-    mkpart tedbirge ext4 513MiB 100% || hata "Bolumleme basarisiz."
+  P1="${DEV}${EK}1"; P2="${DEV}${EK}2"; P3=""
+  if [ "$SWAP_MIB" -gt 0 ]; then
+    P3="${DEV}${EK}3"
+    parted -s "$DEV" mklabel gpt \
+      mkpart ESP fat32 1MiB 513MiB set 1 esp on \
+      mkpart tedbirge ext4 513MiB "${KOK_SON}MiB" \
+      mkpart takas linux-swap "${KOK_SON}MiB" 100% || hata "Bolumleme basarisiz."
+  else
+    parted -s "$DEV" mklabel gpt \
+      mkpart ESP fat32 1MiB 513MiB set 1 esp on \
+      mkpart tedbirge ext4 513MiB 100% || hata "Bolumleme basarisiz."
+  fi
 else
-  parted -s "$DEV" mklabel msdos \
-    mkpart primary ext4 1MiB 100% set 1 boot on || hata "Bolumleme basarisiz."
-  P2="$P1"; P1=""
+  P1=""; P2="${DEV}${EK}1"; P3=""
+  if [ "$SWAP_MIB" -gt 0 ]; then
+    P3="${DEV}${EK}2"
+    parted -s "$DEV" mklabel msdos \
+      mkpart primary ext4 1MiB "${KOK_SON}MiB" set 1 boot on \
+      mkpart primary linux-swap "${KOK_SON}MiB" 100% || hata "Bolumleme basarisiz."
+  else
+    parted -s "$DEV" mklabel msdos \
+      mkpart primary ext4 1MiB 100% set 1 boot on || hata "Bolumleme basarisiz."
+  fi
 fi
 
 sync
 command -v partprobe >/dev/null 2>&1 && partprobe "$DEV" 2>/dev/null
 command -v udevadm >/dev/null 2>&1 && udevadm settle --timeout=15 2>/dev/null
 BEKLE=0
-while { [ -n "$P1" ] && [ ! -b "$P1" ]; } || [ ! -b "$P2" ]; do
+while { [ -n "$P1" ] && [ ! -b "$P1" ]; } || [ ! -b "$P2" ] || { [ -n "$P3" ] && [ ! -b "$P3" ]; }; do
   [ "$BEKLE" -lt 20 ] || hata "Yeni disk bolumleri gorulemedi."
   sleep 1; BEKLE=$((BEKLE + 1))
 done
 
 [ -n "$P1" ] && { mkfs.vfat -F32 -n TBGEFI "$P1" >/dev/null || hata "EFI bolumu bicimlendirilemedi."; }
 mkfs.ext4 -F -L TEDBIRGE "$P2" >/dev/null || hata "Sistem bolumu bicimlendirilemedi."
+if [ -n "$P3" ]; then
+  if ! mkswap -L TBGSWAP "$P3" >/dev/null; then
+    echo "! Takas bolumu bicimlendirilemedi; derin uyku olmadan devam ediliyor."
+    P3=""
+  fi
+fi
 
 # ------------------------------------------------------------ sistem kopyasi
 baslik "Sistem diske yaziliyor (birkac dakika surer)"
