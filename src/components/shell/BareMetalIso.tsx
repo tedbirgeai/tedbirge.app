@@ -15,13 +15,24 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { HardDriveDownload, Info, Loader2, Smartphone, X } from "lucide-react";
+import {
+  HardDriveDownload,
+  Info,
+  Loader2,
+  Monitor,
+  Smartphone,
+  TabletSmartphone,
+  X,
+} from "lucide-react";
 
 import {
   fetchIsoStatus,
   formatIsoSize,
   ISO_DOWNLOAD_ROUTE,
+  ISO_EDITIONS,
   ISO_RELEASES_PAGE,
+  isoDownloadRoute,
+  type IsoEdition,
   type IsoStatus,
 } from "@/lib/iso-release";
 import { isIosDevice, promptInstall } from "@/lib/pwa-install";
@@ -46,11 +57,16 @@ const STEPS: ReadonlyArray<{ tool: string; text: string }> = [
 /* ------------------------------------------------------------------ */
 
 let fallbackOpen = false;
+let chooserOpen = false;
 const listeners = new Set<() => void>();
+
+function notify() {
+  listeners.forEach((l) => l());
+}
 
 function setFallback(open: boolean) {
   fallbackOpen = open;
-  listeners.forEach((l) => l());
+  notify();
 }
 
 /** Yayında imaj yoksa açılan dürüst bilgi kartını gösterir. */
@@ -58,17 +74,29 @@ export function openIsoFallback() {
   setFallback(true);
 }
 
-function useFallbackOpen(): boolean {
-  const [open, setOpen] = useState(fallbackOpen);
+/** İki ürün sürümü arasında seçim yaptıran kartı açar. */
+export function openIsoEditionChooser() {
+  chooserOpen = true;
+  notify();
+}
+
+function useDialogState(): { fallback: boolean; chooser: boolean } {
+  const [state, setState] = useState({ fallback: fallbackOpen, chooser: chooserOpen });
   useEffect(() => {
-    const l = () => setOpen(fallbackOpen);
+    const l = () => setState({ fallback: fallbackOpen, chooser: chooserOpen });
     listeners.add(l);
     l();
     return () => {
       listeners.delete(l);
     };
   }, []);
-  return open;
+  return state;
+}
+
+function closeAll() {
+  fallbackOpen = false;
+  chooserOpen = false;
+  notify();
 }
 
 /* ------------------------------------------------------------------ */
