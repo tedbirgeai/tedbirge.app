@@ -24,7 +24,7 @@ surec_ilerlemesi() { # pid -> "cpu_tick io_bayt"
 }
 
 uzun_adim() { # ad, komut...
-  local ad="$1" pid baslangic simdi rc onceki suanki sessiz=0
+  local ad="$1" pid baslangic simdi rc onceki suanki sessiz=0 wchan cocuk
   shift
   echo "-- $ad (kilitlenme denetimi: ${STALL}s ilerlemesizlik)"
   stdbuf -oL -eL "$@" &
@@ -39,7 +39,11 @@ uzun_adim() { # ad, komut...
     else
       sessiz=0; onceki="$suanki"
     fi
-    echo "... $ad suruyor ($((simdi - baslangic))s, ilerlemesiz ${sessiz}s)"
+    # Tanilama: surec hangi cekirdek cagrisinda bekliyor, alt sureci var mi?
+    # Kilitlenme kaydinda bu iki bilgi kok nedeni dogrudan gosterir.
+    wchan=$(cat "/proc/$pid/wchan" 2>/dev/null || true)
+    cocuk=$(pgrep -P "$pid" 2>/dev/null | head -3 | tr '\n' ' ')
+    echo "... $ad suruyor ($((simdi - baslangic))s, ilerlemesiz ${sessiz}s, beklenen: ${wchan:-?}, alt surec: ${cocuk:-yok})"
     if [ "$sessiz" -ge "$STALL" ]; then
       echo "! $ad ${STALL}s boyunca hicbir ilerleme kaydetmedi; kilitlendi." >&2
       kill -TERM "$pid" 2>/dev/null
@@ -52,6 +56,18 @@ uzun_adim() { # ad, komut...
   wait "$pid"; rc=$?
   return "$rc"
 }
+
+# chroot icinde calisan tum komutlara verilen ortak ortam: kullanici girdisi
+# beklenmesi tumden engellenir, hizmet baslatma tetikleyicileri susturulur.
+CHROOT_ENV=(env
+  DEBIAN_FRONTEND=noninteractive
+  APT_LISTCHANGES_FRONTEND=none
+  UCF_FORCE_CONFFOLD=1
+  GRUB_DISABLE_OS_PROBER=true
+  TERM=dumb
+  HOME=/root
+  PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+)
 
 
 MIN_BAYT=$((8 * 1024 * 1024 * 1024))
@@ -77,6 +93,8 @@ KOK=/mnt/tedbirge
 P1=""; P2=""; P3=""; BAGLI=0
 temizle() {
   set +e
+  # Hizmet engelleyici her durumda kaldirilir; kurulan sistemde kalmamalidir.
+  [ -n "$KOK" ] && rm -f "$KOK/usr/sbin/policy-rc.d" 2>/dev/null
   if [ "$BAGLI" = "1" ]; then
     [ -d "$KOK/var/log/tedbirge" ] && cp "$LOG" "$KOK/var/log/tedbirge/kurulum.log" 2>/dev/null
     for d in run sys proc dev/pts dev; do mountpoint -q "$KOK/$d" && umount -l "$KOK/$d"; done
