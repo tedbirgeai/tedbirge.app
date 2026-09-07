@@ -8,6 +8,8 @@ set -uo pipefail
 export DEBIAN_FRONTEND=noninteractive
 export APT_LISTCHANGES_FRONTEND=none
 export UCF_FORCE_CONFFOLD=1
+export INITRD=Yes
+export GRUB_DISABLE_OS_PROBER=true
 
 # Uzun disk islemlerini SABIT bir sureyle degil, PROSES AKTIVITESI ile denetler.
 # Islem CPU zamani veya diske yazma sayaci ilerledigi surece asla kesilmez;
@@ -27,7 +29,9 @@ uzun_adim() { # ad, komut...
   local ad="$1" pid baslangic simdi rc onceki suanki sessiz=0 wchan cocuk
   shift
   echo "-- $ad (kilitlenme denetimi: ${STALL}s ilerlemesizlik)"
-  stdbuf -oL -eL "$@" &
+  # Girdi beklentisi tumden kapatilir: chroot icindeki hicbir arac soru sorup
+  # sessizce bekleyemez (kilitlenmelerin bilinen kok nedeni).
+  stdbuf -oL -eL "$@" < /dev/null &
   pid=$!; baslangic=$(date +%s); onceki=$(surec_ilerlemesi "$pid")
   while kill -0 "$pid" 2>/dev/null; do
     sleep 15
@@ -64,6 +68,7 @@ CHROOT_ENV=(env
   APT_LISTCHANGES_FRONTEND=none
   UCF_FORCE_CONFFOLD=1
   GRUB_DISABLE_OS_PROBER=true
+  INITRD=Yes
   TERM=dumb
   HOME=/root
   PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -306,15 +311,23 @@ sed -i "s|^#\?GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$CEKIRD
 # ------------------------------------ kalici sistem icin tasınabilir initramfs
 # Kurulan sistem baska bir bilgisayara tasinabilir (disk baska makineye
 # takilabilir); MODULES=dep yalniz bu donanimin suruculerini paketler ve
-# tasimada acilis bozulur. MODULES=most tum yaygin denetleyicileri korur;
-# sure artisi zstd-1 sikistirmayla telafi edilir.
+# tasimada acilis bozulur. MODULES=most tum yaygin denetleyicileri korur.
+# Sikistirma gzip: her ortamda mevcut, dusuk CPU maliyetli ve zstd'nin
+# olmadigi kurulumlarda sessiz kilitlenme uretmez.
 mkdir -p "$KOK/etc/initramfs-tools/conf.d"
 cat > "$KOK/etc/initramfs-tools/conf.d/tedbirge.conf" <<'EOF'
 MODULES=most
-COMPRESS=zstd
-COMPRESSLEVEL=1
+COMPRESS=gzip
 BUSYBOX=y
 EOF
+# Ana yapilandirmada baska bir sikistirma yaziyorsa onu da gzip'e cek.
+if [ -f "$KOK/etc/initramfs-tools/initramfs.conf" ]; then
+  if grep -q '^COMPRESS=' "$KOK/etc/initramfs-tools/initramfs.conf"; then
+    sed -i 's|^COMPRESS=.*|COMPRESS=gzip|' "$KOK/etc/initramfs-tools/initramfs.conf"
+  else
+    echo 'COMPRESS=gzip' >> "$KOK/etc/initramfs-tools/initramfs.conf"
+  fi
+fi
 # Derin uyku (S4) geri donusu: initramfs hangi bolumden uyanacagini bilmeli.
 if [ -n "$SWAP_UUID" ]; then
   echo "RESUME=UUID=$SWAP_UUID" > "$KOK/etc/initramfs-tools/conf.d/resume"
@@ -322,27 +335,32 @@ else
   echo "RESUME=none" > "$KOK/etc/initramfs-tools/conf.d/resume"
   echo "! Takas bolumu yok; derin uyku (hibernasyon) bu kurulumda devre disi."
 fi
-# os-prober disk taramasi CI/emulasyon ortaminda dakikalarca surebiliyor.
+# os-prober disk taramasi CI/emulasyon ortaminda dakikalarca surebiliyor;
+# hem yapilandirmadan hem de betik iznini kaldirarak tumden engellenir.
 grep -q '^GRUB_DISABLE_OS_PROBER=' "$KOK/etc/default/grub" 2>/dev/null \
   || echo 'GRUB_DISABLE_OS_PROBER=true' >> "$KOK/etc/default/grub"
+[ -f "$KOK/etc/grub.d/30_os-prober" ] && chmod -x "$KOK/etc/grub.d/30_os-prober"
 
 # ------------------------------------------------------------ acilis yukleyici
 baslik "Acilis yukleyici kuruluyor ($MOD)"
 # --no-floppy: disket modulu yoklamasi QEMU/sanal ortamda sonsuz bekleyebilir.
 if [ "$MOD" = "UEFI" ]; then
-  uzun_adim "UEFI acilis yukleyicisi kuruluyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+  uzun_adim "UEFI acilis yukleyicisi kuruluyor" timeout 300s chroot "$KOK" "${CHROOT_ENV[@]}" \
     grub-install --target=x86_64-efi --efi-directory=/boot/efi \
     --bootloader-id=Tedbirge --recheck --removable --no-nvram --no-floppy \
     || hata "UEFI acilis yukleyici kurulamadi."
 else
-  uzun_adim "BIOS acilis yukleyicisi kuruluyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+  uzun_adim "BIOS acilis yukleyicisi kuruluyor" timeout 300s chroot "$KOK" "${CHROOT_ENV[@]}" \
     grub-install --target=i386-pc --recheck --no-floppy "$DEV" \
     || hata "BIOS acilis yukleyici kurulamadi."
 fi
-uzun_adim "Acilis diski guncelleniyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+# Sert zaman asimi: ilerleme denetimine ek olarak islem hicbir kosulda
+# belirlenen sureyi asamaz (varsayilan 240s; yavas ortamlarda ayarlanabilir).
+uzun_adim "Acilis diski guncelleniyor" timeout "${TEDBIRGE_INITRAMFS_TIMEOUT:-240}s" \
+  chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-initramfs -u -k all \
-  || hata "Acilis diski guncellenemedi."
-uzun_adim "Acilis menusu olusturuluyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+  || hata "Acilis diski guncellenemedi (zaman asimi veya hata)."
+uzun_adim "Acilis menusu olusturuluyor" timeout 300s chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-grub \
   || hata "Acilis menusu olusturulamadi."
 # Hizmet engelleyici yalnizca kurulum surecine ozeldir.
