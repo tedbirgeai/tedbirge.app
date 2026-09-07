@@ -195,8 +195,9 @@ baslik "Sistem diske yaziliyor (birkac dakika surer)"
 mkdir -p "$KOK"
 mount "$P2" "$KOK" || hata "Sistem bolumu baglanamadi."
 BAGLI=1
-uzun_adim "Sistem imaji diske aciliyor" 1200 unsquashfs -f -d "$KOK" "$SQUASH" \
-  || hata "Sistem imaji 20 dakika icinde diske acilamadi. Disk sagligini ve baglantisini denetleyin."
+uzun_adim "Sistem imaji diske aciliyor" unsquashfs -f -d "$KOK" "$SQUASH" \
+  || hata "Sistem imaji diske acilamadi (islem kilitlendi veya disk hatasi). Disk sagligini ve baglantisini denetleyin."
+
 
 if [ -n "$P1" ]; then
   mkdir -p "$KOK/boot/efi"
