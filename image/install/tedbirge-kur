@@ -358,7 +358,7 @@ uzun_adim "Acilis diski guncelleniyor" timeout "${TEDBIRGE_INITRAMFS_TIMEOUT:-24
   chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-initramfs -u -k all \
   || hata "Acilis diski guncellenemedi (zaman asimi veya hata)."
-uzun_adim "Acilis menusu olusturuluyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+uzun_adim "Acilis menusu olusturuluyor" timeout 300s chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-grub \
   || hata "Acilis menusu olusturulamadi."
 # Hizmet engelleyici yalnizca kurulum surecine ozeldir.
