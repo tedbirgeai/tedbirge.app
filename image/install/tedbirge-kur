@@ -187,6 +187,9 @@ fi
 [ -n "${HEDEF:-}" ] || hata "Kurulum iptal edildi."
 HEDEF="${HEDEF#/dev/}"
 DEV="/dev/$HEDEF"
+# Ilerleme olcumu bu diskin yazma sayacini da izler (bkz. surec_ilerlemesi).
+HEDEF_DISK="$HEDEF"
+
 
 [ -b "$DEV" ] || hata "Boyle bir disk yok: $DEV"
 [ "$HEDEF" != "$CANLI" ] || hata "Canli USB bellege kurulum yapilamaz."
