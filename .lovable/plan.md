@@ -1,63 +1,68 @@
-# MASTER DONANIM PLANI — Tedbirge® WebOS Evrensel Cihaz Desteği
+# BÖLÜNMÜŞ DERLEME PLANI — Workstation vs. Touch & Mobile
 
-Bu tur hiçbir dosya değiştirilmedi. Aşağıdaki tespit, mevcut imaj yapılandırmasının (`image/config/package-lists/tedbirge.list.chroot`, `image/build.sh`, `image/config/hooks/normal/9000-tedbirge.hook.chroot`, `image/install/tedbirge-kur`, initramfs ayarları) okunmasıyla çıkarıldı.
+Bu tur hiçbir dosya değiştirilmedi. Analiz `image/build.sh`, `image/config/package-lists/tedbirge.list.chroot`, `9000-tedbirge.hook.chroot`, `image/install/tedbirge-kur` ve `scripts/check-image-config.sh` okunarak yapıldı.
 
-## Mevcut durum — özet
+## 1) Mimari değerlendirme — bölme mantıklı mı?
 
-Var olanlar: Debian bookworm amd64 çekirdeği, `main contrib non-free-firmware` depoları, Intel/Realtek/Atheros/Broadcom/AMD firmware, Mesa + Vulkan, NetworkManager, BlueZ, PipeWire, `acpid`, zram, geniş depolama araçları, canlı imajda `MODULES=most`.
+Kısa yanıt: **evet, ama paket listesi düzeyinde bölme; iki ayrı derleme hattı değil.**
 
-Yapısal sınır (dürüst beyan): mevcut hat **yalnız x86_64**'tür. Qualcomm/MediaTek/Exynos telefonlar farklı bir dünyadır — ARM64 çekirdeği, cihaz ağacı (DTB), üreticiye özel önyükleyici (fastboot/U-Boot) ve kilitli bootloader gerektirir. Tek bir ISO ile "tüm telefonlarda" bare-metal çalışmak teknik olarak mümkün değildir; bunun için ayrı bir ARM64 hattı (postmarketOS/Mobian tarzı, cihaz başına port) kurulur. Plan bunu ayrı Faz olarak ayırır ve x86 tablet/2'si 1 arada cihazları mevcut hatta tam kapsar.
+Sayısal gerçekler:
 
-## 1) Kategori bazlı eksik paket ve sürücü listesi
+| Ölçüt | Tek birleşik ISO | İki profil |
+| --- | --- | --- |
+| ISO boyutu | ~2.6–3.0 GB (tüm firmware + dokunmatik yığın) | Workstation ~2.4–2.7 GB · Touch ~2.6–2.9 GB |
+| Derleme süresi (CI) | ~35–50 dk | Her profil ~35–45 dk; **paralel** iki iş → duvar saati aynı, CI dakikası 2× |
+| Çalışma zamanı RAM | Fark ~40–70 MB (iio-sensor-proxy, sanal klavye, wacom girdi sürücüsü) | Workstation'da bu servisler hiç yok |
+| Bakım yükü | 1 liste | 3 liste (ortak + 2 profil) + 2 doğrulama matrisi |
 
-### Grafik (Intel / AMD / Nvidia / harici ekran / parlaklık)
-Eksik: `firmware-nvidia-graphics` (Turing/Ampere/Ada GSP), `firmware-amd-graphics` güncel sürümü, `firmware-intel-graphics`/GuC-HuC içeren `firmware-misc-nonfree` teyidi, `intel-media-va-driver-non-free`, `va-driver-all`, `vdpau-driver-all`, `libvulkan1`, `vulkan-tools`, `libdrm-tests`, `brightnessctl`, `light`, `ddcutil` (harici monitör parlaklığı), `edid-decode`.
-Not: `xe` sürücüsü bookworm 6.1'de yok → çekirdek `linux-image-amd64` yerine `bookworm-backports` çekirdeğine (6.12+) geçilir; Intel Lunar/Arrow Lake, AMD RDNA3+ ve yeni Nvidia bu olmadan çalışmaz.
+Kritik nokta — dürüst beyan: **boyutun büyük kısmı ayrılamaz.** `linux-image`, `linux-firmware` (Wi-Fi/GPU firmware), Mesa, Xorg ve Chromium toplamın ~%85'ini oluşturur ve her iki sürümde de zorunludur. Dokunmatik/sensör katmanı ISO'ya ancak **~40–80 MB** ekler. Yani bölmenin gerçek kazancı **disk boyutu değil**, şunlardır:
 
-### Ses
-Eksik: `firmware-sof-signed` (modern Intel dizüstülerinin çoğunda sesin ön koşulu), `firmware-cirrus`/`firmware-intel-sound` (bookworm'da yoksa backports), `alsa-ucm-conf`, `libasound2-plugins`, `pipewire-audio`, `pipewire-pulse` (var), `bluez-firmware`, `libspa-0.2-bluetooth` (BT kulaklık A2DP/HFP), `pulseaudio-utils` (araçlar).
+- Workstation'da gereksiz servis çalışmaz (daha temiz süreç tablosu, daha az D-Bus yüzeyi, daha hızlı açılış ~1–2 sn).
+- Touch sürümünde dokunmatik odaklı kabuk davranışı (sanal klavye, jest, döndürme) varsayılan açık gelir — masaüstünde bu yanlış davranış olurdu.
+- Hata alanı ayrışır: dokunmatik regresyonu masaüstü kullanıcısını etkilemez.
 
-### Kablosuz ve ağ
-Eksik: `firmware-mediatek` (MT7921/7922 — yeni dizüstülerin çoğu), `firmware-ath9k-htc`, `firmware-qcom-soc`, `firmware-ti-connectivity`, `firmware-iwlwifi` (var), `bluez-firmware`, `firmware-linux-nonfree` (toplayıcı), `modemmanager`, `libmbim-utils`, `libqmi-utils`, `usb-modeswitch`, `usb-modeswitch-data` (4G/5G WWAN modemler), `rfkill`, `wireless-regdb`, `iwd` (opsiyonel yedek supplicant).
+Bunun karşılığında CI dakikası ikiye katlanır ve her donanım düzeltmesi iki matriste doğrulanmalıdır. Bu maliyet, yalnız ortak taban tek yerde tutulursa (aşağıdaki `common` listesi) kabul edilebilir.
 
-### Girdi, dokunmatik, kalem, sensörler
-Eksik: `iio-sensor-proxy` (otomatik ekran döndürme, ışık/yakınlık sensörü), `xserver-xorg-input-wacom` (kalem/stylus), `libwacom-common`, `xinput-calibrator` veya `xinput` (var), `libinput-tools`, `evtest`, `i2c-tools`, `acpi-support`. Ekran döndürmede X üzerinde `xrandr` + `xinput` eşlemesi yazılacak (dönünce dokunmatik eksenlerin de dönmesi için).
+Alternatif olarak değerlendirilip **reddedilen** yol: tek ISO + açılışta donanım tespitiyle servisleri etkinleştirme. Reddi nedeni: dokunmatik cihaz tespiti (ACPI convertible/tablet mode) güvenilmez, hatalı tespit masaüstünde sanal klavyenin açılmasına yol açar; ayrıca "sıfır sürtünme" ilkesine ters şekilde davranış çalışma zamanında değişkenleşir.
 
-### Güç, pil, termal
-Eksik: `upower` (pil göstergesinin standart kaynağı — şu an yok), `power-profiles-daemon`, `thermald` (Intel), `tlp` (opsiyonel, `power-profiles-daemon` ile çakışmayacak biçimde tek seçim), `acpi`, `acpi-call-dkms` gerekmiyor, `systemd-logind` lid politikası yapılandırması, `pm-utils` gereksiz. S4 hibernasyon: swap bölümü ve `RESUME=` zaten kurucuda var; canlı sistemde S4 kapalı kalır (doğru davranış).
+Önerilen model: **tek `image/build.sh`, `--profile` argümanı ile iki ürün.** Ortak taban ve tüm boot/kurulum mantığı tek kaynakta kalır (Unix ilkesi: tek iş, iyi yap — build betiği yalnız derler, profil yalnız paket/servis seçer).
 
-### Depolama, çipset, portatiflik
-Eksik: `mmc-utils`, `sdparm`, `hdparm`, `smartmontools`, `bolt` (Thunderbolt/USB4 yetkilendirme), `thunderbolt-tools` yerine `bolt` yeterli, `udisks2` (otomatik güvenli bağlama), `exfat-fuse` (varsa `exfatprogs` yeterli), `dmraid`/`mdadm` (Intel RST/VMD RAID görünürlüğü), `nvme-cli` (var).
-Kritik portatiflik: kurulan sistemde initramfs `MODULES=dep` — imaj başka donanıma taşındığında açılmama riski. `MODULES=most` yapılır; kurulum süresi artışı zstd-1 ile telafi edilir.
+## 2) Bölünmüş uygulama planı (adım adım)
 
-### Kamera ve biyometrik
-Eksik: `v4l-utils`, `libv4l-0`, `uvcdynctrl` gereksiz, `fwupd` (firmware güncelleme), `fprintd` + `libpam-fprintd` (parmak izi), `firmware-sof-signed` içindeki IPU6 desteği için backports çekirdeği + `intel-ipu6` yığını (bookworm'da yok → yeni Intel dizüstülerin dahili kamerası çalışmaz; UVC kameralar çalışır).
+### Adım 1 — Paket listelerinin üçe ayrılması
+`image/config/package-lists/` yeniden düzenlenir:
+- `common.list.chroot` — live-boot, çekirdek, Xorg, Mesa, Chromium, nginx, NetworkManager, PipeWire, depolama/kurulum araçları, tüm Wi-Fi/BT/GPU firmware, `upower`, `udisks2`, `fwupd`, `v4l-utils`.
+- `workstation.list.chroot` — `thermald`, `power-profiles-daemon`, `smartmontools`, `bolt`, `ddcutil`, `mdadm`, `intel-media-va-driver-non-free`, `vulkan-tools`.
+- `touch.list.chroot` — `iio-sensor-proxy`, `xserver-xorg-input-wacom`, `libwacom-common`, `onboard` (ekran klavyesi), `libinput-tools`, `i2c-tools`, `xinput`, dokunmatik jest yardımcıları.
+Derleme başında yalnız seçilen profilin listesi `config/package-lists/` içine kopyalanır; diğeri hiç girmez.
 
-### Mobil (ARM64 / Android sınıfı) — ayrı hat
-x86 hattında yeri yok. Gerekenler: ARM64 çapraz derleme, cihaz başına DTB, mainline destekli SoC listesi (Snapdragon 845/8xx, MT6xxx sınırlı), Mesa `freedreno` (Adreno) ve `panfrost` (Mali) sürücüleri, `firmware-qcom-soc`, `ofono`/`ModemManager`, `mtp-server`, `adbd`, Waydroid (binder çekirdek modülü + Wayland zorunlu). Waydroid X11 kiosk ile çalışmaz → mobil kolda Wayland kompozitörüne geçiş gerekir.
+### Adım 2 — `image/build.sh` profil argümanı
+`TEDBIRGE_EDITION=workstation|touch` (varsayılan `workstation`). Değişen tek şeyler: kopyalanan paket listesi, `--iso-application`/`--iso-volume` etiketi (`TEDBIRGE_WS` / `TEDBIRGE_TOUCH`), çıktı adı (`tedbirge-webos-workstation-x86_64.iso`, `tedbirge-webos-touch-x86_64.iso`) ve manifest içindeki `edition` alanı. Boot menüsü, kurulum aracı, hazır sinyali, seri konsol — hepsi ortak kalır.
 
-## 2) Eklenecek sistem servisleri ve kernel modülleri
+### Adım 3 — Servis etkinleştirmenin profile duyarlı hâle gelmesi
+`9000-tedbirge.hook.chroot` içinde ortak servisler her zaman etkinleşir; profil servisleri yalnız o paket kuruluysa (`systemctl enable X || true` yerine `dpkg -s X` kontrolü ile) etkinleşir. Böylece hook tek dosya kalır, profil listesi tek doğruluk kaynağı olur.
 
-Servisler (imajda etkinleştirilecek): `upower`, `power-profiles-daemon`, `thermald`, `iio-sensor-proxy`, `ModemManager`, `bolt`, `udisks2`, `fwupd`, `bluetooth` (mevcut), `systemd-logind` lid/güç tuşu politikası (`HandleLidSwitch=suspend`, `HandlePowerKey` → `tedbirge-sysbridge`).
+### Adım 4 — Kabuk (arayüz) tarafı tek kod, farklı varsayılan
+`/etc/tedbirge-release` içine `EDITION=workstation|touch` yazılır. Arayüz bunu okuyup dokunmatik varsayılanlarını (büyük dokunma hedefleri, sanal klavye çağrısı, jest katmanı) açar/kapatır. Ayrı bir arayüz derlemesi yapılmaz — tek `dist`, tek davranış anahtarı.
 
-Çekirdek/initramfs modülleri (canlı `most` zaten kapsıyor; kurulu sistemde de garanti altına alınacak): `nvme`, `ahci`, `vmd`, `sdhci_pci`, `mmc_block`, `rtsx_pci_sdmmc`, `xhci_pci`, `uas`, `usb_storage`, `thunderbolt`, `i2c_hid_acpi`, `intel_lpss_pci`, `hid_multitouch`, `pinctrl_*`, `snd_sof_pci`, `i915`, `amdgpu`, `nouveau`.
+### Adım 5 — Donanım katmanının tamamlanması (her iki profile de yansır)
+Önceki donanım denetiminde çıkan eksikler ortak veya profil listelerine dağıtılır: backports çekirdeği (yeni Intel/AMD/Nvidia için zorunlu), `firmware-sof-signed`, `firmware-mediatek`, `firmware-nvidia-graphics` (`non-free`), `modemmanager` + `libmbim/libqmi` + `usb-modeswitch`, `brightnessctl` ile gerçek donanım parlaklığı, `upower` ile gerçek pil, kurulu sistemde `MODULES=most` portatifliği.
 
-sysbridge/ControlCenter entegrasyonu: pil yüzdesi, şarj durumu, pil sağlığı ve güç profili D-Bus (`upower`, `power-profiles-daemon`) üzerinden okunur; parlaklık `/sys/class/backlight` + `brightnessctl` ile gerçek donanıma yazılır (bugünkü CSS karartması yerine). Servis yoksa arayüzde düğme görünmez — sahte başarı gösterilmez.
+### Adım 6 — CI matrisi
+`.github/workflows/build-iso.yml` `strategy.matrix.edition: [workstation, touch]` ile paralel iki iş üretir. Doğrulama (`verify-iso.sh`, QEMU BIOS/UEFI/kurulum) her iki imaj için ayrı koşar; Touch matrisine QEMU dokunmatik aygıt (`-device usb-tablet`) senaryosu eklenir. Release'e iki ISO + tek `SHA256SUMS` yüklenir.
 
-## 3) Bütünsel uygulama planı (tek derlemede)
+### Adım 7 — Doğrulama betiği
+`scripts/check-image-config.sh` profil farkındalığı kazanır: ortak zorunlu paketler her iki listede aranır, profil paketleri yalnız kendi listesinde; iki `.iso` adının ve `edition` alanının manifestte bulunduğu denetlenir.
 
-1. **Çekirdek yükseltmesi**: `image/build.sh`'e `bookworm-backports` deposu eklenir; `linux-image-amd64` backports sürümünden kurulur. Tüm modern GPU/SOF/Wi-Fi desteğinin ön koşulu budur.
-2. **Paket listesi genişletmesi**: yukarıdaki tüm eksikler `image/config/package-lists/tedbirge.list.chroot` içine kategori yorumlarıyla eklenir; `--archive-areas` zaten `non-free-firmware` içeriyor, `non-free` de eklenir (Nvidia GSP firmware için).
-3. **Servis etkinleştirme**: `9000-tedbirge.hook.chroot` içine yeni servislerin `systemctl enable` satırları ve logind güç politikası yazılır.
-4. **Gerçek parlaklık + pil köprüsü**: `tedbirge-sysbridge` içine backlight yazma ve `upower` okuma uçları; kabuk tarafında ControlCenter bunları kullanır.
-5. **Ekran döndürme**: `iio-sensor-proxy` çıktısını dinleyip `xrandr` + `xinput` dönüşüm matrisi uygulayan küçük servis (`/opt/tedbirge/ekran-donme.sh`).
-6. **Kurulu sistem portatifliği**: `image/install/tedbirge-kur` içinde `MODULES=dep` → `MODULES=most`.
-7. **Doğrulama adımı**: `scripts/check-image-config.sh` ve `.github/workflows/build-iso.yml`'e "beklenen paket/servis imajda var mı" denetimi; QEMU BIOS/UEFI + kalıcı kurulum testleri mevcut watchdog ile korunur.
-8. **Mobil hat (ayrı faz, bu derlemeye dahil değil)**: `image-arm64/` profili, Wayland kompozitörü, Waydroid/binder, ModemManager+ofono; cihaz başına port listesi ile.
+### Adım 8 — İndirme sayfası
+`BareMetalIso` bölümü iki seçenek gösterir: "Masaüstü & Dizüstü" ve "Tablet & Dokunmatik", her biri kısa bir "hangisini seçmeliyim" açıklamasıyla.
 
-### Riskler
-- Backports çekirdeği imaj boyutunu ve derleme süresini artırır (~%15).
-- Nvidia GSP firmware `non-free` gerektirir; lisans metni imaja eklenir.
-- Intel IPU6 dahili kameralar ve kilitli bootloader'lı telefonlar bu derlemeyle de çalışmaz — kapsam dışı olarak beyan edilir.
+### Adım 9 — ARM64 / mobil (bu derlemenin dışında)
+Touch Edition ileride ARM64 kolunun tabanı olur; ancak Snapdragon/MediaTek/Exynos telefonlar cihaz ağacı, üretici önyükleyicisi ve kilitli bootloader nedeniyle ayrı bir port hattı gerektirir. Bu, ayrı bir faz olarak planlanır; şimdi söz verilmez.
 
-Onaylarsanız 1–7 arası maddeler tek derlemede uygulanır; mobil hat (8) ayrı turda ele alınır.
+## Riskler
+- CI dakikası iki katına çıkar; ISO boyutu kazancı küçüktür (asıl kazanç davranış ve servis temizliğidir).
+- İki imaj = iki doğrulama matrisi; bir düzeltme unutulursa sürümler ayrışır. Ortak taban tek dosyada tutularak bu risk sınırlanır.
+- Convertible cihazlarda kullanıcı yanlış sürümü indirebilir; indirme sayfasındaki açıklama bunu azaltır.
+
+Onaylarsanız Adım 1–8 tek turda uygulanır; Adım 9 ayrı faz olarak kalır.
