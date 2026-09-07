@@ -47,7 +47,7 @@ for p in live-boot live-config linux-image-amd64 systemd-sysv chromium nginx-lig
     || hata "Ortak paket listesinde '$p' yok."
 done
 # Dokunmatik sürümün kimlik paketleri
-for p in iio-sensor-proxy onboard wacomtablet xserver-xorg-input-libinput; do
+for p in iio-sensor-proxy onboard xserver-xorg-input-wacom xserver-xorg-input-libinput; do
   grep -qx "$p" image/profiles/touch.list \
     || hata "Touch paket listesinde '$p' yok."
 done
