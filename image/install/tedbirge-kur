@@ -8,6 +8,8 @@ set -uo pipefail
 export DEBIAN_FRONTEND=noninteractive
 export APT_LISTCHANGES_FRONTEND=none
 export UCF_FORCE_CONFFOLD=1
+export INITRD=Yes
+export GRUB_DISABLE_OS_PROBER=true
 
 # Uzun disk islemlerini SABIT bir sureyle degil, PROSES AKTIVITESI ile denetler.
 # Islem CPU zamani veya diske yazma sayaci ilerledigi surece asla kesilmez;
