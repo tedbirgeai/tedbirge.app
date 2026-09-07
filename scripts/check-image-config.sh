@@ -95,9 +95,18 @@ grep -q 'grub-install' "$KUR"    || hata "Kurulum aracı açılış yükleyicisi
 grep -q 'systemd' "$KUR"         || hata "Kurulum sonrası init doğrulaması yok."
 grep -q 'lsblk -ndo PKNAME' "$KUR" || hata "Canlı USB üst aygıtı güvenilir biçimde saptanmıyor."
 grep -q 'update-initramfs -u -k all' "$KUR" || hata "initramfs güncellemesi yok."
-grep -A2 'update-initramfs -u -k all' "$KUR" | grep -q '|| hata' \
-  || hata "initramfs hatası sessizce geçiliyor."
+grep -B2 'update-initramfs -u -k all' "$KUR" | grep -q 'timeout 90s' \
+  || hata "initramfs güncellemesi 90 saniyelik sert zaman aşımıyla korunmuyor."
+grep -A1 'update-initramfs -u -k all' "$KUR" | grep -q '|| true' \
+  || hata "initramfs kilitlenmesi fail-safe olarak geçilmiyor."
+grep -q 'boot/initrd.img-' "$KUR" \
+  || hata "fail-safe sonrası initramfs varlığı doğrulanmıyor."
+grep -B1 'update-grub' "$KUR" | grep -q 'timeout 60s' \
+  || hata "update-grub 60 saniyelik sert zaman aşımıyla korunmuyor."
+grep -A1 'update-grub' "$KUR" | grep -q '|| true' \
+  || hata "update-grub kilitlenmesi fail-safe olarak geçilmiyor."
 grep -q 'DEBIAN_FRONTEND=noninteractive' "$KUR" || hata "Kurulum aracı etkileşimsiz kipte değil."
+grep -q 'UDEV_DISABLE=1' "$KUR" || hata "udev beklemeleri devre dışı bırakılmıyor."
 grep -q 'surec_ilerlemesi' "$KUR" || hata "Uzun kurulum adımlarında aktivite (kilitlenme) denetimi yok."
 grep -q 'TEDBIRGE_STALL_SECONDS' "$KUR" || hata "Kilitlenme eşiği ayarlanabilir değil."
 grep -q 'MODULES=most' "$KUR" || hata "Kalıcı sistemde taşınabilir initramfs profili uygulanmıyor."
