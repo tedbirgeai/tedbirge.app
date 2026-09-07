@@ -25,7 +25,9 @@ export function fetchSystemImageInfo(): Promise<SystemImageInfo> {
     cache = Promise.resolve(fallback);
     return cache;
   }
-  cache = fetch("/tedbirge-image.json", { headers: { Accept: "application/json" } })
+  const promise: Promise<SystemImageInfo> = fetch("/tedbirge-image.json", {
+    headers: { Accept: "application/json" },
+  })
     .then(async (res) => {
       if (!res.ok) return fallback;
       const data = (await res.json()) as {
@@ -33,14 +35,17 @@ export function fetchSystemImageInfo(): Promise<SystemImageInfo> {
         version?: string;
         distribution?: string;
       };
+      const edition: SystemEdition =
+        data.edition === "workstation" || data.edition === "touch" ? data.edition : "web";
       return {
-        edition: data.edition === "workstation" || data.edition === "touch" ? data.edition : "web",
+        edition,
         version: typeof data.version === "string" ? data.version : "",
         distribution: typeof data.distribution === "string" ? data.distribution : "",
       };
     })
     .catch(() => fallback);
-  return cache;
+  cache = promise;
+  return promise;
 }
 
 /** Bu cihaz dokunmatik sürümle mi çalışıyor? */
