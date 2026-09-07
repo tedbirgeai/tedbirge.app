@@ -7,8 +7,8 @@ cd "$(dirname "$0")/.."
 export DEBIAN_FRONTEND=noninteractive
 
 ISO="${1:-${TEDBIRGE_ISO:-build-iso/iso/tedbirge-webos-workstation-x86_64.iso}}"
-STALL="${INSTALL_STALL:-420}"   # ilerlemesizlik siniri (saniye)
-QEMU_STOP_TIMEOUT="${QEMU_STOP_TIMEOUT:-60}"
+STALL="${INSTALL_STALL:-180}"   # ilerlemesizlik siniri (saniye)
+QEMU_STOP_TIMEOUT="${QEMU_STOP_TIMEOUT:-15}"
 
 [ -s "$ISO" ] || { echo "::error::ISO yok: $ISO"; exit 1; }
 command -v qemu-system-x86_64 >/dev/null || { echo "::error::qemu yok"; exit 1; }
