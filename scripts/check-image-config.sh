@@ -61,7 +61,7 @@ done
 grep -q "console=ttyS0" image/build.sh || hata "Seri konsol açılış satırında yok; CI testi kör kalır."
 grep -q "TEDBIRGE_BOOT_READY" image/config/includes.chroot/opt/tedbirge/tedbirge-ready.sh \
   || hata "Hazır sinyali tanımlı değil."
-grep -q 'VOLUME_ID=' image/build.sh || hata "ISO birim etiketi tanımlı değil."
+grep -q 'VOLID=' image/build.sh || hata "ISO birim etiketi tanımlı değil."
 grep -q 'TEDBIRGE_EDITION' image/build.sh || hata "Sürüm (edition) seçimi tanımlı değil."
 grep -q 'image/profiles' image/build.sh || hata "Derleme betiği profil listelerini kullanmıyor."
 grep -q 'bookworm-backports' image/build.sh || hata "Backports deposu yapılandırılmamış."
