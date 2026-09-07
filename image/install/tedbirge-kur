@@ -18,12 +18,32 @@ export UDEV_DISABLE=1
 # durdurulur. Boylece yavas ama saglikli CI/emulasyon ortamlari cezalandirilmaz.
 STALL="${TEDBIRGE_STALL_SECONDS:-300}"
 
-surec_ilerlemesi() { # pid -> "cpu_tick io_bayt"
-  local pid="$1" cpu=0 io=0
-  # Cocuk sureclerin toplam CPU zamani (utime+stime, tick).
-  cpu=$(awk '{print $14+$15+$16+$17}' "/proc/$pid/stat" 2>/dev/null || echo 0)
-  io=$(awk '/^(read|write)_bytes:/ {t+=$2} END{print t+0}' "/proc/$pid/io" 2>/dev/null || echo 0)
-  printf '%s %s' "${cpu:-0}" "${io:-0}"
+HEDEF_DISK=""   # ilerleme olcumu icin: kurulum diskinin cekirdek adi (ornek: sda)
+
+surec_agaci() { # pid -> pid + tum alt/torun pid'leri
+  local pid="$1" c
+  printf '%s\n' "$pid"
+  for c in $(pgrep -P "$pid" 2>/dev/null); do surec_agaci "$c"; done
+}
+
+disk_yazma() { # kurulum diskinin toplam yazma sektoru (varsa)
+  [ -n "$HEDEF_DISK" ] || { printf '0'; return; }
+  awk '{print $7+0}' "/sys/block/$HEDEF_DISK/stat" 2>/dev/null || printf '0'
+}
+
+# ONEMLI: update-initramfs/grub gibi araclar isi ALT SURECLERE yaptirir ve
+# kendileri sigsuspend ile bekler. Yalniz ana surece bakan bir olcum, saglikli
+# calisan kurulumu "kilitlendi" sanip oldururdu (CI'de tam olarak bu yasandi).
+# Bu yuzden ilerleme TUM SUREC AGACI + hedef diskin yazma sayaci uzerinden olculur.
+surec_ilerlemesi() { # pid -> "cpu_tick io_bayt disk_sektor"
+  local pid="$1" p cpu=0 io=0 v
+  for p in $(surec_agaci "$pid"); do
+    v=$(awk '{print $14+$15+$16+$17}' "/proc/$p/stat" 2>/dev/null || echo 0)
+    cpu=$((cpu + ${v:-0}))
+    v=$(awk '/^(read|write)_bytes:/ {t+=$2} END{print t+0}' "/proc/$p/io" 2>/dev/null || echo 0)
+    io=$((io + ${v:-0}))
+  done
+  printf '%s %s %s' "$cpu" "$io" "$(disk_yazma)"
 }
 
 uzun_adim() { # ad, komut...
@@ -45,12 +65,16 @@ uzun_adim() { # ad, komut...
       sessiz=0; onceki="$suanki"
     fi
     # Tanilama: surec hangi cekirdek cagrisinda bekliyor, alt sureci var mi?
-    # Kilitlenme kaydinda bu iki bilgi kok nedeni dogrudan gosterir.
     wchan=$(cat "/proc/$pid/wchan" 2>/dev/null || true)
     cocuk=$(pgrep -P "$pid" 2>/dev/null | head -3 | tr '\n' ' ')
-    echo "... $ad suruyor ($((simdi - baslangic))s, ilerlemesiz ${sessiz}s, beklenen: ${wchan:-?}, alt surec: ${cocuk:-yok})"
+    echo "... $ad suruyor ($((simdi - baslangic))s, ilerlemesiz ${sessiz}s, beklenen: ${wchan:-?}, alt surec: ${cocuk:-yok}, olcum: $suanki)"
     if [ "$sessiz" -ge "$STALL" ]; then
       echo "! $ad ${STALL}s boyunca hicbir ilerleme kaydetmedi; kilitlendi." >&2
+      # Gercek kilitlenmede kok neden: hangi alt surec nerede bekliyor?
+      for p in $(surec_agaci "$pid"); do
+        echo "   surec $p: $(tr '\0' ' ' < "/proc/$p/cmdline" 2>/dev/null | cut -c1-120) [wchan: $(cat "/proc/$p/wchan" 2>/dev/null)]" >&2
+      done
+      tail -20 "$KOK/var/log/initramfs-tools.log" 2>/dev/null >&2 || true
       kill -TERM "$pid" 2>/dev/null
       sleep 5
       kill -KILL "$pid" 2>/dev/null
@@ -61,6 +85,7 @@ uzun_adim() { # ad, komut...
   wait "$pid"; rc=$?
   return "$rc"
 }
+
 
 # chroot icinde calisan tum komutlara verilen ortak ortam: kullanici girdisi
 # beklenmesi tumden engellenir, hizmet baslatma tetikleyicileri susturulur.
