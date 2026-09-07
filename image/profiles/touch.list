@@ -7,6 +7,7 @@ iio-sensor-proxy
 i2c-tools
 
 # --- dokunmatik ve kalem (Wacom stylus)
+xserver-xorg-input-libinput
 xserver-xorg-input-wacom
 libwacom-common
 libinput-tools
