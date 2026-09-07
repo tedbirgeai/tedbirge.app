@@ -74,7 +74,7 @@ hata() {
 baslik() { echo ""; echo "== $* =="; }
 
 KOK=/mnt/tedbirge
-P1=""; P2=""; BAGLI=0
+P1=""; P2=""; P3=""; BAGLI=0
 temizle() {
   set +e
   if [ "$BAGLI" = "1" ]; then
