@@ -19,11 +19,19 @@ WORK="${WORK:-/work}"
 VERSION="${TEDBIRGE_VERSION:-1.0.0}"
 COMMIT="${TEDBIRGE_COMMIT:-${GITHUB_SHA:-unknown}}"
 BUILD_TIME="${TEDBIRGE_BUILD_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+# İki ürün sürümü: workstation (masaüstü/dizüstü) ve touch (tablet/2'si 1 arada).
+# Ortak taban image/profiles/common.list; profil listesi yalnızca seçilen
+# sürüme kopyalanır. Ayrıntı: .lovable/plan/ bölünmüş derleme planı.
+EDITION="${TEDBIRGE_EDITION:-workstation}"
+case "$EDITION" in
+  workstation) SURUM_ADI="Workstation";  VOLID="TEDBIRGE_WS" ;;
+  touch)       SURUM_ADI="Touch & Mobile"; VOLID="TEDBIRGE_TOUCH" ;;
+  *) echo "! Geçersiz TEDBIRGE_EDITION: $EDITION (workstation|touch)" >&2; exit 1 ;;
+esac
 BUILD="$WORK/build-iso/live"
 OUT="$WORK/build-iso/iso"
-VOLID="TEDBIRGE_WEBOS"
 
-echo "== Tedbirge(R) WebOS kurulum imajı · $VERSION =="
+echo "== Tedbirge(R) WebOS $SURUM_ADI kurulum imajı · $VERSION =="
 
 # ----------------------------------------------------------- girdi denetimi
 if [ -s "$WORK/build-iso/web/index.html" ]; then
@@ -53,6 +61,18 @@ rm -rf "$BUILD"
 mkdir -p "$BUILD" "$OUT"
 cp -r "$WORK/image/config" "$BUILD/config"
 cd "$BUILD"
+
+# Sürüm profili: ortak liste + seçilen sürümün listesi.
+mkdir -p config/package-lists
+cp "$WORK/image/profiles/common.list" config/package-lists/common.list.chroot
+cp "$WORK/image/profiles/$EDITION.list" "config/package-lists/$EDITION.list.chroot"
+echo "-- sürüm profili: $EDITION (common + $EDITION)"
+
+# bookworm-backports deposu: çekirdek ve firmware bu depodan gelir.
+mkdir -p config/archives
+cat > config/archives/bookworm-backports.list.chroot <<'EOF'
+deb http://deb.debian.org/debian bookworm-backports main contrib non-free-firmware
+EOF
 
 # Arayüz paketi kök dosya sistemine gömülür (ağ gerektirmez).
 mkdir -p config/includes.chroot/var/www/tedbirge
