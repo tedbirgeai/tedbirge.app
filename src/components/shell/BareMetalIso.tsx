@@ -202,7 +202,10 @@ export function IsoEditionDialog({
               </span>
             </span>
             {busy === e.id && (
-              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--tb-muted)]" aria-hidden />
+              <Loader2
+                className="h-4 w-4 shrink-0 animate-spin text-[var(--tb-muted)]"
+                aria-hidden
+              />
             )}
           </button>
         ))}
@@ -290,7 +293,11 @@ export function IsoGuideDialog({
 }) {
   if (!open) return null;
   const surum =
-    status?.edition === "touch" ? "Touch & Mobile" : status?.edition === "workstation" ? "Workstation" : "";
+    status?.edition === "touch"
+      ? "Touch & Mobile"
+      : status?.edition === "workstation"
+        ? "Workstation"
+        : "";
   const detay = [surum, status?.version, formatIsoSize(status?.size ?? 0)]
     .filter(Boolean)
     .join(" · ");
