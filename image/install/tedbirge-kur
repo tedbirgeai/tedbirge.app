@@ -616,12 +616,30 @@ if [ "$MOD" = "UEFI" ]; then
     "$KOK_UUID" > "$KOK/boot/efi/EFI/BOOT/grub.cfg"
 fi
 
+# ------------------------------------------------ klavye ve saat dilimi
+# Kullanicinin sihirbazda verdigi cevaplar kurulan sisteme yazilir.
+ILERLE 70 "Klavye ve saat dilimi ayarlaniyor"
+mkdir -p "$KOK/etc/default"
+cat > "$KOK/etc/default/keyboard" <<EOF
+XKBMODEL="pc105"
+XKBLAYOUT="$( [ "$KLAVYE" = "us" ] && echo us || echo tr )"
+XKBVARIANT="$( [ "$KLAVYE" = "trf" ] && echo f || echo "" )"
+XKBOPTIONS=""
+BACKSPACE="guess"
+EOF
+if [ -f "$KOK/usr/share/zoneinfo/$ZAMAN" ]; then
+  ln -sf "/usr/share/zoneinfo/$ZAMAN" "$KOK/etc/localtime"
+  echo "$ZAMAN" > "$KOK/etc/timezone"
+fi
+
 # Bu iki adim acilisin kendisidir; basarisiz olurlarsa kurulan sistem sessizce
 # acilmaz. Bu yuzden ARTIK yutulmuyor, kurulum aninda durduruluyor.
+ILERLE 75 "Acilis diski hazirlaniyor (initramfs) — birkac dakika surebilir"
 uzun_adim "Acilis diski guncelleniyor" timeout 1800s \
   chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-initramfs -u -k all < /dev/null \
   || hata "Acilis diski (initramfs) uretilemedi."
+ILERLE 90 "Acilis menusu olusturuluyor"
 uzun_adim "Acilis menusu olusturuluyor" timeout 600s chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-grub < /dev/null \
   || hata "Acilis menusu (grub.cfg) uretilemedi."
@@ -630,7 +648,8 @@ rm -f "$KOK/usr/sbin/policy-rc.d"
 
 
 # -------------------------------------------------------- kurulum dogrulama
-baslik "Kurulum dogrulaniyor"
+ILERLE 96 "Kurulum dogrulaniyor"
+
 [ -x "$KOK/usr/lib/systemd/systemd" ] || hata "Kurulan sistemde init yok."
 ls "$KOK"/boot/vmlinuz-* >/dev/null 2>&1 || hata "Kurulan sistemde cekirdek yok."
 ls "$KOK"/boot/initrd.img-* >/dev/null 2>&1 || hata "Kurulan sistemde acilis diski yok."
