@@ -128,6 +128,7 @@ async function latestFromGithub(edition: IsoEdition): Promise<Resolved | null> {
           sha256: manifest.sha256 ?? "",
           distribution: "Debian bookworm",
           commit: manifest.commit ?? "",
+          edition,
         };
       }
     } catch {
@@ -137,9 +138,9 @@ async function latestFromGithub(edition: IsoEdition): Promise<Resolved | null> {
   return null;
 }
 
-async function resolve(): Promise<Resolved> {
+async function resolve(edition: IsoEdition): Promise<Resolved> {
   const page = `https://github.com/${repo()}/releases/latest`;
-  const github = await latestFromGithub();
+  const github = await latestFromGithub(edition);
   return (
     github ?? {
       ready: false,
@@ -151,6 +152,7 @@ async function resolve(): Promise<Resolved> {
       sha256: "",
       distribution: "",
       commit: "",
+      edition,
     }
   );
 }
@@ -160,7 +162,8 @@ export const Route = createFileRoute("/api/public/iso")({
     handlers: {
       GET: async ({ request }) => {
         const url = new URL(request.url);
-        const info = await resolve();
+        const edition = normalizeEdition(url.searchParams.get("surum"));
+        const info = await resolve(edition);
 
         if (url.searchParams.has("durum")) {
           return new Response(JSON.stringify(info), {
