@@ -127,10 +127,10 @@ lb config \
   --memtest none \
   --apt-recommends false \
   --backports false \
-  --iso-application "Tedbirge WebOS" \
+  --iso-application "Tedbirge WebOS $SURUM_ADI" \
   --iso-publisher "Mehmet DINC; tedbirge.app" \
   --iso-volume "$VOLID" \
-  --image-name "tedbirge-webos" \
+  --image-name "tedbirge-webos-$EDITION" \
   --bootappend-live "boot=live components noeject quiet loglevel=3 rootdelay=5 live-media-timeout=20 modules=loop,squashfs,overlay,iso9660 console=tty0 console=ttyS0,115200 hostname=tedbirge"
 
 # --------------------------------------------------------------- derleme
