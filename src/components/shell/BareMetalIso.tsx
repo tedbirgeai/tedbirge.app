@@ -325,7 +325,7 @@ export function IsoGuideDialog({
       ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <a
-          href={ISO_DOWNLOAD_ROUTE}
+          href={isoDownloadRoute(status?.edition === "touch" ? "touch" : "workstation")}
           className="wa-press inline-flex min-h-11 items-center rounded-xl border border-[var(--tb-accent)]/40 px-4 font-osmono text-[11.5px] text-[var(--tb-accent)]"
         >
           İndirme yarıda kaldıysa yeniden dene
