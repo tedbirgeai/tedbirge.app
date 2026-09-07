@@ -27,7 +27,9 @@ uzun_adim() { # ad, komut...
   local ad="$1" pid baslangic simdi rc onceki suanki sessiz=0 wchan cocuk
   shift
   echo "-- $ad (kilitlenme denetimi: ${STALL}s ilerlemesizlik)"
-  stdbuf -oL -eL "$@" &
+  # Girdi beklentisi tumden kapatilir: chroot icindeki hicbir arac soru sorup
+  # sessizce bekleyemez (kilitlenmelerin bilinen kok nedeni).
+  stdbuf -oL -eL "$@" < /dev/null &
   pid=$!; baslangic=$(date +%s); onceki=$(surec_ilerlemesi "$pid")
   while kill -0 "$pid" 2>/dev/null; do
     sleep 15
