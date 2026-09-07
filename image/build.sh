@@ -71,8 +71,52 @@ echo "-- sürüm profili: $EDITION (common + $EDITION)"
 # bookworm-backports deposu: çekirdek ve firmware bu depodan gelir.
 mkdir -p config/archives
 cat > config/archives/bookworm-backports.list.chroot <<'EOF'
-deb http://deb.debian.org/debian bookworm-backports main contrib non-free-firmware
+deb http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
 EOF
+
+# ------------------------------------------------- paket listesi ön denetimi
+# Yanlış yazılmış ya da depoda olmayan tek bir paket, saatler süren derlemenin
+# ortasında "Unable to locate package" ile çöker. Bu denetim aynı hatayı
+# saniyeler içinde ve paket adını söyleyerek yakalar.
+echo "-- paket listeleri depolara karşı doğrulanıyor"
+python3 - "config/package-lists/common.list.chroot" "config/package-lists/$EDITION.list.chroot" <<'PY' || exit 1
+import lzma, sys, urllib.request
+
+SUITES = ["bookworm", "bookworm-backports"]
+AREAS = ["main", "contrib", "non-free", "non-free-firmware"]
+index = {}
+for suite in SUITES:
+    for area in AREAS:
+        url = f"http://deb.debian.org/debian/dists/{suite}/{area}/binary-amd64/Packages.xz"
+        try:
+            raw = urllib.request.urlopen(url, timeout=120).read()
+        except Exception as exc:  # ağ hatası denetimi engellememeli
+            print(f"-- uyarı: {suite}/{area} dizini okunamadı ({exc})")
+            continue
+        for line in lzma.decompress(raw).decode("utf8", "replace").split("\n"):
+            if line.startswith("Package: "):
+                index.setdefault(line[9:].strip(), set()).add(suite)
+if not index:
+    print("-- uyarı: depo dizinleri okunamadı, ön denetim atlandı")
+    sys.exit(0)
+
+sorunlar = []
+for path in sys.argv[1:]:
+    for satir in open(path):
+        satir = satir.split("#")[0].strip()
+        if not satir:
+            continue
+        ad, _, depo = satir.partition("/")
+        yerler = index.get(ad)
+        if not yerler:
+            sorunlar.append(f"{path}: '{ad}' hiçbir depoda yok")
+        elif depo and depo not in yerler:
+            sorunlar.append(f"{path}: '{ad}' '{depo}' deposunda yok (var: {', '.join(sorted(yerler))})")
+for s in sorunlar:
+    print(f"! {s}")
+sys.exit(1 if sorunlar else 0)
+PY
+
 
 # Arayüz paketi kök dosya sistemine gömülür (ağ gerektirmez).
 mkdir -p config/includes.chroot/var/www/tedbirge
