@@ -8,7 +8,13 @@ ConditionKernelCommandLine=tedbirge.install=1
 Type=idle
 Environment=DEBIAN_FRONTEND=noninteractive
 Environment=APT_LISTCHANGES_FRONTEND=none
+Environment=TERM=linux
+Environment=NCURSES_NO_UTF8_ACS=1
+# Kurulum bittiginde ya da iptal edildiginde ekran bos kalmasin: kullanici
+# her durumda okunabilir bir kabuga duser (bos ekran + yanip sonen imlec yok).
+ExecStartPre=-/bin/setfont /usr/share/consolefonts/Lat15-Terminus16.psf.gz
 ExecStart=/usr/local/sbin/tedbirge-kur
+ExecStopPost=-/opt/tedbirge/kurulum-sonrasi.sh
 StandardInput=tty-force
 StandardOutput=tty
 StandardError=tty

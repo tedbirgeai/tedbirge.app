@@ -39,6 +39,12 @@ libva2
 va-driver-all
 vdpau-driver-all
 fonts-dejavu-core
+# Kurulum sihirbazi: pencereli metin arayuzu, klavye ve konsol duzeni
+whiptail
+console-setup
+kbd
+keyboard-configuration
+
 brightnessctl
 
 # --- arayüz

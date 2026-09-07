@@ -107,10 +107,76 @@ MIN_BAYT=$((8 * 1024 * 1024 * 1024))
 # TEDBIRGE_AUTO=1 verilmisse soru sorulmaz (CI kurulum testi bunu kullanir).
 OTO="${TEDBIRGE_AUTO:-0}"
 grep -q "tedbirge.autoinstall=1" /proc/cmdline 2>/dev/null && OTO=1
+METIN=0
+for a in "$@"; do
+  case "$a" in
+    --metin|--text) METIN=1 ;;
+    --oto|--auto)   OTO=1 ;;
+  esac
+done
 SQUASH="/run/live/medium/live/filesystem.squashfs"
 LOG="/var/log/tedbirge/kurulum.log"
 mkdir -p "$(dirname "$LOG")"
-exec > >(tee -a "$LOG") 2>&1
+
+# ------------------------------------------------------ arayuz kipi secimi
+# Pencereli sihirbaz yalnizca gercek bir kullanici oturumunda acilir; CI ve
+# gozetimsiz kurulum eskisi gibi duz metin akisiyla calisir (test uyumu).
+GUI=0
+if [ "$OTO" != "1" ] && [ "$METIN" != "1" ] && [ -t 0 ] \
+   && command -v whiptail >/dev/null 2>&1 && [ -e /dev/tty ]; then
+  GUI=1
+fi
+
+BT="Tedbirge(R) WebOS — Kurulum Yardimcisi"
+GAUGE_PID=""
+FIFO=""
+
+if [ "$GUI" = "1" ]; then
+  # Ekran temiz kalsin: tum teknik cikti yalnizca kayit dosyasina akar.
+  exec >>"$LOG" 2>&1
+else
+  exec > >(tee -a "$LOG") 2>&1
+fi
+
+# whiptail pencereleri her zaman gercek konsola cizilir; secilen deger
+# stderr'den okunur (klasik 3>&1 1>&2 2>&3 takasi).
+p_mesaj() { # baslik, metin
+  whiptail --backtitle "$BT" --title "$1" --msgbox "$2" 18 74 >/dev/tty 2>&1
+}
+p_soru() { # baslik, metin  -> 0 = evet
+  whiptail --backtitle "$BT" --title "$1" --yesno "$2" 18 74 \
+    --yes-button "Evet, devam et" --no-button "Hayir, iptal" >/dev/tty 2>&1
+}
+p_bilgi() { # baslik, metin (ileri/iptal)
+  whiptail --backtitle "$BT" --title "$1" --yesno "$2" 20 74 \
+    --yes-button "Ileri" --no-button "Iptal" >/dev/tty 2>&1
+}
+p_menu() { # baslik, metin, satirlar...  -> secim stdout
+  local b="$1" m="$2"; shift 2
+  whiptail --backtitle "$BT" --title "$b" --menu "$m" 20 74 8 "$@" 3>&1 1>&2 2>&3
+}
+
+gauge_baslat() {
+  [ "$GUI" = "1" ] || return 0
+  FIFO=$(mktemp -u /tmp/tbg-gauge.XXXXXX)
+  mkfifo "$FIFO"
+  whiptail --backtitle "$BT" --title "Kurulum suruyor" \
+    --gauge "Hazirlaniyor..." 10 74 0 < "$FIFO" >/dev/tty 2>&1 &
+  GAUGE_PID=$!
+  exec 3>"$FIFO"
+}
+gauge_kapat() {
+  [ -n "$GAUGE_PID" ] || return 0
+  exec 3>&- 2>/dev/null
+  wait "$GAUGE_PID" 2>/dev/null
+  GAUGE_PID=""
+  [ -n "$FIFO" ] && rm -f "$FIFO"
+}
+ILERLE() { # yuzde, aciklama
+  echo ""; echo "== [%$1] $2 =="
+  [ -n "$GAUGE_PID" ] || return 0
+  printf 'XXX\n%s\n%s\nXXX\n' "$1" "$2" >&3 2>/dev/null || true
+}
 
 hata() {
   echo ""; echo "! $*" >&2
@@ -125,10 +191,26 @@ hata() {
       printf 'TEDBIRGE_INSTALL_FAIL %s\n' "$*" > "$t" 2>/dev/null
     done
   fi
+  if [ "$GUI" = "1" ]; then
+    gauge_kapat
+    p_mesaj "Kurulum durduruldu" \
+"$*
+
+Diskinizde kalici bir zarar olusmadi; sistemi USB uzerinden kullanmaya
+devam edebilirsiniz.
+
+Ne yapabilirsiniz:
+ * Kuruluma bastan yeniden deneyin (menuden 'Diske kur').
+ * Baska bir disk secin ya da disk kablosunu yeniden takin.
+ * Ayrintili kayit: $LOG
+
+Devam etmek icin Enter'a basin."
+  fi
   exit 1
 }
 
 baslik() { echo ""; echo "== $* =="; }
+
 
 KOK=/mnt/tedbirge
 P1=""; P2=""; P3=""; BAGLI=0
@@ -147,13 +229,15 @@ trap temizle EXIT INT TERM
 
 [ "$(id -u)" = "0" ] || hata "Bu araci yonetici olarak calistirin: sudo tedbirge-kur"
 
-clear 2>/dev/null || true
-echo "==============================================="
-echo "   Tedbirge® WebOS — Diske Kurulum"
-echo "==============================================="
-echo ""
-echo "Bu islem secilen diskteki TUM VERIYI SILER."
-echo ""
+if [ "$GUI" != "1" ]; then
+  clear 2>/dev/null || true
+  echo "==============================================="
+  echo "   Tedbirge(R) WebOS — Diske Kurulum"
+  echo "==============================================="
+  echo ""
+  echo "Bu islem secilen diskteki TUM VERIYI SILER."
+  echo ""
+fi
 
 # --------------------------------------------------------- kaynak dogrulama
 if [ ! -s "$SQUASH" ]; then
@@ -173,7 +257,48 @@ else
 fi
 echo "Acilis kipi: $MOD"
 
-# ------------------------------------------------------------ disk secimi
+# ------------------------------------------------------- 1/6 hos geldiniz
+if [ "$GUI" = "1" ]; then
+  p_bilgi "Adim 1/6 — Hos geldiniz" \
+"Tedbirge(R) WebOS bilgisayarinizin diskine kalici olarak kurulacak.
+
+Ne olacak:
+ * Sececeginiz disk tamamen silinip yeniden bolumlenir.
+ * Hazir sistem imaji diske acilir (internet gerekmez).
+ * Acilis yukleyicisi kurulur ve bilgisayar tek basina acilir.
+
+Sure: yaklasik 5-15 dakika (diskin hizina gore).
+Acilis kipi: $MOD
+
+Kurulum boyunca her adimda ne oldugunu goreceksiniz. Iptal etmek
+istediginiz anda 'Iptal' secebilirsiniz; o ana kadar diske hicbir
+kalici degisiklik yapilmaz." || hata "Kurulum iptal edildi."
+fi
+
+# ------------------------------------------------- 2/6 klavye ve saat dilimi
+if [ "$GUI" = "1" ]; then
+  KLAVYE=$(p_menu "Adim 2/6 — Klavye duzeni" \
+"Kullanacaginiz klavye duzenini secin. Emin degilseniz 'Turkce Q' secin." \
+    "tr" "Turkce Q (varsayilan)" \
+    "trf" "Turkce F" \
+    "us" "Ingilizce (US)") || hata "Kurulum iptal edildi."
+  loadkeys "$KLAVYE" >/dev/null 2>&1 || true
+  ZAMAN="Europe/Istanbul"
+  if p_soru "Adim 2/6 — Saat dilimi" \
+"Saat dilimi 'Europe/Istanbul' olarak ayarlanacak.
+
+Farkli bir ulkedeyseniz 'Hayir' secin; sistem saati UTC olarak kalir
+ve kurulum sonrasinda Ayarlar'dan degistirebilirsiniz."; then
+    ZAMAN="Europe/Istanbul"
+  else
+    ZAMAN="UTC"
+  fi
+  echo "klavye: $KLAVYE, saat dilimi: $ZAMAN"
+else
+  KLAVYE="tr"; ZAMAN="Europe/Istanbul"
+fi
+
+# --------------------------------------------------------- 3/6 disk secimi
 baslik "Kurulabilir diskler"
 KAYNAK=$(findmnt -n -o SOURCE /run/live/medium 2>/dev/null || true)
 CANLI=""
@@ -181,16 +306,31 @@ if [ -n "$KAYNAK" ]; then
   CANLI=$(lsblk -ndo PKNAME "$KAYNAK" 2>/dev/null | head -1)
   [ -n "$CANLI" ] || CANLI=$(basename "$KAYNAK")
 fi
-lsblk -dnro NAME,SIZE,MODEL,TYPE | awk '$4=="disk"' | while read -r n s m t; do
-  case "$n" in "$CANLI") continue ;; esac
-  printf "  %-10s %-8s %s\n" "$n" "$s" "$m"
-done
-echo ""
+DISK_LISTE=$(lsblk -bdnro NAME,SIZE,TYPE,MODEL | awk -v c="$CANLI" -v min="$MIN_BAYT" '
+  $3=="disk" && $1!=c && $2>=min {
+    model=""; for (i=4; i<=NF; i++) model = model (i>4 ? " " : "") $i
+    if (model == "") model = "disk"
+    printf "%s\t%.0f GB — %s\n", $1, $2/1000000000, model
+  }')
+
 if [ "$OTO" = "1" ]; then
   HEDEF=$(lsblk -bdnro NAME,TYPE,SIZE,RO | awk -v c="$CANLI" -v min="$MIN_BAYT" \
     '$2=="disk" && $1!=c && $3>=min && $4==0 {print $1; exit}')
   echo "Gozetimsiz kurulum hedefi: $HEDEF"
+elif [ "$GUI" = "1" ]; then
+  [ -n "$DISK_LISTE" ] || hata "Kurulum yapilabilecek bir disk bulunamadi (en az 8 GB gerekir). Disk kablosunu denetleyip yeniden deneyin."
+  # shellcheck disable=SC2046
+  OLDIFS=$IFS; IFS=$'\n\t'
+  # shellcheck disable=SC2086
+  HEDEF=$(p_menu "Adim 3/6 — Kurulum diski" \
+"Tedbirge(R) WebOS hangi diske kurulsun?
+
+Ok tuslariyla secin, Enter ile onaylayin. Uzerinden calistiginiz
+USB bellek listede yer almaz." $DISK_LISTE) || { IFS=$OLDIFS; hata "Kurulum iptal edildi."; }
+  IFS=$OLDIFS
 else
+  printf '%s\n' "$DISK_LISTE" | sed 's/^/  /'
+  echo ""
   read -r -p "Hedef disk adi (ornek: sda) [bos = iptal]: " HEDEF
 fi
 [ -n "${HEDEF:-}" ] || hata "Kurulum iptal edildi."
@@ -205,22 +345,55 @@ HEDEF_DISK="$HEDEF"
 BOYUT=$(blockdev --getsize64 "$DEV")
 [ "$BOYUT" -ge "$MIN_BAYT" ] || hata "Disk cok kucuk (en az 8 GB gerekir)."
 KIMLIK=$(lsblk -dnro MAJ:MIN "$DEV")
+DISK_MODEL=$(lsblk -dnro MODEL "$DEV" 2>/dev/null | head -1)
 
 echo ""
 echo "SECILEN DISK: $DEV ($(numfmt --to=iec "$BOYUT"))"
 echo "Bu diskteki her sey silinecek."
+# ------------------------------------------- 4/6 silme onayi ve 5/6 ozet
+# Onay artik yazi yazarak degil, Evet/Hayir dugmesiyle verilir. Eski akista
+# kucuk harfle "evet" yazan kullanici sessizce bos ekrana dusuyordu.
 if [ "$OTO" = "1" ]; then
   ONAY=EVET
+elif [ "$GUI" = "1" ]; then
+  p_soru "Adim 4/6 — DIKKAT: disk silinecek" \
+"Secilen disk: $DEV
+Model: ${DISK_MODEL:-bilinmiyor}
+Kapasite: $(numfmt --to=iec "$BOYUT")
+
+Bu diskteki TUM DOSYALAR, bolumler ve varsa kurulu isletim sistemi
+KALICI OLARAK SILINECEK. Geri alinamaz.
+
+Devam edilsin mi?" && ONAY=EVET || ONAY=HAYIR
 else
   read -r -p "Devam etmek icin buyuk harfle EVET yazin: " ONAY
+  case "$ONAY" in [Ee][Vv][Ee][Tt]) ONAY=EVET ;; esac
 fi
 [ "$ONAY" = "EVET" ] || hata "Kurulum iptal edildi."
 
 [ -b "$DEV" ] || hata "Disk artik bagli degil."
 [ "$(lsblk -dnro MAJ:MIN "$DEV")" = "$KIMLIK" ] || hata "Disk kimligi degisti; guvenlik icin durduruldu."
 
+# ------------------------------------------------------------ 5/6 ozet
+if [ "$GUI" = "1" ]; then
+  p_bilgi "Adim 5/6 — Kurulum ozeti" \
+"Asagidaki islem simdi baslatilacak. Son kontrol:
+
+ Hedef disk    : $DEV (${DISK_MODEL:-disk}, $(numfmt --to=iec "$BOYUT"))
+ Acilis kipi   : $MOD
+ Bolumler      : $( [ "$MOD" = "UEFI" ] && echo "EFI (512 MB) + sistem + takas" || echo "sistem + takas" )
+ Klavye        : $KLAVYE
+ Saat dilimi   : $ZAMAN
+ Kurulum kaydi : $LOG
+
+'Ileri' dedikten sonra disk silinir ve kurulum baslar.
+Bilgisayari kapatmayin, USB bellegi cikarmayin." || hata "Kurulum iptal edildi."
+  gauge_baslat
+fi
+
 # --------------------------------------------------------------- bolumleme
-baslik "Disk hazirlaniyor"
+ILERLE 5 "Disk hazirlaniyor (bolumler olusturuluyor)"
+
 while read -r m; do [ -n "$m" ] && umount -f "$m" 2>/dev/null; done < <(lsblk -lnpo NAME "$DEV" | while read -r d; do findmnt -nr -o TARGET --source "$d" 2>/dev/null; done)
 swapoff -a 2>/dev/null || true
 wipefs -a "$DEV" >/dev/null 2>&1 || true
@@ -295,12 +468,28 @@ if [ -n "$P3" ]; then
 fi
 
 # ------------------------------------------------------------ sistem kopyasi
-baslik "Sistem diske yaziliyor (birkac dakika surer)"
+ILERLE 15 "Sistem dosyalari diske kopyalaniyor (en uzun adim, birkac dakika)"
 mkdir -p "$KOK"
 mount "$P2" "$KOK" || hata "Sistem bolumu baglanamadi."
 BAGLI=1
-uzun_adim "Sistem imaji diske aciliyor" unsquashfs -f -d "$KOK" "$SQUASH" \
-  || hata "Sistem imaji diske acilamadi (islem kilitlendi veya disk hatasi). Disk sagligini ve baglantisini denetleyin."
+if [ "$GUI" = "1" ]; then
+  # Gercek yuzde: unsquashfs -percentage yalnizca sayi yazar; %15-%60 arasina
+  # olceklenir, boylece kullanici islemin gercekten ilerledigini gorur.
+  KOPYA_RC=1
+  while read -r satir; do
+    case "$satir" in
+      RC=*) KOPYA_RC="${satir#RC=}" ;;
+      ''|*[!0-9]*) : ;;
+      *) ILERLE $((15 + satir * 45 / 100)) "Sistem dosyalari diske kopyalaniyor — %$satir" ;;
+    esac
+  done < <(unsquashfs -f -percentage -d "$KOK" "$SQUASH" 2>>"$LOG"; echo "RC=$?")
+  [ "$KOPYA_RC" = "0" ] \
+    || hata "Sistem dosyalari diske kopyalanamadi. Disk ariza vermis ya da kablo gevsemis olabilir; kabloyu yeniden takip kurulumu tekrarlayin."
+else
+  uzun_adim "Sistem imaji diske aciliyor" unsquashfs -f -d "$KOK" "$SQUASH" \
+    || hata "Sistem imaji diske acilamadi (islem kilitlendi veya disk hatasi). Disk sagligini ve baglantisini denetleyin."
+fi
+
 
 
 if [ -n "$P1" ]; then
@@ -398,7 +587,8 @@ grep -q '^GRUB_DISABLE_OS_PROBER=' "$KOK/etc/default/grub" 2>/dev/null \
 [ -f "$KOK/etc/grub.d/30_os-prober" ] && chmod -x "$KOK/etc/grub.d/30_os-prober"
 
 # ------------------------------------------------------------ acilis yukleyici
-baslik "Acilis yukleyici kuruluyor ($MOD)"
+ILERLE 65 "Acilis yukleyicisi kuruluyor ($MOD)"
+
 # --no-floppy: disket modulu yoklamasi QEMU/sanal ortamda sonsuz bekleyebilir.
 if [ "$MOD" = "UEFI" ]; then
   uzun_adim "UEFI acilis yukleyicisi kuruluyor" timeout 900s chroot "$KOK" "${CHROOT_ENV[@]}" \
@@ -426,12 +616,30 @@ if [ "$MOD" = "UEFI" ]; then
     "$KOK_UUID" > "$KOK/boot/efi/EFI/BOOT/grub.cfg"
 fi
 
+# ------------------------------------------------ klavye ve saat dilimi
+# Kullanicinin sihirbazda verdigi cevaplar kurulan sisteme yazilir.
+ILERLE 70 "Klavye ve saat dilimi ayarlaniyor"
+mkdir -p "$KOK/etc/default"
+cat > "$KOK/etc/default/keyboard" <<EOF
+XKBMODEL="pc105"
+XKBLAYOUT="$( [ "$KLAVYE" = "us" ] && echo us || echo tr )"
+XKBVARIANT="$( [ "$KLAVYE" = "trf" ] && echo f || echo "" )"
+XKBOPTIONS=""
+BACKSPACE="guess"
+EOF
+if [ -f "$KOK/usr/share/zoneinfo/$ZAMAN" ]; then
+  ln -sf "/usr/share/zoneinfo/$ZAMAN" "$KOK/etc/localtime"
+  echo "$ZAMAN" > "$KOK/etc/timezone"
+fi
+
 # Bu iki adim acilisin kendisidir; basarisiz olurlarsa kurulan sistem sessizce
 # acilmaz. Bu yuzden ARTIK yutulmuyor, kurulum aninda durduruluyor.
+ILERLE 75 "Acilis diski hazirlaniyor (initramfs) — birkac dakika surebilir"
 uzun_adim "Acilis diski guncelleniyor" timeout 1800s \
   chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-initramfs -u -k all < /dev/null \
   || hata "Acilis diski (initramfs) uretilemedi."
+ILERLE 90 "Acilis menusu olusturuluyor"
 uzun_adim "Acilis menusu olusturuluyor" timeout 600s chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-grub < /dev/null \
   || hata "Acilis menusu (grub.cfg) uretilemedi."
@@ -440,7 +648,8 @@ rm -f "$KOK/usr/sbin/policy-rc.d"
 
 
 # -------------------------------------------------------- kurulum dogrulama
-baslik "Kurulum dogrulaniyor"
+ILERLE 96 "Kurulum dogrulaniyor"
+
 [ -x "$KOK/usr/lib/systemd/systemd" ] || hata "Kurulan sistemde init yok."
 ls "$KOK"/boot/vmlinuz-* >/dev/null 2>&1 || hata "Kurulan sistemde cekirdek yok."
 ls "$KOK"/boot/initrd.img-* >/dev/null 2>&1 || hata "Kurulan sistemde acilis diski yok."
@@ -465,10 +674,12 @@ if [ -n "$SWAP_UUID" ]; then
   echo "Derin uyku (S4) etkin — takas bolumu UUID=$SWAP_UUID"
 fi
 
+ILERLE 100 "Kurulum tamamlandi"
 sync
 temizle
 BAGLI=0
 sync
+gauge_kapat
 
 echo ""
 echo "==============================================="
@@ -485,5 +696,24 @@ if [ "$OTO" = "1" ]; then
   exit 0
 fi
 
+if [ "$GUI" = "1" ]; then
+  if p_soru "Adim 6/6 — Kurulum tamamlandi" \
+"Tedbirge(R) WebOS $DEV diskine basariyla kuruldu.
+
+Simdi yapmaniz gerekenler:
+ 1) 'Evet' secin, bilgisayar kapanmaya baslasin.
+ 2) Ekran kararinca USB bellegi cikarin.
+ 3) Bilgisayari yeniden baslatin — Tedbirge(R) WebOS kendiliginden acilir.
+
+Kurulum kaydi: $LOG
+
+Simdi yeniden baslatilsin mi? ('Hayir' derseniz canli sistemde
+calismaya devam edebilirsiniz.)"; then
+    reboot
+  fi
+  exit 0
+fi
+
 read -r -p "Simdi yeniden baslatmak icin Enter, iptal icin Ctrl+C " _
 reboot
+
