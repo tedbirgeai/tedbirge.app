@@ -66,6 +66,7 @@ CHROOT_ENV=(env
   APT_LISTCHANGES_FRONTEND=none
   UCF_FORCE_CONFFOLD=1
   GRUB_DISABLE_OS_PROBER=true
+  INITRD=Yes
   TERM=dumb
   HOME=/root
   PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
