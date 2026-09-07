@@ -418,36 +418,50 @@ export function IsoFallbackDialog({ open, onClose }: { open: boolean; onClose: (
 
 /** Kök düzende bir kez monte edilir; genel bilgi kartını yönetir. */
 export function IsoFallbackHost() {
-  const open = useFallbackOpen();
-  return <IsoFallbackDialog open={open} onClose={() => setFallback(false)} />;
+  const { fallback } = useDialogState();
+  return <IsoFallbackDialog open={fallback} onClose={() => setFallback(false)} />;
+}
+
+/**
+ * Kök düzende bir kez monte edilir; sürüm seçim kartını yönetir.
+ * Düğmeler yalnızca kartı açar; indirme ve kılavuz burada yürütülür.
+ */
+export function IsoChooserHost() {
+  const { chooser } = useDialogState();
+  const { guide, setGuide, download, busy, status } = useIsoDownload();
+  return (
+    <>
+      <IsoEditionDialog
+        open={chooser}
+        onClose={closeAll}
+        onPick={(edition) => {
+          closeAll();
+          void download(edition);
+        }}
+        busy={busy}
+      />
+      <IsoGuideDialog open={guide} onClose={() => setGuide(false)} status={status} />
+    </>
+  );
 }
 
 /** Üst bar ve Sistem Ayarları'nda kullanılan indirme düğmesi. */
 export function BareMetalIsoButton({ compact = false }: { compact?: boolean }) {
-  const { guide, setGuide, download, busy, status } = useIsoDownload();
   const label = "Kurulum İmajını İndir (.iso)";
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => void download()}
-        disabled={busy}
-        title={label}
-        aria-label={label}
-        className={
-          compact
-            ? "tbos-winbtn wa-press grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-accent)] sm:h-7 sm:w-7"
-            : "wa-press inline-flex min-h-12 items-center gap-1.5 rounded-xl border border-[var(--tb-border)] px-3 py-2 font-osmono text-[12px] text-[var(--tb-text)]"
-        }
-      >
-        {busy ? (
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        ) : (
-          <HardDriveDownload className="h-4 w-4" aria-hidden />
-        )}
-        {!compact && <span>{label}</span>}
-      </button>
-      <IsoGuideDialog open={guide} onClose={() => setGuide(false)} status={status} />
-    </>
+    <button
+      type="button"
+      onClick={() => openIsoEditionChooser()}
+      title={label}
+      aria-label={label}
+      className={
+        compact
+          ? "tbos-winbtn wa-press grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-accent)] sm:h-7 sm:w-7"
+          : "wa-press inline-flex min-h-12 items-center gap-1.5 rounded-xl border border-[var(--tb-border)] px-3 py-2 font-osmono text-[12px] text-[var(--tb-text)]"
+      }
+    >
+      <HardDriveDownload className="h-4 w-4" aria-hidden />
+      {!compact && <span>{label}</span>}
+    </button>
   );
 }
