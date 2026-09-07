@@ -114,7 +114,12 @@ grep -q 'Acilis menusu kurulan diskin kimligini' "$KUR" \
 grep -q 'DEBIAN_FRONTEND=noninteractive' "$KUR" || hata "Kurulum aracı etkileşimsiz kipte değil."
 grep -q 'UDEV_DISABLE=1' "$KUR" || hata "udev beklemeleri devre dışı bırakılmıyor."
 grep -q 'surec_ilerlemesi' "$KUR" || hata "Uzun kurulum adımlarında aktivite (kilitlenme) denetimi yok."
+grep -q 'surec_agaci' "$KUR" \
+  || hata "İlerleme ölçümü alt süreçleri kapsamıyor (sigsuspend yanlış kilitlenme üretir)."
+grep -q 'disk_yazma' "$KUR" \
+  || hata "İlerleme ölçümü hedef diskin yazma sayacını izlemiyor."
 grep -q 'TEDBIRGE_STALL_SECONDS' "$KUR" || hata "Kilitlenme eşiği ayarlanabilir değil."
+
 grep -q 'MODULES=most' "$KUR" || hata "Kalıcı sistemde taşınabilir initramfs profili uygulanmıyor."
 grep -q 'policy-rc.d' "$KUR" || hata "chroot hizmet susturucusu (policy-rc.d) yok."
 grep -q 'mountpoint -q' "$KUR" || hata "chroot öncesi sanal dosya sistemi doğrulaması yok."
