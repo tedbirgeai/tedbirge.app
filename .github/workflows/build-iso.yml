@@ -128,13 +128,13 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           sudo -E apt-get update
           sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" xorriso squashfs-tools zstd
-          bash scripts/verify-iso.sh build-iso/iso/tedbirge-webos-x86_64.iso
+          bash scripts/verify-iso.sh "build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso"
 
       - name: Açılış testi (QEMU · gerçek donanım senaryoları)
         run: |
           export DEBIAN_FRONTEND=noninteractive
           sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" qemu-system-x86 ovmf zstd
-          ISO=build-iso/iso/tedbirge-webos-x86_64.iso
+          ISO="build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso"
           OVMF_CODE=""; OVMF_VARS=""
           for c in /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_CODE.fd \
                    /usr/share/edk2/ovmf/OVMF_CODE.fd; do
