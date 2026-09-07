@@ -133,7 +133,7 @@ jobs:
       - name: Açılış testi (QEMU · gerçek donanım senaryoları)
         run: |
           export DEBIAN_FRONTEND=noninteractive
-          sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" qemu-system-x86 ovmf zstd
+          sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" qemu-system-x86 ovmf mtools zstd
           ISO="build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso"
           OVMF_CODE=""; OVMF_VARS=""
           for c in /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_CODE.fd \
