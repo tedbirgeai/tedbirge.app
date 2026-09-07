@@ -32,6 +32,12 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Iki urun surumu tek depodan uretilir: workstation (masaustu/laptop) ve
+    # touch (tablet/2'si 1 arada). Her surum ayri is olarak derlenip dogrulanir.
+    strategy:
+      fail-fast: false
+      matrix:
+        edition: [workstation, touch]
     # ISO derleme + acilis testi + BIOS/UEFI kalici kurulum zinciri en kotu
     # durumda ~100 dakika surer; 120 dakika sinira cok yakindi.
     timeout-minutes: 180
@@ -107,10 +113,11 @@ jobs:
           fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
 
-      - name: ISO derle (Debian live-build · önceden pişirilmiş squashfs kök)
+      - name: ISO derle (Debian live-build · önceden pişirilmiş squashfs kök · ${{ matrix.edition }})
         run: |
           docker run --rm --privileged \
             -v "$PWD:/work" -w /work \
+            -e TEDBIRGE_EDITION="${{ matrix.edition }}" \
             -e TEDBIRGE_VERSION="${{ steps.ver.outputs.version }}" \
             -e TEDBIRGE_COMMIT="$GITHUB_SHA" \
             -e TEDBIRGE_BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
@@ -121,13 +128,13 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           sudo -E apt-get update
           sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" xorriso squashfs-tools zstd
-          bash scripts/verify-iso.sh build-iso/iso/tedbirge-webos-x86_64.iso
+          bash scripts/verify-iso.sh "build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso"
 
       - name: Açılış testi (QEMU · gerçek donanım senaryoları)
         run: |
           export DEBIAN_FRONTEND=noninteractive
           sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" qemu-system-x86 ovmf zstd
-          ISO=build-iso/iso/tedbirge-webos-x86_64.iso
+          ISO="build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso"
           OVMF_CODE=""; OVMF_VARS=""
           for c in /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_CODE.fd \
                    /usr/share/edk2/ovmf/OVMF_CODE.fd; do
@@ -191,7 +198,9 @@ jobs:
           fi
           echo "Tüm açılış senaryoları geçti."
 
-      - name: Kalıcı kurulum testi (diske kur + kurulan sistemden aç)
+      - name: Kalıcı kurulum testi (diske kur + kurulan sistemden aç · ${{ matrix.edition }})
+        env:
+          TEDBIRGE_ISO: build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso
         run: bash scripts/test-install-qemu.sh
 
       - name: Haber ve WebOS içerik kontrolü
@@ -219,26 +228,26 @@ jobs:
           if (!ok) throw new Error('Hiçbir doğrulanmış haber kaynağı kayıt döndürmedi.');
           NODE
 
-      - name: Yayın kimliğini onayla
+      - name: Yayın kimliğini onayla (${{ matrix.edition }})
         run: |
-          MANIFEST=build-iso/iso/TEDBIRGE-ISO-MANIFEST.json
+          MANIFEST="build-iso/iso/TEDBIRGE-ISO-MANIFEST-${{ matrix.edition }}.json"
           node -e 'const fs=require("fs"); const p=process.argv[1]; const m=JSON.parse(fs.readFileSync(p)); m.validated=true; fs.writeFileSync(p, JSON.stringify(m)+"\n")' "$MANIFEST"
           cat "$MANIFEST"
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: tedbirge-boot-test-log
+          name: tedbirge-boot-test-log-${{ matrix.edition }}
           path: build-iso/*.log
           if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v4
         with:
-          name: tedbirge-webos-iso
+          name: tedbirge-webos-iso-${{ matrix.edition }}
           path: |
             build-iso/iso/*.iso
-            build-iso/iso/SHA256SUMS
-            build-iso/iso/TEDBIRGE-ISO-MANIFEST.json
+            build-iso/iso/SHA256SUMS-${{ matrix.edition }}
+            build-iso/iso/TEDBIRGE-ISO-MANIFEST-${{ matrix.edition }}.json
 
       - name: Yayınla (sürüm etiketi)
         if: github.event_name == 'release' || github.ref_type == 'tag'
@@ -246,8 +255,8 @@ jobs:
         with:
           files: |
             build-iso/iso/*.iso
-            build-iso/iso/SHA256SUMS
-            build-iso/iso/TEDBIRGE-ISO-MANIFEST.json
+            build-iso/iso/SHA256SUMS-${{ matrix.edition }}
+            build-iso/iso/TEDBIRGE-ISO-MANIFEST-${{ matrix.edition }}.json
 
       - name: Yayınla (latest ön-sürüm)
         if: github.event_name != 'release' && github.ref_type != 'tag'
@@ -257,8 +266,8 @@ jobs:
           name: "Tedbirge® WebOS — güncel imaj"
           prerelease: true
           overwrite_files: true
-          body: "Otomatik derleme · ${{ steps.ver.outputs.version }} · tedbirgeai/tedbirge.app"
+          body: "Otomatik derleme · ${{ steps.ver.outputs.version }} · ${{ matrix.edition }} · tedbirgeai/tedbirge.app"
           files: |
             build-iso/iso/*.iso
-            build-iso/iso/SHA256SUMS
-            build-iso/iso/TEDBIRGE-ISO-MANIFEST.json
+            build-iso/iso/SHA256SUMS-${{ matrix.edition }}
+            build-iso/iso/TEDBIRGE-ISO-MANIFEST-${{ matrix.edition }}.json

@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 
 export DEBIAN_FRONTEND=noninteractive
 
-ISO=build-iso/iso/tedbirge-webos-x86_64.iso
+ISO="${1:-${TEDBIRGE_ISO:-build-iso/iso/tedbirge-webos-workstation-x86_64.iso}}"
 STALL="${INSTALL_STALL:-420}"   # ilerlemesizlik siniri (saniye)
 QEMU_STOP_TIMEOUT="${QEMU_STOP_TIMEOUT:-30}"
 

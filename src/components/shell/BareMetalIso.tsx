@@ -15,13 +15,24 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { HardDriveDownload, Info, Loader2, Smartphone, X } from "lucide-react";
+import {
+  HardDriveDownload,
+  Info,
+  Loader2,
+  Monitor,
+  Smartphone,
+  TabletSmartphone,
+  X,
+} from "lucide-react";
 
 import {
   fetchIsoStatus,
   formatIsoSize,
   ISO_DOWNLOAD_ROUTE,
+  ISO_EDITIONS,
   ISO_RELEASES_PAGE,
+  isoDownloadRoute,
+  type IsoEdition,
   type IsoStatus,
 } from "@/lib/iso-release";
 import { isIosDevice, promptInstall } from "@/lib/pwa-install";
@@ -46,11 +57,16 @@ const STEPS: ReadonlyArray<{ tool: string; text: string }> = [
 /* ------------------------------------------------------------------ */
 
 let fallbackOpen = false;
+let chooserOpen = false;
 const listeners = new Set<() => void>();
+
+function notify() {
+  listeners.forEach((l) => l());
+}
 
 function setFallback(open: boolean) {
   fallbackOpen = open;
-  listeners.forEach((l) => l());
+  notify();
 }
 
 /** Yayında imaj yoksa açılan dürüst bilgi kartını gösterir. */
@@ -58,17 +74,29 @@ export function openIsoFallback() {
   setFallback(true);
 }
 
-function useFallbackOpen(): boolean {
-  const [open, setOpen] = useState(fallbackOpen);
+/** İki ürün sürümü arasında seçim yaptıran kartı açar. */
+export function openIsoEditionChooser() {
+  chooserOpen = true;
+  notify();
+}
+
+function useDialogState(): { fallback: boolean; chooser: boolean } {
+  const [state, setState] = useState({ fallback: fallbackOpen, chooser: chooserOpen });
   useEffect(() => {
-    const l = () => setOpen(fallbackOpen);
+    const l = () => setState({ fallback: fallbackOpen, chooser: chooserOpen });
     listeners.add(l);
     l();
     return () => {
       listeners.delete(l);
     };
   }, []);
-  return open;
+  return state;
+}
+
+function closeAll() {
+  fallbackOpen = false;
+  chooserOpen = false;
+  notify();
 }
 
 /* ------------------------------------------------------------------ */
@@ -94,40 +122,101 @@ function triggerDownload(url: string) {
  * yarıda "Ağ sorunu" ile düşerdi. Kalıcı rota her denemede taze adres verir,
  * böylece duraklat/devam et de çalışır.
  */
+/**
+ * İndirme akışını başlatır: iki ürün sürümü (Workstation / Touch & Mobile)
+ * arasında seçim kartı açılır; doğrudan dosya indirilmez.
+ */
 export async function startIsoDownload(): Promise<boolean> {
   if (typeof document === "undefined") return false;
-  const status = await fetchIsoStatus();
-  if (!status.ready) {
-    openIsoFallback();
-    return false;
-  }
-  triggerDownload(ISO_DOWNLOAD_ROUTE);
+  openIsoEditionChooser();
   return true;
 }
 
 export function useIsoDownload() {
   const [guide, setGuide] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<IsoEdition | null>(null);
   const [status, setStatus] = useState<IsoStatus | null>(null);
 
-  const download = useCallback(async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      const info = await fetchIsoStatus();
-      setStatus(info);
-      if (!info.ready) {
-        openIsoFallback();
-        return;
+  const download = useCallback(
+    async (edition: IsoEdition) => {
+      if (busy) return;
+      setBusy(edition);
+      try {
+        const info = await fetchIsoStatus(edition);
+        setStatus(info);
+        if (!info.ready) {
+          openIsoFallback();
+          return;
+        }
+        triggerDownload(isoDownloadRoute(edition));
+        setGuide(true);
+      } finally {
+        setBusy(null);
       }
-      triggerDownload(ISO_DOWNLOAD_ROUTE);
-      setGuide(true);
-    } finally {
-      setBusy(false);
-    }
-  }, [busy]);
+    },
+    [busy],
+  );
 
   return { guide, setGuide, download, busy, status };
+}
+
+/** Hangi sürümü indireceğini seçtiren kart. */
+export function IsoEditionDialog({
+  open,
+  onClose,
+  onPick,
+  busy,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onPick: (edition: IsoEdition) => void;
+  busy: IsoEdition | null;
+}) {
+  if (!open) return null;
+  return (
+    <Shell
+      title="Hangi sürümü indireceksiniz?"
+      subtitle="Tedbirge® WebOS · bare-metal x86_64"
+      onClose={onClose}
+    >
+      <div className="mt-4 space-y-3">
+        {ISO_EDITIONS.map((e) => (
+          <button
+            key={e.id}
+            type="button"
+            disabled={busy !== null}
+            onClick={() => onPick(e.id)}
+            className="wa-press flex min-h-12 w-full items-center gap-3 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] px-4 py-3 text-left hover:border-[var(--tb-accent)]/50 disabled:opacity-60"
+          >
+            {e.id === "workstation" ? (
+              <Monitor className="h-5 w-5 shrink-0 text-[var(--tb-accent)]" aria-hidden />
+            ) : (
+              <TabletSmartphone className="h-5 w-5 shrink-0 text-[var(--tb-accent)]" aria-hidden />
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13.5px] font-semibold text-[var(--tb-text)]">
+                {e.title}
+              </span>
+              <span className="block font-osmono text-[11px] leading-relaxed text-[var(--tb-muted)]">
+                {e.subtitle}
+              </span>
+            </span>
+            {busy === e.id && (
+              <Loader2
+                className="h-4 w-4 shrink-0 animate-spin text-[var(--tb-muted)]"
+                aria-hidden
+              />
+            )}
+          </button>
+        ))}
+      </div>
+      <p className="mt-4 font-osmono text-[11px] leading-relaxed text-[var(--tb-muted)]">
+        Emin değilseniz “Masaüstü & Dizüstü”nü seçin. Dokunmatik ekranlı veya ekranı katlanan bir
+        bilgisayarınız varsa “Tablet & 2'si 1 Arada” sürümü ekran klavyesi ve otomatik döndürme ile
+        gelir. İki sürüm de aynı sistemdir; yalnızca varsayılan donanım desteği farklıdır.
+      </p>
+    </Shell>
+  );
 }
 
 function Shell({
@@ -203,7 +292,15 @@ export function IsoGuideDialog({
   status?: IsoStatus | null;
 }) {
   if (!open) return null;
-  const detay = [status?.version, formatIsoSize(status?.size ?? 0)].filter(Boolean).join(" · ");
+  const surum =
+    status?.edition === "touch"
+      ? "Touch & Mobile"
+      : status?.edition === "workstation"
+        ? "Workstation"
+        : "";
+  const detay = [surum, status?.version, formatIsoSize(status?.size ?? 0)]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <Shell
       title="İndirme başladı — USB'ye yazdırma"
@@ -239,7 +336,7 @@ export function IsoGuideDialog({
       ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <a
-          href={ISO_DOWNLOAD_ROUTE}
+          href={isoDownloadRoute(status?.edition === "touch" ? "touch" : "workstation")}
           className="wa-press inline-flex min-h-11 items-center rounded-xl border border-[var(--tb-accent)]/40 px-4 font-osmono text-[11.5px] text-[var(--tb-accent)]"
         >
           İndirme yarıda kaldıysa yeniden dene
@@ -332,36 +429,50 @@ export function IsoFallbackDialog({ open, onClose }: { open: boolean; onClose: (
 
 /** Kök düzende bir kez monte edilir; genel bilgi kartını yönetir. */
 export function IsoFallbackHost() {
-  const open = useFallbackOpen();
-  return <IsoFallbackDialog open={open} onClose={() => setFallback(false)} />;
+  const { fallback } = useDialogState();
+  return <IsoFallbackDialog open={fallback} onClose={() => setFallback(false)} />;
+}
+
+/**
+ * Kök düzende bir kez monte edilir; sürüm seçim kartını yönetir.
+ * Düğmeler yalnızca kartı açar; indirme ve kılavuz burada yürütülür.
+ */
+export function IsoChooserHost() {
+  const { chooser } = useDialogState();
+  const { guide, setGuide, download, busy, status } = useIsoDownload();
+  return (
+    <>
+      <IsoEditionDialog
+        open={chooser}
+        onClose={closeAll}
+        onPick={(edition) => {
+          closeAll();
+          void download(edition);
+        }}
+        busy={busy}
+      />
+      <IsoGuideDialog open={guide} onClose={() => setGuide(false)} status={status} />
+    </>
+  );
 }
 
 /** Üst bar ve Sistem Ayarları'nda kullanılan indirme düğmesi. */
 export function BareMetalIsoButton({ compact = false }: { compact?: boolean }) {
-  const { guide, setGuide, download, busy, status } = useIsoDownload();
   const label = "Kurulum İmajını İndir (.iso)";
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => void download()}
-        disabled={busy}
-        title={label}
-        aria-label={label}
-        className={
-          compact
-            ? "tbos-winbtn wa-press grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-accent)] sm:h-7 sm:w-7"
-            : "wa-press inline-flex min-h-12 items-center gap-1.5 rounded-xl border border-[var(--tb-border)] px-3 py-2 font-osmono text-[12px] text-[var(--tb-text)]"
-        }
-      >
-        {busy ? (
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        ) : (
-          <HardDriveDownload className="h-4 w-4" aria-hidden />
-        )}
-        {!compact && <span>{label}</span>}
-      </button>
-      <IsoGuideDialog open={guide} onClose={() => setGuide(false)} status={status} />
-    </>
+    <button
+      type="button"
+      onClick={() => openIsoEditionChooser()}
+      title={label}
+      aria-label={label}
+      className={
+        compact
+          ? "tbos-winbtn wa-press grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-accent)] sm:h-7 sm:w-7"
+          : "wa-press inline-flex min-h-12 items-center gap-1.5 rounded-xl border border-[var(--tb-border)] px-3 py-2 font-osmono text-[12px] text-[var(--tb-text)]"
+      }
+    >
+      <HardDriveDownload className="h-4 w-4" aria-hidden />
+      {!compact && <span>{label}</span>}
+    </button>
   );
 }

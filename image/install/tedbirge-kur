@@ -24,7 +24,7 @@ surec_ilerlemesi() { # pid -> "cpu_tick io_bayt"
 }
 
 uzun_adim() { # ad, komut...
-  local ad="$1" pid baslangic simdi rc onceki suanki sessiz=0
+  local ad="$1" pid baslangic simdi rc onceki suanki sessiz=0 wchan cocuk
   shift
   echo "-- $ad (kilitlenme denetimi: ${STALL}s ilerlemesizlik)"
   stdbuf -oL -eL "$@" &
@@ -39,7 +39,11 @@ uzun_adim() { # ad, komut...
     else
       sessiz=0; onceki="$suanki"
     fi
-    echo "... $ad suruyor ($((simdi - baslangic))s, ilerlemesiz ${sessiz}s)"
+    # Tanilama: surec hangi cekirdek cagrisinda bekliyor, alt sureci var mi?
+    # Kilitlenme kaydinda bu iki bilgi kok nedeni dogrudan gosterir.
+    wchan=$(cat "/proc/$pid/wchan" 2>/dev/null || true)
+    cocuk=$(pgrep -P "$pid" 2>/dev/null | head -3 | tr '\n' ' ')
+    echo "... $ad suruyor ($((simdi - baslangic))s, ilerlemesiz ${sessiz}s, beklenen: ${wchan:-?}, alt surec: ${cocuk:-yok})"
     if [ "$sessiz" -ge "$STALL" ]; then
       echo "! $ad ${STALL}s boyunca hicbir ilerleme kaydetmedi; kilitlendi." >&2
       kill -TERM "$pid" 2>/dev/null
@@ -52,6 +56,18 @@ uzun_adim() { # ad, komut...
   wait "$pid"; rc=$?
   return "$rc"
 }
+
+# chroot icinde calisan tum komutlara verilen ortak ortam: kullanici girdisi
+# beklenmesi tumden engellenir, hizmet baslatma tetikleyicileri susturulur.
+CHROOT_ENV=(env
+  DEBIAN_FRONTEND=noninteractive
+  APT_LISTCHANGES_FRONTEND=none
+  UCF_FORCE_CONFFOLD=1
+  GRUB_DISABLE_OS_PROBER=true
+  TERM=dumb
+  HOME=/root
+  PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+)
 
 
 MIN_BAYT=$((8 * 1024 * 1024 * 1024))
@@ -77,6 +93,8 @@ KOK=/mnt/tedbirge
 P1=""; P2=""; P3=""; BAGLI=0
 temizle() {
   set +e
+  # Hizmet engelleyici her durumda kaldirilir; kurulan sistemde kalmamalidir.
+  [ -n "$KOK" ] && rm -f "$KOK/usr/sbin/policy-rc.d" 2>/dev/null
   if [ "$BAGLI" = "1" ]; then
     [ -d "$KOK/var/log/tedbirge" ] && cp "$LOG" "$KOK/var/log/tedbirge/kurulum.log" 2>/dev/null
     for d in run sys proc dev/pts dev; do mountpoint -q "$KOK/$d" && umount -l "$KOK/$d"; done
@@ -250,6 +268,16 @@ for d in dev dev/pts proc sys run; do
   mount --rbind "/$d" "$KOK/$d" || hata "Sistem dizini baglanamadi: /$d"
   mount --make-rslave "$KOK/$d" || hata "Sistem baglama guvenligi ayarlanamadi: /$d"
 done
+# chroot'a girmeden once tum sanal dosya sistemleri gercekten bagli olmali;
+# yarim kalan bir baglama update-initramfs/grub-install'i sessizce kilitler.
+for d in dev dev/pts proc sys run; do
+  mountpoint -q "$KOK/$d" || hata "Baglama dogrulanamadi: $KOK/$d"
+done
+# chroot icindeki paket tetikleyicileri hizmet baslatmaya kalkmasin; aksi
+# halde systemd iletisim kanali kapaliyken invoke-rc.d bekleyebilir.
+mkdir -p "$KOK/usr/sbin"
+printf '#!/bin/sh\nexit 101\n' > "$KOK/usr/sbin/policy-rc.d"
+chmod 0755 "$KOK/usr/sbin/policy-rc.d"
 [ -e /etc/resolv.conf ] && cp -L /etc/resolv.conf "$KOK/etc/resolv.conf" \
   || hata "Ag cozucu ayari hedefe kopyalanamadi."
 
@@ -275,13 +303,14 @@ CEKIRDEK_SATIRI="quiet console=tty0 console=ttyS0,115200"
 sed -i "s|^#\?GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$CEKIRDEK_SATIRI\"|" \
   "$KOK/etc/default/grub" 2>/dev/null || true
 
-# --------------------------------------- kalici sistem icin hizli initramfs
-# Hedef donanim artik belli oldugu icin yalnizca gerekli suruculer paketlenir
-# (MODULES=dep) ve en hizli sikistirma kullanilir. Bu adim, kurulumun en pahali
-# bolumuydu; kapsam kaybi olmadan dakikalar yerine saniyeler surer.
+# ------------------------------------ kalici sistem icin tasınabilir initramfs
+# Kurulan sistem baska bir bilgisayara tasinabilir (disk baska makineye
+# takilabilir); MODULES=dep yalniz bu donanimin suruculerini paketler ve
+# tasimada acilis bozulur. MODULES=most tum yaygin denetleyicileri korur;
+# sure artisi zstd-1 sikistirmayla telafi edilir.
 mkdir -p "$KOK/etc/initramfs-tools/conf.d"
 cat > "$KOK/etc/initramfs-tools/conf.d/tedbirge.conf" <<'EOF'
-MODULES=dep
+MODULES=most
 COMPRESS=zstd
 COMPRESSLEVEL=1
 BUSYBOX=y
@@ -299,22 +328,25 @@ grep -q '^GRUB_DISABLE_OS_PROBER=' "$KOK/etc/default/grub" 2>/dev/null \
 
 # ------------------------------------------------------------ acilis yukleyici
 baslik "Acilis yukleyici kuruluyor ($MOD)"
+# --no-floppy: disket modulu yoklamasi QEMU/sanal ortamda sonsuz bekleyebilir.
 if [ "$MOD" = "UEFI" ]; then
-  uzun_adim "UEFI acilis yukleyicisi kuruluyor" chroot "$KOK" env \
-    DEBIAN_FRONTEND=noninteractive grub-install --target=x86_64-efi --efi-directory=/boot/efi \
-    --bootloader-id=Tedbirge --recheck --removable --no-nvram \
+  uzun_adim "UEFI acilis yukleyicisi kuruluyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+    grub-install --target=x86_64-efi --efi-directory=/boot/efi \
+    --bootloader-id=Tedbirge --recheck --removable --no-nvram --no-floppy \
     || hata "UEFI acilis yukleyici kurulamadi."
 else
-  uzun_adim "BIOS acilis yukleyicisi kuruluyor" chroot "$KOK" env \
-    DEBIAN_FRONTEND=noninteractive grub-install --target=i386-pc --recheck "$DEV" \
+  uzun_adim "BIOS acilis yukleyicisi kuruluyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+    grub-install --target=i386-pc --recheck --no-floppy "$DEV" \
     || hata "BIOS acilis yukleyici kurulamadi."
 fi
-uzun_adim "Acilis diski guncelleniyor" chroot "$KOK" env \
-  DEBIAN_FRONTEND=noninteractive update-initramfs -u -k all \
+uzun_adim "Acilis diski guncelleniyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+  update-initramfs -u -k all \
   || hata "Acilis diski guncellenemedi."
-uzun_adim "Acilis menusu olusturuluyor" chroot "$KOK" env \
-  DEBIAN_FRONTEND=noninteractive update-grub \
+uzun_adim "Acilis menusu olusturuluyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+  update-grub \
   || hata "Acilis menusu olusturulamadi."
+# Hizmet engelleyici yalnizca kurulum surecine ozeldir.
+rm -f "$KOK/usr/sbin/policy-rc.d"
 
 
 # -------------------------------------------------------- kurulum dogrulama

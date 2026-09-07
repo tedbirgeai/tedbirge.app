@@ -13,7 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportRuntimeError } from "../lib/error-reporting";
 import { OfflineBanner } from "../components/site/OfflineBanner";
-import { IsoFallbackHost } from "../components/shell/BareMetalIso";
+import { IsoChooserHost, IsoFallbackHost } from "../components/shell/BareMetalIso";
 import { BackgroundServicesProvider } from "../shell/BackgroundServices";
 import { THEME_BOOT_SCRIPT } from "../lib/ui/theme";
 import { Toaster } from "../components/ui/sonner";
@@ -171,6 +171,7 @@ function RootComponent() {
       {/* Görünmeyen arka plan servisleri: düğüm, P2P, çağrı karşılayıcı. */}
       <BackgroundServicesProvider />
       <IsoFallbackHost />
+      <IsoChooserHost />
       <Toaster />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />

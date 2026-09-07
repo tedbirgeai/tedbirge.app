@@ -40,7 +40,15 @@ type Resolved = {
   sha256: string;
   distribution: string;
   commit: string;
+  edition: string;
 };
+
+/** İki ürün sürümü: workstation (masaüstü/dizüstü) ve touch (tablet/2'si 1 arada). */
+export type IsoEdition = "workstation" | "touch";
+
+function normalizeEdition(raw: string | null): IsoEdition {
+  return raw === "touch" ? "touch" : "workstation";
+}
 
 function repo(): string {
   return (
@@ -50,7 +58,7 @@ function repo(): string {
   ).trim();
 }
 
-async function latestFromGithub(): Promise<Resolved | null> {
+async function latestFromGithub(edition: IsoEdition): Promise<Resolved | null> {
   const slug = repo();
   const page = `https://github.com/${slug}/releases/latest`;
   const headers: Record<string, string> = {
@@ -71,8 +79,17 @@ async function latestFromGithub(): Promise<Resolved | null> {
       const releases = Array.isArray(body) ? body : [body];
       for (const rel of releases) {
         const assets = rel.assets ?? [];
-        const manifestAsset = assets.find((a) => a.name === "TEDBIRGE-ISO-MANIFEST.json");
-        const sumsAsset = assets.find((a) => a.name === "SHA256SUMS");
+        // Sürüme özel bildirim dosyası; eski tekil adlandırma yedek olarak kabul edilir.
+        const manifestAsset = assets.find(
+          (a) =>
+            a.name === `TEDBIRGE-ISO-MANIFEST-${edition}.json` ||
+            (edition === "workstation" && a.name === "TEDBIRGE-ISO-MANIFEST.json"),
+        );
+        const sumsAsset = assets.find(
+          (a) =>
+            a.name === `SHA256SUMS-${edition}` ||
+            (edition === "workstation" && a.name === "SHA256SUMS"),
+        );
         if (!manifestAsset || !sumsAsset) continue;
 
         const [manifestResponse, sumsResponse] = await Promise.all([
@@ -111,6 +128,7 @@ async function latestFromGithub(): Promise<Resolved | null> {
           sha256: manifest.sha256 ?? "",
           distribution: "Debian bookworm",
           commit: manifest.commit ?? "",
+          edition,
         };
       }
     } catch {
@@ -120,9 +138,9 @@ async function latestFromGithub(): Promise<Resolved | null> {
   return null;
 }
 
-async function resolve(): Promise<Resolved> {
+async function resolve(edition: IsoEdition): Promise<Resolved> {
   const page = `https://github.com/${repo()}/releases/latest`;
-  const github = await latestFromGithub();
+  const github = await latestFromGithub(edition);
   return (
     github ?? {
       ready: false,
@@ -134,6 +152,7 @@ async function resolve(): Promise<Resolved> {
       sha256: "",
       distribution: "",
       commit: "",
+      edition,
     }
   );
 }
@@ -143,7 +162,8 @@ export const Route = createFileRoute("/api/public/iso")({
     handlers: {
       GET: async ({ request }) => {
         const url = new URL(request.url);
-        const info = await resolve();
+        const edition = normalizeEdition(url.searchParams.get("surum"));
+        const info = await resolve(edition);
 
         if (url.searchParams.has("durum")) {
           return new Response(JSON.stringify(info), {

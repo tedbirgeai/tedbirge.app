@@ -19,11 +19,19 @@ WORK="${WORK:-/work}"
 VERSION="${TEDBIRGE_VERSION:-1.0.0}"
 COMMIT="${TEDBIRGE_COMMIT:-${GITHUB_SHA:-unknown}}"
 BUILD_TIME="${TEDBIRGE_BUILD_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+# İki ürün sürümü: workstation (masaüstü/dizüstü) ve touch (tablet/2'si 1 arada).
+# Ortak taban image/profiles/common.list; profil listesi yalnızca seçilen
+# sürüme kopyalanır. Ayrıntı: .lovable/plan/ bölünmüş derleme planı.
+EDITION="${TEDBIRGE_EDITION:-workstation}"
+case "$EDITION" in
+  workstation) SURUM_ADI="Workstation";  VOLID="TEDBIRGE_WS" ;;
+  touch)       SURUM_ADI="Touch & Mobile"; VOLID="TEDBIRGE_TOUCH" ;;
+  *) echo "! Geçersiz TEDBIRGE_EDITION: $EDITION (workstation|touch)" >&2; exit 1 ;;
+esac
 BUILD="$WORK/build-iso/live"
 OUT="$WORK/build-iso/iso"
-VOLID="TEDBIRGE_WEBOS"
 
-echo "== Tedbirge(R) WebOS kurulum imajı · $VERSION =="
+echo "== Tedbirge(R) WebOS $SURUM_ADI kurulum imajı · $VERSION =="
 
 # ----------------------------------------------------------- girdi denetimi
 if [ -s "$WORK/build-iso/web/index.html" ]; then
@@ -54,6 +62,18 @@ mkdir -p "$BUILD" "$OUT"
 cp -r "$WORK/image/config" "$BUILD/config"
 cd "$BUILD"
 
+# Sürüm profili: ortak liste + seçilen sürümün listesi.
+mkdir -p config/package-lists
+cp "$WORK/image/profiles/common.list" config/package-lists/common.list.chroot
+cp "$WORK/image/profiles/$EDITION.list" "config/package-lists/$EDITION.list.chroot"
+echo "-- sürüm profili: $EDITION (common + $EDITION)"
+
+# bookworm-backports deposu: çekirdek ve firmware bu depodan gelir.
+mkdir -p config/archives
+cat > config/archives/bookworm-backports.list.chroot <<'EOF'
+deb http://deb.debian.org/debian bookworm-backports main contrib non-free-firmware
+EOF
+
 # Arayüz paketi kök dosya sistemine gömülür (ağ gerektirmez).
 mkdir -p config/includes.chroot/var/www/tedbirge
 rsync -a --delete "$WEBROOT/" config/includes.chroot/var/www/tedbirge/
@@ -82,11 +102,16 @@ DEBIAN_CODENAME=bookworm
 BUILD_COMMIT=$COMMIT
 BUILD_TIME=$BUILD_TIME
 VARIANT="live-kiosk"
+EDITION="$EDITION"
 HTTP_PORT=80
 EOF
 cat > config/includes.chroot/etc/tedbirge-image.json <<EOF
-{"product":"Tedbirge WebOS","distribution":"Debian","codename":"bookworm","version":"$VERSION","commit":"$COMMIT","built_at":"$BUILD_TIME","architecture":"x86_64"}
+{"product":"Tedbirge WebOS","edition":"$EDITION","distribution":"Debian","codename":"bookworm","version":"$VERSION","commit":"$COMMIT","built_at":"$BUILD_TIME","architecture":"x86_64"}
 EOF
+# Arayüz, çalıştığı sistemin sürümünü bu dosyadan okur (tek kod tabanı,
+# sürüme göre dokunmatik varsayılanlar).
+cp config/includes.chroot/etc/tedbirge-image.json \
+   config/includes.chroot/var/www/tedbirge/tedbirge-image.json
 
 chmod +x config/hooks/normal/*.hook.chroot
 
@@ -102,10 +127,10 @@ lb config \
   --memtest none \
   --apt-recommends false \
   --backports false \
-  --iso-application "Tedbirge WebOS" \
+  --iso-application "Tedbirge WebOS $SURUM_ADI" \
   --iso-publisher "Mehmet DINC; tedbirge.app" \
   --iso-volume "$VOLID" \
-  --image-name "tedbirge-webos" \
+  --image-name "tedbirge-webos-$EDITION" \
   --bootappend-live "boot=live components noeject quiet loglevel=3 rootdelay=5 live-media-timeout=20 modules=loop,squashfs,overlay,iso9660 console=tty0 console=ttyS0,115200 hostname=tedbirge"
 
 # --------------------------------------------------------------- derleme
@@ -114,18 +139,20 @@ timeout --foreground 90m stdbuf -oL -eL lb build
 ISO=$(ls -1 "$BUILD"/*.iso "$BUILD"/*.hybrid.iso 2>/dev/null | head -1 || true)
 [ -n "$ISO" ] || { echo "! ISO üretilmedi." >&2; ls -la "$BUILD" >&2; exit 1; }
 
-TARGET="$OUT/tedbirge-webos-x86_64.iso"
+BASENAME="tedbirge-webos-$EDITION-x86_64"
+TARGET="$OUT/$BASENAME.iso"
 cp "$ISO" "$TARGET"
 SAFE_VERSION=$(printf '%s' "$VERSION" | tr -c 'A-Za-z0-9._+-' '-')
-VERSIONED="tedbirge-webos-${SAFE_VERSION}-x86_64.iso"
+VERSIONED="tedbirge-webos-${SAFE_VERSION}-$EDITION-x86_64.iso"
 cp "$TARGET" "$OUT/$VERSIONED"
+MANIFEST="TEDBIRGE-ISO-MANIFEST-$EDITION.json"
 (
   cd "$OUT"
-  sha256sum tedbirge-webos-x86_64.iso "$VERSIONED" > SHA256SUMS
-  SHA=$(sha256sum tedbirge-webos-x86_64.iso | awk '{print $1}')
-  SIZE=$(stat -c%s tedbirge-webos-x86_64.iso)
-  cat > TEDBIRGE-ISO-MANIFEST.json <<EOF
-{"schema":1,"product":"Tedbirge WebOS","distribution":"Debian","codename":"bookworm","architecture":"x86_64","version":"$VERSION","commit":"$COMMIT","built_at":"$BUILD_TIME","asset":"tedbirge-webos-x86_64.iso","sha256":"$SHA","size":$SIZE,"validated":false}
+  sha256sum "$BASENAME.iso" "$VERSIONED" > "SHA256SUMS-$EDITION"
+  SHA=$(sha256sum "$BASENAME.iso" | awk '{print $1}')
+  SIZE=$(stat -c%s "$BASENAME.iso")
+  cat > "$MANIFEST" <<EOF
+{"schema":1,"product":"Tedbirge WebOS","edition":"$EDITION","distribution":"Debian","codename":"bookworm","architecture":"x86_64","version":"$VERSION","commit":"$COMMIT","built_at":"$BUILD_TIME","asset":"$BASENAME.iso","sha256":"$SHA","size":$SIZE,"validated":false}
 EOF
 )
 

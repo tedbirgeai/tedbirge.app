@@ -23,6 +23,38 @@ systemctl enable tedbirge-installer.service
 systemctl enable tedbirge-kiosk.service
 systemctl enable NetworkManager.service || true
 systemctl enable acpid.service || true
+
+# Donanim servisleri: yalnizca paketi kuruluysa etkinlesir. Boylece surum
+# profili (workstation/touch) tek dogruluk kaynagi olarak paket listelerinde
+# kalir; bu dosya iki surum icin de ayndir.
+etkinlestir() { # paket, servis
+  if dpkg -s "$1" >/dev/null 2>&1; then
+    systemctl enable "$2" 2>/dev/null || true
+    echo "-- servis etkin: $2 ($1)"
+  fi
+}
+etkinlestir upower upower.service
+etkinlestir power-profiles-daemon power-profiles-daemon.service
+etkinlestir thermald thermald.service
+etkinlestir iio-sensor-proxy iio-sensor-proxy.service
+etkinlestir modemmanager ModemManager.service
+etkinlestir bolt bolt.service
+etkinlestir udisks2 udisks2.service
+etkinlestir bluez bluetooth.service
+etkinlestir fwupd fwupd.service
+
+# Guc dugmesi / kapak davranisi: kapak kapaninca S3 uykusu; guc dugmesi
+# kabuk uzerinden (tedbirge-sysbridge) yonetilir, logind mudahale etmesin.
+mkdir -p /etc/systemd/logind.conf.d
+cat > /etc/systemd/logind.conf.d/tedbirge.conf <<'EOF'
+[Login]
+HandleLidSwitch=suspend
+HandleLidSwitchExternalPower=suspend
+HandleLidSwitchDocked=ignore
+HandlePowerKey=ignore
+IdleAction=ignore
+EOF
+
 systemctl set-default graphical.target
 
 # Konsol karsilama
