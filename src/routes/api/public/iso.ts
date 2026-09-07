@@ -138,9 +138,60 @@ async function latestFromGithub(edition: IsoEdition): Promise<Resolved | null> {
   return null;
 }
 
+/**
+ * API'siz doğrudan yol: yayın varlıkları sabit `download/latest/...` adresinden
+ * okunur. GitHub API kotası dolduğunda veya yayın "ön sürüm" işaretli olduğunda
+ * (bu durumda /releases/latest 404 döner) indirme yine de çalışır.
+ */
+async function directFromRelease(edition: IsoEdition): Promise<Resolved | null> {
+  const slug = repo();
+  const page = `https://github.com/${slug}/releases/latest`;
+  const base = `https://github.com/${slug}/releases/download/latest`;
+  try {
+    const [manifestResponse, sumsResponse] = await Promise.all([
+      fetch(`${base}/TEDBIRGE-ISO-MANIFEST-${edition}.json`),
+      fetch(`${base}/SHA256SUMS-${edition}`),
+    ]);
+    if (!manifestResponse.ok || !sumsResponse.ok) return null;
+    const manifest = (await manifestResponse.json()) as Manifest;
+    const sums = await sumsResponse.text();
+    const expectedLine = `${manifest.sha256}  ${manifest.asset}`;
+    const valid =
+      manifest.schema === 1 &&
+      manifest.product === "Tedbirge WebOS" &&
+      manifest.distribution === "Debian" &&
+      manifest.codename === "bookworm" &&
+      manifest.architecture === "x86_64" &&
+      manifest.validated === true &&
+      typeof manifest.commit === "string" &&
+      manifest.commit !== "unknown" &&
+      typeof manifest.sha256 === "string" &&
+      /^[a-f0-9]{64}$/.test(manifest.sha256) &&
+      typeof manifest.size === "number" &&
+      manifest.size >= 524_288_000 &&
+      typeof manifest.asset === "string" &&
+      sums.split(/\r?\n/).includes(expectedLine);
+    if (!valid) return null;
+    return {
+      ready: true,
+      url: `${base}/${manifest.asset}`,
+      name: manifest.asset as string,
+      size: manifest.size as number,
+      version: manifest.version ?? "",
+      page,
+      sha256: manifest.sha256 ?? "",
+      distribution: "Debian bookworm",
+      commit: manifest.commit ?? "",
+      edition,
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function resolve(edition: IsoEdition): Promise<Resolved> {
   const page = `https://github.com/${repo()}/releases/latest`;
-  const github = await latestFromGithub(edition);
+  const github = (await directFromRelease(edition)) ?? (await latestFromGithub(edition));
   return (
     github ?? {
       ready: false,
