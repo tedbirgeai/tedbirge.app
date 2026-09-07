@@ -268,6 +268,16 @@ for d in dev dev/pts proc sys run; do
   mount --rbind "/$d" "$KOK/$d" || hata "Sistem dizini baglanamadi: /$d"
   mount --make-rslave "$KOK/$d" || hata "Sistem baglama guvenligi ayarlanamadi: /$d"
 done
+# chroot'a girmeden once tum sanal dosya sistemleri gercekten bagli olmali;
+# yarim kalan bir baglama update-initramfs/grub-install'i sessizce kilitler.
+for d in dev dev/pts proc sys run; do
+  mountpoint -q "$KOK/$d" || hata "Baglama dogrulanamadi: $KOK/$d"
+done
+# chroot icindeki paket tetikleyicileri hizmet baslatmaya kalkmasin; aksi
+# halde systemd iletisim kanali kapaliyken invoke-rc.d bekleyebilir.
+mkdir -p "$KOK/usr/sbin"
+printf '#!/bin/sh\nexit 101\n' > "$KOK/usr/sbin/policy-rc.d"
+chmod 0755 "$KOK/usr/sbin/policy-rc.d"
 [ -e /etc/resolv.conf ] && cp -L /etc/resolv.conf "$KOK/etc/resolv.conf" \
   || hata "Ag cozucu ayari hedefe kopyalanamadi."
 
