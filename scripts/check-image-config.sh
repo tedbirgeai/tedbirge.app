@@ -95,14 +95,15 @@ grep -q 'grub-install' "$KUR"    || hata "Kurulum aracı açılış yükleyicisi
 grep -q 'systemd' "$KUR"         || hata "Kurulum sonrası init doğrulaması yok."
 grep -q 'lsblk -ndo PKNAME' "$KUR" || hata "Canlı USB üst aygıtı güvenilir biçimde saptanmıyor."
 grep -q 'update-initramfs -u -k all' "$KUR" || hata "initramfs güncellemesi yok."
-grep -B2 'update-initramfs -u -k all' "$KUR" | grep -q 'timeout 300s' \
-  || hata "initramfs güncellemesi sert zaman aşımıyla (300s) korunmuyor."
+grep -B2 'update-initramfs -u -k all' "$KUR" | grep -q 'timeout 1800s' \
+  || hata "initramfs güncellemesi sert zaman aşımıyla (1800s) korunmuyor."
 grep -A2 'update-initramfs -u -k all' "$KUR" | grep -q 'hata "Acilis diski' \
   || hata "initramfs hatası kurulumu durdurmuyor (fail-safe yutuluyor)."
 grep -q 'boot/initrd.img-' "$KUR" \
   || hata "initramfs varlığı doğrulanmıyor."
-grep -B1 'update-grub' "$KUR" | grep -q 'timeout 120s' \
-  || hata "update-grub sert zaman aşımıyla (120s) korunmuyor."
+grep -B1 'update-grub' "$KUR" | grep -q 'timeout 600s' \
+  || hata "update-grub sert zaman aşımıyla (600s) korunmuyor."
+
 grep -A2 'update-grub < /dev/null' "$KUR" | grep -q 'hata "Acilis menusu' \
   || hata "update-grub hatası kurulumu durdurmuyor."
 grep -q 'GRUB_TERMINAL' "$KUR" || hata "GRUB seri konsol çıktısı yapılandırılmıyor."
