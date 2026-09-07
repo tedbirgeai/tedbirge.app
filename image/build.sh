@@ -139,18 +139,20 @@ timeout --foreground 90m stdbuf -oL -eL lb build
 ISO=$(ls -1 "$BUILD"/*.iso "$BUILD"/*.hybrid.iso 2>/dev/null | head -1 || true)
 [ -n "$ISO" ] || { echo "! ISO üretilmedi." >&2; ls -la "$BUILD" >&2; exit 1; }
 
-TARGET="$OUT/tedbirge-webos-x86_64.iso"
+BASENAME="tedbirge-webos-$EDITION-x86_64"
+TARGET="$OUT/$BASENAME.iso"
 cp "$ISO" "$TARGET"
 SAFE_VERSION=$(printf '%s' "$VERSION" | tr -c 'A-Za-z0-9._+-' '-')
-VERSIONED="tedbirge-webos-${SAFE_VERSION}-x86_64.iso"
+VERSIONED="tedbirge-webos-${SAFE_VERSION}-$EDITION-x86_64.iso"
 cp "$TARGET" "$OUT/$VERSIONED"
+MANIFEST="TEDBIRGE-ISO-MANIFEST-$EDITION.json"
 (
   cd "$OUT"
-  sha256sum tedbirge-webos-x86_64.iso "$VERSIONED" > SHA256SUMS
-  SHA=$(sha256sum tedbirge-webos-x86_64.iso | awk '{print $1}')
-  SIZE=$(stat -c%s tedbirge-webos-x86_64.iso)
-  cat > TEDBIRGE-ISO-MANIFEST.json <<EOF
-{"schema":1,"product":"Tedbirge WebOS","distribution":"Debian","codename":"bookworm","architecture":"x86_64","version":"$VERSION","commit":"$COMMIT","built_at":"$BUILD_TIME","asset":"tedbirge-webos-x86_64.iso","sha256":"$SHA","size":$SIZE,"validated":false}
+  sha256sum "$BASENAME.iso" "$VERSIONED" > "SHA256SUMS-$EDITION"
+  SHA=$(sha256sum "$BASENAME.iso" | awk '{print $1}')
+  SIZE=$(stat -c%s "$BASENAME.iso")
+  cat > "$MANIFEST" <<EOF
+{"schema":1,"product":"Tedbirge WebOS","edition":"$EDITION","distribution":"Debian","codename":"bookworm","architecture":"x86_64","version":"$VERSION","commit":"$COMMIT","built_at":"$BUILD_TIME","asset":"$BASENAME.iso","sha256":"$SHA","size":$SIZE,"validated":false}
 EOF
 )
 
