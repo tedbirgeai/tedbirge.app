@@ -102,11 +102,16 @@ DEBIAN_CODENAME=bookworm
 BUILD_COMMIT=$COMMIT
 BUILD_TIME=$BUILD_TIME
 VARIANT="live-kiosk"
+EDITION="$EDITION"
 HTTP_PORT=80
 EOF
 cat > config/includes.chroot/etc/tedbirge-image.json <<EOF
-{"product":"Tedbirge WebOS","distribution":"Debian","codename":"bookworm","version":"$VERSION","commit":"$COMMIT","built_at":"$BUILD_TIME","architecture":"x86_64"}
+{"product":"Tedbirge WebOS","edition":"$EDITION","distribution":"Debian","codename":"bookworm","version":"$VERSION","commit":"$COMMIT","built_at":"$BUILD_TIME","architecture":"x86_64"}
 EOF
+# Arayüz, çalıştığı sistemin sürümünü bu dosyadan okur (tek kod tabanı,
+# sürüme göre dokunmatik varsayılanlar).
+cp config/includes.chroot/etc/tedbirge-image.json \
+   config/includes.chroot/var/www/tedbirge/tedbirge-image.json
 
 chmod +x config/hooks/normal/*.hook.chroot
 
