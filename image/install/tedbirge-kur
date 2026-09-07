@@ -403,8 +403,13 @@ echo "==============================================="
 echo "USB bellegi cikarip bilgisayari yeniden baslatin."
 if [ "$OTO" = "1" ]; then
   for t in /dev/console /dev/ttyS0; do printf 'TEDBIRGE_INSTALL_OK\n' > "$t" 2>/dev/null; done
+  # ACPI S5 asamasinda asili kalmamak icin once systemd'nin zorlayici kapanisi,
+  # o da yoksa dogrudan cekirdek seviyesinde guc kesme denenir.
+  systemctl poweroff -i --no-block 2>/dev/null || true
+  sleep 3
   poweroff -f 2>/dev/null || halt -f
   exit 0
 fi
+
 read -r -p "Simdi yeniden baslatmak icin Enter, iptal icin Ctrl+C " _
 reboot
