@@ -349,15 +349,16 @@ baslik "Acilis yukleyici kuruluyor ($MOD)"
 if [ "$MOD" = "UEFI" ]; then
   uzun_adim "UEFI acilis yukleyicisi kuruluyor" timeout 300s chroot "$KOK" "${CHROOT_ENV[@]}" \
     grub-install --target=x86_64-efi --efi-directory=/boot/efi \
-    --bootloader-id=Tedbirge --recheck --removable --no-nvram --no-floppy \
+    --bootloader-id=Tedbirge --recheck --removable --no-nvram --no-floppy < /dev/null \
     || hata "UEFI acilis yukleyici kurulamadi."
 else
   uzun_adim "BIOS acilis yukleyicisi kuruluyor" timeout 300s chroot "$KOK" "${CHROOT_ENV[@]}" \
-    grub-install --target=i386-pc --recheck --no-floppy "$DEV" \
+    grub-install --target=i386-pc --recheck --no-floppy "$DEV" < /dev/null \
     || hata "BIOS acilis yukleyici kurulamadi."
 fi
 # Sert zaman asimi: ilerleme denetimine ek olarak islem hicbir kosulda
-# belirlenen sureyi asamaz (varsayilan 240s; yavas ortamlarda ayarlanabilir).
+# belirlenen sureyi asamaz; bu adim kilitlenirse mevcut acilis diskiyle devam
+# edilir ve alttaki dogrulama acilis dosyasi yoksa kurulumu durdurur.
 uzun_adim "Acilis diski guncelleniyor" timeout 90s \
   chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-initramfs -u -k all < /dev/null \
