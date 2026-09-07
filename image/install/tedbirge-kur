@@ -361,7 +361,7 @@ elif [ "$GUI" = "1" ]; then
 Model: ${DISK_MODEL:-bilinmiyor}
 Kapasite: $(numfmt --to=iec "$BOYUT")
 
-Bu disktekiTUM DOSYALAR, bolumler ve varsa kurulu isletim sistemi
+Bu diskteki TUM DOSYALAR, bolumler ve varsa kurulu isletim sistemi
 KALICI OLARAK SILINECEK. Geri alinamaz.
 
 Devam edilsin mi?" && ONAY=EVET || ONAY=HAYIR
