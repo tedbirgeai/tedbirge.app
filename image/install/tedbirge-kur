@@ -255,17 +255,24 @@ done
 
 # --------------------------------------------------------------- fstab
 KOK_UUID=$(blkid -s UUID -o value "$P2")
+SWAP_UUID=""
+[ -n "$P3" ] && SWAP_UUID=$(blkid -s UUID -o value "$P3" 2>/dev/null)
 {
   echo "UUID=$KOK_UUID / ext4 errors=remount-ro,noatime 0 1"
   if [ -n "$P1" ]; then
     echo "UUID=$(blkid -s UUID -o value "$P1") /boot/efi vfat umask=0077 0 1"
+  fi
+  if [ -n "$SWAP_UUID" ]; then
+    echo "UUID=$SWAP_UUID none swap sw 0 0"
   fi
   echo "tmpfs /tmp tmpfs defaults,nosuid,nodev 0 0"
 } > "$KOK/etc/fstab"
 
 # Canli acilis bilesenleri kalici sistemde kapatilir.
 rm -f "$KOK/etc/systemd/system/multi-user.target.wants/live-config.service" 2>/dev/null
-sed -i 's/^#\?GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet console=tty0 console=ttyS0,115200"/' \
+CEKIRDEK_SATIRI="quiet console=tty0 console=ttyS0,115200"
+[ -n "$SWAP_UUID" ] && CEKIRDEK_SATIRI="$CEKIRDEK_SATIRI resume=UUID=$SWAP_UUID"
+sed -i "s|^#\?GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$CEKIRDEK_SATIRI\"|" \
   "$KOK/etc/default/grub" 2>/dev/null || true
 
 # --------------------------------------- kalici sistem icin hizli initramfs
@@ -279,6 +286,13 @@ COMPRESS=zstd
 COMPRESSLEVEL=1
 BUSYBOX=y
 EOF
+# Derin uyku (S4) geri donusu: initramfs hangi bolumden uyanacagini bilmeli.
+if [ -n "$SWAP_UUID" ]; then
+  echo "RESUME=UUID=$SWAP_UUID" > "$KOK/etc/initramfs-tools/conf.d/resume"
+else
+  echo "RESUME=none" > "$KOK/etc/initramfs-tools/conf.d/resume"
+  echo "! Takas bolumu yok; derin uyku (hibernasyon) bu kurulumda devre disi."
+fi
 # os-prober disk taramasi CI/emulasyon ortaminda dakikalarca surebiliyor.
 grep -q '^GRUB_DISABLE_OS_PROBER=' "$KOK/etc/default/grub" 2>/dev/null \
   || echo 'GRUB_DISABLE_OS_PROBER=true' >> "$KOK/etc/default/grub"
