@@ -37,11 +37,13 @@ done
 [ ! -e image/config/package-lists/tedbirge.list.chroot ] \
   || hata "Eski tekil paket listesi duruyor; image/profiles/ kullanılıyor."
 
-# 3) Ortak paket listesi: sistemin açılması için zorunlu paketler
+# 3) Ortak paket listesi: sistemin açılması için zorunlu paketler.
+# "<paket>/<depo>" (ör. bookworm-backports hedeflemesi) biçimi de kabul edilir.
+paket_var() { grep -Eq "^$1(/[^[:space:]]+)?\$" "$2"; }
 for p in live-boot live-config linux-image-amd64 systemd-sysv chromium nginx-light \
          xserver-xorg xinit squashfs-tools zstd grub-pc-bin grub-efi-amd64-bin parted \
          upower firmware-sof-signed; do
-  grep -qx "$p" image/profiles/common.list \
+  paket_var "$p" image/profiles/common.list \
     || hata "Ortak paket listesinde '$p' yok."
 done
 # Dokunmatik sürümün kimlik paketleri
