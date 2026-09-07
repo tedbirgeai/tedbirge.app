@@ -32,6 +32,12 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Iki urun surumu tek depodan uretilir: workstation (masaustu/laptop) ve
+    # touch (tablet/2'si 1 arada). Her surum ayri is olarak derlenip dogrulanir.
+    strategy:
+      fail-fast: false
+      matrix:
+        edition: [workstation, touch]
     # ISO derleme + acilis testi + BIOS/UEFI kalici kurulum zinciri en kotu
     # durumda ~100 dakika surer; 120 dakika sinira cok yakindi.
     timeout-minutes: 180
@@ -107,10 +113,11 @@ jobs:
           fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
 
-      - name: ISO derle (Debian live-build · önceden pişirilmiş squashfs kök)
+      - name: ISO derle (Debian live-build · önceden pişirilmiş squashfs kök · ${{ matrix.edition }})
         run: |
           docker run --rm --privileged \
             -v "$PWD:/work" -w /work \
+            -e TEDBIRGE_EDITION="${{ matrix.edition }}" \
             -e TEDBIRGE_VERSION="${{ steps.ver.outputs.version }}" \
             -e TEDBIRGE_COMMIT="$GITHUB_SHA" \
             -e TEDBIRGE_BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
