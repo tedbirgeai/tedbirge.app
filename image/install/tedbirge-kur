@@ -9,26 +9,50 @@ export DEBIAN_FRONTEND=noninteractive
 export APT_LISTCHANGES_FRONTEND=none
 export UCF_FORCE_CONFFOLD=1
 
-# Uzun disk islemlerini sinirlar ve cikti olmasa bile duzenli ilerleme mesaji
-# yazar. Boylece gercek bir takilma ile yavas disk islemi birbirinden ayrilir.
-uzun_adim() { # ad, saniye, komut...
-  local ad="$1" limit="$2" pid baslangic simdi rc
-  shift 2
-  echo "-- $ad (en fazla ${limit}s)"
-  stdbuf -oL -eL timeout --foreground "${limit}s" "$@" &
-  pid=$!; baslangic=$(date +%s)
+# Uzun disk islemlerini SABIT bir sureyle degil, PROSES AKTIVITESI ile denetler.
+# Islem CPU zamani veya diske yazma sayaci ilerledigi surece asla kesilmez;
+# yalnizca gercekten kilitlenirse (belirlenen sure boyunca hicbir ilerleme yok)
+# durdurulur. Boylece yavas ama saglikli CI/emulasyon ortamlari cezalandirilmaz.
+STALL="${TEDBIRGE_STALL_SECONDS:-300}"
+
+surec_ilerlemesi() { # pid -> "cpu_tick io_bayt"
+  local pid="$1" cpu=0 io=0
+  # Cocuk sureclerin toplam CPU zamani (utime+stime, tick).
+  cpu=$(awk '{print $14+$15+$16+$17}' "/proc/$pid/stat" 2>/dev/null || echo 0)
+  io=$(awk '/^(read|write)_bytes:/ {t+=$2} END{print t+0}' "/proc/$pid/io" 2>/dev/null || echo 0)
+  printf '%s %s' "${cpu:-0}" "${io:-0}"
+}
+
+uzun_adim() { # ad, komut...
+  local ad="$1" pid baslangic simdi rc onceki suanki sessiz=0
+  shift
+  echo "-- $ad (kilitlenme denetimi: ${STALL}s ilerlemesizlik)"
+  stdbuf -oL -eL "$@" &
+  pid=$!; baslangic=$(date +%s); onceki=$(surec_ilerlemesi "$pid")
   while kill -0 "$pid" 2>/dev/null; do
     sleep 15
     kill -0 "$pid" 2>/dev/null || break
     simdi=$(date +%s)
-    echo "... $ad suruyor ($((simdi - baslangic))s)"
+    suanki=$(surec_ilerlemesi "$pid")
+    if [ "$suanki" = "$onceki" ]; then
+      sessiz=$((sessiz + 15))
+    else
+      sessiz=0; onceki="$suanki"
+    fi
+    echo "... $ad suruyor ($((simdi - baslangic))s, ilerlemesiz ${sessiz}s)"
+    if [ "$sessiz" -ge "$STALL" ]; then
+      echo "! $ad ${STALL}s boyunca hicbir ilerleme kaydetmedi; kilitlendi." >&2
+      kill -TERM "$pid" 2>/dev/null
+      sleep 5
+      kill -KILL "$pid" 2>/dev/null
+      wait "$pid" 2>/dev/null
+      return 125
+    fi
   done
   wait "$pid"; rc=$?
-  if [ "$rc" = 124 ]; then
-    echo "! $ad zaman asimina ugradi (${limit}s)." >&2
-  fi
   return "$rc"
 }
+
 
 MIN_BAYT=$((8 * 1024 * 1024 * 1024))
 # Gozetimsiz kurulum: cekirdek satirinda tedbirge.autoinstall=1 varsa veya
