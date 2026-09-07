@@ -82,7 +82,32 @@ PY
 }
 
 
+# Sessiz UEFI acilis hatalarinda diskin acilis bolumunu (ESP) disaridan okur.
+esp_denetle() { # qcow2-disk
+  local disk="$1" ham="build-iso/esp-denetim.raw" ofs
+  command -v mdir >/dev/null 2>&1 || { echo "(ESP denetimi icin mtools yok)"; return 0; }
+  qemu-img convert -f qcow2 -O raw "$disk" "$ham" 2>/dev/null || return 0
+  echo "---- disk bolum tablosu ----"; sfdisk -l "$ham" 2>/dev/null || true
+  ofs=$(sfdisk -J "$ham" 2>/dev/null | python3 -c '
+import json,sys
+try: t=json.load(sys.stdin)["partitiontable"]
+except Exception: sys.exit()
+s=t.get("sectorsize",512)
+for p in t.get("partitions",[]):
+    if "EFI" in str(p.get("name","")) or str(p.get("type","")).upper().startswith("C12A7328"):
+        print(p["start"]*s); break
+')
+  if [ -n "${ofs:-}" ]; then
+    echo "---- ESP icerigi (EFI/BOOT) ----"
+    mdir -i "$ham@@$ofs" ::/EFI/BOOT 2>&1 | head -20 || true
+  else
+    echo "(ESP bolumu bulunamadi)"
+  fi
+  rm -f "$ham"
+}
+
 kurulum_senaryosu() {
+
   local mod="$1"; shift
   local disk="build-iso/kurulum-${mod}.qcow2"
   local log1="build-iso/kurulum-${mod}-asama1.log"
