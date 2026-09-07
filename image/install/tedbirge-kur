@@ -1,5 +1,5 @@
 #!/bin/bash
-# Tedbirge(R) WebOS — kalici disk kurulumu (Debian canli sistem uzerinde).
+# Tedbirge® WebOS — kalici disk kurulumu (Debian canli sistem uzerinde).
 # ------------------------------------------------------------------
 # Model: canli sistemin ONCEDEN PISIRILMIS koku (squashfs) hedefe acilir.
 # Hedef bilgisayarda paket kurulumu YAPILMAZ; internet gerekmez.
@@ -90,7 +90,7 @@ trap temizle EXIT INT TERM
 
 clear 2>/dev/null || true
 echo "==============================================="
-echo "   TEDBIRGE(R) WebOS — Diske Kurulum"
+echo "   Tedbirge® WebOS — Diske Kurulum"
 echo "==============================================="
 echo ""
 echo "Bu islem secilen diskteki TUM VERIYI SILER."
