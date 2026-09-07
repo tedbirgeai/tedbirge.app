@@ -122,6 +122,11 @@ jobs:
             -e TEDBIRGE_COMMIT="$GITHUB_SHA" \
             -e TEDBIRGE_BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             debian:bookworm bash /work/image/build.sh
+          # Docker kök kullanıcı olarak yazar; sonraki adımlar (manifest güncelleme,
+          # artifact yükleme) yazma izni ister. Sahipliği koşucu kullanıcısına al.
+          sudo chown -R "$(id -u):$(id -g)" build-iso
+
+
 
       - name: İmajı doğrula (sahte çıktı yayınlanmaz)
         run: |
