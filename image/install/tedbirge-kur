@@ -229,13 +229,15 @@ trap temizle EXIT INT TERM
 
 [ "$(id -u)" = "0" ] || hata "Bu araci yonetici olarak calistirin: sudo tedbirge-kur"
 
-clear 2>/dev/null || true
-echo "==============================================="
-echo "   Tedbirge® WebOS — Diske Kurulum"
-echo "==============================================="
-echo ""
-echo "Bu islem secilen diskteki TUM VERIYI SILER."
-echo ""
+if [ "$GUI" != "1" ]; then
+  clear 2>/dev/null || true
+  echo "==============================================="
+  echo "   Tedbirge(R) WebOS — Diske Kurulum"
+  echo "==============================================="
+  echo ""
+  echo "Bu islem secilen diskteki TUM VERIYI SILER."
+  echo ""
+fi
 
 # --------------------------------------------------------- kaynak dogrulama
 if [ ! -s "$SQUASH" ]; then
@@ -255,7 +257,48 @@ else
 fi
 echo "Acilis kipi: $MOD"
 
-# ------------------------------------------------------------ disk secimi
+# ------------------------------------------------------- 1/6 hos geldiniz
+if [ "$GUI" = "1" ]; then
+  p_bilgi "Adim 1/6 — Hos geldiniz" \
+"Tedbirge(R) WebOS bilgisayarinizin diskine kalici olarak kurulacak.
+
+Ne olacak:
+ * Sececeginiz disk tamamen silinip yeniden bolumlenir.
+ * Hazir sistem imaji diske acilir (internet gerekmez).
+ * Acilis yukleyicisi kurulur ve bilgisayar tek basina acilir.
+
+Sure: yaklasik 5-15 dakika (diskin hizina gore).
+Acilis kipi: $MOD
+
+Kurulum boyunca her adimda ne oldugunu goreceksiniz. Iptal etmek
+istediginiz anda 'Iptal' secebilirsiniz; o ana kadar diske hicbir
+kalici degisiklik yapilmaz." || hata "Kurulum iptal edildi."
+fi
+
+# ------------------------------------------------- 2/6 klavye ve saat dilimi
+if [ "$GUI" = "1" ]; then
+  KLAVYE=$(p_menu "Adim 2/6 — Klavye duzeni" \
+"Kullanacaginiz klavye duzenini secin. Emin degilseniz 'Turkce Q' secin." \
+    "tr" "Turkce Q (varsayilan)" \
+    "trf" "Turkce F" \
+    "us" "Ingilizce (US)") || hata "Kurulum iptal edildi."
+  loadkeys "$KLAVYE" >/dev/null 2>&1 || true
+  ZAMAN="Europe/Istanbul"
+  if p_soru "Adim 2/6 — Saat dilimi" \
+"Saat dilimi 'Europe/Istanbul' olarak ayarlanacak.
+
+Farkli bir ulkedeyseniz 'Hayir' secin; sistem saati UTC olarak kalir
+ve kurulum sonrasinda Ayarlar'dan degistirebilirsiniz."; then
+    ZAMAN="Europe/Istanbul"
+  else
+    ZAMAN="UTC"
+  fi
+  echo "klavye: $KLAVYE, saat dilimi: $ZAMAN"
+else
+  KLAVYE="tr"; ZAMAN="Europe/Istanbul"
+fi
+
+# --------------------------------------------------------- 3/6 disk secimi
 baslik "Kurulabilir diskler"
 KAYNAK=$(findmnt -n -o SOURCE /run/live/medium 2>/dev/null || true)
 CANLI=""
@@ -263,16 +306,31 @@ if [ -n "$KAYNAK" ]; then
   CANLI=$(lsblk -ndo PKNAME "$KAYNAK" 2>/dev/null | head -1)
   [ -n "$CANLI" ] || CANLI=$(basename "$KAYNAK")
 fi
-lsblk -dnro NAME,SIZE,MODEL,TYPE | awk '$4=="disk"' | while read -r n s m t; do
-  case "$n" in "$CANLI") continue ;; esac
-  printf "  %-10s %-8s %s\n" "$n" "$s" "$m"
-done
-echo ""
+DISK_LISTE=$(lsblk -bdnro NAME,SIZE,TYPE,MODEL | awk -v c="$CANLI" -v min="$MIN_BAYT" '
+  $3=="disk" && $1!=c && $2>=min {
+    model=""; for (i=4; i<=NF; i++) model = model (i>4 ? " " : "") $i
+    if (model == "") model = "disk"
+    printf "%s\t%.0f GB — %s\n", $1, $2/1000000000, model
+  }')
+
 if [ "$OTO" = "1" ]; then
   HEDEF=$(lsblk -bdnro NAME,TYPE,SIZE,RO | awk -v c="$CANLI" -v min="$MIN_BAYT" \
     '$2=="disk" && $1!=c && $3>=min && $4==0 {print $1; exit}')
   echo "Gozetimsiz kurulum hedefi: $HEDEF"
+elif [ "$GUI" = "1" ]; then
+  [ -n "$DISK_LISTE" ] || hata "Kurulum yapilabilecek bir disk bulunamadi (en az 8 GB gerekir). Disk kablosunu denetleyip yeniden deneyin."
+  # shellcheck disable=SC2046
+  OLDIFS=$IFS; IFS=$'\n\t'
+  # shellcheck disable=SC2086
+  HEDEF=$(p_menu "Adim 3/6 — Kurulum diski" \
+"Tedbirge(R) WebOS hangi diske kurulsun?
+
+Ok tuslariyla secin, Enter ile onaylayin. Uzerinden calistiginiz
+USB bellek listede yer almaz." $DISK_LISTE) || { IFS=$OLDIFS; hata "Kurulum iptal edildi."; }
+  IFS=$OLDIFS
 else
+  printf '%s\n' "$DISK_LISTE" | sed 's/^/  /'
+  echo ""
   read -r -p "Hedef disk adi (ornek: sda) [bos = iptal]: " HEDEF
 fi
 [ -n "${HEDEF:-}" ] || hata "Kurulum iptal edildi."
@@ -287,16 +345,32 @@ HEDEF_DISK="$HEDEF"
 BOYUT=$(blockdev --getsize64 "$DEV")
 [ "$BOYUT" -ge "$MIN_BAYT" ] || hata "Disk cok kucuk (en az 8 GB gerekir)."
 KIMLIK=$(lsblk -dnro MAJ:MIN "$DEV")
+DISK_MODEL=$(lsblk -dnro MODEL "$DEV" 2>/dev/null | head -1)
 
 echo ""
 echo "SECILEN DISK: $DEV ($(numfmt --to=iec "$BOYUT"))"
 echo "Bu diskteki her sey silinecek."
+# ------------------------------------------- 4/6 silme onayi ve 5/6 ozet
+# Onay artik yazi yazarak degil, Evet/Hayir dugmesiyle verilir. Eski akista
+# kucuk harfle "evet" yazan kullanici sessizce bos ekrana dusuyordu.
 if [ "$OTO" = "1" ]; then
   ONAY=EVET
+elif [ "$GUI" = "1" ]; then
+  p_soru "Adim 4/6 — DIKKAT: disk silinecek" \
+"Secilen disk: $DEV
+Model: ${DISK_MODEL:-bilinmiyor}
+Kapasite: $(numfmt --to=iec "$BOYUT")
+
+Bu disktekiTUM DOSYALAR, bolumler ve varsa kurulu isletim sistemi
+KALICI OLARAK SILINECEK. Geri alinamaz.
+
+Devam edilsin mi?" && ONAY=EVET || ONAY=HAYIR
 else
   read -r -p "Devam etmek icin buyuk harfle EVET yazin: " ONAY
+  case "$ONAY" in [Ee][Vv][Ee][Tt]) ONAY=EVET ;; esac
 fi
 [ "$ONAY" = "EVET" ] || hata "Kurulum iptal edildi."
+
 
 [ -b "$DEV" ] || hata "Disk artik bagli degil."
 [ "$(lsblk -dnro MAJ:MIN "$DEV")" = "$KIMLIK" ] || hata "Disk kimligi degisti; guvenlik icin durduruldu."
