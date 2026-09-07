@@ -1,68 +1,26 @@
-# BÖLÜNMÜŞ DERLEME PLANI — Workstation vs. Touch & Mobile
+# Kalıcı kurulum testinde QEMU kapanış kilidini bitirme
 
-Bu tur hiçbir dosya değiştirilmedi. Analiz `image/build.sh`, `image/config/package-lists/tedbirge.list.chroot`, `9000-tedbirge.hook.chroot`, `image/install/tedbirge-kur` ve `scripts/check-image-config.sh` okunarak yapıldı.
+Kurulum artık gerçekten başarılı: kayıtlarda hem `TEDBIRGE_INSTALL_OK` hem `TEDBIRGE_BOOT_READY` görünüyor. Tek başarısızlık nedeni, test aracının sanal makineyi kapatırken 30 saniye içinde yanıt alamayıp koşuyu "başarısız (kod 4)" saymasi. Yani ürün sağlam, ölçüm aracı hatalı.
 
-## 1) Mimari değerlendirme — bölme mantıklı mı?
+## Yapılacaklar
 
-Kısa yanıt: **evet, ama paket listesi düzeyinde bölme; iki ayrı derleme hattı değil.**
+1. Sanal makine başlatma parametreleri
+   - Her iki aşamada da `-no-reboot` yanına `-action shutdown=poweroff` eklenir; konuk sistem kapandığında emülatör kendiliğinden sıfır koduyla sonlanır.
 
-Sayısal gerçekler:
+2. Kapanış bekleme mantığı (asıl düzeltme)
+   - Bekleme süresi 30 saniyeden 60 saniyeye çıkarılır.
+   - Başarı bayrağı (`TEDBIRGE_INSTALL_OK` / `TEDBIRGE_BOOT_READY`) kayda düşmüşse ve emülatör 60 saniyede kapanmamışsa, süreç zorla sonlandırılır ve aşama BAŞARILI sayılır.
+   - Bayrak yoksa eski davranış korunur: kilitlenme gerçek hata olarak raporlanır ve imaj yayınlanmaz.
+   - Zorla sonlandırma sonrası bilgi amaçlı uyarı satırı yazılır (sessizce yutulmaz).
 
-| Ölçüt | Tek birleşik ISO | İki profil |
-| --- | --- | --- |
-| ISO boyutu | ~2.6–3.0 GB (tüm firmware + dokunmatik yığın) | Workstation ~2.4–2.7 GB · Touch ~2.6–2.9 GB |
-| Derleme süresi (CI) | ~35–50 dk | Her profil ~35–45 dk; **paralel** iki iş → duvar saati aynı, CI dakikası 2× |
-| Çalışma zamanı RAM | Fark ~40–70 MB (iio-sensor-proxy, sanal klavye, wacom girdi sürücüsü) | Workstation'da bu servisler hiç yok |
-| Bakım yükü | 1 liste | 3 liste (ortak + 2 profil) + 2 doğrulama matrisi |
+3. Konuk taraf kapanışı
+   - Kurulum sonunda `poweroff -f` zaten çağrılıyor; ek olarak öncesinde `systemctl poweroff -i --no-block` denenip başarısızsa `poweroff -f`/`halt -f` zincirine düşülür, böylece ACPI S5 aşamasında asılı kalma ihtimali kapanır.
 
-Kritik nokta — dürüst beyan: **boyutun büyük kısmı ayrılamaz.** `linux-image`, `linux-firmware` (Wi-Fi/GPU firmware), Mesa, Xorg ve Chromium toplamın ~%85'ini oluşturur ve her iki sürümde de zorunludur. Dokunmatik/sensör katmanı ISO'ya ancak **~40–80 MB** ekler. Yani bölmenin gerçek kazancı **disk boyutu değil**, şunlardır:
+4. Doğrulama
+   - Betik sözdizimi kontrolü ve imaj yapılandırma denetimi çalıştırılır.
+   - Değişiklik yayınlandığında CI hattı yeniden tetiklenir; iki sürüm (workstation, touch) için BIOS ve UEFI zincirinin tamamının geçmesi beklenir.
 
-- Workstation'da gereksiz servis çalışmaz (daha temiz süreç tablosu, daha az D-Bus yüzeyi, daha hızlı açılış ~1–2 sn).
-- Touch sürümünde dokunmatik odaklı kabuk davranışı (sanal klavye, jest, döndürme) varsayılan açık gelir — masaüstünde bu yanlış davranış olurdu.
-- Hata alanı ayrışır: dokunmatik regresyonu masaüstü kullanıcısını etkilemez.
+## Teknik ayrıntı
 
-Bunun karşılığında CI dakikası ikiye katlanır ve her donanım düzeltmesi iki matriste doğrulanmalıdır. Bu maliyet, yalnız ortak taban tek yerde tutulursa (aşağıdaki `common` listesi) kabul edilebilir.
-
-Alternatif olarak değerlendirilip **reddedilen** yol: tek ISO + açılışta donanım tespitiyle servisleri etkinleştirme. Reddi nedeni: dokunmatik cihaz tespiti (ACPI convertible/tablet mode) güvenilmez, hatalı tespit masaüstünde sanal klavyenin açılmasına yol açar; ayrıca "sıfır sürtünme" ilkesine ters şekilde davranış çalışma zamanında değişkenleşir.
-
-Önerilen model: **tek `image/build.sh`, `--profile` argümanı ile iki ürün.** Ortak taban ve tüm boot/kurulum mantığı tek kaynakta kalır (Unix ilkesi: tek iş, iyi yap — build betiği yalnız derler, profil yalnız paket/servis seçer).
-
-## 2) Bölünmüş uygulama planı (adım adım)
-
-### Adım 1 — Paket listelerinin üçe ayrılması
-`image/config/package-lists/` yeniden düzenlenir:
-- `common.list.chroot` — live-boot, çekirdek, Xorg, Mesa, Chromium, nginx, NetworkManager, PipeWire, depolama/kurulum araçları, tüm Wi-Fi/BT/GPU firmware, `upower`, `udisks2`, `fwupd`, `v4l-utils`.
-- `workstation.list.chroot` — `thermald`, `power-profiles-daemon`, `smartmontools`, `bolt`, `ddcutil`, `mdadm`, `intel-media-va-driver-non-free`, `vulkan-tools`.
-- `touch.list.chroot` — `iio-sensor-proxy`, `xserver-xorg-input-wacom`, `libwacom-common`, `onboard` (ekran klavyesi), `libinput-tools`, `i2c-tools`, `xinput`, dokunmatik jest yardımcıları.
-Derleme başında yalnız seçilen profilin listesi `config/package-lists/` içine kopyalanır; diğeri hiç girmez.
-
-### Adım 2 — `image/build.sh` profil argümanı
-`TEDBIRGE_EDITION=workstation|touch` (varsayılan `workstation`). Değişen tek şeyler: kopyalanan paket listesi, `--iso-application`/`--iso-volume` etiketi (`TEDBIRGE_WS` / `TEDBIRGE_TOUCH`), çıktı adı (`tedbirge-webos-workstation-x86_64.iso`, `tedbirge-webos-touch-x86_64.iso`) ve manifest içindeki `edition` alanı. Boot menüsü, kurulum aracı, hazır sinyali, seri konsol — hepsi ortak kalır.
-
-### Adım 3 — Servis etkinleştirmenin profile duyarlı hâle gelmesi
-`9000-tedbirge.hook.chroot` içinde ortak servisler her zaman etkinleşir; profil servisleri yalnız o paket kuruluysa (`systemctl enable X || true` yerine `dpkg -s X` kontrolü ile) etkinleşir. Böylece hook tek dosya kalır, profil listesi tek doğruluk kaynağı olur.
-
-### Adım 4 — Kabuk (arayüz) tarafı tek kod, farklı varsayılan
-`/etc/tedbirge-release` içine `EDITION=workstation|touch` yazılır. Arayüz bunu okuyup dokunmatik varsayılanlarını (büyük dokunma hedefleri, sanal klavye çağrısı, jest katmanı) açar/kapatır. Ayrı bir arayüz derlemesi yapılmaz — tek `dist`, tek davranış anahtarı.
-
-### Adım 5 — Donanım katmanının tamamlanması (her iki profile de yansır)
-Önceki donanım denetiminde çıkan eksikler ortak veya profil listelerine dağıtılır: backports çekirdeği (yeni Intel/AMD/Nvidia için zorunlu), `firmware-sof-signed`, `firmware-mediatek`, `firmware-nvidia-graphics` (`non-free`), `modemmanager` + `libmbim/libqmi` + `usb-modeswitch`, `brightnessctl` ile gerçek donanım parlaklığı, `upower` ile gerçek pil, kurulu sistemde `MODULES=most` portatifliği.
-
-### Adım 6 — CI matrisi
-`.github/workflows/build-iso.yml` `strategy.matrix.edition: [workstation, touch]` ile paralel iki iş üretir. Doğrulama (`verify-iso.sh`, QEMU BIOS/UEFI/kurulum) her iki imaj için ayrı koşar; Touch matrisine QEMU dokunmatik aygıt (`-device usb-tablet`) senaryosu eklenir. Release'e iki ISO + tek `SHA256SUMS` yüklenir.
-
-### Adım 7 — Doğrulama betiği
-`scripts/check-image-config.sh` profil farkındalığı kazanır: ortak zorunlu paketler her iki listede aranır, profil paketleri yalnız kendi listesinde; iki `.iso` adının ve `edition` alanının manifestte bulunduğu denetlenir.
-
-### Adım 8 — İndirme sayfası
-`BareMetalIso` bölümü iki seçenek gösterir: "Masaüstü & Dizüstü" ve "Tablet & Dokunmatik", her biri kısa bir "hangisini seçmeliyim" açıklamasıyla.
-
-### Adım 9 — ARM64 / mobil (bu derlemenin dışında)
-Touch Edition ileride ARM64 kolunun tabanı olur; ancak Snapdragon/MediaTek/Exynos telefonlar cihaz ağacı, üretici önyükleyicisi ve kilitli bootloader nedeniyle ayrı bir port hattı gerektirir. Bu, ayrı bir faz olarak planlanır; şimdi söz verilmez.
-
-## Riskler
-- CI dakikası iki katına çıkar; ISO boyutu kazancı küçüktür (asıl kazanç davranış ve servis temizliğidir).
-- İki imaj = iki doğrulama matrisi; bir düzeltme unutulursa sürümler ayrışır. Ortak taban tek dosyada tutularak bu risk sınırlanır.
-- Convertible cihazlarda kullanıcı yanlış sürümü indirebilir; indirme sayfasındaki açıklama bunu azaltır.
-
-Onaylarsanız Adım 1–8 tek turda uygulanır; Adım 9 ayrı faz olarak kalır.
+Dosyalar: `scripts/test-install-qemu.sh` (parametreler + `qemu_temiz_kapat` ve `kurulum_senaryosu` içindeki dönüş kodu değerlendirmesi), `image/install/tedbirge-kur` (kapanış zinciri).
+`QEMU_STOP_TIMEOUT` varsayılanı 60 olur. `qemu_temiz_kapat` yeni bir "bayrak görüldü mü" argümanı alır; görülmüşse `kill -9` sonrası 0 döner, görülmemişse 1 döner ve senaryo başarısız olur.
