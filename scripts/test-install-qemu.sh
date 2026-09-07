@@ -82,7 +82,32 @@ PY
 }
 
 
+# Sessiz UEFI acilis hatalarinda diskin acilis bolumunu (ESP) disaridan okur.
+esp_denetle() { # qcow2-disk
+  local disk="$1" ham="build-iso/esp-denetim.raw" ofs
+  command -v mdir >/dev/null 2>&1 || { echo "(ESP denetimi icin mtools yok)"; return 0; }
+  qemu-img convert -f qcow2 -O raw "$disk" "$ham" 2>/dev/null || return 0
+  echo "---- disk bolum tablosu ----"; sfdisk -l "$ham" 2>/dev/null || true
+  ofs=$(sfdisk -J "$ham" 2>/dev/null | python3 -c '
+import json,sys
+try: t=json.load(sys.stdin)["partitiontable"]
+except Exception: sys.exit()
+s=t.get("sectorsize",512)
+for p in t.get("partitions",[]):
+    if "EFI" in str(p.get("name","")) or str(p.get("type","")).upper().startswith("C12A7328"):
+        print(p["start"]*s); break
+')
+  if [ -n "${ofs:-}" ]; then
+    echo "---- ESP icerigi (EFI/BOOT) ----"
+    mdir -i "$ham@@$ofs" ::/EFI/BOOT 2>&1 | head -20 || true
+  else
+    echo "(ESP bolumu bulunamadi)"
+  fi
+  rm -f "$ham"
+}
+
 kurulum_senaryosu() {
+
   local mod="$1"; shift
   local disk="build-iso/kurulum-${mod}.qcow2"
   local log1="build-iso/kurulum-${mod}-asama1.log"
@@ -117,12 +142,15 @@ kurulum_senaryosu() {
   echo "==== $mod 2. aşama: kurulan sistemden SATA açılışı ===="
   # Kurulumda virtio yalnızca TCG altında kopyalamayı hızlandırır. Yeniden açılış
   # gerçek dizüstü/masaüstü bilgisayarlar gibi AHCI/SATA üzerinden yapılır.
-  # Bazı OVMF sürümleri virtio diski açılış aygıtı olarak hiç görmez ve seri
-  # porta tek satır yazmadan bekler; eski 15 dakikalık sahte "donma" buydu.
+  # NOT: UEFI'de "-boot order=c,menu=on" firmware'i acilis yoneticisi ekraninda
+  # sonsuz bekletebilir (seri porta tek satir bile dusmez). Bu yuzden acilis
+  # sirasi yalnizca BIOS'ta verilir; UEFI'de bootindex yeterlidir.
+  local BOOTARG=(-boot order=c)
+  [ "$mod" = "uefi" ] && BOOTARG=()
   stdbuf -oL -eL qemu-system-x86_64 -m 4096 -smp 4 -accel tcg,thread=multi -display none \
     -no-reboot -action shutdown=poweroff "$@" \
     -qmp unix:"$qmp2",server=on,wait=off \
-    -boot order=c,menu=on \
+    ${BOOTARG[@]+"${BOOTARG[@]}"} \
     -device ahci,id=system-ahci \
     -drive if=none,id=system-disk,file="$disk",format=qcow2,cache=unsafe \
     -device ide-hd,bus=system-ahci.0,drive=system-disk,bootindex=1 \
@@ -138,29 +166,48 @@ kurulum_senaryosu() {
 
   tail -n 60 "$log2" 2>/dev/null
   if [ "$rc" != 0 ]; then
-    # Sessiz acilis hatasi bir daha kor nokta kalmasin: firmware ve emulator
-    # kayitlarinin son satirlari da hata ciktisina basilir.
+    # Sessiz acilis hatasi bir daha kor nokta kalmasin: firmware, emulator ve
+    # diskin acilis bolumu (ESP) icerigi hata ciktisina basilir.
     echo "---- $mod UEFI/BIOS firmware kaydi (son 40 satir) ----"
     tail -n 40 "build-iso/kurulum-${mod}-firmware.log" 2>/dev/null || echo "(firmware kaydi yok)"
     echo "---- $mod emulator hata kaydi (son 40 satir) ----"
     tail -n 40 "build-iso/kurulum-${mod}-asama2.stderr.log" 2>/dev/null || echo "(kayit yok)"
+    esp_denetle "$disk"
     echo "::error::$mod kurulu sistem açılış testi başarısız (kod $rc)."
     return 1
   fi
+
   echo "✓ $mod kalıcı kurulum zinciri geçti."
 }
 
 HATA=0
 kurulum_senaryosu bios || HATA=1
 
+# UEFI firmware secimi DETERMINISTIK olmali: rastgele bulunan bir dosya
+# "secboot/ms" surumu olabilir (imzasiz GRUB reddedilir, seri porta tek satir
+# dusmez) ya da CODE 4M iken VARS 2M olup firmware hic baslamaz.
 OVMF_CODE="${OVMF_CODE:-}"; OVMF_VARS="${OVMF_VARS:-}"
-[ -n "$OVMF_CODE" ] || OVMF_CODE=$(find /usr/share -type f -name 'OVMF_CODE*.fd' -print -quit)
-[ -n "$OVMF_VARS" ] || OVMF_VARS=$(find /usr/share -type f -name 'OVMF_VARS*.fd' -print -quit)
-[ -r "$OVMF_CODE" ] && [ -r "$OVMF_VARS" ] || { echo "::error::UEFI firmware bulunamadı"; exit 1; }
+if [ -z "$OVMF_CODE" ] || [ -z "$OVMF_VARS" ]; then
+  for c in /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_CODE.fd \
+           /usr/share/ovmf/OVMF_CODE.fd /usr/share/edk2-ovmf/x64/OVMF_CODE.fd; do
+    [ -r "$c" ] || continue
+    v="${c/CODE/VARS}"
+    [ -r "$v" ] || continue
+    OVMF_CODE="$c"; OVMF_VARS="$v"; break
+  done
+fi
+[ -r "${OVMF_CODE:-}" ] && [ -r "${OVMF_VARS:-}" ] \
+  || { echo "::error::UEFI firmware (guvenli onyukleme kapali OVMF) bulunamadı"; exit 1; }
+case "$OVMF_CODE" in *secboot*|*.ms.*) echo "::error::Guvenli onyuklemeli OVMF secildi: $OVMF_CODE"; exit 1;; esac
+echo "UEFI firmware: $OVMF_CODE + $OVMF_VARS"
+# Her kosuda TEMIZ degisken deposu: onceki asamadan kalan gecersiz acilis
+# kaydi firmware'i bekletebilir.
+rm -f build-iso/kurulum-OVMF_VARS.fd
 cp "$OVMF_VARS" build-iso/kurulum-OVMF_VARS.fd
 kurulum_senaryosu uefi \
   -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
   -drive if=pflash,format=raw,file=build-iso/kurulum-OVMF_VARS.fd || HATA=1
+
 
 # Onceden bu betik senaryolar basarisiz olsa bile 0 ile cikiyordu; hatali imaj
 # yayinlanabiliyordu. Artik tek bir basarisiz senaryo bile is akisini durdurur.
