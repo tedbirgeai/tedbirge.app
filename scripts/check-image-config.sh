@@ -14,7 +14,9 @@ grep -rq "alpine/ci-build.sh" .github/workflows/ && hata "Yayın hattı hâlâ A
 for f in \
   image/build.sh \
   image/install/tedbirge-kur \
-  image/config/package-lists/tedbirge.list.chroot \
+  image/profiles/common.list \
+  image/profiles/workstation.list \
+  image/profiles/touch.list \
   image/config/hooks/normal/9000-tedbirge.hook.chroot \
   image/config/includes.chroot/etc/nginx/sites-available/tedbirge.conf \
   image/config/includes.chroot/opt/tedbirge/kiosk.sh \
@@ -31,18 +33,36 @@ do
   [ -s "$f" ] || hata "Zorunlu dosya yok: $f"
 done
 
-# 3) Paket listesi: sistemin açılması için zorunlu paketler
+# Tek paket listesi kalıntısı kalmamalı: profiller tek doğruluk kaynağıdır.
+[ ! -e image/config/package-lists/tedbirge.list.chroot ] \
+  || hata "Eski tekil paket listesi duruyor; image/profiles/ kullanılıyor."
+
+# 3) Ortak paket listesi: sistemin açılması için zorunlu paketler
 for p in live-boot live-config linux-image-amd64 systemd-sysv chromium nginx-light \
-         xserver-xorg xinit squashfs-tools zstd grub-pc-bin grub-efi-amd64-bin parted; do
-  grep -qx "$p" image/config/package-lists/tedbirge.list.chroot \
-    || hata "Paket listesinde '$p' yok."
+         xserver-xorg xinit squashfs-tools zstd grub-pc-bin grub-efi-amd64-bin parted \
+         upower firmware-sof-signed; do
+  grep -qx "$p" image/profiles/common.list \
+    || hata "Ortak paket listesinde '$p' yok."
+done
+# Dokunmatik sürümün kimlik paketleri
+for p in iio-sensor-proxy onboard wacomtablet xserver-xorg-input-libinput; do
+  grep -qx "$p" image/profiles/touch.list \
+    || hata "Touch paket listesinde '$p' yok."
+done
+# İş istasyonu sürümünün kimlik paketleri
+for p in power-profiles-daemon thermald; do
+  grep -qx "$p" image/profiles/workstation.list \
+    || hata "Workstation paket listesinde '$p' yok."
 done
 
 # 4) Açılış hattı: hazır sinyali ve seri konsol
 grep -q "console=ttyS0" image/build.sh || hata "Seri konsol açılış satırında yok; CI testi kör kalır."
 grep -q "TEDBIRGE_BOOT_READY" image/config/includes.chroot/opt/tedbirge/tedbirge-ready.sh \
   || hata "Hazır sinyali tanımlı değil."
-grep -q "TEDBIRGE_WEBOS" image/build.sh || hata "ISO birim etiketi tanımlı değil."
+grep -q 'VOLUME_ID=' image/build.sh || hata "ISO birim etiketi tanımlı değil."
+grep -q 'TEDBIRGE_EDITION' image/build.sh || hata "Sürüm (edition) seçimi tanımlı değil."
+grep -q 'image/profiles' image/build.sh || hata "Derleme betiği profil listelerini kullanmıyor."
+grep -q 'bookworm-backports' image/build.sh || hata "Backports deposu yapılandırılmamış."
 grep -q "iso-hybrid" image/build.sh || hata "BIOS+UEFI hibrit imaj kipi seçilmemiş."
 grep -q "grub-efi" image/build.sh || hata "UEFI açılış yükleyicisi yapılandırılmamış."
 grep -q "rootdelay=" image/build.sh || hata "Yavaş USB/CD ortamı için rootdelay= tanımlı değil."
@@ -71,7 +91,11 @@ grep -A2 'update-initramfs -u -k all' "$KUR" | grep -q '|| hata' \
 grep -q 'DEBIAN_FRONTEND=noninteractive' "$KUR" || hata "Kurulum aracı etkileşimsiz kipte değil."
 grep -q 'surec_ilerlemesi' "$KUR" || hata "Uzun kurulum adımlarında aktivite (kilitlenme) denetimi yok."
 grep -q 'TEDBIRGE_STALL_SECONDS' "$KUR" || hata "Kilitlenme eşiği ayarlanabilir değil."
-grep -q 'MODULES=dep' "$KUR" || hata "Kalıcı sistemde hızlı initramfs profili uygulanmıyor."
+grep -q 'MODULES=most' "$KUR" || hata "Kalıcı sistemde taşınabilir initramfs profili uygulanmıyor."
+grep -q 'policy-rc.d' "$KUR" || hata "chroot hizmet susturucusu (policy-rc.d) yok."
+grep -q 'mountpoint -q' "$KUR" || hata "chroot öncesi sanal dosya sistemi doğrulaması yok."
+grep -q 'wchan' "$KUR" || hata "Kilitlenme tanılaması (wchan) yok."
+grep -q -- '--no-floppy' "$KUR" || hata "grub-install disket yoklamasını kapatmıyor."
 grep -q 'GRUB_DISABLE_OS_PROBER' "$KUR" || hata "os-prober kapatılmıyor (açılış menüsü adımı kilitlenebilir)."
 INITCONF=image/config/includes.chroot/etc/initramfs-tools/conf.d/tedbirge.conf
 grep -q 'COMPRESS=zstd' "$INITCONF" || hata "Canlı imaj initramfs sıkıştırması zstd değil: $INITCONF"
