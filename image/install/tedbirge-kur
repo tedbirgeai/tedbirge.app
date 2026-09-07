@@ -115,10 +115,19 @@ exec > >(tee -a "$LOG") 2>&1
 hata() {
   echo ""; echo "! $*" >&2
   if [ "${OTO:-0}" = "1" ]; then
-    for t in /dev/console /dev/ttyS0; do printf 'TEDBIRGE_INSTALL_FAIL %s\n' "$*" > "$t" 2>/dev/null; done
+    # /dev/console cogu kez ttyS0'a baglidir; ayni satiri iki kez yazmamak
+    # icin aygitlarin gercek kimligi karsilastirilir.
+    local yazilan="" t kimlik
+    for t in /dev/console /dev/ttyS0; do
+      kimlik=$(stat -Lc '%t:%T' "$t" 2>/dev/null || echo "$t")
+      case " $yazilan " in *" $kimlik "*) continue ;; esac
+      yazilan="$yazilan $kimlik"
+      printf 'TEDBIRGE_INSTALL_FAIL %s\n' "$*" > "$t" 2>/dev/null
+    done
   fi
   exit 1
 }
+
 baslik() { echo ""; echo "== $* =="; }
 
 KOK=/mnt/tedbirge
