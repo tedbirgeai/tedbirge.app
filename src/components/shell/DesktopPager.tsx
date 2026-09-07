@@ -12,8 +12,11 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ICON_H } from "@/components/shell/DesktopIcon";
 import { PageDots } from "@/components/shell/PageDots";
 
-const GAP = 24;
-const PAD = 24;
+/** Izgara boşluğu ve sayfa dolgusu, yerleşimdeki sınıflarla birebir aynı. */
+const GAP = 12;
+/** Saat kartına ayrılan üst boşluk (pt-40) + alt dolgu (pb-3). */
+const TOP_PAD = 160;
+const BOTTOM_PAD = 12;
 export const MAX_PER_PAGE = 16;
 
 /** Ölçülen alana göre sayfa başına ikon kapasitesi (en çok 16). */
@@ -23,7 +26,8 @@ export const MOBILE_COLS = 4;
 export function pageCapacity(width: number, height: number) {
   // Telefonda sütun sayısı ölçüden bağımsız 4'tür; simgeler esner.
   const cols = MOBILE_COLS;
-  const rows = Math.max(1, Math.floor((height - PAD * 2 + GAP) / (ICON_H + GAP)));
+  const usable = height - TOP_PAD - BOTTOM_PAD;
+  const rows = Math.max(1, Math.floor((usable + GAP) / (ICON_H + GAP)));
   void width;
   return { cols, perPage: Math.min(MAX_PER_PAGE, cols * rows) };
 }
