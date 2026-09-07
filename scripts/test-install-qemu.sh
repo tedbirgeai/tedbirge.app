@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 export DEBIAN_FRONTEND=noninteractive
 
 ISO=build-iso/iso/tedbirge-webos-x86_64.iso
-TIMEOUT="${INSTALL_TIMEOUT:-1500}"
+STALL="${INSTALL_STALL:-420}"   # ilerlemesizlik siniri (saniye)
 QEMU_STOP_TIMEOUT="${QEMU_STOP_TIMEOUT:-30}"
 
 [ -s "$ISO" ] || { echo "::error::ISO yok: $ISO"; exit 1; }
@@ -20,19 +20,25 @@ xorriso -osirrox on -indev "$ISO" -extract /live/vmlinuz "$TMP/vmlinuz" >/dev/nu
 xorriso -osirrox on -indev "$ISO" -extract /live/initrd.img "$TMP/initrd.img" >/dev/null 2>&1 \
   || { echo "::error::ISO initrd dosyası çıkarılamadı"; exit 1; }
 
-izle() { # log, basari-deseni, hata-deseni, pid, sure
-  local log="$1" ok="$2" bad="$3" pid="$4" limit="$5" i=0
-  while [ "$i" -lt "$limit" ]; do
+izle() { # log, basari-deseni, hata-deseni, pid, ilerlemesizlik-siniri
+  # Sabit toplam sure yerine LOG AKTIVITESI izlenir: kayit buyudugu surece
+  # beklenir, yalnizca gercekten sessiz kalirsa (kilitlenme) basarisiz sayilir.
+  local log="$1" ok="$2" bad="$3" pid="$4" stall="$5" i=0 sessiz=0 boy onceki=-1
+  while :; do
     grep -qE "$ok" "$log" 2>/dev/null && return 0
     grep -qiE "$bad" "$log" 2>/dev/null && return 2
     kill -0 "$pid" 2>/dev/null || return 3
-    # Uzun beklemede iş akışı kaydı sessiz kalmasın (canlı ilerleme).
+    boy=$(stat -c%s "$log" 2>/dev/null || echo 0)
+    if [ "$boy" = "$onceki" ]; then sessiz=$((sessiz + 3)); else sessiz=0; onceki="$boy"; fi
     if [ $((i % 60)) -eq 0 ] && [ "$i" -gt 0 ]; then
-      echo "... ${i}s bekleniyor (son satır: $(tail -n 1 "$log" 2>/dev/null))"
+      echo "... ${i}s calisiyor (ilerlemesiz ${sessiz}s, son satir: $(tail -n 1 "$log" 2>/dev/null))"
+    fi
+    if [ "$sessiz" -ge "$stall" ]; then
+      echo "::error::${stall}s boyunca hicbir ilerleme yok — kilitlenme."
+      return 1
     fi
     sleep 3; i=$((i + 3))
   done
-  return 1
 }
 
 qemu_temiz_kapat() { # pid, qmp-soketi
@@ -90,7 +96,7 @@ kurulum_senaryosu() {
     -drive file="$disk",format=qcow2,if=virtio,cache=unsafe \
     -serial file:"$log1" 2>"build-iso/kurulum-${mod}-asama1.stderr.log" &
   local p1=$! rc
-  izle "$log1" "TEDBIRGE_INSTALL_OK" "TEDBIRGE_INSTALL_FAIL|Kernel panic|Attempted to kill init" "$p1" "$TIMEOUT"; rc=$?
+  izle "$log1" "TEDBIRGE_INSTALL_OK" "TEDBIRGE_INSTALL_FAIL|Kernel panic|Attempted to kill init" "$p1" "$STALL"; rc=$?
   if [ "$rc" = 0 ]; then
     qemu_temiz_kapat "$p1" "$qmp1" || rc=4
   else
@@ -113,7 +119,7 @@ kurulum_senaryosu() {
     -debugcon file:"build-iso/kurulum-${mod}-firmware.log" -global isa-debugcon.iobase=0x402 \
     -serial file:"$log2" 2>"build-iso/kurulum-${mod}-asama2.stderr.log" &
   local p2=$!
-  izle "$log2" "TEDBIRGE_BOOT_READY" "Kernel panic|Attempted to kill init|No bootable device|Operating System not found|grub rescue" "$p2" 300; rc=$?
+  izle "$log2" "TEDBIRGE_BOOT_READY" "Kernel panic|Attempted to kill init|No bootable device|Operating System not found|grub rescue" "$p2" "$STALL"; rc=$?
   if [ "$rc" = 0 ]; then
     qemu_temiz_kapat "$p2" "$qmp2" || rc=4
   else

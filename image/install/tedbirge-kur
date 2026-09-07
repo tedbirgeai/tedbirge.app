@@ -9,26 +9,50 @@ export DEBIAN_FRONTEND=noninteractive
 export APT_LISTCHANGES_FRONTEND=none
 export UCF_FORCE_CONFFOLD=1
 
-# Uzun disk islemlerini sinirlar ve cikti olmasa bile duzenli ilerleme mesaji
-# yazar. Boylece gercek bir takilma ile yavas disk islemi birbirinden ayrilir.
-uzun_adim() { # ad, saniye, komut...
-  local ad="$1" limit="$2" pid baslangic simdi rc
-  shift 2
-  echo "-- $ad (en fazla ${limit}s)"
-  stdbuf -oL -eL timeout --foreground "${limit}s" "$@" &
-  pid=$!; baslangic=$(date +%s)
+# Uzun disk islemlerini SABIT bir sureyle degil, PROSES AKTIVITESI ile denetler.
+# Islem CPU zamani veya diske yazma sayaci ilerledigi surece asla kesilmez;
+# yalnizca gercekten kilitlenirse (belirlenen sure boyunca hicbir ilerleme yok)
+# durdurulur. Boylece yavas ama saglikli CI/emulasyon ortamlari cezalandirilmaz.
+STALL="${TEDBIRGE_STALL_SECONDS:-300}"
+
+surec_ilerlemesi() { # pid -> "cpu_tick io_bayt"
+  local pid="$1" cpu=0 io=0
+  # Cocuk sureclerin toplam CPU zamani (utime+stime, tick).
+  cpu=$(awk '{print $14+$15+$16+$17}' "/proc/$pid/stat" 2>/dev/null || echo 0)
+  io=$(awk '/^(read|write)_bytes:/ {t+=$2} END{print t+0}' "/proc/$pid/io" 2>/dev/null || echo 0)
+  printf '%s %s' "${cpu:-0}" "${io:-0}"
+}
+
+uzun_adim() { # ad, komut...
+  local ad="$1" pid baslangic simdi rc onceki suanki sessiz=0
+  shift
+  echo "-- $ad (kilitlenme denetimi: ${STALL}s ilerlemesizlik)"
+  stdbuf -oL -eL "$@" &
+  pid=$!; baslangic=$(date +%s); onceki=$(surec_ilerlemesi "$pid")
   while kill -0 "$pid" 2>/dev/null; do
     sleep 15
     kill -0 "$pid" 2>/dev/null || break
     simdi=$(date +%s)
-    echo "... $ad suruyor ($((simdi - baslangic))s)"
+    suanki=$(surec_ilerlemesi "$pid")
+    if [ "$suanki" = "$onceki" ]; then
+      sessiz=$((sessiz + 15))
+    else
+      sessiz=0; onceki="$suanki"
+    fi
+    echo "... $ad suruyor ($((simdi - baslangic))s, ilerlemesiz ${sessiz}s)"
+    if [ "$sessiz" -ge "$STALL" ]; then
+      echo "! $ad ${STALL}s boyunca hicbir ilerleme kaydetmedi; kilitlendi." >&2
+      kill -TERM "$pid" 2>/dev/null
+      sleep 5
+      kill -KILL "$pid" 2>/dev/null
+      wait "$pid" 2>/dev/null
+      return 125
+    fi
   done
   wait "$pid"; rc=$?
-  if [ "$rc" = 124 ]; then
-    echo "! $ad zaman asimina ugradi (${limit}s)." >&2
-  fi
   return "$rc"
 }
+
 
 MIN_BAYT=$((8 * 1024 * 1024 * 1024))
 # Gozetimsiz kurulum: cekirdek satirinda tedbirge.autoinstall=1 varsa veya
@@ -171,8 +195,9 @@ baslik "Sistem diske yaziliyor (birkac dakika surer)"
 mkdir -p "$KOK"
 mount "$P2" "$KOK" || hata "Sistem bolumu baglanamadi."
 BAGLI=1
-uzun_adim "Sistem imaji diske aciliyor" 1200 unsquashfs -f -d "$KOK" "$SQUASH" \
-  || hata "Sistem imaji 20 dakika icinde diske acilamadi. Disk sagligini ve baglantisini denetleyin."
+uzun_adim "Sistem imaji diske aciliyor" unsquashfs -f -d "$KOK" "$SQUASH" \
+  || hata "Sistem imaji diske acilamadi (islem kilitlendi veya disk hatasi). Disk sagligini ve baglantisini denetleyin."
+
 
 if [ -n "$P1" ]; then
   mkdir -p "$KOK/boot/efi"
@@ -201,24 +226,40 @@ rm -f "$KOK/etc/systemd/system/multi-user.target.wants/live-config.service" 2>/d
 sed -i 's/^#\?GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet console=tty0 console=ttyS0,115200"/' \
   "$KOK/etc/default/grub" 2>/dev/null || true
 
+# --------------------------------------- kalici sistem icin hizli initramfs
+# Hedef donanim artik belli oldugu icin yalnizca gerekli suruculer paketlenir
+# (MODULES=dep) ve en hizli sikistirma kullanilir. Bu adim, kurulumun en pahali
+# bolumuydu; kapsam kaybi olmadan dakikalar yerine saniyeler surer.
+mkdir -p "$KOK/etc/initramfs-tools/conf.d"
+cat > "$KOK/etc/initramfs-tools/conf.d/tedbirge.conf" <<'EOF'
+MODULES=dep
+COMPRESS=zstd
+COMPRESSLEVEL=1
+BUSYBOX=y
+EOF
+# os-prober disk taramasi CI/emulasyon ortaminda dakikalarca surebiliyor.
+grep -q '^GRUB_DISABLE_OS_PROBER=' "$KOK/etc/default/grub" 2>/dev/null \
+  || echo 'GRUB_DISABLE_OS_PROBER=true' >> "$KOK/etc/default/grub"
+
 # ------------------------------------------------------------ acilis yukleyici
 baslik "Acilis yukleyici kuruluyor ($MOD)"
 if [ "$MOD" = "UEFI" ]; then
-  uzun_adim "UEFI acilis yukleyicisi kuruluyor" 180 chroot "$KOK" env \
+  uzun_adim "UEFI acilis yukleyicisi kuruluyor" chroot "$KOK" env \
     DEBIAN_FRONTEND=noninteractive grub-install --target=x86_64-efi --efi-directory=/boot/efi \
     --bootloader-id=Tedbirge --recheck --removable --no-nvram \
-    || hata "UEFI acilis yukleyici kurulamadi veya zaman asimina ugradi."
+    || hata "UEFI acilis yukleyici kurulamadi."
 else
-  uzun_adim "BIOS acilis yukleyicisi kuruluyor" 180 chroot "$KOK" env \
+  uzun_adim "BIOS acilis yukleyicisi kuruluyor" chroot "$KOK" env \
     DEBIAN_FRONTEND=noninteractive grub-install --target=i386-pc --recheck "$DEV" \
-    || hata "BIOS acilis yukleyici kurulamadi veya zaman asimina ugradi."
+    || hata "BIOS acilis yukleyici kurulamadi."
 fi
-uzun_adim "Acilis diski guncelleniyor" 600 chroot "$KOK" env \
+uzun_adim "Acilis diski guncelleniyor" chroot "$KOK" env \
   DEBIAN_FRONTEND=noninteractive update-initramfs -u -k all \
-  || hata "Acilis diski 10 dakika icinde guncellenemedi."
-uzun_adim "Acilis menusu olusturuluyor" 180 chroot "$KOK" env \
+  || hata "Acilis diski guncellenemedi."
+uzun_adim "Acilis menusu olusturuluyor" chroot "$KOK" env \
   DEBIAN_FRONTEND=noninteractive update-grub \
-  || hata "Acilis menusu olusturulamadi veya zaman asimina ugradi."
+  || hata "Acilis menusu olusturulamadi."
+
 
 # -------------------------------------------------------- kurulum dogrulama
 baslik "Kurulum dogrulaniyor"

@@ -69,7 +69,12 @@ grep -q 'update-initramfs -u -k all' "$KUR" || hata "initramfs güncellemesi yok
 grep -A2 'update-initramfs -u -k all' "$KUR" | grep -q '|| hata' \
   || hata "initramfs hatası sessizce geçiliyor."
 grep -q 'DEBIAN_FRONTEND=noninteractive' "$KUR" || hata "Kurulum aracı etkileşimsiz kipte değil."
-grep -q 'timeout --foreground' "$KUR" || hata "Uzun kurulum adımlarında zaman aşımı koruması yok."
+grep -q 'surec_ilerlemesi' "$KUR" || hata "Uzun kurulum adımlarında aktivite (kilitlenme) denetimi yok."
+grep -q 'TEDBIRGE_STALL_SECONDS' "$KUR" || hata "Kilitlenme eşiği ayarlanabilir değil."
+grep -q 'MODULES=dep' "$KUR" || hata "Kalıcı sistemde hızlı initramfs profili uygulanmıyor."
+grep -q 'GRUB_DISABLE_OS_PROBER' "$KUR" || hata "os-prober kapatılmıyor (açılış menüsü adımı kilitlenebilir)."
+INITCONF=image/config/includes.chroot/etc/initramfs-tools/conf.d/tedbirge.conf
+grep -q 'COMPRESS=zstd' "$INITCONF" || hata "Canlı imaj initramfs sıkıştırması zstd değil: $INITCONF"
 grep -q 'stdbuf -oL' "$KUR" || hata "Kurulum kayıtları satır bazında akmıyor."
 grep -q 'qemu_temiz_kapat' scripts/test-install-qemu.sh || hata "QEMU kontrollü kapanış yordamı yok."
 grep -q 'tedbirge.install=1' image/config/bootloaders/syslinux_common/live.cfg.in \
