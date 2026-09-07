@@ -226,24 +226,40 @@ rm -f "$KOK/etc/systemd/system/multi-user.target.wants/live-config.service" 2>/d
 sed -i 's/^#\?GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet console=tty0 console=ttyS0,115200"/' \
   "$KOK/etc/default/grub" 2>/dev/null || true
 
+# --------------------------------------- kalici sistem icin hizli initramfs
+# Hedef donanim artik belli oldugu icin yalnizca gerekli suruculer paketlenir
+# (MODULES=dep) ve en hizli sikistirma kullanilir. Bu adim, kurulumun en pahali
+# bolumuydu; kapsam kaybi olmadan dakikalar yerine saniyeler surer.
+mkdir -p "$KOK/etc/initramfs-tools/conf.d"
+cat > "$KOK/etc/initramfs-tools/conf.d/tedbirge.conf" <<'EOF'
+MODULES=dep
+COMPRESS=zstd
+COMPRESSLEVEL=1
+BUSYBOX=y
+EOF
+# os-prober disk taramasi CI/emulasyon ortaminda dakikalarca surebiliyor.
+grep -q '^GRUB_DISABLE_OS_PROBER=' "$KOK/etc/default/grub" 2>/dev/null \
+  || echo 'GRUB_DISABLE_OS_PROBER=true' >> "$KOK/etc/default/grub"
+
 # ------------------------------------------------------------ acilis yukleyici
 baslik "Acilis yukleyici kuruluyor ($MOD)"
 if [ "$MOD" = "UEFI" ]; then
-  uzun_adim "UEFI acilis yukleyicisi kuruluyor" 180 chroot "$KOK" env \
+  uzun_adim "UEFI acilis yukleyicisi kuruluyor" chroot "$KOK" env \
     DEBIAN_FRONTEND=noninteractive grub-install --target=x86_64-efi --efi-directory=/boot/efi \
     --bootloader-id=Tedbirge --recheck --removable --no-nvram \
-    || hata "UEFI acilis yukleyici kurulamadi veya zaman asimina ugradi."
+    || hata "UEFI acilis yukleyici kurulamadi."
 else
-  uzun_adim "BIOS acilis yukleyicisi kuruluyor" 180 chroot "$KOK" env \
+  uzun_adim "BIOS acilis yukleyicisi kuruluyor" chroot "$KOK" env \
     DEBIAN_FRONTEND=noninteractive grub-install --target=i386-pc --recheck "$DEV" \
-    || hata "BIOS acilis yukleyici kurulamadi veya zaman asimina ugradi."
+    || hata "BIOS acilis yukleyici kurulamadi."
 fi
-uzun_adim "Acilis diski guncelleniyor" 600 chroot "$KOK" env \
+uzun_adim "Acilis diski guncelleniyor" chroot "$KOK" env \
   DEBIAN_FRONTEND=noninteractive update-initramfs -u -k all \
-  || hata "Acilis diski 10 dakika icinde guncellenemedi."
-uzun_adim "Acilis menusu olusturuluyor" 180 chroot "$KOK" env \
+  || hata "Acilis diski guncellenemedi."
+uzun_adim "Acilis menusu olusturuluyor" chroot "$KOK" env \
   DEBIAN_FRONTEND=noninteractive update-grub \
-  || hata "Acilis menusu olusturulamadi veya zaman asimina ugradi."
+  || hata "Acilis menusu olusturulamadi."
+
 
 # -------------------------------------------------------- kurulum dogrulama
 baslik "Kurulum dogrulaniyor"
