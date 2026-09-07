@@ -303,13 +303,14 @@ CEKIRDEK_SATIRI="quiet console=tty0 console=ttyS0,115200"
 sed -i "s|^#\?GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$CEKIRDEK_SATIRI\"|" \
   "$KOK/etc/default/grub" 2>/dev/null || true
 
-# --------------------------------------- kalici sistem icin hizli initramfs
-# Hedef donanim artik belli oldugu icin yalnizca gerekli suruculer paketlenir
-# (MODULES=dep) ve en hizli sikistirma kullanilir. Bu adim, kurulumun en pahali
-# bolumuydu; kapsam kaybi olmadan dakikalar yerine saniyeler surer.
+# ------------------------------------ kalici sistem icin tasınabilir initramfs
+# Kurulan sistem baska bir bilgisayara tasinabilir (disk baska makineye
+# takilabilir); MODULES=dep yalniz bu donanimin suruculerini paketler ve
+# tasimada acilis bozulur. MODULES=most tum yaygin denetleyicileri korur;
+# sure artisi zstd-1 sikistirmayla telafi edilir.
 mkdir -p "$KOK/etc/initramfs-tools/conf.d"
 cat > "$KOK/etc/initramfs-tools/conf.d/tedbirge.conf" <<'EOF'
-MODULES=dep
+MODULES=most
 COMPRESS=zstd
 COMPRESSLEVEL=1
 BUSYBOX=y
@@ -327,22 +328,25 @@ grep -q '^GRUB_DISABLE_OS_PROBER=' "$KOK/etc/default/grub" 2>/dev/null \
 
 # ------------------------------------------------------------ acilis yukleyici
 baslik "Acilis yukleyici kuruluyor ($MOD)"
+# --no-floppy: disket modulu yoklamasi QEMU/sanal ortamda sonsuz bekleyebilir.
 if [ "$MOD" = "UEFI" ]; then
-  uzun_adim "UEFI acilis yukleyicisi kuruluyor" chroot "$KOK" env \
-    DEBIAN_FRONTEND=noninteractive grub-install --target=x86_64-efi --efi-directory=/boot/efi \
-    --bootloader-id=Tedbirge --recheck --removable --no-nvram \
+  uzun_adim "UEFI acilis yukleyicisi kuruluyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+    grub-install --target=x86_64-efi --efi-directory=/boot/efi \
+    --bootloader-id=Tedbirge --recheck --removable --no-nvram --no-floppy \
     || hata "UEFI acilis yukleyici kurulamadi."
 else
-  uzun_adim "BIOS acilis yukleyicisi kuruluyor" chroot "$KOK" env \
-    DEBIAN_FRONTEND=noninteractive grub-install --target=i386-pc --recheck "$DEV" \
+  uzun_adim "BIOS acilis yukleyicisi kuruluyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+    grub-install --target=i386-pc --recheck --no-floppy "$DEV" \
     || hata "BIOS acilis yukleyici kurulamadi."
 fi
-uzun_adim "Acilis diski guncelleniyor" chroot "$KOK" env \
-  DEBIAN_FRONTEND=noninteractive update-initramfs -u -k all \
+uzun_adim "Acilis diski guncelleniyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+  update-initramfs -u -k all \
   || hata "Acilis diski guncellenemedi."
-uzun_adim "Acilis menusu olusturuluyor" chroot "$KOK" env \
-  DEBIAN_FRONTEND=noninteractive update-grub \
+uzun_adim "Acilis menusu olusturuluyor" chroot "$KOK" "${CHROOT_ENV[@]}" \
+  update-grub \
   || hata "Acilis menusu olusturulamadi."
+# Hizmet engelleyici yalnizca kurulum surecine ozeldir.
+rm -f "$KOK/usr/sbin/policy-rc.d"
 
 
 # -------------------------------------------------------- kurulum dogrulama
