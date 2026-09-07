@@ -1,0 +1,14 @@
+# Tedbirge(R) WebOS — WORKSTATION EDITION (Masaustu & Laptop) paketleri.
+# Odak: klavye/fare, GPU suruculeri, termal ve guc profilleri, S3/S4.
+# Dokunmatik panel, ekran dondurme ve sanal klavye BU SURUMDE YOK.
+
+# --- isinma ve guc profili yonetimi
+thermald
+power-profiles-daemon
+
+# --- harici monitor parlakligi (DDC/CI) ve GPU tani araclari
+ddcutil
+libdrm-tests
+
+# --- donanim video hizlandirma (Intel/AMD)
+intel-media-va-driver-non-free

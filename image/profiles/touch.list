@@ -1,0 +1,18 @@
+# Tedbirge(R) WebOS — TOUCH & MOBILE EDITION (Tablet / 2'si 1 Arada) paketleri.
+# Odak: dokunmatik panel, kalem, otomatik ekran dondurme, sanal klavye,
+# yakinlik/isik sensorleri. Masaustu termal araclari bu surumde yok.
+
+# --- sensorler: otomatik ekran dondurme, ortam isigi, yakinlik
+iio-sensor-proxy
+i2c-tools
+
+# --- dokunmatik ve kalem (Wacom stylus)
+xserver-xorg-input-wacom
+libwacom-common
+libinput-tools
+evtest
+xinput
+xinput-calibrator
+
+# --- ekran ustu sanal klavye
+onboard
