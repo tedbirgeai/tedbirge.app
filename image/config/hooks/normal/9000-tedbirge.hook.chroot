@@ -7,7 +7,7 @@ echo "-- Tedbirge yapilandirmasi uygulaniyor"
 # Dosya izinleri
 chmod 0755 /opt/tedbirge/kiosk.sh /opt/tedbirge/ekran-duzeni.sh \
            /opt/tedbirge/tedbirge-ready.sh /opt/tedbirge/tedbirge-sysbridge \
-           /usr/local/sbin/tedbirge-kur
+           /usr/local/sbin/tedbirge-kur /opt/tedbirge/kurulum-sonrasi.sh
 mkdir -p /var/log/tedbirge /var/lib/tedbirge/chromium /media
 
 # nginx: yalnizca Tedbirge sitesi etkin
@@ -75,6 +75,7 @@ for f in /var/www/tedbirge/index.html /var/www/tedbirge/kernel/tedbirge_kernel.w
          /usr/local/sbin/tedbirge-kur /opt/tedbirge/kiosk.sh \
          /etc/systemd/system/tedbirge-kiosk.service \
          /etc/systemd/system/tedbirge-installer.service \
+         /opt/tedbirge/kurulum-sonrasi.sh \
          /etc/tedbirge-release /etc/tedbirge-image.json; do
   [ -s "$f" ] || { echo "! Zorunlu dosya yok: $f" >&2; exit 1; }
 done

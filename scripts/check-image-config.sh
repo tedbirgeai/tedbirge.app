@@ -138,6 +138,25 @@ grep -q 'ConditionKernelCommandLine=!tedbirge.install=1' \
   image/config/includes.chroot/etc/systemd/system/tedbirge-kiosk.service \
   || hata "Kurulum kipinde kiosk servisi devre dışı bırakılmıyor."
 
+# 5b) İnsan dostu kurulum sihirbazı
+grep -q 'whiptail' "$KUR" || hata "Kurulum aracında pencereli sihirbaz (whiptail) yok."
+grep -q 'Adim 1/6' "$KUR" || hata "Kurulum sihirbazında adım adım yönlendirme yok."
+grep -q -- '--metin' "$KUR" || hata "Düz metin kurulum kipi (--metin) yok."
+grep -q 'gauge' "$KUR" || hata "Kurulumda ilerleme göstergesi yok."
+grep -q 'Ee\]\[Vv\]\[Ee\]\[Tt\]' "$KUR"   || hata "Metin kipinde küçük harfli onay kabul edilmiyor (kullanıcı sessizce iptal olur)."
+for pkg in whiptail console-setup kbd keyboard-configuration; do
+  grep -qx "$pkg" image/profiles/common.list || hata "Kurulum arayüzü paketi eksik: $pkg"
+done
+[ -s image/config/includes.chroot/opt/tedbirge/kurulum-sonrasi.sh ] \
+  || hata "Kurulum sonrası bilgilendirme ekranı yok (boş ekran riski)."
+grep -q 'kurulum-sonrasi.sh' \
+  image/config/includes.chroot/etc/systemd/system/tedbirge-installer.service \
+  || hata "Kurulum servisi bittiğinde kullanıcı bilgilendirilmiyor."
+for f in image/config/bootloaders/syslinux_common/live.cfg.in \
+         image/config/bootloaders/grub-pc/grub.cfg; do
+  grep -q '®' "$f" && hata "Açılış menüsünde desteklenmeyen ® karakteri var: $f"
+done
+
 # 6) Kabuk sözdizimi
 for s in image/build.sh image/install/tedbirge-kur scripts/test-install-qemu.sh \
          scripts/verify-iso.sh \
