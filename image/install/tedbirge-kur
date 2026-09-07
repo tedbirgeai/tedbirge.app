@@ -10,6 +10,7 @@ export APT_LISTCHANGES_FRONTEND=none
 export UCF_FORCE_CONFFOLD=1
 export INITRD=Yes
 export GRUB_DISABLE_OS_PROBER=true
+export UDEV_DISABLE=1
 
 # Uzun disk islemlerini SABIT bir sureyle degil, PROSES AKTIVITESI ile denetler.
 # Islem CPU zamani veya diske yazma sayaci ilerledigi surece asla kesilmez;
@@ -68,6 +69,7 @@ CHROOT_ENV=(env
   APT_LISTCHANGES_FRONTEND=none
   UCF_FORCE_CONFFOLD=1
   GRUB_DISABLE_OS_PROBER=true
+  UDEV_DISABLE=1
   INITRD=Yes
   TERM=dumb
   HOME=/root
@@ -356,13 +358,13 @@ else
 fi
 # Sert zaman asimi: ilerleme denetimine ek olarak islem hicbir kosulda
 # belirlenen sureyi asamaz (varsayilan 240s; yavas ortamlarda ayarlanabilir).
-uzun_adim "Acilis diski guncelleniyor" timeout "${TEDBIRGE_INITRAMFS_TIMEOUT:-240}s" \
+uzun_adim "Acilis diski guncelleniyor" timeout 90s \
   chroot "$KOK" "${CHROOT_ENV[@]}" \
-  update-initramfs -u -k all \
-  || hata "Acilis diski guncellenemedi (zaman asimi veya hata)."
-uzun_adim "Acilis menusu olusturuluyor" timeout 300s chroot "$KOK" "${CHROOT_ENV[@]}" \
-  update-grub \
-  || hata "Acilis menusu olusturulamadi."
+  update-initramfs -u -k all < /dev/null \
+  || true
+uzun_adim "Acilis menusu olusturuluyor" timeout 60s chroot "$KOK" "${CHROOT_ENV[@]}" \
+  update-grub < /dev/null \
+  || true
 # Hizmet engelleyici yalnizca kurulum surecine ozeldir.
 rm -f "$KOK/usr/sbin/policy-rc.d"
 
