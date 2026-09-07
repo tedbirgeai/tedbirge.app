@@ -587,7 +587,8 @@ grep -q '^GRUB_DISABLE_OS_PROBER=' "$KOK/etc/default/grub" 2>/dev/null \
 [ -f "$KOK/etc/grub.d/30_os-prober" ] && chmod -x "$KOK/etc/grub.d/30_os-prober"
 
 # ------------------------------------------------------------ acilis yukleyici
-baslik "Acilis yukleyici kuruluyor ($MOD)"
+ILERLE 65 "Acilis yukleyicisi kuruluyor ($MOD)"
+
 # --no-floppy: disket modulu yoklamasi QEMU/sanal ortamda sonsuz bekleyebilir.
 if [ "$MOD" = "UEFI" ]; then
   uzun_adim "UEFI acilis yukleyicisi kuruluyor" timeout 900s chroot "$KOK" "${CHROOT_ENV[@]}" \
