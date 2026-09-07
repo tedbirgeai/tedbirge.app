@@ -15,7 +15,8 @@ need unsquashfs
 
 PVD=$(xorriso -indev "$ISO" -pvd_info 2>&1) || fail "ISO üst bilgisi okunamadı."
 printf '%s\n' "$PVD"
-printf '%s\n' "$PVD" | grep -q "TEDBIRGE_WEBOS" || fail "ISO birim etiketi TEDBIRGE_WEBOS değil."
+# Sürüm başına etiket: TEDBIRGE_WS (workstation) veya TEDBIRGE_TOUCH (touch).
+printf '%s\n' "$PVD" | grep -qE "TEDBIRGE_(WS|TOUCH)" || fail "ISO birim etiketi TEDBIRGE_WS/TEDBIRGE_TOUCH değil."
 
 ELTORITO=$(xorriso -indev "$ISO" -report_el_torito plain 2>&1) || fail "El Torito kaydı okunamadı."
 printf '%s\n' "$ELTORITO"
