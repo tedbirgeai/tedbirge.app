@@ -18,12 +18,32 @@ export UDEV_DISABLE=1
 # durdurulur. Boylece yavas ama saglikli CI/emulasyon ortamlari cezalandirilmaz.
 STALL="${TEDBIRGE_STALL_SECONDS:-300}"
 
-surec_ilerlemesi() { # pid -> "cpu_tick io_bayt"
-  local pid="$1" cpu=0 io=0
-  # Cocuk sureclerin toplam CPU zamani (utime+stime, tick).
-  cpu=$(awk '{print $14+$15+$16+$17}' "/proc/$pid/stat" 2>/dev/null || echo 0)
-  io=$(awk '/^(read|write)_bytes:/ {t+=$2} END{print t+0}' "/proc/$pid/io" 2>/dev/null || echo 0)
-  printf '%s %s' "${cpu:-0}" "${io:-0}"
+HEDEF_DISK=""   # ilerleme olcumu icin: kurulum diskinin cekirdek adi (ornek: sda)
+
+surec_agaci() { # pid -> pid + tum alt/torun pid'leri
+  local pid="$1" c
+  printf '%s\n' "$pid"
+  for c in $(pgrep -P "$pid" 2>/dev/null); do surec_agaci "$c"; done
+}
+
+disk_yazma() { # kurulum diskinin toplam yazma sektoru (varsa)
+  [ -n "$HEDEF_DISK" ] || { printf '0'; return; }
+  awk '{print $7+0}' "/sys/block/$HEDEF_DISK/stat" 2>/dev/null || printf '0'
+}
+
+# ONEMLI: update-initramfs/grub gibi araclar isi ALT SURECLERE yaptirir ve
+# kendileri sigsuspend ile bekler. Yalniz ana surece bakan bir olcum, saglikli
+# calisan kurulumu "kilitlendi" sanip oldururdu (CI'de tam olarak bu yasandi).
+# Bu yuzden ilerleme TUM SUREC AGACI + hedef diskin yazma sayaci uzerinden olculur.
+surec_ilerlemesi() { # pid -> "cpu_tick io_bayt disk_sektor"
+  local pid="$1" p cpu=0 io=0 v
+  for p in $(surec_agaci "$pid"); do
+    v=$(awk '{print $14+$15+$16+$17}' "/proc/$p/stat" 2>/dev/null || echo 0)
+    cpu=$((cpu + ${v:-0}))
+    v=$(awk '/^(read|write)_bytes:/ {t+=$2} END{print t+0}' "/proc/$p/io" 2>/dev/null || echo 0)
+    io=$((io + ${v:-0}))
+  done
+  printf '%s %s %s' "$cpu" "$io" "$(disk_yazma)"
 }
 
 uzun_adim() { # ad, komut...
@@ -45,12 +65,16 @@ uzun_adim() { # ad, komut...
       sessiz=0; onceki="$suanki"
     fi
     # Tanilama: surec hangi cekirdek cagrisinda bekliyor, alt sureci var mi?
-    # Kilitlenme kaydinda bu iki bilgi kok nedeni dogrudan gosterir.
     wchan=$(cat "/proc/$pid/wchan" 2>/dev/null || true)
     cocuk=$(pgrep -P "$pid" 2>/dev/null | head -3 | tr '\n' ' ')
-    echo "... $ad suruyor ($((simdi - baslangic))s, ilerlemesiz ${sessiz}s, beklenen: ${wchan:-?}, alt surec: ${cocuk:-yok})"
+    echo "... $ad suruyor ($((simdi - baslangic))s, ilerlemesiz ${sessiz}s, beklenen: ${wchan:-?}, alt surec: ${cocuk:-yok}, olcum: $suanki)"
     if [ "$sessiz" -ge "$STALL" ]; then
       echo "! $ad ${STALL}s boyunca hicbir ilerleme kaydetmedi; kilitlendi." >&2
+      # Gercek kilitlenmede kok neden: hangi alt surec nerede bekliyor?
+      for p in $(surec_agaci "$pid"); do
+        echo "   surec $p: $(tr '\0' ' ' < "/proc/$p/cmdline" 2>/dev/null | cut -c1-120) [wchan: $(cat "/proc/$p/wchan" 2>/dev/null)]" >&2
+      done
+      tail -20 "$KOK/var/log/initramfs-tools.log" 2>/dev/null >&2 || true
       kill -TERM "$pid" 2>/dev/null
       sleep 5
       kill -KILL "$pid" 2>/dev/null
@@ -61,6 +85,7 @@ uzun_adim() { # ad, komut...
   wait "$pid"; rc=$?
   return "$rc"
 }
+
 
 # chroot icinde calisan tum komutlara verilen ortak ortam: kullanici girdisi
 # beklenmesi tumden engellenir, hizmet baslatma tetikleyicileri susturulur.
@@ -90,10 +115,19 @@ exec > >(tee -a "$LOG") 2>&1
 hata() {
   echo ""; echo "! $*" >&2
   if [ "${OTO:-0}" = "1" ]; then
-    for t in /dev/console /dev/ttyS0; do printf 'TEDBIRGE_INSTALL_FAIL %s\n' "$*" > "$t" 2>/dev/null; done
+    # /dev/console cogu kez ttyS0'a baglidir; ayni satiri iki kez yazmamak
+    # icin aygitlarin gercek kimligi karsilastirilir.
+    local yazilan="" t kimlik
+    for t in /dev/console /dev/ttyS0; do
+      kimlik=$(stat -Lc '%t:%T' "$t" 2>/dev/null || echo "$t")
+      case " $yazilan " in *" $kimlik "*) continue ;; esac
+      yazilan="$yazilan $kimlik"
+      printf 'TEDBIRGE_INSTALL_FAIL %s\n' "$*" > "$t" 2>/dev/null
+    done
   fi
   exit 1
 }
+
 baslik() { echo ""; echo "== $* =="; }
 
 KOK=/mnt/tedbirge
@@ -162,6 +196,9 @@ fi
 [ -n "${HEDEF:-}" ] || hata "Kurulum iptal edildi."
 HEDEF="${HEDEF#/dev/}"
 DEV="/dev/$HEDEF"
+# Ilerleme olcumu bu diskin yazma sayacini da izler (bkz. surec_ilerlemesi).
+HEDEF_DISK="$HEDEF"
+
 
 [ -b "$DEV" ] || hata "Boyle bir disk yok: $DEV"
 [ "$HEDEF" != "$CANLI" ] || hata "Canli USB bellege kurulum yapilamaz."
@@ -364,12 +401,12 @@ grep -q '^GRUB_DISABLE_OS_PROBER=' "$KOK/etc/default/grub" 2>/dev/null \
 baslik "Acilis yukleyici kuruluyor ($MOD)"
 # --no-floppy: disket modulu yoklamasi QEMU/sanal ortamda sonsuz bekleyebilir.
 if [ "$MOD" = "UEFI" ]; then
-  uzun_adim "UEFI acilis yukleyicisi kuruluyor" timeout 300s chroot "$KOK" "${CHROOT_ENV[@]}" \
+  uzun_adim "UEFI acilis yukleyicisi kuruluyor" timeout 900s chroot "$KOK" "${CHROOT_ENV[@]}" \
     grub-install --target=x86_64-efi --efi-directory=/boot/efi \
     --bootloader-id=Tedbirge --recheck --removable --no-nvram --no-floppy < /dev/null \
     || hata "UEFI acilis yukleyici kurulamadi."
 else
-  uzun_adim "BIOS acilis yukleyicisi kuruluyor" timeout 300s chroot "$KOK" "${CHROOT_ENV[@]}" \
+  uzun_adim "BIOS acilis yukleyicisi kuruluyor" timeout 900s chroot "$KOK" "${CHROOT_ENV[@]}" \
     grub-install --target=i386-pc --recheck --no-floppy "$DEV" < /dev/null \
     || hata "BIOS acilis yukleyici kurulamadi."
 fi
@@ -391,11 +428,11 @@ fi
 
 # Bu iki adim acilisin kendisidir; basarisiz olurlarsa kurulan sistem sessizce
 # acilmaz. Bu yuzden ARTIK yutulmuyor, kurulum aninda durduruluyor.
-uzun_adim "Acilis diski guncelleniyor" timeout 300s \
+uzun_adim "Acilis diski guncelleniyor" timeout 1800s \
   chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-initramfs -u -k all < /dev/null \
   || hata "Acilis diski (initramfs) uretilemedi."
-uzun_adim "Acilis menusu olusturuluyor" timeout 120s chroot "$KOK" "${CHROOT_ENV[@]}" \
+uzun_adim "Acilis menusu olusturuluyor" timeout 600s chroot "$KOK" "${CHROOT_ENV[@]}" \
   update-grub < /dev/null \
   || hata "Acilis menusu (grub.cfg) uretilemedi."
 # Hizmet engelleyici yalnizca kurulum surecine ozeldir.
