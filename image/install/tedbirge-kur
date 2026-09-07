@@ -468,12 +468,28 @@ if [ -n "$P3" ]; then
 fi
 
 # ------------------------------------------------------------ sistem kopyasi
-baslik "Sistem diske yaziliyor (birkac dakika surer)"
+ILERLE 15 "Sistem dosyalari diske kopyalaniyor (en uzun adim, birkac dakika)"
 mkdir -p "$KOK"
 mount "$P2" "$KOK" || hata "Sistem bolumu baglanamadi."
 BAGLI=1
-uzun_adim "Sistem imaji diske aciliyor" unsquashfs -f -d "$KOK" "$SQUASH" \
-  || hata "Sistem imaji diske acilamadi (islem kilitlendi veya disk hatasi). Disk sagligini ve baglantisini denetleyin."
+if [ "$GUI" = "1" ]; then
+  # Gercek yuzde: unsquashfs -percentage yalnizca sayi yazar; %15-%60 arasina
+  # olceklenir, boylece kullanici islemin gercekten ilerledigini gorur.
+  KOPYA_RC=1
+  while read -r satir; do
+    case "$satir" in
+      RC=*) KOPYA_RC="${satir#RC=}" ;;
+      ''|*[!0-9]*) : ;;
+      *) ILERLE $((15 + satir * 45 / 100)) "Sistem dosyalari diske kopyalaniyor — %$satir" ;;
+    esac
+  done < <(unsquashfs -f -percentage -d "$KOK" "$SQUASH" 2>>"$LOG"; echo "RC=$?")
+  [ "$KOPYA_RC" = "0" ] \
+    || hata "Sistem dosyalari diske kopyalanamadi. Disk ariza vermis ya da kablo gevsemis olabilir; kabloyu yeniden takip kurulumu tekrarlayin."
+else
+  uzun_adim "Sistem imaji diske aciliyor" unsquashfs -f -d "$KOK" "$SQUASH" \
+    || hata "Sistem imaji diske acilamadi (islem kilitlendi veya disk hatasi). Disk sagligini ve baglantisini denetleyin."
+fi
+
 
 
 if [ -n "$P1" ]; then
