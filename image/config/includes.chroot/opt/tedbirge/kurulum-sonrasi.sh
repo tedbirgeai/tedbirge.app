@@ -13,7 +13,7 @@ Ne yapabilirsiniz:
 
   * Kurulumu yeniden baslatmak icin :  tedbirge-kur
   * Kurulumu duz metin kipinde denemek icin :  tedbirge-kur --metin
-  * Masaustunu (canli kip) acmak icin :  systemctl start tedbirge-kiosk
+  * Masaustunu (canli kip) acmak icin :  xinit /opt/tedbirge/kiosk.sh -- :0 vt1
 
 Kurulum kaydi: /var/log/tedbirge/kurulum.log
 
