@@ -15,22 +15,14 @@ linux-image-amd64/bookworm-backports
 intel-microcode
 amd64-microcode
 
-# --- donanim yazilimlari (backports surumleri: yeni cekirdek ile uyum)
+# --- donanim yazilimlari (temel kapsamli firmware seti)
 firmware-linux-free
-firmware-misc-nonfree/bookworm-backports
-firmware-realtek/bookworm-backports
-firmware-atheros/bookworm-backports
-firmware-iwlwifi/bookworm-backports
-firmware-brcm80211/bookworm-backports
-firmware-libertas/bookworm-backports
-firmware-amd-graphics/bookworm-backports
-firmware-nvidia-graphics/bookworm-backports
-firmware-mediatek/bookworm-backports
+firmware-misc-nonfree
+firmware-realtek
+firmware-iwlwifi
 firmware-sof-signed
-firmware-ath9k-htc
-firmware-ti-connectivity
-firmware-qcom-soc
-bluez-firmware
+firmware-atheros
+firmware-amd-graphics
 
 # --- grafik yığını
 xserver-xorg
