@@ -137,7 +137,16 @@ kurulum_senaryosu() {
   fi
 
   tail -n 60 "$log2" 2>/dev/null
-  [ "$rc" = 0 ] || { echo "::error::$mod kurulu sistem açılış testi başarısız (kod $rc)."; return 1; }
+  if [ "$rc" != 0 ]; then
+    # Sessiz acilis hatasi bir daha kor nokta kalmasin: firmware ve emulator
+    # kayitlarinin son satirlari da hata ciktisina basilir.
+    echo "---- $mod UEFI/BIOS firmware kaydi (son 40 satir) ----"
+    tail -n 40 "build-iso/kurulum-${mod}-firmware.log" 2>/dev/null || echo "(firmware kaydi yok)"
+    echo "---- $mod emulator hata kaydi (son 40 satir) ----"
+    tail -n 40 "build-iso/kurulum-${mod}-asama2.stderr.log" 2>/dev/null || echo "(kayit yok)"
+    echo "::error::$mod kurulu sistem açılış testi başarısız (kod $rc)."
+    return 1
+  fi
   echo "✓ $mod kalıcı kurulum zinciri geçti."
 }
 
