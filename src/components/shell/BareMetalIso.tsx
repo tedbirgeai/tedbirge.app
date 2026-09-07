@@ -122,40 +122,98 @@ function triggerDownload(url: string) {
  * yarıda "Ağ sorunu" ile düşerdi. Kalıcı rota her denemede taze adres verir,
  * böylece duraklat/devam et de çalışır.
  */
+/**
+ * İndirme akışını başlatır: iki ürün sürümü (Workstation / Touch & Mobile)
+ * arasında seçim kartı açılır; doğrudan dosya indirilmez.
+ */
 export async function startIsoDownload(): Promise<boolean> {
   if (typeof document === "undefined") return false;
-  const status = await fetchIsoStatus();
-  if (!status.ready) {
-    openIsoFallback();
-    return false;
-  }
-  triggerDownload(ISO_DOWNLOAD_ROUTE);
+  openIsoEditionChooser();
   return true;
 }
 
 export function useIsoDownload() {
   const [guide, setGuide] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<IsoEdition | null>(null);
   const [status, setStatus] = useState<IsoStatus | null>(null);
 
-  const download = useCallback(async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      const info = await fetchIsoStatus();
-      setStatus(info);
-      if (!info.ready) {
-        openIsoFallback();
-        return;
+  const download = useCallback(
+    async (edition: IsoEdition) => {
+      if (busy) return;
+      setBusy(edition);
+      try {
+        const info = await fetchIsoStatus(edition);
+        setStatus(info);
+        if (!info.ready) {
+          openIsoFallback();
+          return;
+        }
+        triggerDownload(isoDownloadRoute(edition));
+        setGuide(true);
+      } finally {
+        setBusy(null);
       }
-      triggerDownload(ISO_DOWNLOAD_ROUTE);
-      setGuide(true);
-    } finally {
-      setBusy(false);
-    }
-  }, [busy]);
+    },
+    [busy],
+  );
 
   return { guide, setGuide, download, busy, status };
+}
+
+/** Hangi sürümü indireceğini seçtiren kart. */
+export function IsoEditionDialog({
+  open,
+  onClose,
+  onPick,
+  busy,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onPick: (edition: IsoEdition) => void;
+  busy: IsoEdition | null;
+}) {
+  if (!open) return null;
+  return (
+    <Shell
+      title="Hangi sürümü indireceksiniz?"
+      subtitle="Tedbirge® WebOS · bare-metal x86_64"
+      onClose={onClose}
+    >
+      <div className="mt-4 space-y-3">
+        {ISO_EDITIONS.map((e) => (
+          <button
+            key={e.id}
+            type="button"
+            disabled={busy !== null}
+            onClick={() => onPick(e.id)}
+            className="wa-press flex min-h-12 w-full items-center gap-3 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] px-4 py-3 text-left hover:border-[var(--tb-accent)]/50 disabled:opacity-60"
+          >
+            {e.id === "workstation" ? (
+              <Monitor className="h-5 w-5 shrink-0 text-[var(--tb-accent)]" aria-hidden />
+            ) : (
+              <TabletSmartphone className="h-5 w-5 shrink-0 text-[var(--tb-accent)]" aria-hidden />
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13.5px] font-semibold text-[var(--tb-text)]">
+                {e.title}
+              </span>
+              <span className="block font-osmono text-[11px] leading-relaxed text-[var(--tb-muted)]">
+                {e.subtitle}
+              </span>
+            </span>
+            {busy === e.id && (
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--tb-muted)]" aria-hidden />
+            )}
+          </button>
+        ))}
+      </div>
+      <p className="mt-4 font-osmono text-[11px] leading-relaxed text-[var(--tb-muted)]">
+        Emin değilseniz “Masaüstü & Dizüstü”nü seçin. Dokunmatik ekranlı veya ekranı katlanan bir
+        bilgisayarınız varsa “Tablet & 2'si 1 Arada” sürümü ekran klavyesi ve otomatik döndürme ile
+        gelir. İki sürüm de aynı sistemdir; yalnızca varsayılan donanım desteği farklıdır.
+      </p>
+    </Shell>
+  );
 }
 
 function Shell({
