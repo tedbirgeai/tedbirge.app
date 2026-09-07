@@ -674,10 +674,12 @@ if [ -n "$SWAP_UUID" ]; then
   echo "Derin uyku (S4) etkin — takas bolumu UUID=$SWAP_UUID"
 fi
 
+ILERLE 100 "Kurulum tamamlandi"
 sync
 temizle
 BAGLI=0
 sync
+gauge_kapat
 
 echo ""
 echo "==============================================="
@@ -694,5 +696,24 @@ if [ "$OTO" = "1" ]; then
   exit 0
 fi
 
+if [ "$GUI" = "1" ]; then
+  if p_soru "Adim 6/6 — Kurulum tamamlandi" \
+"Tedbirge(R) WebOS $DEV diskine basariyla kuruldu.
+
+Simdi yapmaniz gerekenler:
+ 1) 'Evet' secin, bilgisayar kapanmaya baslasin.
+ 2) Ekran kararinca USB bellegi cikarin.
+ 3) Bilgisayari yeniden baslatin — Tedbirge(R) WebOS kendiliginden acilir.
+
+Kurulum kaydi: $LOG
+
+Simdi yeniden baslatilsin mi? ('Hayir' derseniz canli sistemde
+calismaya devam edebilirsiniz.)"; then
+    reboot
+  fi
+  exit 0
+fi
+
 read -r -p "Simdi yeniden baslatmak icin Enter, iptal icin Ctrl+C " _
 reboot
+
