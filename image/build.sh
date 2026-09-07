@@ -54,7 +54,7 @@ timeout --foreground 10m stdbuf -oL -eL apt-get update
 timeout --foreground 20m stdbuf -oL -eL apt-get install "${APT_OPTS[@]}" --no-install-recommends \
   live-build debootstrap squashfs-tools xorriso isolinux syslinux-common \
   grub-pc-bin grub-efi-amd64-bin mtools dosfstools ca-certificates rsync \
-  file coreutils zstd
+  file coreutils zstd python3
 
 # ---------------------------------------------------------- çalışma alanı
 rm -rf "$BUILD"
@@ -71,8 +71,19 @@ echo "-- sürüm profili: $EDITION (common + $EDITION)"
 # bookworm-backports deposu: çekirdek ve firmware bu depodan gelir.
 mkdir -p config/archives
 cat > config/archives/bookworm-backports.list.chroot <<'EOF'
-deb http://deb.debian.org/debian bookworm-backports main contrib non-free-firmware
+deb http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
 EOF
+
+# ------------------------------------------------- paket listesi ön denetimi
+# Yanlış yazılmış ya da depoda olmayan tek bir paket, saatler süren derlemenin
+# ortasında "Unable to locate package" ile çöker. Bu denetim aynı hatayı
+# saniyeler içinde ve paket adını söyleyerek yakalar.
+echo "-- paket listeleri depolara karşı doğrulanıyor"
+python3 "$WORK/scripts/verify-packages.py" \
+  "config/package-lists/common.list.chroot" \
+  "config/package-lists/$EDITION.list.chroot" \
+  || { echo "! Paket listesi hatalı — derleme başlatılmadı." >&2; exit 1; }
+
 
 # Arayüz paketi kök dosya sistemine gömülür (ağ gerektirmez).
 mkdir -p config/includes.chroot/var/www/tedbirge
@@ -120,7 +131,7 @@ chmod +x config/hooks/normal/*.hook.chroot
 lb config \
   --distribution bookworm \
   --architectures amd64 \
-  --archive-areas "main contrib non-free-firmware" \
+  --archive-areas "main contrib non-free non-free-firmware" \
   --binary-images iso-hybrid \
   --bootloaders "syslinux,grub-efi" \
   --debian-installer none \

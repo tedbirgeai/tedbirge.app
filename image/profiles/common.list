@@ -16,7 +16,7 @@ intel-microcode
 amd64-microcode
 
 # --- donanim yazilimlari (backports surumleri: yeni cekirdek ile uyum)
-firmware-linux-free/bookworm-backports
+firmware-linux-free
 firmware-misc-nonfree/bookworm-backports
 firmware-realtek/bookworm-backports
 firmware-atheros/bookworm-backports
@@ -26,7 +26,7 @@ firmware-libertas/bookworm-backports
 firmware-amd-graphics/bookworm-backports
 firmware-nvidia-graphics/bookworm-backports
 firmware-mediatek/bookworm-backports
-firmware-sof-signed/bookworm-backports
+firmware-sof-signed
 firmware-ath9k-htc
 firmware-ti-connectivity
 firmware-qcom-soc

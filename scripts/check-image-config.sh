@@ -57,6 +57,13 @@ for p in power-profiles-daemon thermald; do
     || hata "Workstation paket listesinde '$p' yok."
 done
 
+# 3b) Paket adları gerçekten Debian depolarında var mı? (docker derlemesinden ÖNCE)
+if command -v python3 >/dev/null 2>&1; then
+  python3 scripts/verify-packages.py \
+    image/profiles/common.list image/profiles/workstation.list image/profiles/touch.list \
+    || hata "Paket listelerinde depoda bulunmayan paket var."
+fi
+
 # 4) Açılış hattı: hazır sinyali ve seri konsol
 grep -q "console=ttyS0" image/build.sh || hata "Seri konsol açılış satırında yok; CI testi kör kalır."
 grep -q "TEDBIRGE_BOOT_READY" image/config/includes.chroot/opt/tedbirge/tedbirge-ready.sh \
