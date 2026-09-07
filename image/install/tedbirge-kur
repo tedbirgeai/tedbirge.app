@@ -107,10 +107,76 @@ MIN_BAYT=$((8 * 1024 * 1024 * 1024))
 # TEDBIRGE_AUTO=1 verilmisse soru sorulmaz (CI kurulum testi bunu kullanir).
 OTO="${TEDBIRGE_AUTO:-0}"
 grep -q "tedbirge.autoinstall=1" /proc/cmdline 2>/dev/null && OTO=1
+METIN=0
+for a in "$@"; do
+  case "$a" in
+    --metin|--text) METIN=1 ;;
+    --oto|--auto)   OTO=1 ;;
+  esac
+done
 SQUASH="/run/live/medium/live/filesystem.squashfs"
 LOG="/var/log/tedbirge/kurulum.log"
 mkdir -p "$(dirname "$LOG")"
-exec > >(tee -a "$LOG") 2>&1
+
+# ------------------------------------------------------ arayuz kipi secimi
+# Pencereli sihirbaz yalnizca gercek bir kullanici oturumunda acilir; CI ve
+# gozetimsiz kurulum eskisi gibi duz metin akisiyla calisir (test uyumu).
+GUI=0
+if [ "$OTO" != "1" ] && [ "$METIN" != "1" ] && [ -t 0 ] \
+   && command -v whiptail >/dev/null 2>&1 && [ -e /dev/tty ]; then
+  GUI=1
+fi
+
+BT="Tedbirge(R) WebOS — Kurulum Yardimcisi"
+GAUGE_PID=""
+FIFO=""
+
+if [ "$GUI" = "1" ]; then
+  # Ekran temiz kalsin: tum teknik cikti yalnizca kayit dosyasina akar.
+  exec >>"$LOG" 2>&1
+else
+  exec > >(tee -a "$LOG") 2>&1
+fi
+
+# whiptail pencereleri her zaman gercek konsola cizilir; secilen deger
+# stderr'den okunur (klasik 3>&1 1>&2 2>&3 takasi).
+p_mesaj() { # baslik, metin
+  whiptail --backtitle "$BT" --title "$1" --msgbox "$2" 18 74 >/dev/tty 2>&1
+}
+p_soru() { # baslik, metin  -> 0 = evet
+  whiptail --backtitle "$BT" --title "$1" --yesno "$2" 18 74 \
+    --yes-button "Evet, devam et" --no-button "Hayir, iptal" >/dev/tty 2>&1
+}
+p_bilgi() { # baslik, metin (ileri/iptal)
+  whiptail --backtitle "$BT" --title "$1" --yesno "$2" 20 74 \
+    --yes-button "Ileri" --no-button "Iptal" >/dev/tty 2>&1
+}
+p_menu() { # baslik, metin, satirlar...  -> secim stdout
+  local b="$1" m="$2"; shift 2
+  whiptail --backtitle "$BT" --title "$b" --menu "$m" 20 74 8 "$@" 3>&1 1>&2 2>&3
+}
+
+gauge_baslat() {
+  [ "$GUI" = "1" ] || return 0
+  FIFO=$(mktemp -u /tmp/tbg-gauge.XXXXXX)
+  mkfifo "$FIFO"
+  whiptail --backtitle "$BT" --title "Kurulum suruyor" \
+    --gauge "Hazirlaniyor..." 10 74 0 < "$FIFO" >/dev/tty 2>&1 &
+  GAUGE_PID=$!
+  exec 3>"$FIFO"
+}
+gauge_kapat() {
+  [ -n "$GAUGE_PID" ] || return 0
+  exec 3>&- 2>/dev/null
+  wait "$GAUGE_PID" 2>/dev/null
+  GAUGE_PID=""
+  [ -n "$FIFO" ] && rm -f "$FIFO"
+}
+ILERLE() { # yuzde, aciklama
+  echo ""; echo "== [%$1] $2 =="
+  [ -n "$GAUGE_PID" ] || return 0
+  printf 'XXX\n%s\n%s\nXXX\n' "$1" "$2" >&3 2>/dev/null || true
+}
 
 hata() {
   echo ""; echo "! $*" >&2
@@ -125,10 +191,26 @@ hata() {
       printf 'TEDBIRGE_INSTALL_FAIL %s\n' "$*" > "$t" 2>/dev/null
     done
   fi
+  if [ "$GUI" = "1" ]; then
+    gauge_kapat
+    p_mesaj "Kurulum durduruldu" \
+"$*
+
+Diskinizde kalici bir zarar olusmadi; sistemi USB uzerinden kullanmaya
+devam edebilirsiniz.
+
+Ne yapabilirsiniz:
+ * Kuruluma bastan yeniden deneyin (menuden 'Diske kur').
+ * Baska bir disk secin ya da disk kablosunu yeniden takin.
+ * Ayrintili kayit: $LOG
+
+Devam etmek icin Enter'a basin."
+  fi
   exit 1
 }
 
 baslik() { echo ""; echo "== $* =="; }
+
 
 KOK=/mnt/tedbirge
 P1=""; P2=""; P3=""; BAGLI=0
