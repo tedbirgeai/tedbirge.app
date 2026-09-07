@@ -150,15 +150,31 @@ timeout --foreground 90m stdbuf -oL -eL lb build
 ISO=$(ls -1 "$BUILD"/*.iso "$BUILD"/*.hybrid.iso 2>/dev/null | head -1 || true)
 [ -n "$ISO" ] || { echo "! ISO üretilmedi." >&2; ls -la "$BUILD" >&2; exit 1; }
 
-# UEFI güvencesi: taşınabilir açılış yolu ISO içinde gerçekten var mı? Yoksa
-# imaj bazı bilgisayarlarda hiç açılmaz — bu yüzden derleme burada durur.
+# UEFI güvencesi: bilgisayarlar UEFI açılışında ya ISO9660 ağacındaki
+# EFI/boot/bootx64.efi dosyasını ya da El Torito'daki gömülü EFI (FAT) imajını
+# kullanır. live-build çoğu kez yalnızca ikincisini üretir; bu yüzden ikisinden
+# biri yeterlidir. Hiçbiri yoksa imaj UEFI'de açılmaz ve derleme durur.
 if command -v xorriso >/dev/null 2>&1; then
-  if ! xorriso -indev "$ISO" -find /EFI/BOOT -name 'BOOTX64.EFI' 2>/dev/null | grep -qi 'bootx64.efi'; then
-    echo "! ISO içinde /EFI/BOOT/BOOTX64.EFI yok — UEFI açılışı garanti edilemez." >&2
+  UEFI_OK=0
+  # 1) ISO9660 ağacında dosya (buyuk/kucuk harf farkli olabilir)
+  if xorriso -indev "$ISO" -find / -name 'bootx64.efi' 2>/dev/null | grep -qi 'bootx64.efi' \
+    || xorriso -indev "$ISO" -find / -name 'BOOTX64.EFI' 2>/dev/null | grep -qi 'bootx64.efi'; then
+    UEFI_OK=1
+    echo "-- UEFI taşınabilir açılış dosyası ISO ağacında bulundu"
+  fi
+  # 2) El Torito EFI kaydı (gömülü FAT imajı)
+  if [ "$UEFI_OK" = 0 ] \
+    && xorriso -indev "$ISO" -report_el_torito plain 2>/dev/null | grep -qiE 'UEFI|efi'; then
+    UEFI_OK=1
+    echo "-- UEFI açılışı El Torito EFI kaydıyla doğrulandı"
+  fi
+  if [ "$UEFI_OK" = 0 ]; then
+    echo "! ISO'da UEFI açılış yolu yok (ne EFI/boot/bootx64.efi ne El Torito EFI kaydı)." >&2
+    xorriso -indev "$ISO" -report_el_torito plain 2>&1 | head -30 >&2 || true
     exit 1
   fi
-  echo "-- UEFI taşınabilir açılış dosyası doğrulandı"
 fi
+
 
 BASENAME="tedbirge-webos-$EDITION-x86_64"
 TARGET="$OUT/$BASENAME.iso"
