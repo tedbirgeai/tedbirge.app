@@ -289,7 +289,11 @@ export function IsoGuideDialog({
   status?: IsoStatus | null;
 }) {
   if (!open) return null;
-  const detay = [status?.version, formatIsoSize(status?.size ?? 0)].filter(Boolean).join(" · ");
+  const surum =
+    status?.edition === "touch" ? "Touch & Mobile" : status?.edition === "workstation" ? "Workstation" : "";
+  const detay = [surum, status?.version, formatIsoSize(status?.size ?? 0)]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <Shell
       title="İndirme başladı — USB'ye yazdırma"
