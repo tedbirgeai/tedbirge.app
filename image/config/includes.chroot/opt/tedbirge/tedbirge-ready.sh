@@ -21,6 +21,17 @@ while [ "$i" -lt 60 ]; do
 done
 [ "$i" -lt 60 ] || exit 1
 
+# Normal canli/kurulu acilista yalniz web sunucusunu degil, gercek X + Chromium
+# masaustunu da bekle. Kurulum kipinde kiosk bilerek kapali oldugundan bu kosul
+# uygulanmaz.
+if ! grep -qE 'tedbirge\.(auto)?install=1' /proc/cmdline 2>/dev/null; then
+  i=0
+  while [ "$i" -lt 60 ] && [ ! -e /run/tedbirge-kiosk-ready ]; do
+    i=$((i + 1)); sleep 1
+  done
+  [ -e /run/tedbirge-kiosk-ready ] || exit 1
+fi
+
 printf '%s\n' TEDBIRGE_BOOT_READY > /dev/console 2>/dev/null || true
 printf '%s\n' TEDBIRGE_BOOT_READY > /dev/ttyS0 2>/dev/null || true
 touch /run/tedbirge-ready

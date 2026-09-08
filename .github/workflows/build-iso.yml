@@ -101,7 +101,9 @@ jobs:
           chmod +x build-iso/payload/bin/tedbirge-sysbridge
 
       - name: Kurulum imajı yapılandırmasını doğrula
-        run: bash scripts/check-image-config.sh
+        run: |
+          bash scripts/check-image-config.sh
+          bash scripts/test-installer-contract.sh
 
       - name: Sürüm etiketi
         id: ver
@@ -170,7 +172,7 @@ jobs:
             QPID=$!
             RESULT="timeout"; i=0
             while [ "$i" -lt "$BOOT_TIMEOUT" ]; do
-              if grep -q "TEDBIRGE_BOOT_READY" "$LOG" 2>/dev/null; then RESULT="ok"; break; fi
+               if grep -q "TEDBIRGE_BOOT_READY" "$LOG" 2>/dev/null && grep -q "TEDBIRGE_DESKTOP_READY" "$LOG" 2>/dev/null; then RESULT="ok"; break; fi
               if grep -qiE "Kernel panic|Attempted to kill init|Unable to mount root|Cannot find live |No such file or directory.*filesystem.squashfs|Failed to start Tedbirge|No bootable device|Boot failed" "$LOG" 2>/dev/null; then
                 RESULT="panic"; break
               fi
@@ -184,7 +186,7 @@ jobs:
               ok) echo "$NAME testi geçti." ;;
               panic) echo "::error::$NAME — canlı ortam açılamadı."; FAIL=1 ;;
               exited) echo "::error::$NAME — QEMU açılış tamamlanmadan sonlandı."; FAIL=1 ;;
-              *) echo "::error::$NAME — ${BOOT_TIMEOUT}s içinde hazır sinyali görülmedi."; FAIL=1 ;;
+               *) echo "::error::$NAME — ${BOOT_TIMEOUT}s içinde masaüstü hazır sinyali görülmedi."; FAIL=1 ;;
             esac
           }
 

@@ -9,3 +9,7 @@
 - [x] Kalıcı disk kurulumunu BIOS/UEFI için tutarlı hale getir
 - [x] Testleri ve mevcut uygulama derlemesini doğrula
 - [x] Yalnız başarılı paketin yayınlanmasını güvenceye al
+- [x] Disk bölümlemeyi BIOS/UEFI için ortak GPT düzeni ve açıklanabilir hata kodlarıyla sağlamlaştır
+- [x] Kurulum boyunca boş konsolu kaldır; tekrar dene/canlı masaüstü/kapat kurtarma menüsünü kur
+- [x] Canlı masaüstü ve ilk açılış hazır sinyalini gerçek kiosk durumu üzerinden doğrula
+- [x] Etkileşimli kurucu sözleşmesi ve hata sonrası dönüş denetimlerini CI hattına ekle

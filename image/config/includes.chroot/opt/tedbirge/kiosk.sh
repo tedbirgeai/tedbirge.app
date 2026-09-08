@@ -30,10 +30,22 @@ if [ -z "$BROWSER" ]; then
   exec /bin/sh
 fi
 
+# Tarayiciyi once baslat, gercekten ayakta kaldigini dogruladiktan sonra hazir
+# isaretini uret. Yalniz HTTP sunucusunun calismasi masaustunun acildigi
+# anlamina gelmez.
 # shellcheck disable=SC2086
-exec "$BROWSER" \
+"$BROWSER" \
   --kiosk --app="$URL" --start-fullscreen \
   --user-data-dir=/var/lib/tedbirge/chromium \
   --noerrdialogs --disable-infobars --disable-translate \
   --no-first-run --disable-pinch --overscroll-history-navigation=0 \
-  --password-store=basic --test-type --no-sandbox $GPU_FLAGS
+  --password-store=basic --test-type --no-sandbox $GPU_FLAGS &
+BROWSER_PID=$!
+sleep 2
+if ! kill -0 "$BROWSER_PID" 2>/dev/null; then
+  echo "Goruntuleyici baslatilamadi."
+  exit 1
+fi
+touch /run/tedbirge-kiosk-ready
+printf '%s\n' TEDBIRGE_DESKTOP_READY > /dev/ttyS0 2>/dev/null || true
+wait "$BROWSER_PID"
