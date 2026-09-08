@@ -143,6 +143,16 @@ grep -q 'whiptail' "$KUR" || hata "Kurulum aracında pencereli sihirbaz (whiptai
 grep -q 'Adim 1/6' "$KUR" || hata "Kurulum sihirbazında adım adım yönlendirme yok."
 grep -q -- '--metin' "$KUR" || hata "Düz metin kurulum kipi (--metin) yok."
 grep -q 'gauge' "$KUR" || hata "Kurulumda ilerleme göstergesi yok."
+grep -q 'Kurulum devam ediyor, bilgisayari kapatmayin' "$KUR" \
+  || hata "Uzun kurulum adımlarında kullanıcıya devam bilgisi verilmiyor."
+grep -q 'mklabel gpt' "$KUR" || hata "Kurulum ortak GPT bölüm tablosu kullanmıyor."
+grep -q 'mkpart bios_grub' "$KUR" || hata "BIOS için GPT bios_grub bölümü oluşturulmuyor."
+if grep -q 'mklabel msdos' "$KUR"; then
+  hata "BIOS kurulumu eski MBR/msdos bölüm tablosunu kullanıyor."
+fi
+grep -q 'blockdev --getro' "$KUR" || hata "Hedef diskin yazma koruması denetlenmiyor."
+grep -q 'sgdisk --zap-all' "$KUR" || hata "Eski GPT yedek başlığı temizlenmiyor."
+grep -q 'Hata kodu:' "$KUR" || hata "Kurulum hataları izlenebilir kod taşımıyor."
 grep -q 'Ee\]\[Vv\]\[Ee\]\[Tt\]' "$KUR"   || hata "Metin kipinde küçük harfli onay kabul edilmiyor (kullanıcı sessizce iptal olur)."
 for pkg in whiptail console-setup kbd keyboard-configuration; do
   grep -qx "$pkg" image/profiles/common.list || hata "Kurulum arayüzü paketi eksik: $pkg"
@@ -152,6 +162,20 @@ done
 grep -q 'kurulum-sonrasi.sh' \
   image/config/includes.chroot/etc/systemd/system/tedbirge-installer.service \
   || hata "Kurulum servisi bittiğinde kullanıcı bilgilendirilmiyor."
+grep -q '^Restart=always' \
+  image/config/includes.chroot/etc/systemd/system/tedbirge-installer.service \
+  || hata "Kurulum beklenmedik kapanmada otomatik yeniden başlamıyor."
+SONRASI=image/config/includes.chroot/opt/tedbirge/kurulum-sonrasi.sh
+grep -q 'Kurulumu yeniden baslat' "$SONRASI" || hata "Kurulum sonrası yeniden deneme seçeneği yok."
+grep -q 'USB uzerinden canli masaustune don' "$SONRASI" || hata "Kurulum sonrası canlı masaüstü seçeneği yok."
+grep -q 'systemctl poweroff' "$SONRASI" || hata "Kurulum sonrası güvenli kapatma seçeneği yok."
+if grep -q 'exec /bin/login\|startx' "$SONRASI"; then
+  hata "Kurulum sonrası akış kullanıcıyı komut satırına/Xsession yoluna bırakıyor."
+fi
+grep -q 'TEDBIRGE_DESKTOP_READY' image/config/includes.chroot/opt/tedbirge/kiosk.sh \
+  || hata "Gerçek masaüstü hazır sinyali yok."
+grep -q 'tedbirge-kiosk-ready' image/config/includes.chroot/opt/tedbirge/tedbirge-ready.sh \
+  || hata "Açılış doğrulaması gerçek masaüstünü beklemiyor."
 for f in image/config/bootloaders/syslinux_common/live.cfg.in \
          image/config/bootloaders/grub-pc/grub.cfg; do
   grep -q '®' "$f" && hata "Açılış menüsünde desteklenmeyen ® karakteri var: $f"
