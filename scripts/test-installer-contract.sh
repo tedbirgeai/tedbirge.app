@@ -30,6 +30,11 @@ zorunlu 'mkpart ESP' "$KUR" "UEFI açılış bölümü yok"
 zorunlu 'blockdev --getro' "$KUR" "Yazma koruması denetlenmiyor"
 zorunlu 'MAJ:MIN' "$KUR" "Disk kimliği yeniden doğrulanmıyor"
 zorunlu 'sgdisk --zap-all' "$KUR" "Eski GPT izi temizlenmiyor"
+zorunlu 'DSK-101' "$KUR" "Yazma koruması hata kodu yok"
+zorunlu 'DSK-103' "$KUR" "Bağlı bölüm hata kodu yok"
+zorunlu 'DSK-110' "$KUR" "Bölüm tablosu hata kodu yok"
+zorunlu 'DSK-120' "$KUR" "Bölüm görünürlüğü hata kodu yok"
+zorunlu 'udevadm settle --timeout=30' "$KUR" "Bölüm aygıtı bekleme süresi yetersiz"
 if grep -q 'mklabel msdos' "$KUR"; then
   echo "HATA: eski MBR bölümleme yolu geri gelmiş" >&2
   exit 1
@@ -39,6 +44,7 @@ fi
 zorunlu 'Kurulumu yeniden baslat' "$SONRASI" "Yeniden deneme menüsü yok"
 zorunlu 'canli masaustune don' "$SONRASI" "Canlı masaüstü menüsü yok"
 zorunlu 'TEDBIRGE_DESKTOP_READY' "$KIOSK" "Masaüstü hazır sinyali yok"
+zorunlu 'tedbirge-installer-complete' "$KUR" "Başarılı yeniden başlatma işareti yok"
 if grep -qE 'exec /bin/login|(^|[[:space:]])startx([[:space:]]|$)' "$SONRASI"; then
   echo "HATA: kullanıcı hâlâ komut satırı/Xsession yoluna bırakılıyor" >&2
   exit 1
