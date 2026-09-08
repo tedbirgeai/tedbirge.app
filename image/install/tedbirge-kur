@@ -536,8 +536,7 @@ BAGLI=1
 
 # --- kaynak dogrulama: bozuk USB/imaj ile kopyalamaya hic baslanmaz.
 # NOT: Kopyalama komutunda YALNIZCA her squashfs-tools surumunde bulunan
-# secenekler kullanilir (-f, -d, -i). Surume gore degisen secenekler (ornegin
-# -percentage) araci yardim ekranina dusurur ve kurulum sahte "disk arizasi"
+# secenekler kullanilir (-f, -d, -i). Surume gore degisen secenekler (surume gore degisen ilerleme secenekleri) araci yardim ekranina dusurur ve kurulum sahte "disk arizasi"
 # hatasi verirdi; bu bilinen kok neden tumden kaldirilmistir.
 if ! unsquashfs -s "$SQUASH" >"$LOG.kaynak" 2>&1; then
   cat "$LOG.kaynak" >>"$LOG" 2>/dev/null
