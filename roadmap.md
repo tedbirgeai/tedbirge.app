@@ -13,3 +13,8 @@
 - [x] Kurulum boyunca boş konsolu kaldır; tekrar dene/canlı masaüstü/kapat kurtarma menüsünü kur
 - [x] Canlı masaüstü ve ilk açılış hazır sinyalini gerçek kiosk durumu üzerinden doğrula
 - [x] Etkileşimli kurucu sözleşmesi ve hata sonrası dönüş denetimlerini CI hattına ekle
+- [x] Sistem kopyalama hatasını kökten çöz (desteklenmeyen ilerleme seçeneği kaldırıldı, gerçek squashfs testi eklendi)
+- [x] Kopyalama hatalarını gerçek nedene göre sınıflandır (bozuk imaj / yazma hatası / bağlantı kaybı / yer yok)
+- [x] Kopyalama sırasında sürekli ilerleme, dosya sayısı, geçen süre ve faaliyet göstergesi
+- [x] Kurulum ekranlarında konsol fare desteği (gpm)
+- [ ] Gerçek donanımda yeni ISO ile kurulum kabulü (fiziksel disk gerektirir)
