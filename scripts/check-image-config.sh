@@ -154,9 +154,13 @@ grep -q 'blockdev --getro' "$KUR" || hata "Hedef diskin yazma koruması denetlen
 grep -q 'sgdisk --zap-all' "$KUR" || hata "Eski GPT yedek başlığı temizlenmiyor."
 grep -q 'Hata kodu:' "$KUR" || hata "Kurulum hataları izlenebilir kod taşımıyor."
 grep -q 'Ee\]\[Vv\]\[Ee\]\[Tt\]' "$KUR"   || hata "Metin kipinde küçük harfli onay kabul edilmiyor (kullanıcı sessizce iptal olur)."
-for pkg in whiptail console-setup kbd keyboard-configuration; do
+for pkg in whiptail console-setup kbd keyboard-configuration gpm; do
   grep -qx "$pkg" image/profiles/common.list || hata "Kurulum arayüzü paketi eksik: $pkg"
 done
+grep -q 'unsquashfs -f -i -d' "$KUR" || hata "Kopyalama taşınabilir seçeneklerle çalıştırılmıyor."
+grep -q -- '-percentage' "$KUR" && hata "Kurucuda desteklenmeyen unsquashfs seçeneği var."
+grep -q 'KUR-201' "$KUR" || hata "Kopyalama hataları nedene göre sınıflandırılmıyor."
+grep -q 'dosya acildi' "$KUR" || hata "Kopyalama sırasında gerçek ilerleme gösterilmiyor."
 [ -s image/config/includes.chroot/opt/tedbirge/kurulum-sonrasi.sh ] \
   || hata "Kurulum sonrası bilgilendirme ekranı yok (boş ekran riski)."
 grep -q 'kurulum-sonrasi.sh' \
