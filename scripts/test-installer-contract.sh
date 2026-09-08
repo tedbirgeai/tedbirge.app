@@ -40,6 +40,24 @@ if grep -q 'mklabel msdos' "$KUR"; then
   exit 1
 fi
 
+# Sistem kopyalama: yalnızca her sürümde bulunan seçenekler kullanılmalı.
+if grep -q 'unsquashfs .*-percentage' "$KUR"; then
+  echo "HATA: unsquashfs -percentage geri gelmiş (araç yardım ekranına düşer)" >&2
+  exit 1
+fi
+zorunlu 'unsquashfs -s' "$KUR" "Kopyalama öncesi imaj bütünlüğü doğrulanmıyor"
+zorunlu 'unsquashfs -f -i -d' "$KUR" "Kopyalama taşınabilir seçeneklerle çalıştırılmıyor"
+zorunlu 'KUR-201' "$KUR" "Bozuk kaynak imaj hata kodu yok"
+zorunlu 'KUR-202' "$KUR" "Gerçek disk yazma hatası kodu yok"
+zorunlu 'KUR-203' "$KUR" "Yetersiz disk alanı hata kodu yok"
+zorunlu 'KUR-204' "$KUR" "Disk bağlantı kaybı hata kodu yok"
+zorunlu 'dosya acildi' "$KUR" "Kopyalama sırasında gerçek ilerleme gösterilmiyor"
+zorunlu 'dk .* sn' "$KUR" "Kopyalama sırasında geçen süre gösterilmiyor"
+
+# Kurulum ekranları fare ile de kullanılabilmeli (konsol fare hizmeti).
+grep -qx 'gpm' image/profiles/common.list || {
+  echo "HATA: konsol fare desteği (gpm) paket listesinde yok" >&2; exit 1; }
+
 # Boş konsol ve Xsession kaçış yolu geri gelmesin.
 zorunlu 'Kurulumu yeniden baslat' "$SONRASI" "Yeniden deneme menüsü yok"
 zorunlu 'canli masaustune don' "$SONRASI" "Canlı masaüstü menüsü yok"
