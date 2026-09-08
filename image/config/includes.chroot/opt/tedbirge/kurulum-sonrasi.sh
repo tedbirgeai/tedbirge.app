@@ -1,21 +1,51 @@
-#!/bin/sh
-# Kurulum ekrani kapandiktan sonra calisir. Amaci tek sey: kullanici asla
-# bos ekran + yanip sonen imlecle bas basa kalmasin.
+#!/bin/bash
+# Kurucu hangi nedenle kapanirsa kapansin kullanici bos konsola veya komut
+# satirina birakilmaz. Bu betik hizmetin ExecStopPost adiminda tty1'i devralir.
 set -u
-exec >/dev/tty1 2>&1
-clear 2>/dev/null || true
-cat <<'MSJ'
-===============================================
-   Tedbirge(R) WebOS — Kurulum ekrani kapandi
-===============================================
+exec </dev/tty1 >/dev/tty1 2>&1
 
-Ne yapabilirsiniz:
+# Basarili yeniden baslatma sirasinda hizmet durdurulurken menu acma.
+if [ -e /run/tedbirge-installer-complete ]; then
+  exit 0
+fi
 
-  * Kurulumu yeniden baslatmak icin :  tedbirge-kur
-  * Kurulumu duz metin kipinde denemek icin :  tedbirge-kur --metin
-  * Masaustunu (canli kip) acmak icin :  xinit /opt/tedbirge/kiosk.sh -- :0 vt1
+masaustu() {
+  local eksik=""
+  command -v xinit >/dev/null 2>&1 || eksik="xinit"
+  [ -x /opt/tedbirge/kiosk.sh ] || eksik="kiosk baslaticisi"
+  [ -s /var/www/tedbirge/index.html ] || eksik="WebOS arayuzu"
+  command -v chromium >/dev/null 2>&1 || command -v chromium-browser >/dev/null 2>&1 || eksik="goruntuleyici"
+  if [ -n "$eksik" ]; then
+    whiptail --backtitle "Tedbirge(R) WebOS" --title "Masaustu acilamadi" \
+      --msgbox "$eksik bulunamadi. Kurulum USB'sini yeniden olusturup tekrar deneyin.\n\nKayit: /var/log/tedbirge/kiosk.log" 14 72
+    return 1
+  fi
+  clear
+  printf 'Tedbirge(R) WebOS masaustu hazirlaniyor...\n'
+  printf 'Bu islem birkac saniye surebilir. Lutfen bekleyin.\n'
+  /usr/bin/xinit /opt/tedbirge/kiosk.sh -- :0 vt1 -keeptty
+}
 
-Kurulum kaydi: /var/log/tedbirge/kurulum.log
-
-MSJ
-exec /bin/login -f root
+while :; do
+  SECIM=$(whiptail --backtitle "Tedbirge(R) WebOS" \
+    --title "Kurulum yardimcisi" \
+    --menu "Kurulum ekrani kapandi. Ne yapmak istersiniz?\n\nAyrintili kayit: /var/log/tedbirge/kurulum.log" \
+    18 74 4 \
+    yeniden "Kurulumu yeniden baslat" \
+    masaustu "USB uzerinden canli masaustune don" \
+    kayit "Kurulum kaydinin son satirlarini goster" \
+    kapat "Bilgisayari guvenle kapat" \
+    3>&1 1>&2 2>&3) || SECIM="yeniden"
+  case "$SECIM" in
+    yeniden) exit 0 ;;
+    masaustu) masaustu || true ;;
+    kayit)
+      whiptail --backtitle "Tedbirge(R) WebOS" --title "Kurulum kaydi" \
+        --scrolltext --msgbox "$(tail -n 40 /var/log/tedbirge/kurulum.log 2>/dev/null || echo 'Kayit bulunamadi.')" 22 78 ;;
+    kapat)
+      whiptail --backtitle "Tedbirge(R) WebOS" --title "Bilgisayar kapatiliyor" \
+        --infobox "Bilgisayar guvenle kapatiliyor. Ekran karardiginda USB bellegi cikarabilirsiniz." 9 70
+      systemctl poweroff -i --no-block 2>/dev/null || poweroff -f
+      exit 0 ;;
+  esac
+done

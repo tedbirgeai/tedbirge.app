@@ -764,6 +764,12 @@ Kurulum kaydi: $LOG
 
 Simdi yeniden baslatilsin mi? ('Hayir' derseniz canli sistemde
 calismaya devam edebilirsiniz.)"; then
+    touch /run/tedbirge-installer-complete
+    p_mesaj "Bilgisayar yeniden baslatiliyor" \
+"Kurulum tamamlandi.
+
+Bilgisayar guvenle yeniden baslatiliyor. Ekran kapandiginda USB bellegi
+cikarin. Bu sirada bilgisayari kapatmayin."
     reboot
   fi
   exit 0
