@@ -151,7 +151,10 @@ export const Route = createFileRoute("/api/public/relay")({
         }
 
         try {
-          const storeSignal = AbortSignal.timeout(3_000);
+          // Her sorgu KENDI zaman butcesini alir: ardisik sorgularda (lookup:
+          // self + fanout, pull: ack + select) ilk sorgunun yavasligi ikincisini
+          // aninda iptal etmesin.
+          const storeSignal = () => AbortSignal.timeout(6_000);
           if (parsed.action === "publish") {
             const { error } = await supabaseAdmin
               .from("relay_directory")
@@ -165,7 +168,7 @@ export const Route = createFileRoute("/api/public/relay")({
                 },
                 { onConflict: "node_id" },
               )
-              .abortSignal(storeSignal);
+              .abortSignal(storeSignal());
             if (error) return storageUnavailable("dizin kaydı", error);
             return json({ ok: true });
           }
@@ -178,7 +181,7 @@ export const Route = createFileRoute("/api/public/relay")({
               .from("relay_directory")
               .select("node_id, person_id, sign_public, box_public")
               .eq("node_id", parsed.nodeId)
-              .abortSignal(storeSignal)
+              .abortSignal(storeSignal())
               .maybeSingle();
             if (selfError) return storageUnavailable("düğüm araması", selfError);
 
@@ -188,7 +191,7 @@ export const Route = createFileRoute("/api/public/relay")({
               .select("node_id, person_id, sign_public, box_public")
               .eq("person_id", person)
               .limit(20)
-              .abortSignal(storeSignal);
+              .abortSignal(storeSignal());
             if (fanoutError) return storageUnavailable("bağlı cihaz araması", fanoutError);
 
             const map = new Map<
@@ -231,7 +234,7 @@ export const Route = createFileRoute("/api/public/relay")({
             const { error } = await supabaseAdmin
               .from("relay_envelopes")
               .upsert(rows, { onConflict: "pkt_id", ignoreDuplicates: true })
-              .abortSignal(storeSignal);
+              .abortSignal(storeSignal());
             if (error) return storageUnavailable("zarf kuyruğu", error);
             // Alıcı kapalıysa cihazını uyandır: yalnızca "yeni şifreli mesaj var"
             // sinyali gider; içerik sunucudan geçmez.
@@ -265,7 +268,7 @@ export const Route = createFileRoute("/api/public/relay")({
               .delete()
               .in("target_node", mailboxes)
               .in("pkt_id", parsed.ack)
-              .abortSignal(storeSignal);
+              .abortSignal(storeSignal());
             if (ackError) return storageUnavailable("teslim onayı", ackError);
           }
           // Süresi dolan zarfların silinmesi artık istek yolunda değil,
@@ -280,7 +283,7 @@ export const Route = createFileRoute("/api/public/relay")({
             .order("priority", { ascending: true })
             .order("created_at", { ascending: true })
             .limit(MAX_PULL)
-            .abortSignal(storeSignal);
+            .abortSignal(storeSignal());
           if (pullError) return storageUnavailable("zarf teslimi", pullError);
 
           return json({

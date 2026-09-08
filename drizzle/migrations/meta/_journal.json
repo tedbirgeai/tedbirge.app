@@ -8,6 +8,13 @@
       "when": 1788092087801,
       "tag": "0000_fix_cron_http_post_and_relay_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788880585087,
+      "tag": "0001_relay_envelopes_pull_index",
+      "breakpoints": true
     }
   ]
 }
