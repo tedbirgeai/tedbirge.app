@@ -130,6 +130,12 @@ if [ "$OTO" != "1" ] && [ "$METIN" != "1" ] && [ -t 0 ] \
   GUI=1
 fi
 
+# Konsol fare destegi: kurulum ekranlari klavyenin yani sira fare ile de
+# kullanilabilsin. gpm yoksa kurulum klavyeyle sorunsuz devam eder.
+if [ "$GUI" = "1" ] && command -v gpm >/dev/null 2>&1; then
+  pgrep -x gpm >/dev/null 2>&1 || gpm -m /dev/input/mice -t exps2 >/dev/null 2>&1 || true
+fi
+
 BT="Tedbirge(R) WebOS — Kurulum Yardimcisi"
 GAUGE_PID=""
 FIFO=""
