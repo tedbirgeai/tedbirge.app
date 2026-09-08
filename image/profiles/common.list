@@ -39,11 +39,13 @@ libva2
 va-driver-all
 vdpau-driver-all
 fonts-dejavu-core
-# Kurulum sihirbazi: pencereli metin arayuzu, klavye ve konsol duzeni
+# Kurulum sihirbazi: pencereli metin arayuzu, klavye, konsol duzeni ve
+# konsol fare destegi (gpm) — kurulum ekranlari fare ile de kullanilabilir.
 whiptail
 console-setup
 kbd
 keyboard-configuration
+gpm
 
 brightnessctl
 
