@@ -130,6 +130,12 @@ if [ "$OTO" != "1" ] && [ "$METIN" != "1" ] && [ -t 0 ] \
   GUI=1
 fi
 
+# Konsol fare destegi: kurulum ekranlari klavyenin yani sira fare ile de
+# kullanilabilsin. gpm yoksa kurulum klavyeyle sorunsuz devam eder.
+if [ "$GUI" = "1" ] && command -v gpm >/dev/null 2>&1; then
+  pgrep -x gpm >/dev/null 2>&1 || gpm -m /dev/input/mice -t exps2 >/dev/null 2>&1 || true
+fi
+
 BT="Tedbirge(R) WebOS — Kurulum Yardimcisi"
 GAUGE_PID=""
 FIFO=""
@@ -525,25 +531,92 @@ fi
 # ------------------------------------------------------------ sistem kopyasi
 ILERLE 15 "Sistem dosyalari diske kopyalaniyor (en uzun adim, birkac dakika)"
 mkdir -p "$KOK"
-mount "$P2" "$KOK" || hata "Sistem bolumu baglanamadi."
+mount "$P2" "$KOK" || { HATA_KODU="KUR-210"; hata "Sistem bolumu baglanamadi. Disk bicimlendirildi ancak kullanima acilamadi."; }
 BAGLI=1
-if [ "$GUI" = "1" ]; then
-  # Gercek yuzde: unsquashfs -percentage yalnizca sayi yazar; %15-%60 arasina
-  # olceklenir, boylece kullanici islemin gercekten ilerledigini gorur.
-  KOPYA_RC=1
-  while read -r satir; do
-    case "$satir" in
-      RC=*) KOPYA_RC="${satir#RC=}" ;;
-      ''|*[!0-9]*) : ;;
-      *) ILERLE $((15 + satir * 45 / 100)) "Sistem dosyalari diske kopyalaniyor — %$satir" ;;
-    esac
-  done < <(unsquashfs -f -percentage -d "$KOK" "$SQUASH" 2>>"$LOG"; echo "RC=$?")
-  [ "$KOPYA_RC" = "0" ] \
-    || hata "Sistem dosyalari diske kopyalanamadi. Disk ariza vermis ya da kablo gevsemis olabilir; kabloyu yeniden takip kurulumu tekrarlayin."
-else
-  uzun_adim "Sistem imaji diske aciliyor" unsquashfs -f -d "$KOK" "$SQUASH" \
-    || hata "Sistem imaji diske acilamadi (islem kilitlendi veya disk hatasi). Disk sagligini ve baglantisini denetleyin."
+
+# --- kaynak dogrulama: bozuk USB/imaj ile kopyalamaya hic baslanmaz.
+# NOT: Kopyalama komutunda YALNIZCA her squashfs-tools surumunde bulunan
+# secenekler kullanilir (-f, -d, -i). Surume gore degisen secenekler (surume gore degisen ilerleme secenekleri) araci yardim ekranina dusurur ve kurulum sahte "disk arizasi"
+# hatasi verirdi; bu bilinen kok neden tumden kaldirilmistir.
+if ! unsquashfs -s "$SQUASH" >"$LOG.kaynak" 2>&1; then
+  cat "$LOG.kaynak" >>"$LOG" 2>/dev/null
+  HATA_KODU="KUR-201"
+  hata "Kurulum imaji okunamadi ya da bozuk. USB bellegi baska bir yuvaya takip yeniden deneyin veya imaji tekrar yazin."
 fi
+cat "$LOG.kaynak" >>"$LOG" 2>/dev/null
+TOPLAM_DOSYA=$(awk '/Number of inodes/ {print $NF}' "$LOG.kaynak" 2>/dev/null | head -1)
+KAYNAK_BAYT=$(awk '/Filesystem size/ {print $3}' "$LOG.kaynak" 2>/dev/null | head -1)
+rm -f "$LOG.kaynak"
+case "${TOPLAM_DOSYA:-}" in ''|*[!0-9]*) TOPLAM_DOSYA=0 ;; esac
+case "${KAYNAK_BAYT:-}" in ''|*[!0-9.]*) KAYNAK_BAYT=0 ;; esac
+
+# --- hedefte yer var mi? (sikistirilmis olcunun ~3 kati acilir)
+BOS_KB=$(df -Pk "$KOK" 2>/dev/null | awk 'NR==2 {print $4}')
+GEREKEN_KB=$(awk -v b="$KAYNAK_BAYT" 'BEGIN {printf "%d", (b/1024)*3}')
+if [ -n "${BOS_KB:-}" ] && [ "$GEREKEN_KB" -gt 0 ] && [ "$BOS_KB" -lt "$GEREKEN_KB" ]; then
+  HATA_KODU="KUR-203"
+  hata "Secilen diskte sistem dosyalari icin yeterli yer yok. Daha buyuk bir disk secin."
+fi
+
+kopyalama_hatasi() { # rc
+  local rc="$1"
+  if [ ! -b "$DEV" ]; then
+    HATA_KODU="KUR-204"
+    hata "Kurulum sirasinda disk baglantisi koptu. Guc ve veri kablosunu yeniden takip kurulumu tekrarlayin."
+  fi
+  if ! mountpoint -q "$KOK"; then
+    HATA_KODU="KUR-205"
+    hata "Hedef bolum kurulum sirasinda kullanimdan dustu. Diski yeniden secip kurulumu tekrarlayin."
+  fi
+  if dmesg 2>/dev/null | tail -n 200 | grep -qiE "I/O error|medium error|ata[0-9]+.*failed|blk_update_request"; then
+    HATA_KODU="KUR-202"
+    hata "Disk yazma hatasi bildirdi. Disk saglikli olmayabilir; baska bir disk deneyin veya kabloyu degistirin."
+  fi
+  HATA_KODU="KUR-206"
+  hata "Sistem dosyalari acilirken beklenmeyen bir hata olustu (kod $rc). Ayrintili neden kurulum kaydinda."
+}
+
+KOPYA_LOG="/var/log/tedbirge/kopya.log"
+KOPYA_SAYAC="/run/tedbirge-kopya-sayac"
+: > "$KOPYA_SAYAC"
+# -i: acilan her ogeyi yazar. Sayaci bu ciktidan uretiriz; ilerleme boylece
+# araca ozgu bir bicime degil, gercekten acilan dosya sayisina baglanir.
+( unsquashfs -f -i -d "$KOK" "$SQUASH" 2>>"$LOG" \
+    | stdbuf -oL awk '{n++; if (n % 200 == 0) print n}' > "$KOPYA_SAYAC"
+  echo "${PIPESTATUS[0]}" > "$KOPYA_SAYAC.rc" ) &
+KOPYA_PID=$!
+
+KOPYA_BASI=$(date +%s)
+SON_SAYI=0
+SPIN=0
+while kill -0 "$KOPYA_PID" 2>/dev/null; do
+  sleep 3
+  SPIN=$(((SPIN + 1) % 4))
+  SIMDI=$(date +%s)
+  GECEN=$((SIMDI - KOPYA_BASI))
+  SAYI=$(tail -n 1 "$KOPYA_SAYAC" 2>/dev/null)
+  case "${SAYI:-}" in ''|*[!0-9]*) SAYI="$SON_SAYI" ;; esac
+  SON_SAYI="$SAYI"
+  if [ "$TOPLAM_DOSYA" -gt 0 ]; then
+    YUZ=$((15 + SAYI * 45 / TOPLAM_DOSYA))
+    [ "$YUZ" -gt 60 ] && YUZ=60
+  else
+    YUZ=$((15 + (GECEN / 10) % 45))
+  fi
+  DAKIKA=$((GECEN / 60)); SANIYE=$((GECEN % 60))
+  ISARET=$(printf '%s' "|/-\\" | cut -c $((SPIN + 1)))
+  ILERLE "$YUZ" "Sistem dosyalari diske kopyalaniyor $ISARET — ${SAYI} dosya acildi, ${DAKIKA} dk ${SANIYE} sn"
+done
+wait "$KOPYA_PID" 2>/dev/null
+KOPYA_RC=$(cat "$KOPYA_SAYAC.rc" 2>/dev/null || echo 1)
+rm -f "$KOPYA_SAYAC" "$KOPYA_SAYAC.rc"
+case "$KOPYA_RC" in ''|*[!0-9]*) KOPYA_RC=1 ;; esac
+[ "$KOPYA_RC" = "0" ] || kopyalama_hatasi "$KOPYA_RC"
+# Kopyalama "basarili" dedi diye guvenilmez; kurulan kok gercekten var mi?
+[ -x "$KOK/usr/lib/systemd/systemd" ] || { HATA_KODU="KUR-207"; hata "Sistem dosyalari eksik kopyalandi. USB bellegi denetleyip kurulumu tekrarlayin."; }
+ILERLE 60 "Sistem dosyalari diske kopyalandi"
+echo "Kopyalama tamamlandi (rc=$KOPYA_RC, kayit: $KOPYA_LOG)"
+
 
 
 

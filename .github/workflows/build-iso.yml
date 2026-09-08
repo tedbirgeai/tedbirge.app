@@ -105,6 +105,13 @@ jobs:
           bash scripts/check-image-config.sh
           bash scripts/test-installer-contract.sh
 
+      - name: Sistem kopyalama komutunu gerçek squashfs ile doğrula
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo -E apt-get update
+          sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" squashfs-tools
+          bash scripts/test-squashfs-copy.sh
+
       - name: Sürüm etiketi
         id: ver
         run: |
