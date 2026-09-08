@@ -138,23 +138,28 @@ else
   exec > >(tee -a "$LOG") 2>&1
 fi
 
-# whiptail pencereleri her zaman gercek konsola cizilir; secilen deger
-# stderr'den okunur (klasik 3>&1 1>&2 2>&3 takasi).
+# whiptail pencereleri her zaman gercek konsola cizilir. GUI kipinde stdout ve
+# stderr kayit dosyasina yonlendirildigi icin her pencere acikca /dev/tty'ye
+# cizilir ve klavye girdisi de /dev/tty'den okunur.
 p_mesaj() { # baslik, metin
-  whiptail --backtitle "$BT" --title "$1" --msgbox "$2" 18 74 >/dev/tty 2>&1
+  whiptail --backtitle "$BT" --title "$1" --msgbox "$2" 18 74 >/dev/tty 2>&1 </dev/tty
 }
 p_soru() { # baslik, metin  -> 0 = evet
   whiptail --backtitle "$BT" --title "$1" --yesno "$2" 18 74 \
-    --yes-button "Evet, devam et" --no-button "Hayir, iptal" >/dev/tty 2>&1
+    --yes-button "Evet, devam et" --no-button "Hayir, iptal" >/dev/tty 2>&1 </dev/tty
 }
 p_bilgi() { # baslik, metin (ileri/iptal)
   whiptail --backtitle "$BT" --title "$1" --yesno "$2" 20 74 \
-    --yes-button "Ileri" --no-button "Iptal" >/dev/tty 2>&1
+    --yes-button "Ileri" --no-button "Iptal" >/dev/tty 2>&1 </dev/tty
 }
 p_menu() { # baslik, metin, satirlar...  -> secim stdout
   local b="$1" m="$2"; shift 2
-  whiptail --backtitle "$BT" --title "$b" --menu "$m" 20 74 8 "$@" 3>&1 1>&2 2>&3
+  # Pencere /dev/tty'ye cizilir, secilen deger fd4 uzerinden stdout'a doner.
+  # (fd3 ilerleme cubugu FIFO'su icin ayrilmistir.)
+  whiptail --backtitle "$BT" --title "$b" --menu "$m" 20 74 8 "$@" \
+    4>&1 1>/dev/tty 2>&4 </dev/tty
 }
+
 
 gauge_baslat() {
   [ "$GUI" = "1" ] || return 0
