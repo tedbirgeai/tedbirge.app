@@ -92,10 +92,11 @@ export const browserHost: TerminalHost = {
     const snap = diagnosticsSnapshot();
     return {
       nodeId: nodeId(),
-      mode: peers.length ? "eşler arası" : "bağlı düğüm yok",
+      mode: peers.length
+        ? `eşler arası · kuyruk ${snap.queued}`
+        : `bağlı düğüm yok · kuyruk ${snap.queued}`,
       peers,
-      queued: snap.queued,
-    } as ReturnType<TerminalHost["mesh"]>;
+    };
   },
 
   async ping(peer) {
