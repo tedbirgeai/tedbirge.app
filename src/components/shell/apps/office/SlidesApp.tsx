@@ -69,7 +69,9 @@ export function SlidesApp() {
               }`}
               style={{ border: "1px solid var(--border)", background: "var(--tb-panel-solid)" }}
             >
-              <span className="line-clamp-3 text-[var(--tb-text)]">{s.title || `Slayt ${i + 1}`}</span>
+              <span className="line-clamp-3 text-[var(--tb-text)]">
+                {s.title || `Slayt ${i + 1}`}
+              </span>
             </button>
           ))}
         </div>

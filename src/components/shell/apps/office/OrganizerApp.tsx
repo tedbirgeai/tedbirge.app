@@ -88,7 +88,9 @@ export function OrganizerApp() {
               <button
                 type="button"
                 aria-label={t.done ? "Tamamlanmadı işaretle" : "Tamamlandı işaretle"}
-                onClick={() => write(tasks.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)))}
+                onClick={() =>
+                  write(tasks.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)))
+                }
                 className={`flex h-6 w-6 items-center justify-center rounded-md ${
                   t.done ? "bg-emerald-500/20 text-emerald-300" : "text-[var(--tb-muted)]"
                 }`}

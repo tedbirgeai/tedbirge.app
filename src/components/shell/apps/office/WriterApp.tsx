@@ -71,7 +71,10 @@ export function WriterApp() {
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </div>
-      <p className="border-t p-2 text-[11px] text-[var(--tb-muted)]" style={{ borderColor: "var(--border)" }}>
+      <p
+        className="border-t p-2 text-[11px] text-[var(--tb-muted)]"
+        style={{ borderColor: "var(--border)" }}
+      >
         {words} kelime · {editor.text.length} karakter · çevrimdışı çalışır
       </p>
     </OfficeFrame>

@@ -176,7 +176,6 @@ export async function readDocument(id: string): Promise<string | null> {
   return f ? f.text() : null;
 }
 
-
 /** Depodaki dosyayı `File` olarak geri verir (P2P gönderimi için). */
 export async function readFile(id: string): Promise<File | null> {
   const rec = await tx<VfsRecord | undefined>(
