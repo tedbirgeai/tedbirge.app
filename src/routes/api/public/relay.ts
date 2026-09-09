@@ -231,11 +231,28 @@ export const Route = createFileRoute("/api/public/relay")({
               envelope: i.envelope,
               priority: i.priority,
             }));
-            const { error } = await supabaseAdmin
-              .from("relay_envelopes")
-              .upsert(rows, { onConflict: "pkt_id", ignoreDuplicates: true })
-              .abortSignal(storeSignal());
-            if (error) return storageUnavailable("zarf kuyruğu", error);
+            // Tek dev yazma yerine kucuk gruplar: buyuk zarf yiginlari
+            // veritabani zaman asimina takilip TUM mesajlari dusurmesin.
+            // Bir grup basarisiz olsa da digerleri kuyrukta kalir; istemci
+            // teslim edilemeyeni yeniden dener.
+            const CHUNK = 5;
+            let stored = 0;
+            let lastError: unknown = null;
+            for (let i = 0; i < rows.length; i += CHUNK) {
+              const chunk = rows.slice(i, i + CHUNK);
+              let ok = false;
+              for (let deneme = 0; deneme < 2 && !ok; deneme++) {
+                const { error } = await supabaseAdmin
+                  .from("relay_envelopes")
+                  .upsert(chunk, { onConflict: "pkt_id", ignoreDuplicates: true })
+                  .abortSignal(AbortSignal.timeout(12_000));
+                if (!error) ok = true;
+                else lastError = error;
+              }
+              if (ok) stored += chunk.length;
+            }
+            if (stored === 0) return storageUnavailable("zarf kuyruğu", lastError);
+
             // Alıcı kapalıysa cihazını uyandır: yalnızca "yeni şifreli mesaj var"
             // sinyali gider; içerik sunucudan geçmez.
             try {
