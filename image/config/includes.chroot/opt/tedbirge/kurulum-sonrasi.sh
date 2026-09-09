@@ -1,6 +1,9 @@
 #!/bin/bash
 # Kurucu hangi nedenle kapanirsa kapansin kullanici bos konsola veya komut
-# satirina birakilmaz. Bu betik hizmetin ExecStopPost adiminda tty1'i devralir.
+# satirina birakilmaz. Bu betik /opt/tedbirge/oturum.sh icinden, kurulum
+# hizmetinin ASIL sureci olarak calisir (kapanis adimi degil), boylece
+# systemd zaman asimi menuyu veya canli masaustunu yarida kesmez.
+# Cikis 10 = "kurulumu yeniden baslat".
 set -u
 exec </dev/tty1 >/dev/tty1 2>&1
 
@@ -8,6 +11,7 @@ exec </dev/tty1 >/dev/tty1 2>&1
 if [ -e /run/tedbirge-installer-complete ]; then
   exit 0
 fi
+
 
 masaustu() {
   local eksik=""
