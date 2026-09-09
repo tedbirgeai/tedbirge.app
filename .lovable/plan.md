@@ -1,69 +1,57 @@
-# Tedbirge® WebOS — Masaüstü Kabuğu ve Ofis Süreçlerinin Yeniden İnşası
+# Tedbirge® WebOS — Kabuk, İletişim, Sistem Araçları ve Ofis Süreçlerinin Yeniden İnşası
 
-Mevcut yüzeysel ofis taslakları (Markdown bölünmüş Writer, ilkel Sheets tablosu, liste tabanlı Slides/Notes/Organizer, iframe PDF) kaldırılır. Yerlerine gerçek masaüstü seviyesinde uygulamalar gelir. Şifreli sanal dosya sistemi (VFS), pencere yöneticisi ve çekirdek katmanına dokunulmaz; tüm belgeler bugünkü kayıt/okuma kapısını kullanmaya devam eder.
+Yüzeysel taslaklar (Markdown bölünmüş Writer, ilkel Sheets, liste tabanlı Slides/Notes/Organizer, iframe PDF, basit oynatıcılar ve applet'ler) kaldırılır; yerlerine gerçek masaüstü işletim sistemi seviyesinde uygulamalar gelir. Şifreli sanal dosya sistemi (VFS), pencere yöneticisi, çekirdek ve P2P katmanı bozulmaz.
 
-Görsel dil: Açık Kristal / karanlık cam yüzey. Tüm renkler mevcut `--tb-*` değişkenlerinden okunur, sabit renk kodu yazılmaz.
+Görsel dil: Açık Kristal / karanlık cam yüzey. Tüm renkler mevcut `--tb-*` değişkenlerinden okunur, sabit renk kodu yazılmaz. Dış ağ/CDN bağımlılığı yoktur; her şey pakete gömülüdür.
 
-## 1. Masaüstü kabuğu (OS seviyesi etkileşim)
+## 1. Masaüstü kabuğu ve etkileşim katmanı
 
-- Tarayıcının kendi sağ tık menüsü kabuk genelinde tamamen kapatılır.
-- Boş alana sağ tık: çok katmanlı (alt menülü) kristal menü — Yeni Oluştur (Klasör, Writer belgesi, Sheets tablosu, Slides sunumu, Metin notu), Sırala (ada/türe/tarihe göre), Görünüm (büyük/orta simgeler, ızgaraya hizala), Duvar kâğıdı, Temayı özelleştir, Sistem ayarları, Terminal.
-- Yeni oluşturulan belge doğrudan VFS'e yazılır ve ilgili uygulamada açılır.
-- Sol tuşla boş alanda sürükleme: yarı saydam seçim kutusu (rubber-band), kesişen simgeler toplu seçilir; Ctrl/Shift ile ekleme, Esc ile temizleme.
-- Simgeler serbest sürüklenir, bırakıldığında en yakın ızgara hücresine oturur (grid snapping); konumlar cihazda saklanır, "Izgaraya hizala" ile sıfırlanır. Dokunmatik profilde sürükleme uzun basma ile başlar, sayfalayıcı bozulmaz.
-- Dosya/klasör simgesine sağ tık: Aç, Birlikte Aç (uygun uygulamalar), Yeniden Adlandır, Kopyala/Yapıştır, Şifreli VFS'ye Kilitle, P2P Ağında Paylaş, Sil, Özellikler.
+- Tarayıcının kendi sağ tık menüsü kabuk genelinde kapatılır.
+- Boş alana sağ tık: çok katmanlı kristal menü — Yeni Oluştur (Klasör, Writer belgesi, Sheets tablosu, Slides sunumu, Metin notu), Sırala (ada/türe/tarihe göre), Görünüm (büyük/orta simgeler, ızgaraya hizala), Duvar kâğıdı, Temayı özelleştir, Sistem ayarları, Terminal. Yeni belge doğrudan VFS'e yazılır ve ilgili uygulamada açılır.
+- Boş alanda sol tuşla sürükleme: yarı saydam seçim kutusu; kesişen simgeler toplu seçilir. Ctrl/Shift ile ekleme, Esc ile temizleme.
+- Simgeler serbest sürüklenir, bırakınca en yakın ızgara hücresine oturur; konumlar cihazda saklanır, "Izgaraya hizala" sıfırlar. Dokunmatik profilde uzun basma ile sürükleme; sayfalayıcı korunur.
+- Dosya/klasör sağ tık: Aç, Birlikte Aç, Yeniden Adlandır, Kopyala/Yapıştır, Şifreli VFS'ye Kilitle, P2P Ağında Paylaş, Sil, Özellikler.
 - Masaüstünde uygulama kısayollarının yanında VFS belgeleri de simge olarak görünür.
 
-## 2. Tedbirge Writer
+## 2. İletişim ve medya
 
-- Markdown yazım/önizleme bölünmesi kaldırılır; tek WYSIWYG yüzey.
-- Gerçek A4 sayfa görünümü: sayfa gövdesi, kenar boşlukları, sayfa sınırı ve otomatik sayfa sonu göstergesi, yakınlaştırma.
-- Sekmeli kurumsal şerit menü: Giriş (yazı tipi, punto, kalın/italik/altı çizili, renk, hizalama, liste, başlık stilleri), Ekle (tablo, görsel, sayfa sonu, çizgi), Düzen (kenar boşlukları, cetvel), Görünüm (yakınlaştırma, cetvel aç/kapa).
-- Yatay/dikey cetvel, kelime/sayfa sayacı, otomatik kaydetme.
+- **Sohbet:** Profesyonel iletişim paneli — sohbet listesi + konuşma yüzeyi, uçtan uca şifreli anahtar rozeti, düğüm/mesh bağlantı durumu, VFS'ten dosya gönderme, sesli not, mesaj arama, teslim/okundu ve kuyruk durumu, cihaz senkron paneli. Mevcut mesajlaşma/kripto/röle altyapısı korunur, yalnız arayüz ve durum görünürlüğü yeniden yazılır.
+- **Arama:** Mevcut WebRTC mesh çağrı katmanı üzerinde profesyonel arama arayüzü — sinyal kalitesi, bant genişliği ve gecikme göstergesi, sessize alma, kamera/ekran paylaşımı, katılımcı ızgarası, arama geçmişi.
+- **Medya / Müzik:** VFS'teki ses ve video dosyalarını okuyan tek gelişmiş oynatıcı — çalma listeleri, kuyruk, dalga formu, görselleştirici (WebGPU varsa GPU, yoksa canvas yedeği), altyazı/tam ekran ve arka planda çalma.
 
-## 3. Tedbirge Sheets
+## 3. Sistem ve yönetim uygulamaları
 
-- Harfli sütun ve numaralı satır başlıklı gerçek hücre ızgarası; sütun genişliği/satır yüksekliği ayarlanabilir, seçim aralığı ve klavyeyle gezinme (ok tuşları, Tab, Enter, Ctrl+ok).
-- Üstte formül çubuğu: hücre adresi + içerik girişi. Formül motoru genişletilir: SUM, AVERAGE/AVG, MIN, MAX, COUNT, IF, ROUND ve aritmetik ifadeler, aralık ve hücre referansları, döngüsel referans koruması.
-- Altta sayfa sekmeleri (Sheet1, Sheet2 …): ekleme, yeniden adlandırma, silme.
-- Belge biçimi çok sayfalı yapıya geçer; eski tek sayfalı kayıtlar açılırken otomatik dönüştürülür.
+- **Dosyalar:** Solda hiyerarşik dizin ağacı, sağda ızgara/liste görünümü, üst arama çubuğu, önizleme paneli, VFS alan/kota durumu, çoklu seçim ve toplu işlemler.
+- **Cihazım / Sistem Bilgisi:** Gerçek telemetri — işlemci yükü, bellek, VFS depolama, WebGPU/GPU durumu, aktif mesh düğüm sayısı, sürücü ve donanım kontrol listesi. Ölçülemeyen değer uydurulmaz, "ölçülemiyor" olarak gösterilir.
+- **Ayarlar / Panel:** Tema özelleştirici (kristal/cam parlaklığı, duvar kâğıdı), ağ ve mesh yönlendirme ayarları, ekran/kiosk parametreleri, sürücü durum göstergeleri.
+- **Mağaza:** İnternetsiz çalışan yerel sistem uygulaması yöneticisi — gömülü uygulamalar, yetki (capability) yönetimi, etkinleştir/kaldır.
+- **Profil:** Cihazın mesh kimliği (düğüm kimliği, açık anahtar), imza/doğrulama durumu, yedek anahtar ve yerel kullanıcı tercihleri. Anahtar materyali ekranda açık gösterilmez.
 
-## 4. Tedbirge Slides
+## 4. Gömülü ofis takımı
 
-- Sol tarafta slayt küçük resim paneli (sırala, çoğalt, sil), ortada etkileşimli slayt tuvali.
-- Tuvale metin kutusu, şekil (dikdörtgen, elips, çizgi, ok) ve görsel eklenir; nesneler sürüklenir, boyutlandırılır, katman sırası değişir.
-- Üst araç çubuğunda düzen şablonları, tema rengi ve "Sunumu Başlat" (tam ekran kiosk, F5; ok tuşları/Esc ile kontrol).
-
-## 5. Tedbirge PDF Studio
-
-- Gerçek PDF işleme motoru uygulama paketine gömülür (çevrimdışı çalışır, dış ağdan hiçbir kaynak çekilmez).
-- Sol panelde sayfa önizlemeleri, ortada yüksek çözünürlüklü sayfa tuvali; yakınlaştırma, sayfa geçişi, metin seçimi.
-- Araç çubuğu: Vurgula, Not ekle, Serbest çizim, Metin seç, Yazdır, VFS'ye kaydet. Açıklamalar belge yanında VFS'te saklanır.
-
-## 6. Tedbirge Notes
-
-- Blok tabanlı zengin metin mimarisi: başlık, paragraf, madde/numaralı liste, yapılacaklar kutusu, alıntı, kod, ayraç, görsel bloğu. Bloklar sürüklenerek yeniden sıralanır, "/" komut menüsü ile blok eklenir.
-- Sol tarafta hiyerarşik klasör ve etiket ağacı, sabitlenen notlar, hızlı arama (başlık + içerik).
-
-## 7. Tedbirge Organizer
-
-- Tam ekran takvim matrisi: Aylık, Haftalık, Günlük görünümler; olay oluşturma, sürükleyerek taşıma, hatırlatma alanı.
-- Entegre Kanban panosu: Yapılacaklar / Devam Edenler / Tamamlananlar; kartlar sütunlar arasında sürüklenir, karta tarih verildiğinde takvimde görünür.
+- **Writer:** Markdown bölünmesi kaldırılır; gerçek A4 sayfa düzeni (kenar boşlukları, sayfa sınırı, sayfa sonu, yakınlaştırma), sekmeli şerit menü (Giriş, Ekle, Düzen, Görünüm), cetveller, tablo/görsel ekleme, başlık stilleri, otomatik kaydetme.
+- **Sheets:** Harfli sütun / numaralı satır başlıklı gerçek hücre ızgarası, sütun-satır boyutlandırma, aralık seçimi, klavyeyle gezinme; formül çubuğu ve motoru (SUM, AVERAGE, MIN, MAX, COUNT, IF, ROUND, aritmetik, aralık referansları, döngü koruması); alt sayfa sekmeleri.
+- **Slides:** Solda slayt minyatürleri, ortada vektörel tuval (metin kutusu, şekil, görsel; sürükle, boyutlandır, katman), üstte düzen/tema ve "Sunumu Başlat" tam ekran modu (F5, ok tuşları, Esc).
+- **PDF Studio:** Pakete gömülü `pdfjs-dist` motoru (worker ve fontlar paket içinden), sol sayfa minyatürleri, orta yüksek çözünürlüklü tuval, vurgulama, not, serbest çizim, metin seçimi, yazdır ve VFS'ye kaydet.
+- **Notes:** Blok tabanlı zengin metin (başlık, liste, yapılacaklar, alıntı, kod, ayraç, görsel), sürüklenebilir bloklar, "/" komut menüsü, hiyerarşik klasör/etiket ağacı, sabitleme, hızlı arama.
+- **Organizer:** Tam ekran takvim matrisi (aylık/haftalık/günlük) ve entegre Kanban panosu (Yapılacaklar / Devam Edenler / Tamamlananlar); kart-takvim bağlantısı.
 
 ## Teknik notlar
 
-- Yeni bağımlılık yalnızca PDF işleme motoru (`pdfjs-dist`) olacak; worker ve font kaynakları paketin içinden servis edilir, CDN kullanılmaz. Diğer tüm editörler harici kütüphane olmadan React + Canvas/contentEditable ile yazılır.
-- `src/lib/vfs/store.ts` API'si değişmez. `src/lib/office/documents.ts` belge biçimleri (Writer zengin belge, çok sayfalı Sheets, nesne tabanlı Slides, blok tabanlı Notes, olay+kart Organizer) için sürümlü şemaya taşınır; eski kayıtlar okunurken yükseltilir, veri kaybı olmaz.
-- Masaüstü simge konumları ve görünüm tercihleri cihaz yerel ayarlarında tutulur; çok sayfalı dokunmatik masaüstü ve mevcut pencere yöneticisi davranışı korunur.
-- Doğrulama: `bunx vitest run`, tür kontrolü, ESLint ve mevcut ofis paketi doğrulama kapısı (`scripts/verify-office-bundle.sh`) yeni dosya adlarına göre güncellenip çalıştırılır; ISO derleme akışı bozulmadan kalır.
+- `src/lib/vfs/store.ts` API'si değişmez. `src/lib/office/documents.ts` sürümlü belge şemasına taşınır (zengin Writer belgesi, çok sayfalı Sheets, nesne tabanlı Slides, blok tabanlı Notes, olay+kart Organizer); eski kayıtlar okunurken yükseltilir, veri kaybı olmaz.
+- Yeni bağımlılık yalnızca `pdfjs-dist`. Diğer tüm editörler harici kütüphane olmadan React + Canvas/contentEditable ile yazılır.
+- Ortak bir uygulama kabuğu (şerit/araç çubuğu, yan panel, durum çubuğu) tüm uygulamalarda tek mimari standardı sağlar.
+- Simge konumları ve görünüm tercihleri cihaz yerel ayarlarında tutulur; mevcut pencere yöneticisi, dokunmatik sayfalayıcı ve kiosk davranışı korunur.
+- Doğrulama: `bunx vitest run`, tür kontrolü, ESLint ve `scripts/verify-office-bundle.sh` yeni dosya yapısına göre güncellenip çalıştırılır; ISO derleme akışı bozulmaz.
 
 ## Uygulama sırası
 
 1. Masaüstü kabuğu: sağ tık altyapısı, seçim kutusu, sürükle-bırak/ızgara, dosya menüleri
-2. Belge şeması yükseltmesi + ortak ofis pencere çerçevesi (şerit menü altyapısı)
+2. Belge şeması yükseltmesi + ortak uygulama kabuğu
 3. Writer ve Sheets
-4. Slides ve Notes
-5. Organizer ve PDF Studio
-6. Doğrulama kapıları ve ISO paket kontrolü
+4. Slides, Notes, Organizer, PDF Studio
+5. Dosyalar, Cihazım/Sistem Bilgisi, Ayarlar/Panel, Mağaza, Profil
+6. Sohbet, Arama, Medya/Müzik
+7. Doğrulama kapıları ve ISO paket kontrolü
 
-Toplam kapsam büyüktür; her adım kendi içinde çalışır durumda teslim edilir, hiçbir aşamada mevcut sistem bozulmaz.
+Kapsam çok geniştir; her adım kendi içinde çalışır durumda teslim edilir, hiçbir aşamada mevcut sistem bozulmaz.
