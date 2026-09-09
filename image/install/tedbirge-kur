@@ -292,7 +292,19 @@ fi
 echo "Acilis kipi: $MOD"
 
 # ------------------------------------------------------- 1/6 hos geldiniz
-if [ "$GUI" = "1" ]; then
+if [ "$GUI" = "1" ] && [ "$OTO" = "1" ]; then
+  # Sifir-dokunuslu kurulum: soru sorulmaz, ancak kullanici ne oldugunu gorur.
+  whiptail --backtitle "$BT" --title "Otomatik kurulum baslatiliyor" \
+    --infobox "Tedbirge(R) WebOS otomatik kurulum kipinde baslatildi.
+
+ * Uygun disk kendiliginden secilir ve tamamen silinir.
+ * Bolumleme, bicimlendirme ve acilis kurulumu soru sorulmadan yapilir.
+ * Her adim bu ekranda yuzde ve gecen sureyle gosterilir.
+
+Vazgecmek icin bilgisayari simdi kapatin.
+Kurulum 10 saniye icinde basliyor..." 14 74 >/dev/tty 2>&1 </dev/tty
+  sleep 10
+elif [ "$GUI" = "1" ]; then
   p_bilgi "Adim 1/6 — Hos geldiniz" \
 "Tedbirge(R) WebOS bilgisayarinizin diskine kalici olarak kurulacak.
 
@@ -310,7 +322,7 @@ kalici degisiklik yapilmaz." || hata "Kurulum iptal edildi."
 fi
 
 # ------------------------------------------------- 2/6 klavye ve saat dilimi
-if [ "$GUI" = "1" ]; then
+if [ "$GUI" = "1" ] && [ "$OTO" != "1" ]; then
   KLAVYE=$(p_menu "Adim 2/6 — Klavye duzeni" \
 "Kullanacaginiz klavye duzenini secin. Emin degilseniz 'Turkce Q' secin." \
     "tr" "Turkce Q (varsayilan)" \
@@ -409,7 +421,9 @@ fi
 [ "$(lsblk -dnro MAJ:MIN "$DEV")" = "$KIMLIK" ] || hata "Disk kimligi degisti; guvenlik icin durduruldu."
 
 # ------------------------------------------------------------ 5/6 ozet
-if [ "$GUI" = "1" ]; then
+if [ "$GUI" = "1" ] && [ "$OTO" = "1" ]; then
+  gauge_baslat
+elif [ "$GUI" = "1" ]; then
   p_bilgi "Adim 5/6 — Kurulum ozeti" \
 "Asagidaki islem simdi baslatilacak. Son kontrol:
 
