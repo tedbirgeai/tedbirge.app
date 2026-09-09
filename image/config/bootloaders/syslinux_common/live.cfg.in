@@ -10,3 +10,15 @@ label tedbirge-install-@FLAVOUR@
 	linux @LINUX@
 	initrd @INITRD@
 	append @APPEND_LIVE@ tedbirge.install=1
+
+label tedbirge-safe-@FLAVOUR@
+	menu label Tedbirge(R) WebOS - ^Guvenli goruntu (nomodeset)
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE@ nomodeset video=vesafb vga=791
+
+label tedbirge-compat-@FLAVOUR@
+	menu label Tedbirge(R) WebOS - ^Uyumluluk modu (USB/PCI korumali)
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE@ nomodeset video=vesafb vga=791 pci=nomsi usbcore.autosuspend=-1 noapic

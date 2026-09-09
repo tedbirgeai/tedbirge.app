@@ -17,6 +17,7 @@ amd64-microcode
 
 # --- donanim yazilimlari (temel kapsamli firmware seti)
 firmware-linux-free
+firmware-linux-nonfree
 firmware-misc-nonfree
 firmware-realtek
 firmware-iwlwifi
