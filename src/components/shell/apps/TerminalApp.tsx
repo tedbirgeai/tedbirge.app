@@ -1,154 +1,125 @@
 /**
- * TEDBIRGE TERMINAL — yerel kabuk konsolu
+ * TEDBİRGE TERMİNAL — sistem kabuğu
  * ------------------------------------------------------------------
- * Şifreli VFS katmanı üzerinde çalışan çevrimdışı komut satırı.
- * Hiçbir komut ağa çıkmaz; tüm işlemler cihazda yürür.
+ * POSIX/DOS uyumlu komut çekirdeğinin (src/lib/terminal) görsel yüzü.
+ * Tüm komutlar cihazda çalışır; hiçbir istek ağa çıkmaz.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { deleteFile, listFiles, readDocument, saveFiles, storageUsage } from "@/lib/vfs/store";
+import { browserHost } from "@/lib/terminal/browser-host";
+import type { Line } from "@/lib/terminal/commands";
+import { TerminalShell } from "@/lib/terminal/shell";
 
-const BANNER = [
-  "Tedbirge(R) WebOS - yerel kabuk",
-  "Komutlar icin: yardim",
+const BANNER: Line[] = [
+  { text: "Tedbirge(R) WebOS — sistem kabuğu", tone: "accent" },
+  { text: "Komut rehberi için: yardim · Tamamlama: Tab · Geçmiş: ↑ ↓", tone: "dim" },
+  { text: "" },
 ];
 
+const TONE: Record<string, string> = {
+  ok: "text-[var(--tb-ok)]",
+  err: "text-[var(--tb-danger)]",
+  warn: "text-[var(--tb-warn)]",
+  dim: "opacity-60",
+  accent: "text-[var(--tb-accent)]",
+  out: "",
+};
+
 export function TerminalApp() {
-  const [lines, setLines] = useState<string[]>(BANNER);
+  const [lines, setLines] = useState<Line[]>(BANNER);
   const [input, setInput] = useState("");
-  const [history, setHistory] = useState<string[]>([]);
   const [cursor, setCursor] = useState(-1);
+  const [busy, setBusy] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const shell = useMemo(
+    () => new TerminalShell({ host: browserHost, onClear: () => setLines([]) }),
+    [],
+  );
+  const [cwd, setCwd] = useState(shell.path());
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [lines]);
 
-  const print = useCallback((...out: string[]) => setLines((l) => [...l, ...out]), []);
-
-  const run = useCallback(
+  const submit = useCallback(
     async (raw: string) => {
-      const [cmd, ...args] = raw.trim().split(/\s+/);
-      if (!cmd) return;
-      switch (cmd) {
-        case "yardim":
-        case "help":
-          print(
-            "yardim            bu listeyi gosterir",
-            "ls                belgeleri listeler",
-            "cat <ad>          belge icerigini yazar",
-            "rm <ad>           belgeyi siler",
-            "mkdir <ad>        klasor olusturur",
-            "depo              depolama kullanimini gosterir",
-            "tarih             sistem saatini yazar",
-            "temizle           ekrani temizler",
-          );
-          break;
-        case "ls": {
-          const files = await listFiles();
-          print(
-            ...(files.length
-              ? files.map((f) => `${f.name.padEnd(34)} ${String(f.size).padStart(9)} B`)
-              : ["(bos)"]),
-          );
-          break;
-        }
-        case "cat": {
-          const files = await listFiles();
-          const target = files.find((f) => f.name === args.join(" "));
-          if (!target) {
-            print("bulunamadi");
-            break;
-          }
-          const body = await readDocument(target.id);
-          print(...(body ?? "(bos)").split("\n").slice(0, 200));
-          break;
-        }
-        case "rm": {
-          const files = await listFiles();
-          const target = files.find((f) => f.name === args.join(" "));
-          if (!target) {
-            print("bulunamadi");
-            break;
-          }
-          await deleteFile(target.id);
-          print(`silindi: ${target.name}`);
-          break;
-        }
-        case "mkdir": {
-          const name = args.join(" ") || "Yeni klasor";
-          await saveFiles([
-            new File([""], `${name}.klasor`, { type: "application/x-tedbirge-folder" }),
-          ]);
-          print(`olusturuldu: ${name}`);
-          break;
-        }
-        case "depo": {
-          const u = await storageUsage();
-          print(
-            `dosya: ${u.files}`,
-            `kullanim: ${(u.bytes / 1048576).toFixed(1)} MB`,
-            `kota: ${u.quota ? `${(u.quota / 1048576).toFixed(0)} MB` : "bilinmiyor"}`,
-          );
-          break;
-        }
-        case "tarih":
-          print(new Date().toLocaleString("tr-TR"));
-          break;
-        case "temizle":
-        case "clear":
-          setLines([]);
-          break;
-        default:
-          print(`bilinmeyen komut: ${cmd}`);
+      setLines((l) => [...l, { text: `${cwd} $ ${raw}`, tone: "accent" }]);
+      setBusy(true);
+      try {
+        const res = await shell.execute(raw);
+        if (res.lines.length) setLines((l) => [...l, ...res.lines]);
+      } catch (err) {
+        setLines((l) => [...l, { text: `kabuk hatası: ${String(err)}`, tone: "err" }]);
+      } finally {
+        setBusy(false);
+        setCwd(shell.path());
       }
     },
-    [print],
+    [cwd, shell],
   );
+
+  const onKey = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const hist = shell.history();
+    if (e.key === "Enter") {
+      const line = input;
+      setInput("");
+      setCursor(-1);
+      await submit(line);
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      const { value, options } = await shell.complete(input);
+      setInput(value);
+      if (options.length > 1) setLines((l) => [...l, { text: options.join("   "), tone: "dim" }]);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const next = Math.min(hist.length - 1, cursor + 1);
+      setCursor(next);
+      setInput(hist[next] ?? "");
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = Math.max(-1, cursor - 1);
+      setCursor(next);
+      setInput(next < 0 ? "" : (hist[next] ?? ""));
+    } else if (e.key === "c" && e.ctrlKey) {
+      e.preventDefault();
+      setLines((l) => [...l, { text: `${cwd} $ ${input}^C`, tone: "dim" }]);
+      setInput("");
+    } else if (e.key === "l" && e.ctrlKey) {
+      e.preventDefault();
+      setLines([]);
+    }
+  };
 
   return (
     <button
       type="button"
-      onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}
+      onClick={() => inputRef.current?.focus()}
       className="flex min-h-0 flex-1 cursor-text flex-col p-3 text-left font-osmono text-[12.5px] leading-6 text-[var(--tb-text)]"
       style={{ background: "color-mix(in srgb, var(--tb-bg) 88%, black)" }}
     >
-      <div className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap">
+      <div className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap break-words">
         {lines.map((l, i) => (
-          <div key={i}>{l}</div>
+          <div key={i} className={TONE[l.tone ?? "out"]}>
+            {l.text || "\u00a0"}
+          </div>
         ))}
         <div ref={endRef} />
       </div>
       <div className="flex items-center gap-2 pt-2">
-        <span className="text-[var(--tb-accent)]">tedbirge:~$</span>
+        <span className="shrink-0 text-[var(--tb-accent)]">{cwd} $</span>
         <input
+          ref={inputRef}
           value={input}
+          disabled={busy}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              const line = input;
-              setLines((l) => [...l, `tedbirge:~$ ${line}`]);
-              setHistory((h) => [line, ...h]);
-              setCursor(-1);
-              setInput("");
-              void run(line);
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault();
-              const next = Math.min(history.length - 1, cursor + 1);
-              setCursor(next);
-              setInput(history[next] ?? "");
-            } else if (e.key === "ArrowDown") {
-              e.preventDefault();
-              const next = Math.max(-1, cursor - 1);
-              setCursor(next);
-              setInput(next < 0 ? "" : (history[next] ?? ""));
-            }
-          }}
+          onKeyDown={(e) => void onKey(e)}
           aria-label="Komut satırı"
           spellCheck={false}
           autoComplete="off"
-          className="min-w-0 flex-1 bg-transparent outline-none"
+          className="min-w-0 flex-1 bg-transparent outline-none disabled:opacity-50"
         />
       </div>
     </button>
