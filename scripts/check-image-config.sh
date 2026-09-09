@@ -163,12 +163,18 @@ grep -q 'KUR-201' "$KUR" || hata "Kopyalama hataları nedene göre sınıflandı
 grep -q 'dosya acildi' "$KUR" || hata "Kopyalama sırasında gerçek ilerleme gösterilmiyor."
 [ -s image/config/includes.chroot/opt/tedbirge/kurulum-sonrasi.sh ] \
   || hata "Kurulum sonrası bilgilendirme ekranı yok (boş ekran riski)."
-grep -q 'kurulum-sonrasi.sh' \
+grep -q 'oturum.sh' \
   image/config/includes.chroot/etc/systemd/system/tedbirge-installer.service \
   || hata "Kurulum servisi bittiğinde kullanıcı bilgilendirilmiyor."
-grep -q '^Restart=always' \
+grep -q 'kurulum-sonrasi.sh' image/config/includes.chroot/opt/tedbirge/oturum.sh \
+  || hata "Kurulum oturumu bittiğinde yardımcı menü açılmıyor."
+if grep -q '^ExecStopPost' \
+  image/config/includes.chroot/etc/systemd/system/tedbirge-installer.service; then
+  hata "Yardımcı menü kapanış adımında çalışıyor; zaman aşımıyla kesilir."
+fi
+grep -q '^Restart=on-failure' \
   image/config/includes.chroot/etc/systemd/system/tedbirge-installer.service \
-  || hata "Kurulum beklenmedik kapanmada otomatik yeniden başlamıyor."
+  || hata "Kurulum beklenmedik çökmede otomatik yeniden başlamıyor."
 SONRASI=image/config/includes.chroot/opt/tedbirge/kurulum-sonrasi.sh
 grep -q 'Kurulumu yeniden baslat' "$SONRASI" || hata "Kurulum sonrası yeniden deneme seçeneği yok."
 grep -q 'USB uzerinden canli masaustune don' "$SONRASI" || hata "Kurulum sonrası canlı masaüstü seçeneği yok."
