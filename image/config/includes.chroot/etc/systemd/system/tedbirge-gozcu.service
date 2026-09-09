@@ -1,0 +1,17 @@
+[Unit]
+Description=Tedbirge WebOS acilis gozcusu (ekran ve girdi denetleyicisi)
+After=tedbirge-kiosk.service
+Wants=tedbirge-kiosk.service
+ConditionKernelCommandLine=!tedbirge.install=1
+ConditionKernelCommandLine=!tedbirge.autoinstall=1
+
+[Service]
+Type=simple
+ExecStart=/opt/tedbirge/gozcu.sh
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target
