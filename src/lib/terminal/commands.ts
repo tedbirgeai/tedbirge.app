@@ -689,9 +689,7 @@ const cmdRun: Command = {
     });
     worker.terminate();
     URL.revokeObjectURL(url);
-    return out.ok
-      ? ok([{ text: out.v, tone: "ok" }])
-      : fail(`çalıştırma hatası: ${out.v}`);
+    return out.ok ? ok([{ text: out.v, tone: "ok" }]) : fail(`çalıştırma hatası: ${out.v}`);
   },
 };
 
@@ -704,10 +702,7 @@ const cmdHelp: Command = {
     if (args[0]) {
       const c = COMMANDS.find((x) => x.name === args[0]);
       if (!c) return fail(`Komut bulunamadı: ${args[0]}`);
-      return ok([
-        { text: c.usage, tone: "accent" },
-        { text: c.summary },
-      ]);
+      return ok([{ text: c.usage, tone: "accent" }, { text: c.summary }]);
     }
     const groups: Command["group"][] = ["dosya", "sistem", "ağ", "güvenlik", "teşhis", "kabuk"];
     const lines: Line[] = [{ text: "Tedbirge(R) WebOS — komut rehberi", tone: "accent" }];

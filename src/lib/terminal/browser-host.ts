@@ -29,8 +29,9 @@ function nodeId(): string | null {
 
 function heap(): { used: number | null; limit: number | null } {
   if (typeof performance === "undefined") return { used: null, limit: null };
-  const m = (performance as Performance & { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number } })
-    .memory;
+  const m = (
+    performance as Performance & { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number } }
+  ).memory;
   if (!m?.jsHeapSizeLimit) return { used: null, limit: null };
   return {
     used: Math.round(m.usedJSHeapSize / 1048576),

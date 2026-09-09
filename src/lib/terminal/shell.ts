@@ -141,7 +141,8 @@ export class TerminalShell {
           .map((n) => ({ n, d: distance(n, name) }))
           .sort((a, b) => a.d - b.d)[0];
         const lines: Line[] = [{ text: `bilinmeyen komut: ${name}`, tone: "err" }];
-        if (near && near.d <= 2) lines.push({ text: `bunu mu demek istediniz: ${near.n}?`, tone: "warn" });
+        if (near && near.d <= 2)
+          lines.push({ text: `bunu mu demek istediniz: ${near.n}?`, tone: "warn" });
         lines.push({ text: "komut listesi için: yardim", tone: "dim" });
         return { lines, code: 127 };
       }
