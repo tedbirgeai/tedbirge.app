@@ -21,6 +21,13 @@ export type GpuInfo = { adapter: string | null; fps: number | null };
 
 export type WasmInfo = { provider: string; heapMb: number | null; limitMb: number | null };
 
+export type IdentityInfo = {
+  nodeId: string;
+  signPublic: string;
+  boxPublic: string;
+  fingerprint: string;
+};
+
 export type TerminalHost = {
   processes(): ProcInfo[];
   kill(pid: number): boolean;
