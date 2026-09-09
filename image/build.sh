@@ -142,7 +142,7 @@ lb config \
   --iso-publisher "Mehmet DINC; tedbirge.app" \
   --iso-volume "$VOLID" \
   --image-name "tedbirge-webos-$EDITION" \
-  --bootappend-live "boot=live components noeject quiet loglevel=3 rootdelay=5 live-media-timeout=20 modules=loop,squashfs,overlay,iso9660 console=tty0 console=ttyS0,115200 hostname=tedbirge"
+  --bootappend-live "boot=live components noeject quiet loglevel=3 rootdelay=5 usbcore.autosuspend=-1 live-media-timeout=20 modules=loop,squashfs,overlay,iso9660 console=tty0 console=ttyS0,115200 hostname=tedbirge"
 
 # --------------------------------------------------------------- derleme
 timeout --foreground 90m stdbuf -oL -eL lb build
