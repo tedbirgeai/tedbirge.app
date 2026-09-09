@@ -272,7 +272,7 @@ export const Route = createFileRoute("/api/public/relay")({
             } catch {
               /* bildirim gönderilemese de mesaj kuyrukta durur */
             }
-            return json({ ok: true, stored: rows.length });
+            return json({ ok: true, stored });
           }
 
           // pull
