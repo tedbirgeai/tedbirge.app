@@ -57,6 +57,14 @@ kaynak_kapilari() {
     test -s image/config/includes.chroot/opt/tedbirge/gozcu.sh
     test -s image/config/includes.chroot/etc/systemd/system/tedbirge-gozcu.service
     grep -q "tedbirge-gozcu.service" image/config/hooks/normal/9000-tedbirge.hook.chroot'
+  # Faz 4: gömülü ofis süreçleri + VFS. Paket varsa paket seviyesinde de denetlenir.
+  if [ -d build-iso/web ]; then
+    kapi "Gömülü ofis süreçleri ve VFS katmanı (kaynak + imaj paketi)" \
+      bash scripts/verify-office-bundle.sh build-iso/web
+  else
+    kapi "Gömülü ofis süreçleri ve VFS katmanı (kaynak)" \
+      bash scripts/verify-office-bundle.sh
+  fi
   if command -v unsquashfs >/dev/null 2>&1; then
     kapi "Sistem kopyalama komutu gerçek squashfs ile" bash scripts/test-squashfs-copy.sh
   else
