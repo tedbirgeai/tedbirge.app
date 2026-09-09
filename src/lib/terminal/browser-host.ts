@@ -166,16 +166,30 @@ export const browserHost: TerminalHost = {
     }
   },
 
-  keypair() {
-    return { nodeId: nodeId(), publicKey: null };
+  async identity() {
+    const id = nodeId();
+    if (!id) return null;
+    const ident = await getIdentity(id);
+    return ident
+      ? {
+          nodeId: ident.nodeId,
+          signPublic: ident.signPublic,
+          boxPublic: ident.boxPublic,
+          fingerprint: ident.fingerprint,
+        }
+      : null;
   },
 
   async generateKeypair() {
     const id = nodeId();
     if (!id) return null;
-    const existing = await getIdentity(id);
-    const ident = existing ?? (await ensureIdentity(id));
-    return ident.fingerprint ?? null;
+    const ident = await ensureIdentity(id);
+    return {
+      nodeId: ident.nodeId,
+      signPublic: ident.signPublic,
+      boxPublic: ident.boxPublic,
+      fingerprint: ident.fingerprint,
+    };
   },
 
   memoryMb: () => heap().used,
