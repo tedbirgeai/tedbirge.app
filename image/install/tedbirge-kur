@@ -459,11 +459,13 @@ done < <(lsblk -lnpo NAME "$DEV")
 
 YIKICI_ISLEM=1
 ILERLE 8 "Eski bolum bilgileri guvenle temizleniyor"
-if ! wipefs -af "$DEV" >>"$LOG" 2>&1; then
+# Yavas/ariza egilimli disklerde wipefs dakikalarca asili kalabiliyordu; artik
+# ust sinirli calisir ve pencerede gecen sure gorunur.
+if ! uzun_adim "Eski bolum bilgileri temizleniyor" timeout 300s wipefs -af "$DEV"; then
   HATA_KODU="DSK-104"
   hata "Eski disk bilgileri temizlenemedi. Disk kullanimda, yazmaya kapali veya baglantisi kararsiz olabilir."
 fi
-command -v sgdisk >/dev/null 2>&1 && sgdisk --zap-all "$DEV" >>"$LOG" 2>&1 || true
+command -v sgdisk >/dev/null 2>&1 && timeout 300s sgdisk --zap-all "$DEV" >>"$LOG" 2>&1 || true
 sync
 
 # --- takas (swap) bolumu olcusu: derin uyku (S4) icin RAM kadar yer gerekir.
@@ -493,7 +495,7 @@ esac
 
 bolum_adimi() { # hata-kodu, aciklama, parted argumanlari...
   local kod="$1" aciklama="$2"; shift 2
-  if ! parted -s -a optimal "$DEV" "$@" >>"$LOG" 2>&1; then
+  if ! uzun_adim "$aciklama" timeout 300s parted -s -a optimal "$DEV" "$@"; then
     HATA_KODU="$kod"
     hata "$aciklama Disk: $DEV. Ayrintili teknik neden kurulum kaydina yazildi."
   fi
@@ -540,11 +542,24 @@ while { [ -n "$P1" ] && [ ! -b "$P1" ]; } || [ ! -b "$P2" ] || { [ -n "$P3" ] &&
   sleep 1; BEKLE=$((BEKLE + 1))
 done
 
-ILERLE 14 "Bolumler bicimlendiriliyor"
-[ -n "$P1" ] && { mkfs.vfat -F32 -n TBGEFI "$P1" >>"$LOG" 2>&1 || { HATA_KODU="DSK-121"; hata "EFI bolumu bicimlendirilemedi."; }; }
-mkfs.ext4 -F -L TEDBIRGE "$P2" >>"$LOG" 2>&1 || { HATA_KODU="DSK-122"; hata "Sistem bolumu bicimlendirilemedi. Diskte bir yazma veya baglanti sorunu olabilir."; }
+ILERLE 13 "EFI acilis bolumu bicimlendiriliyor"
+if [ -n "$P1" ]; then
+  uzun_adim "EFI bolumu bicimlendiriliyor" timeout 300s mkfs.vfat -F32 -n TBGEFI "$P1" \
+    || { HATA_KODU="DSK-121"; hata "EFI bolumu bicimlendirilemedi."; }
+fi
+
+ILERLE 14 "Sistem bolumu bicimlendiriliyor (bu adim diske gore birkac dakika surebilir)"
+# %14'te kilitlenme kok nedeni: buyuk disklerde mkfs.ext4 tum inode tablosunu
+# pesin yazdigi icin dakikalarca sessiz kaliyordu. Tembel baslatma ve devre disi
+# birakilan discard ile adim hizlanir; ust sinir ve canli sayac ile de ekran
+# hicbir zaman "durmus" gorunmez.
+uzun_adim "Sistem bolumu bicimlendiriliyor" timeout 1800s \
+  mkfs.ext4 -F -q -L TEDBIRGE -E lazy_itable_init=1,lazy_journal_init=1,nodiscard "$P2" \
+  || { HATA_KODU="DSK-122"; hata "Sistem bolumu bicimlendirilemedi. Diskte bir yazma veya baglanti sorunu olabilir."; }
+
 if [ -n "$P3" ]; then
-  if ! mkswap -L TBGSWAP "$P3" >>"$LOG" 2>&1; then
+  ILERLE 14 "Takas (derin uyku) bolumu hazirlaniyor"
+  if ! uzun_adim "Takas bolumu hazirlaniyor" timeout 300s mkswap -L TBGSWAP "$P3"; then
     echo "! Takas bolumu bicimlendirilemedi; derin uyku olmadan devam ediliyor."
     P3=""
   fi
