@@ -17,8 +17,8 @@ xset s noblank 2>/dev/null || true
 /opt/tedbirge/ekran-duzeni.sh 2>/dev/null || true
 
 GPU_FLAGS="--use-gl=egl --disable-gpu-sandbox --enable-features=VaapiVideoDecoder --ignore-gpu-blocklist"
-if [ ! -e /dev/dri/renderD128 ]; then
-  echo "GPU surucusu bulunamadi — yazilim cizimine dusuluyor."
+if [ -e /run/tedbirge-yazilim-cizim ] || [ ! -e /dev/dri/renderD128 ]; then
+  echo "Donanim cizimi kullanilamiyor (surucu yok ya da gozcu guvenli kipe aldi) — yazilim cizimine dusuluyor."
   GPU_FLAGS="--disable-gpu --disable-gpu-sandbox"
   LIBGL_ALWAYS_SOFTWARE=1
   export LIBGL_ALWAYS_SOFTWARE
