@@ -63,6 +63,12 @@ if [ -e dist ]; then
   exit 1
 fi
 
+# 6) Gömülü ofis süreçleri (Faz 4) pakette mi? Değilse imaj üretilmez.
+bash scripts/verify-office-bundle.sh build-iso/web || {
+  echo "! Gömülü ofis süreçleri imaj paketinde bulunamadı." >&2
+  exit 1
+}
+
 echo "✓ build-iso/web  ($(du -sh build-iso/web | cut -f1))"
 echo "✓ build-iso/kernel/tedbirge_kernel.wasm ($(wc -c < build-iso/kernel/tedbirge_kernel.wasm) bayt)"
 echo "ISO_BUNDLE_OK"
