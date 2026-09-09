@@ -39,8 +39,10 @@ done
 
 # 3) Başlatıcı ve masaüstü ikonu tanımlı mı?
 for id in "${OFIS_IDS[@]}"; do
-  grep -q "\"$id\"" src/components/shell/AppLauncher.tsx || hata "Başlatıcı kaydı yok: $id"
-  grep -q "\"$id\"" src/components/shell/app-icons.tsx || hata "İkon eşlemesi yok: $id"
+  grep -qE "(\"$id\"|(^|[[:space:]])$id:)" src/components/shell/AppLauncher.tsx ||
+    hata "Başlatıcı kaydı yok: $id"
+  grep -qE "(\"$id\"|(^|[[:space:]])$id:)" src/components/shell/app-icons.tsx ||
+    hata "İkon eşlemesi yok: $id"
 done
 
 # 4) Uygulama dosyaları mevcut mu?
