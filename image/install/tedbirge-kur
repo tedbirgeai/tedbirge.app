@@ -851,6 +851,30 @@ echo "==============================================="
 echo "  KURULUM TAMAMLANDI"
 echo "==============================================="
 echo "USB bellegi cikarip bilgisayari yeniden baslatin."
+if [ "$OTO" = "1" ] && [ "$GUI" = "1" ]; then
+  # Acilis menusunden baslatilan sifir-dokunuslu kurulum: kullanici USB'yi
+  # cikarma yonergesini gorur, sayac biter ve sistem diskten acilir.
+  touch /run/tedbirge-installer-complete
+  for t in /dev/console /dev/ttyS0; do printf 'TEDBIRGE_INSTALL_OK\n' > "$t" 2>/dev/null; done
+  GERI=20
+  while [ "$GERI" -gt 0 ]; do
+    whiptail --backtitle "$BT" --title "Kurulum tamamlandi" \
+      --infobox "Tedbirge(R) WebOS $DEV diskine basariyla kuruldu.
+
+SIMDI YAPMANIZ GEREKEN:
+ 1) USB bellegi bilgisayardan CIKARIN.
+ 2) Bekleyin; bilgisayar kendiliginden yeniden baslayacak.
+ 3) Acilista dogrudan Tedbirge(R) WebOS masaustu gelir.
+
+Yeniden baslatmaya $GERI saniye kaldi." 15 74 >/dev/tty 2>&1 </dev/tty
+    sleep 1
+    GERI=$((GERI - 1))
+  done
+  sync
+  reboot
+  exit 0
+fi
+
 if [ "$OTO" = "1" ]; then
   for t in /dev/console /dev/ttyS0; do printf 'TEDBIRGE_INSTALL_OK\n' > "$t" 2>/dev/null; done
   # ACPI S5 asamasinda asili kalmamak icin once systemd'nin zorlayici kapanisi,
