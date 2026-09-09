@@ -42,6 +42,7 @@ import {
   Palette,
   UserRound,
   ShieldCheck,
+  TerminalSquare,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -73,6 +74,7 @@ const MAP: Record<string, ComponentType<{ className?: string }>> = {
   pdf: FileType2,
   notes: StickyNote,
   organizer: CalendarCheck,
+  terminal: TerminalSquare,
   "web.search": Search,
   "web.search.g": Search,
   "web.video": Video,
