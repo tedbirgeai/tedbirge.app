@@ -1,12 +1,13 @@
 /**
  * İŞLETİM SİSTEMİ BAĞLAM MENÜSÜ (Context Menu)
  * ------------------------------------------------------------------
- * Tek, yeniden kullanılabilir cam yüzeyli menü: masaüstü, ikon ve Dock
- * aynı bileşeni kullanır. Dışarı tıklama ve Esc menüyü kapatır, menü
- * ekran dışına taşmayacak şekilde konumlandırılır.
+ * Tek, yeniden kullanılabilir cam yüzeyli menü: masaüstü, ikon, dosya
+ * ve Dock aynı bileşeni kullanır. Alt menü (submenu) desteklidir.
+ * Dışarı tıklama ve Esc menüyü kapatır, menü ekran dışına taşmaz.
  */
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { ChevronRight } from "lucide-react";
 
 export type MenuItem =
   | { kind: "sep" }
@@ -17,8 +18,82 @@ export type MenuItem =
       disabled?: boolean;
       danger?: boolean;
       icon?: ReactNode;
-      onSelect: () => void;
+      /** Alt menü öğeleri; verilirse tıklama yerine açılır liste gelir. */
+      children?: MenuItem[];
+      onSelect?: () => void;
     };
+
+function Panel({
+  items,
+  onClose,
+  ariaLabel,
+  level = 0,
+}: {
+  items: MenuItem[];
+  onClose: () => void;
+  ariaLabel: string;
+  level?: number;
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+
+  return (
+    <div role="menu" aria-label={ariaLabel} className="relative w-full">
+      {items.map((it, i) =>
+        it.kind === "sep" ? (
+          <span key={`sep-${i}`} aria-hidden className="my-1 block h-px bg-[var(--tb-border)]" />
+        ) : (
+          <div key={it.label} className="relative">
+            <button
+              type="button"
+              role="menuitem"
+              aria-haspopup={it.children ? "menu" : undefined}
+              aria-expanded={it.children ? open === it.label : undefined}
+              disabled={it.disabled ?? false}
+              onPointerEnter={() => setOpen(it.children ? it.label : null)}
+              onClick={() => {
+                if (it.children) {
+                  setOpen((o) => (o === it.label ? null : it.label));
+                  return;
+                }
+                onClose();
+                it.onSelect?.();
+              }}
+              className={`wa-press flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                it.danger
+                  ? "text-[var(--tb-danger,#e11d48)] hover:bg-[color-mix(in_srgb,currentColor_12%,transparent)]"
+                  : "text-[var(--tb-text)] hover:bg-[color-mix(in_srgb,var(--tb-accent)_12%,transparent)]"
+              }`}
+            >
+              {it.icon ? <span className="shrink-0 opacity-80">{it.icon}</span> : null}
+              <span className="min-w-0 flex-1 truncate">{it.label}</span>
+              {it.children ? (
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+              ) : it.hint ? (
+                <span className="shrink-0 font-osmono text-[10px] text-[var(--tb-muted)]">
+                  {it.hint}
+                </span>
+              ) : null}
+            </button>
+
+            {it.children && open === it.label ? (
+              <div
+                className="tbos-window tbos-ctx absolute top-0 z-10 w-56 rounded-xl p-1 shadow-2xl backdrop-blur-xl"
+                style={{ left: level % 2 === 0 ? "100%" : undefined, right: level % 2 ? "100%" : undefined }}
+              >
+                <Panel
+                  items={it.children}
+                  onClose={onClose}
+                  ariaLabel={`${it.label} alt menüsü`}
+                  level={level + 1}
+                />
+              </div>
+            ) : null}
+          </div>
+        ),
+      )}
+    </div>
+  );
+}
 
 export function ContextMenu({
   x,
@@ -63,42 +138,12 @@ export function ContextMenu({
   return (
     <div
       ref={ref}
-      role="menu"
-      aria-label={ariaLabel}
       className="tbos-window tbos-ctx pointer-events-auto absolute z-[120] w-60 rounded-xl p-1 shadow-2xl backdrop-blur-xl"
       style={{ left: pos.x, top: pos.y }}
       onPointerDown={(e) => e.stopPropagation()}
       onContextMenu={(e) => e.preventDefault()}
     >
-      {items.map((it, i) =>
-        it.kind === "sep" ? (
-          <span key={`sep-${i}`} aria-hidden className="my-1 block h-px bg-[var(--tb-border)]" />
-        ) : (
-          <button
-            key={it.label}
-            type="button"
-            role="menuitem"
-            disabled={it.disabled ?? false}
-            onClick={() => {
-              onClose();
-              it.onSelect();
-            }}
-            className={`wa-press flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-              it.danger
-                ? "text-[var(--tb-danger,#e11d48)] hover:bg-[color-mix(in_srgb,currentColor_12%,transparent)]"
-                : "text-[var(--tb-text)] hover:bg-[color-mix(in_srgb,var(--tb-accent)_12%,transparent)]"
-            }`}
-          >
-            {it.icon ? <span className="shrink-0 opacity-80">{it.icon}</span> : null}
-            <span className="min-w-0 flex-1 truncate">{it.label}</span>
-            {it.hint ? (
-              <span className="shrink-0 font-osmono text-[10px] text-[var(--tb-muted)]">
-                {it.hint}
-              </span>
-            ) : null}
-          </button>
-        ),
-      )}
+      <Panel items={items} onClose={onClose} ariaLabel={ariaLabel} />
     </div>
   );
 }

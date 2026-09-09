@@ -122,6 +122,48 @@ export function saveDoc(
 export const openDoc = readDocument;
 export const removeDoc = deleteFile;
 
+/** Boş bir belge oluşturur (masaüstü "Yeni Oluştur" menüsü). */
+export async function createDoc(kind: OfficeKind, title?: string): Promise<OfficeDoc> {
+  const info = OFFICE_KINDS[kind];
+  const name = title?.trim() || `${info.defaultName} ${new Date().toLocaleDateString("tr-TR")}`;
+  const entry = await saveDoc(kind, name, info.empty);
+  return { ...entry, title: displayName(entry.name) };
+}
+
+/* ------------------------------------------------------------------
+ * Belge açma isteği: masaüstünden çift tıklanan belge, ilgili ofis
+ * uygulaması açılır açılmaz (veya zaten açıksa anında) yüklenir.
+ * ---------------------------------------------------------------- */
+const OPEN_EVENT = "tedbirge:office-open";
+const pendingOpen = new Map<OfficeKind, string>();
+
+export function requestOpenDoc(kind: OfficeKind, id: string) {
+  pendingOpen.set(kind, id);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: { kind, id } }));
+  }
+}
+
+export function takeOpenDoc(kind: OfficeKind): string | null {
+  const id = pendingOpen.get(kind) ?? null;
+  pendingOpen.delete(kind);
+  return id;
+}
+
+/** Açma isteklerini dinler (uygulama zaten açıkken de çalışır). */
+export function onOpenDocRequest(kind: OfficeKind, fn: (id: string) => void): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  const handler = (e: Event) => {
+    const detail = (e as CustomEvent<{ kind: OfficeKind; id: string }>).detail;
+    if (detail?.kind === kind) {
+      pendingOpen.delete(kind);
+      fn(detail.id);
+    }
+  };
+  window.addEventListener(OPEN_EVENT, handler);
+  return () => window.removeEventListener(OPEN_EVENT, handler);
+}
+
 /** Tür listesini canlı izler; başka pencere yazdığında kendini tazeler. */
 export function useOfficeDocs(kind: OfficeKind) {
   const [docs, setDocs] = useState<OfficeDoc[]>([]);
