@@ -41,7 +41,7 @@ while :; do
     kapat "Bilgisayari guvenle kapat" \
     3>&1 1>&2 2>&3) || SECIM="yeniden"
   case "$SECIM" in
-    yeniden) exit 0 ;;
+    yeniden) exit 10 ;;
     masaustu) masaustu || true ;;
     kayit)
       whiptail --backtitle "Tedbirge(R) WebOS" --title "Kurulum kaydi" \
