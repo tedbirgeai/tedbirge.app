@@ -108,8 +108,14 @@ CHROOT_ENV=(env
 MIN_BAYT=$((8 * 1024 * 1024 * 1024))
 # Gozetimsiz kurulum: cekirdek satirinda tedbirge.autoinstall=1 varsa veya
 # TEDBIRGE_AUTO=1 verilmisse soru sorulmaz (CI kurulum testi bunu kullanir).
+# OTO_KAYNAK, gozetimsiz kurulumun acilis menusunden mi (gercek kullanici) yoksa
+# ortam degiskeninden mi (CI) geldigini ayirir: kullanicida pencereli ilerleme
+# ekrani acik kalir, CI'de eskisi gibi duz metin akisi kullanilir.
 OTO="${TEDBIRGE_AUTO:-0}"
-grep -q "tedbirge.autoinstall=1" /proc/cmdline 2>/dev/null && OTO=1
+OTO_KAYNAK=""
+if grep -q "tedbirge.autoinstall=1" /proc/cmdline 2>/dev/null; then
+  OTO=1; OTO_KAYNAK="acilis"
+fi
 METIN=0
 for a in "$@"; do
   case "$a" in
@@ -122,10 +128,12 @@ LOG="/var/log/tedbirge/kurulum.log"
 mkdir -p "$(dirname "$LOG")"
 
 # ------------------------------------------------------ arayuz kipi secimi
-# Pencereli sihirbaz yalnizca gercek bir kullanici oturumunda acilir; CI ve
-# gozetimsiz kurulum eskisi gibi duz metin akisiyla calisir (test uyumu).
+# Pencereli sihirbaz gercek bir kullanici oturumunda acilir. Acilis menusunden
+# baslatilan sifir-dokunuslu kurulumda da pencere acik kalir; boylece hicbir
+# asamada bos/siyah ekran gorulmez. CI (TEDBIRGE_AUTO) duz metinle calisir.
 GUI=0
-if [ "$OTO" != "1" ] && [ "$METIN" != "1" ] && [ -t 0 ] \
+if [ "$METIN" != "1" ] && [ -t 0 ] \
+   && { [ "$OTO" != "1" ] || [ "$OTO_KAYNAK" = "acilis" ]; } \
    && command -v whiptail >/dev/null 2>&1 && [ -e /dev/tty ]; then
   GUI=1
 fi
