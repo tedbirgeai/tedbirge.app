@@ -443,6 +443,13 @@ function AppSurface({
   if (win.appId === "news") return <NewsApp />;
   if (win.appId === "store") return <StoreApp onOpen={onLaunch} />;
   if (win.appId === "transfer") return <TransfersApp />;
+  // Gömülü ofis süreçleri (Yönetilen Sistem Uygulamaları).
+  if (win.appId === "writer") return <WriterApp />;
+  if (win.appId === "sheets") return <SheetsApp />;
+  if (win.appId === "slides") return <SlidesApp />;
+  if (win.appId === "pdf") return <PdfStudioApp />;
+  if (win.appId === "notes") return <NotesApp />;
+  if (win.appId === "organizer") return <OrganizerApp />;
   if (win.appId === "computer")
     return <ComputerApp onMesh={() => onLaunch("mesh")} onLaunch={onLaunch} />;
 
