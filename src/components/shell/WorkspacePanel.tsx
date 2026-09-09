@@ -23,6 +23,7 @@ import { SlidesApp } from "@/components/shell/apps/office/SlidesApp";
 import { PdfStudioApp } from "@/components/shell/apps/office/PdfStudioApp";
 import { NotesApp } from "@/components/shell/apps/office/NotesApp";
 import { OrganizerApp } from "@/components/shell/apps/office/OrganizerApp";
+import { TerminalApp } from "@/components/shell/apps/TerminalApp";
 
 import { WindowFrame } from "@/components/shell/WindowFrame";
 import { AppErrorBoundary } from "@/components/shell/AppErrorBoundary";
@@ -456,6 +457,7 @@ function AppSurface({
   if (win.appId === "pdf") return <PdfStudioApp />;
   if (win.appId === "notes") return <NotesApp />;
   if (win.appId === "organizer") return <OrganizerApp />;
+  if (win.appId === "terminal") return <TerminalApp />;
   if (win.appId === "computer")
     return <ComputerApp onMesh={() => onLaunch("mesh")} onLaunch={onLaunch} />;
 

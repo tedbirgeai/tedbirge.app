@@ -156,6 +156,13 @@ export const LOCAL_APPS: CatalogApp[] = [
     builtin: true,
   },
   {
+    id: "terminal",
+    label: "Terminal",
+    hint: "Yerel komut satırı (çevrimdışı)",
+    category: "araclar",
+    builtin: true,
+  },
+  {
     id: "organizer",
     label: "Organizer",
     hint: "Görev ve randevu ajandası",

@@ -1,61 +1,132 @@
 /**
- * TEDBIRGE SHEETS — gömülü hesap tablosu
- * CSV olarak şifreli VFS katmanına kaydeder; formüller yerel hesaplanır.
+ * TEDBIRGE SHEETS — hesap tablosu
+ * ------------------------------------------------------------------
+ * Harfli sütun / numaralı satır başlıklı gerçek hücre ızgarası, formül
+ * çubuğu ve çok sayfalı yapı. Hesaplama tamamen cihazda yapılır.
  */
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Plus, X } from "lucide-react";
 
-import { OfficeFrame, useOfficeEditor } from "./OfficeFrame";
+import { OfficeShell, RibbonGroup, ToolButton, useOfficeEditor } from "./OfficeFrame";
 
-const COLS = 8;
-const ROWS = 20;
-const LETTERS = "ABCDEFGH".split("");
+const COLS = 20;
+const ROWS = 60;
 
-function parse(text: string): string[][] {
-  const rows = text ? text.split("\n").map((r) => r.split(",")) : [];
-  return Array.from({ length: ROWS }, (_, r) =>
-    Array.from({ length: COLS }, (_, c) => rows[r]?.[c] ?? ""),
-  );
+type Sheet = { name: string; cells: Record<string, string> };
+type Book = { v: 2; sheets: Sheet[] };
+
+export function colName(index: number): string {
+  let n = index;
+  let out = "";
+  do {
+    out = String.fromCharCode(65 + (n % 26)) + out;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return out;
 }
 
-function serialize(grid: string[][]): string {
-  return grid
-    .map((r) => r.join(","))
-    .join("\n")
-    .replace(/(?:\n,*)+$/, "");
+function colIndex(name: string): number {
+  return name
+    .toUpperCase()
+    .split("")
+    .reduce((acc, ch) => acc * 26 + (ch.charCodeAt(0) - 64), 0) - 1;
 }
 
-function cellRef(ref: string, grid: string[][]): number {
-  const m = /^([A-H])(\d{1,2})$/.exec(ref.trim().toUpperCase());
-  if (!m) return 0;
-  const c = LETTERS.indexOf(m[1]!);
-  const r = Number(m[2]) - 1;
-  return Number(grid[r]?.[c] ?? 0) || 0;
+/** Eski CSV belgelerini çok sayfalı yapıya yükseltir. */
+function parseBook(text: string): Book {
+  if (text.trim().startsWith("{")) {
+    try {
+      const data = JSON.parse(text) as Book;
+      if (Array.isArray(data.sheets) && data.sheets.length) {
+        return { v: 2, sheets: data.sheets.map((s) => ({ name: s.name, cells: s.cells ?? {} })) };
+      }
+    } catch {
+      /* bozuk belge: boş kitap */
+    }
+  }
+  const cells: Record<string, string> = {};
+  text.split("\n").forEach((row, r) => {
+    row.split(",").forEach((cell, c) => {
+      if (cell) cells[`${colName(c)}${r + 1}`] = cell;
+    });
+  });
+  return { v: 2, sheets: [{ name: "Sheet1", cells }] };
 }
 
-/** =SUM(A1:A5) · =AVG(...) · =A1+A2 gibi basit ifadeleri hesaplar. */
-function evaluate(raw: string, grid: string[][]): string {
+/** Formül değerlendirici: SUM, AVERAGE, MIN, MAX, COUNT, IF, ROUND + aritmetik. */
+export function evaluate(
+  raw: string,
+  cells: Record<string, string>,
+  seen: Set<string> = new Set(),
+): string {
   if (!raw.startsWith("=")) return raw;
   const body = raw.slice(1).trim();
-  const range = /^(SUM|AVG|MIN|MAX)\(([A-H]\d{1,2}):([A-H]\d{1,2})\)$/i.exec(body);
-  if (range) {
-    const [, fn, from, to] = range;
-    const c1 = LETTERS.indexOf(from![0]!.toUpperCase());
-    const c2 = LETTERS.indexOf(to![0]!.toUpperCase());
-    const r1 = Number(from!.slice(1)) - 1;
-    const r2 = Number(to!.slice(1)) - 1;
-    const vals: number[] = [];
+
+  const valueOf = (ref: string): number => {
+    if (seen.has(ref)) return 0;
+    const next = new Set(seen);
+    next.add(ref);
+    const v = cells[ref.toUpperCase()] ?? "";
+    const out = v.startsWith("=") ? evaluate(v, cells, next) : v;
+    return Number(out) || 0;
+  };
+
+  const rangeValues = (from: string, to: string): number[] => {
+    const m1 = /^([A-Z]+)(\d+)$/.exec(from.toUpperCase());
+    const m2 = /^([A-Z]+)(\d+)$/.exec(to.toUpperCase());
+    if (!m1 || !m2) return [];
+    const c1 = colIndex(m1[1]!);
+    const c2 = colIndex(m2[1]!);
+    const r1 = Number(m1[2]);
+    const r2 = Number(m2[2]);
+    const out: number[] = [];
     for (let r = Math.min(r1, r2); r <= Math.max(r1, r2); r++)
       for (let c = Math.min(c1, c2); c <= Math.max(c1, c2); c++)
-        vals.push(Number(grid[r]?.[c] ?? 0) || 0);
+        out.push(valueOf(`${colName(c)}${r}`));
+    return out;
+  };
+
+  const agg = /^(SUM|AVERAGE|AVG|MIN|MAX|COUNT)\(([A-Z]+\d+):([A-Z]+\d+)\)$/i.exec(body);
+  if (agg) {
+    const fn = agg[1]!.toUpperCase();
+    const vals = rangeValues(agg[2]!, agg[3]!);
+    if (fn === "COUNT") return String(vals.filter((v) => v !== 0).length);
     if (!vals.length) return "0";
-    const f = fn!.toUpperCase();
-    if (f === "SUM") return String(vals.reduce((a, b) => a + b, 0));
-    if (f === "AVG") return String(vals.reduce((a, b) => a + b, 0) / vals.length);
-    if (f === "MIN") return String(Math.min(...vals));
+    if (fn === "SUM") return String(vals.reduce((a, b) => a + b, 0));
+    if (fn === "AVERAGE" || fn === "AVG")
+      return String(vals.reduce((a, b) => a + b, 0) / vals.length);
+    if (fn === "MIN") return String(Math.min(...vals));
     return String(Math.max(...vals));
   }
-  const expr = body.replace(/[A-H]\d{1,2}/gi, (ref) => String(cellRef(ref, grid)));
+
+  const round = /^ROUND\((.+),\s*(\d+)\)$/i.exec(body);
+  if (round) {
+    const inner = evaluate(`=${round[1]}`, cells, seen);
+    const digits = Number(round[2]);
+    const n = Number(inner);
+    return Number.isFinite(n) ? n.toFixed(digits) : "#HATA";
+  }
+
+  const cond = /^IF\((.+?)(<=|>=|<>|=|<|>)(.+?),(.+?),(.+)\)$/i.exec(body);
+  if (cond) {
+    const left = Number(evaluate(`=${cond[1]}`, cells, seen));
+    const right = Number(evaluate(`=${cond[3]}`, cells, seen));
+    const op = cond[2]!;
+    const ok =
+      op === "=" ? left === right
+      : op === "<>" ? left !== right
+      : op === "<" ? left < right
+      : op === ">" ? left > right
+      : op === "<=" ? left <= right
+      : left >= right;
+    const branch = (ok ? cond[4] : cond[5])!.trim();
+    return /^["'].*["']$/.test(branch)
+      ? branch.slice(1, -1)
+      : evaluate(`=${branch}`, cells, seen);
+  }
+
+  const expr = body.replace(/[A-Z]+\d+/gi, (ref) => String(valueOf(ref)));
   if (!/^[-+*/(). 0-9]+$/.test(expr)) return "#HATA";
   try {
     const out = new Function(`"use strict";return (${expr});`)() as unknown;
@@ -67,54 +138,227 @@ function evaluate(raw: string, grid: string[][]): string {
 
 export function SheetsApp() {
   const editor = useOfficeEditor("sheets");
-  const grid = useMemo(() => parse(editor.text), [editor.text]);
+  const book = useMemo(() => parseBook(editor.text), [editor.text]);
+  const [sheetIndex, setSheetIndex] = useState(0);
+  const [active, setActive] = useState("A1");
+  const [draft, setDraft] = useState("");
+  const barRef = useRef<HTMLInputElement>(null);
 
-  const setCell = (r: number, c: number, v: string) => {
-    const next = grid.map((row) => [...row]);
-    next[r]![c] = v.replace(/,/g, ";");
-    editor.setText(serialize(next));
+  const sheet = book.sheets[Math.min(sheetIndex, book.sheets.length - 1)]!;
+  const cells = sheet.cells;
+
+  useEffect(() => setDraft(cells[active] ?? ""), [active, cells]);
+
+  const writeBook = useCallback(
+    (next: Book) => editor.setText(JSON.stringify(next)),
+    [editor],
+  );
+
+  const setCell = useCallback(
+    (ref: string, value: string) => {
+      const sheets = book.sheets.map((s, i) =>
+        i === sheetIndex ? { ...s, cells: { ...s.cells, [ref]: value } } : s,
+      );
+      writeBook({ v: 2, sheets });
+    },
+    [book, sheetIndex, writeBook],
+  );
+
+  const move = (dc: number, dr: number) => {
+    const m = /^([A-Z]+)(\d+)$/.exec(active)!;
+    const c = Math.min(COLS - 1, Math.max(0, colIndex(m[1]!) + dc));
+    const r = Math.min(ROWS, Math.max(1, Number(m[2]) + dr));
+    setActive(`${colName(c)}${r}`);
   };
 
+  const tabs = [
+    {
+      id: "giris",
+      label: "Giriş",
+      content: (
+        <>
+          <RibbonGroup label="Sayfa">
+            <ToolButton
+              onClick={() =>
+                writeBook({
+                  v: 2,
+                  sheets: [...book.sheets, { name: `Sheet${book.sheets.length + 1}`, cells: {} }],
+                })
+              }
+              icon={<Plus className="h-4 w-4" />}
+              label="Sayfa ekle"
+            />
+          </RibbonGroup>
+          <RibbonGroup label="Hücre">
+            <ToolButton onClick={() => setCell(active, "")} label="Temizle" />
+            <ToolButton onClick={() => setCell(active, "=SUM(A1:A10)")} label="=SUM" />
+            <ToolButton onClick={() => setCell(active, "=AVERAGE(A1:A10)")} label="=AVERAGE" />
+          </RibbonGroup>
+        </>
+      ),
+    },
+  ];
+
   return (
-    <OfficeFrame kind="sheets" editor={editor}>
-      <div className="min-h-0 flex-1 overflow-auto p-2">
+    <OfficeShell
+      kind="sheets"
+      editor={editor}
+      tabs={tabs}
+      status={<span>{sheet.name}</span>}
+      sidebar={false}
+    >
+      {/* Formül çubuğu */}
+      <div
+        className="flex items-center gap-2 border-b px-2 py-1.5"
+        style={{ borderColor: "var(--border)" }}
+      >
+        <span
+          className="w-16 rounded-md px-2 py-1 text-center font-osmono text-[12px] text-[var(--tb-text)]"
+          style={{ border: "1px solid var(--border)" }}
+        >
+          {active}
+        </span>
+        <span className="font-osmono text-[13px] text-[var(--tb-muted)]">fx</span>
+        <input
+          ref={barRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              setCell(active, draft);
+              move(0, 1);
+            }
+          }}
+          onBlur={() => setCell(active, draft)}
+          aria-label="Formül çubuğu"
+          placeholder="Değer veya =SUM(A1:A10)"
+          className="min-w-0 flex-1 rounded-md bg-transparent px-2 py-1 text-[13px] text-[var(--tb-text)] outline-none"
+          style={{ border: "1px solid var(--border)" }}
+        />
+      </div>
+
+      {/* Hücre ızgarası */}
+      <div className="min-h-0 flex-1 overflow-auto">
         <table className="border-collapse text-[12px]">
-          <thead>
+          <thead className="sticky top-0 z-10">
             <tr>
-              <th className="w-8" />
-              {LETTERS.map((l) => (
-                <th key={l} className="px-2 py-1 text-[var(--tb-muted)]">
-                  {l}
+              <th
+                className="sticky left-0 z-10 w-10 bg-[var(--tb-panel-solid)]"
+                style={{ border: "1px solid var(--border)" }}
+              />
+              {Array.from({ length: COLS }).map((_, c) => (
+                <th
+                  key={c}
+                  className="min-w-24 bg-[var(--tb-panel-solid)] px-2 py-1 font-osmono text-[11px] font-normal text-[var(--tb-muted)]"
+                  style={{ border: "1px solid var(--border)" }}
+                >
+                  {colName(c)}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {grid.map((row, r) => (
+            {Array.from({ length: ROWS }).map((_, r) => (
               <tr key={r}>
-                <td className="px-1 text-right text-[var(--tb-muted)]">{r + 1}</td>
-                {row.map((cell, c) => (
-                  <td key={c} style={{ border: "1px solid var(--border)" }}>
-                    <input
-                      value={cell}
-                      onChange={(e) => setCell(r, c, e.target.value)}
-                      aria-label={`Hücre ${LETTERS[c]}${r + 1}`}
-                      title={cell.startsWith("=") ? evaluate(cell, grid) : undefined}
-                      className="w-24 bg-transparent px-2 py-1 text-[var(--tb-text)] outline-none focus:bg-emerald-500/10"
-                    />
-                  </td>
-                ))}
+                <th
+                  className="sticky left-0 z-10 bg-[var(--tb-panel-solid)] px-1 text-right font-osmono text-[11px] font-normal text-[var(--tb-muted)]"
+                  style={{ border: "1px solid var(--border)" }}
+                >
+                  {r + 1}
+                </th>
+                {Array.from({ length: COLS }).map((_, c) => {
+                  const ref = `${colName(c)}${r + 1}`;
+                  const raw = cells[ref] ?? "";
+                  const shown = raw.startsWith("=") ? evaluate(raw, cells) : raw;
+                  const on = ref === active;
+                  return (
+                    <td key={c} style={{ border: "1px solid var(--border)" }} className="p-0">
+                      <button
+                        type="button"
+                        onClick={() => setActive(ref)}
+                        onDoubleClick={() => barRef.current?.focus()}
+                        onKeyDown={(e) => {
+                          if (e.key === "ArrowRight") move(1, 0);
+                          else if (e.key === "ArrowLeft") move(-1, 0);
+                          else if (e.key === "ArrowDown") move(0, 1);
+                          else if (e.key === "ArrowUp") move(0, -1);
+                          else if (e.key === "Delete") setCell(ref, "");
+                          else return;
+                          e.preventDefault();
+                        }}
+                        aria-label={`Hücre ${ref}`}
+                        className={`h-7 w-full min-w-24 truncate px-2 text-left ${
+                          on
+                            ? "bg-[color-mix(in_srgb,var(--tb-accent)_22%,transparent)] text-[var(--tb-text)]"
+                            : "text-[var(--tb-text)] hover:bg-[color-mix(in_srgb,var(--tb-text)_5%,transparent)]"
+                        }`}
+                      >
+                        {shown}
+                      </button>
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p
-        className="border-t p-2 text-[11px] text-[var(--tb-muted)]"
+
+      {/* Sayfa sekmeleri */}
+      <div
+        className="flex items-center gap-1 border-t px-2 py-1"
         style={{ borderColor: "var(--border)" }}
       >
-        Formüller: =SUM(A1:A5), =AVG(A1:B3), =A1+A2 · sonuç hücrenin üzerine gelince görünür
-      </p>
-    </OfficeFrame>
+        {book.sheets.map((s, i) => (
+          <span key={s.name + i} className="flex items-center">
+            <button
+              type="button"
+              onClick={() => setSheetIndex(i)}
+              onDoubleClick={() => {
+                const name = window.prompt("Sayfa adı", s.name);
+                if (!name) return;
+                writeBook({
+                  v: 2,
+                  sheets: book.sheets.map((x, j) => (j === i ? { ...x, name } : x)),
+                });
+              }}
+              className={`rounded-t-md px-3 py-1 text-[12px] ${
+                i === sheetIndex
+                  ? "bg-[color-mix(in_srgb,var(--tb-accent)_18%,transparent)] text-[var(--tb-text)]"
+                  : "text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+              }`}
+            >
+              {s.name}
+            </button>
+            {book.sheets.length > 1 ? (
+              <button
+                type="button"
+                aria-label={`${s.name} sayfasını sil`}
+                onClick={() => {
+                  writeBook({ v: 2, sheets: book.sheets.filter((_, j) => j !== i) });
+                  setSheetIndex(0);
+                }}
+                className="px-1 text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            ) : null}
+          </span>
+        ))}
+        <button
+          type="button"
+          aria-label="Sayfa ekle"
+          onClick={() =>
+            writeBook({
+              v: 2,
+              sheets: [...book.sheets, { name: `Sheet${book.sheets.length + 1}`, cells: {} }],
+            })
+          }
+          className="ml-1 rounded-md px-2 py-1 text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </OfficeShell>
   );
 }
