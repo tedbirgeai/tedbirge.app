@@ -80,6 +80,9 @@ jobs:
           echo "Paketlenecek dizin: build-iso/web"
           du -sh build-iso/web
 
+      - name: Gömülü ofis süreçleri ve VFS katmanı (Faz 4)
+        run: bash scripts/verify-office-bundle.sh build-iso/web
+
       - name: Rust birim testleri (çekirdek · HAL · güç köprüsü)
         run: cargo test --manifest-path crates/Cargo.toml --workspace --exclude tedbirge-kernel
 
