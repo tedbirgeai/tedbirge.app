@@ -8,7 +8,7 @@ echo "-- Tedbirge yapilandirmasi uygulaniyor"
 chmod 0755 /opt/tedbirge/kiosk.sh /opt/tedbirge/ekran-duzeni.sh \
            /opt/tedbirge/tedbirge-ready.sh /opt/tedbirge/tedbirge-sysbridge \
            /usr/local/sbin/tedbirge-kur /opt/tedbirge/kurulum-sonrasi.sh \
-           /opt/tedbirge/oturum.sh
+           /opt/tedbirge/oturum.sh /opt/tedbirge/gozcu.sh
 mkdir -p /var/log/tedbirge /var/lib/tedbirge/chromium /media
 
 # nginx: yalnizca Tedbirge sitesi etkin
@@ -22,6 +22,7 @@ systemctl enable tedbirge-ready.service
 systemctl enable tedbirge-autoinstall.service
 systemctl enable tedbirge-installer.service
 systemctl enable tedbirge-kiosk.service
+systemctl enable tedbirge-gozcu.service
 systemctl enable NetworkManager.service || true
 systemctl enable acpid.service || true
 
@@ -81,6 +82,22 @@ for f in /var/www/tedbirge/index.html /var/www/tedbirge/kernel/tedbirge_kernel.w
   [ -s "$f" ] || { echo "! Zorunlu dosya yok: $f" >&2; exit 1; }
 done
 command -v chromium >/dev/null 2>&1 || { echo "! chromium kurulamadi" >&2; exit 1; }
+
+# --- Faz 3 kapisi: surucu/firmware paketleri gercekten kuruldu mu?
+# Depoda bulunmasi yetmez; kok dosya sisteminde KURULU olmalidir. Eksikse
+# derleme burada durur ve sorunlu imaj hic uretilmez.
+for pkg in firmware-linux-free firmware-linux-nonfree firmware-misc-nonfree \
+           firmware-realtek firmware-iwlwifi firmware-atheros \
+           firmware-amd-graphics firmware-sof-signed; do
+  dpkg -s "$pkg" >/dev/null 2>&1 || { echo "! Zorunlu surucu paketi kurulmadi: $pkg" >&2; exit 1; }
+done
+[ -d /lib/firmware ] || { echo "! /lib/firmware yok — kablosuz/ekran suruculeri calismaz" >&2; exit 1; }
+for arac in whiptail parted mkfs.ext4 mkfs.vfat unsquashfs gpm; do
+  command -v "$arac" >/dev/null 2>&1 || { echo "! Kurulum araci eksik: $arac" >&2; exit 1; }
+done
+for f in /opt/tedbirge/gozcu.sh /etc/systemd/system/tedbirge-gozcu.service; do
+  [ -s "$f" ] || { echo "! Acilis gozcusu eksik: $f" >&2; exit 1; }
+done
 [ -x /usr/lib/systemd/systemd ] || { echo "! systemd yok — init olusmaz" >&2; exit 1; }
 
 echo "-- Tedbirge yapilandirmasi tamam"

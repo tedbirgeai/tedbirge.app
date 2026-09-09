@@ -65,4 +65,29 @@ grep -qE '^timeout [1-9][0-9]*$' "$TMP/isolinux.cfg.txt" \
 grep -q 'set timeout=' "$TMP/grub.cfg.txt" \
   || fail "UEFI menüsü otomatik açılmıyor."
 
+# --- Faz 3: BIOS ve UEFI menüleri aynı üç açılış yolunu sunmak zorunda.
+# (Normal · Güvenli görüntü · Uyumluluk) + sıfır dokunuşlu otomatik kurulum.
+for menu in live.cfg grub.cfg; do
+  F="$TMP/$menu.txt"
+  grep -q 'boot=live' "$F" || fail "$menu içinde normal canlı açılış girdisi yok."
+  grep -q 'nomodeset' "$F" || fail "$menu içinde güvenli görüntü (nomodeset) girdisi yok."
+  grep -q 'pci=nomsi' "$F" || fail "$menu içinde uyumluluk modu girdisi yok."
+  grep -q 'usbcore.autosuspend=-1' "$F" || fail "$menu içinde USB kilitlenme koruması yok."
+  grep -q 'tedbirge.autoinstall=1' "$F" || fail "$menu içinde otomatik kurulum girdisi yok."
+done
+
+# --- Faz 3: kurulum sonrası ekran/girdi gözcüsü imaja gerçekten girmiş mi?
+for path in \
+  opt/tedbirge/gozcu.sh \
+  etc/systemd/system/tedbirge-gozcu.service \
+  etc/systemd/system/tedbirge-kiosk.service; do
+  grep -Eq "(^|/)$path$" "$LIST" || fail "Squashfs içinde zorunlu bileşen yok: /$path"
+done
+
+# --- Faz 3: sürücü/firmware yükü kök dosya sisteminde bulunmalı.
+grep -Eq '(^|/)lib/firmware/?$' "$LIST" || fail "Kök dosya sisteminde /lib/firmware yok — sürücü paketleri eksik."
+for fw in rtlwifi rtw88 iwlwifi ath10k; do
+  grep -q "lib/firmware/$fw" "$LIST" || echo "::warning::firmware kümesi görülemedi: $fw"
+done
+
 echo "✓ ISO yapısı, Debian kökü, BIOS/UEFI menüleri ve otomatik açılış zaman aşımı doğrulandı."

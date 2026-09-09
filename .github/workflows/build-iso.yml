@@ -100,10 +100,8 @@ jobs:
           cp "$BIN" build-iso/payload/bin/tedbirge-sysbridge
           chmod +x build-iso/payload/bin/tedbirge-sysbridge
 
-      - name: Kurulum imajı yapılandırmasını doğrula
-        run: |
-          bash scripts/check-image-config.sh
-          bash scripts/test-installer-contract.sh
+      - name: Doğrulama kapıları (derleme öncesi · hepsi yeşil olmalı)
+        run: bash scripts/validation-gates.sh once
 
       - name: Sistem kopyalama komutunu gerçek squashfs ile doğrula
         run: |
@@ -142,7 +140,7 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           sudo -E apt-get update
           sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" xorriso squashfs-tools zstd
-          bash scripts/verify-iso.sh "build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso"
+          bash scripts/validation-gates.sh imaj "build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso"
 
       - name: Açılış testi (QEMU · gerçek donanım senaryoları)
         run: |
