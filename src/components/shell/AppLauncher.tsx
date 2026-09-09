@@ -10,13 +10,19 @@ import { useEffect, type ReactNode } from "react";
 import {
   Activity,
   Boxes,
+  CalendarCheck,
+  FileText,
+  FileType2,
   FileUp,
   FolderOpen,
   Globe,
   MessageCircle,
   Music,
   PlayCircle,
+  Presentation,
   Radio,
+  StickyNote,
+  Table2,
   X,
 } from "lucide-react";
 
