@@ -41,8 +41,8 @@ export type TerminalHost = {
   ipc(): string[];
   vaultLocked(): boolean;
   setVaultLocked(locked: boolean): void;
-  keypair(): { nodeId: string | null; publicKey: string | null };
-  generateKeypair(): Promise<string | null>;
+  identity(): Promise<IdentityInfo | null>;
+  generateKeypair(): Promise<IdentityInfo | null>;
   memoryMb(): number | null;
   uptimeSec(): number;
 };
@@ -61,7 +61,7 @@ export const nullHost: TerminalHost = {
   ipc: () => [],
   vaultLocked: () => false,
   setVaultLocked: () => undefined,
-  keypair: () => ({ nodeId: null, publicKey: null }),
+  identity: async () => null,
   generateKeypair: async () => null,
   memoryMb: () => null,
   uptimeSec: () => 0,
