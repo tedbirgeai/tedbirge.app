@@ -17,6 +17,12 @@ import { SistemBilgisiApp } from "@/components/shell/apps/SistemBilgisiApp";
 import { PanelApp } from "@/components/shell/apps/PanelApp";
 import { ProfileApp } from "@/components/shell/apps/ProfileApp";
 import { YonetimPortaliApp } from "@/components/shell/apps/YonetimPortaliApp";
+import { WriterApp } from "@/components/shell/apps/office/WriterApp";
+import { SheetsApp } from "@/components/shell/apps/office/SheetsApp";
+import { SlidesApp } from "@/components/shell/apps/office/SlidesApp";
+import { PdfStudioApp } from "@/components/shell/apps/office/PdfStudioApp";
+import { NotesApp } from "@/components/shell/apps/office/NotesApp";
+import { OrganizerApp } from "@/components/shell/apps/office/OrganizerApp";
 
 import { WindowFrame } from "@/components/shell/WindowFrame";
 import { AppErrorBoundary } from "@/components/shell/AppErrorBoundary";
@@ -443,6 +449,13 @@ function AppSurface({
   if (win.appId === "news") return <NewsApp />;
   if (win.appId === "store") return <StoreApp onOpen={onLaunch} />;
   if (win.appId === "transfer") return <TransfersApp />;
+  // Gömülü ofis süreçleri (Yönetilen Sistem Uygulamaları).
+  if (win.appId === "writer") return <WriterApp />;
+  if (win.appId === "sheets") return <SheetsApp />;
+  if (win.appId === "slides") return <SlidesApp />;
+  if (win.appId === "pdf") return <PdfStudioApp />;
+  if (win.appId === "notes") return <NotesApp />;
+  if (win.appId === "organizer") return <OrganizerApp />;
   if (win.appId === "computer")
     return <ComputerApp onMesh={() => onLaunch("mesh")} onLaunch={onLaunch} />;
 

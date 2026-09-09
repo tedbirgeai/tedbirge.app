@@ -137,6 +137,45 @@ export async function saveFiles(files: File[], folder?: VfsFolder): Promise<VfsE
   return saved;
 }
 
+/**
+ * Uygulama içinden üretilen belgeyi (Yazı, Tablo, Sunu, Not, Ajanda)
+ * depoya yazar. Aynı `id` ile yeniden yazıldığında belge güncellenir;
+ * böylece ofis uygulamaları kaydettikçe kopya çoğaltmaz.
+ */
+export async function writeDocument(input: {
+  id?: string;
+  name: string;
+  mime: string;
+  text: string;
+  folder?: VfsFolder;
+}): Promise<VfsEntry> {
+  const blob = new Blob([input.text], { type: input.mime });
+  const rec: VfsRecord = {
+    id: input.id ?? `belge_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    name: input.name,
+    mime: input.mime,
+    size: blob.size,
+    at: Date.now(),
+    folder: normalizeFolder(input.folder ?? "Belgeler", input.mime),
+    blob,
+  };
+  await tx("readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>);
+  const cached = urls.get(rec.id);
+  if (cached) {
+    URL.revokeObjectURL(cached);
+    urls.delete(rec.id);
+  }
+  emit();
+  const { blob: _blob, ...meta } = rec;
+  return meta;
+}
+
+/** Belgenin metin içeriğini geri verir (ofis uygulamaları için). */
+export async function readDocument(id: string): Promise<string | null> {
+  const f = await readFile(id);
+  return f ? f.text() : null;
+}
+
 /** Depodaki dosyayı `File` olarak geri verir (P2P gönderimi için). */
 export async function readFile(id: string): Promise<File | null> {
   const rec = await tx<VfsRecord | undefined>(

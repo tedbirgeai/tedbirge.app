@@ -119,6 +119,49 @@ export const LOCAL_APPS: CatalogApp[] = [
   },
   { id: "mesh", label: "Ağ", hint: "Mesh durumu", category: "araclar", builtin: false },
   { id: "relay", label: "Röle", hint: "Taşıma ayarları", category: "araclar", builtin: false },
+  // Gömülü ofis süreçleri: imaj içinde gelir, dış ağ bağımlılığı yoktur.
+  {
+    id: "writer",
+    label: "Writer",
+    hint: "Yazı belgeleri (çevrimdışı)",
+    category: "uretkenlik",
+    builtin: true,
+  },
+  {
+    id: "sheets",
+    label: "Sheets",
+    hint: "Hesap tablosu (çevrimdışı)",
+    category: "uretkenlik",
+    builtin: true,
+  },
+  {
+    id: "slides",
+    label: "Slides",
+    hint: "Sunu hazırlama (çevrimdışı)",
+    category: "uretkenlik",
+    builtin: true,
+  },
+  {
+    id: "pdf",
+    label: "PDF Studio",
+    hint: "PDF görüntüleme ve yazdırma",
+    category: "uretkenlik",
+    builtin: true,
+  },
+  {
+    id: "notes",
+    label: "Notes",
+    hint: "Hızlı notlar",
+    category: "uretkenlik",
+    builtin: true,
+  },
+  {
+    id: "organizer",
+    label: "Organizer",
+    hint: "Görev ve randevu ajandası",
+    category: "uretkenlik",
+    builtin: true,
+  },
 ];
 
 export const CATALOG: CatalogApp[] = [

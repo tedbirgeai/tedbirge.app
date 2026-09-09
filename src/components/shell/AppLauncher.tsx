@@ -10,13 +10,19 @@ import { useEffect, type ReactNode } from "react";
 import {
   Activity,
   Boxes,
+  CalendarCheck,
+  FileText,
+  FileType2,
   FileUp,
   FolderOpen,
   Globe,
   MessageCircle,
   Music,
   PlayCircle,
+  Presentation,
   Radio,
+  StickyNote,
+  Table2,
   X,
 } from "lucide-react";
 
@@ -58,6 +64,42 @@ export const LOCAL_TILES: LauncherTile[] = [
   },
   { id: "mesh", label: "Ağ", hint: "Düğüm ve mesh durumu", icon: <Activity className="h-6 w-6" /> },
   { id: "relay", label: "Röle", hint: "Taşıma ayarları", icon: <Radio className="h-6 w-6" /> },
+  {
+    id: "writer",
+    label: "Writer",
+    hint: "Yazı belgeleri (çevrimdışı)",
+    icon: <FileText className="h-6 w-6" />,
+  },
+  {
+    id: "sheets",
+    label: "Sheets",
+    hint: "Hesap tablosu (çevrimdışı)",
+    icon: <Table2 className="h-6 w-6" />,
+  },
+  {
+    id: "slides",
+    label: "Slides",
+    hint: "Sunu hazırlama (çevrimdışı)",
+    icon: <Presentation className="h-6 w-6" />,
+  },
+  {
+    id: "pdf",
+    label: "PDF Studio",
+    hint: "PDF görüntüleme ve yazdırma",
+    icon: <FileType2 className="h-6 w-6" />,
+  },
+  {
+    id: "notes",
+    label: "Notes",
+    hint: "Hızlı notlar",
+    icon: <StickyNote className="h-6 w-6" />,
+  },
+  {
+    id: "organizer",
+    label: "Organizer",
+    hint: "Görev ve randevu ajandası",
+    icon: <CalendarCheck className="h-6 w-6" />,
+  },
 ];
 
 export const WEB_TILES: LauncherTile[] = WEB_APPS.map((a) => ({
