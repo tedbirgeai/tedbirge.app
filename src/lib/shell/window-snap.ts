@@ -52,10 +52,7 @@ export function snapBoxFor(
 }
 
 /** Ekranı eşit dikey sütunlara böler (klavye kısayolu ile yerleşim). */
-export function gridColumns(
-  count: number,
-  area: { width: number; height: number },
-): SnapBox[] {
+export function gridColumns(count: number, area: { width: number; height: number }): SnapBox[] {
   const cols = Math.max(1, Math.min(4, Math.round(count)));
   const colW = area.width / cols;
   return Array.from({ length: cols }, (_, i) => ({

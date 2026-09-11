@@ -63,13 +63,14 @@ export function StoreApp({ onOpen }: { onOpen: (id: string) => void }) {
 
   const list = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");
-    return CATALOG.filter((a) => (tab === "all" || tab === "subscription" ? true : xdgOf(a.id) === tab))
-      .filter((a) =>
-        needle
-          ? a.label.toLocaleLowerCase("tr").includes(needle) ||
-            a.hint.toLocaleLowerCase("tr").includes(needle)
-          : true,
-      );
+    return CATALOG.filter((a) =>
+      tab === "all" || tab === "subscription" ? true : xdgOf(a.id) === tab,
+    ).filter((a) =>
+      needle
+        ? a.label.toLocaleLowerCase("tr").includes(needle) ||
+          a.hint.toLocaleLowerCase("tr").includes(needle)
+        : true,
+    );
   }, [tab, q]);
 
   useEffect(

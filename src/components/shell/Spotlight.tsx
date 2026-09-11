@@ -160,8 +160,7 @@ export function Spotlight({
     return all
       .filter(
         (i) =>
-          i.label.toLocaleLowerCase("tr").includes(q) ||
-          i.hint.toLocaleLowerCase("tr").includes(q),
+          i.label.toLocaleLowerCase("tr").includes(q) || i.hint.toLocaleLowerCase("tr").includes(q),
       )
       .slice(0, 24);
   }, [query, installed, files, contacts, peers, onLaunch, openFile]);
