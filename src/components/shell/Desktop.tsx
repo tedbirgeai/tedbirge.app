@@ -234,7 +234,11 @@ export function Desktop({
       if (entry.mime === FOLDER_MIME) return onOpen("files");
       if (entry.mime === "application/pdf") return onOpen("pdf");
       const kind = kindOf(entry.name);
-      if (!kind) return onOpen("files");
+      if (!kind) {
+        // Eşleşen uygulama yok: sessizce Dosyalar'a düşmek yerine dürüst kart.
+        setUnsupported(entry);
+        return;
+      }
       requestOpenDoc(kind, entry.id);
       onOpen(KIND_APP[kind]);
     },
