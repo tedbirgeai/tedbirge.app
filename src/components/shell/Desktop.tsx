@@ -14,6 +14,7 @@ import { AppIcon } from "@/components/shell/app-icons";
 import { DesktopItem } from "@/components/shell/DesktopItem";
 import { DesktopPager } from "@/components/shell/DesktopPager";
 import { DesktopIcon } from "@/components/shell/DesktopIcon";
+import { UnsupportedFileCard } from "@/components/shell/UnsupportedFileCard";
 import { useIsCompact } from "@/hooks/use-mobile";
 import { DesktopWidgets } from "@/components/shell/DesktopWidgets";
 import { ClockWidget } from "@/components/shell/ClockWidget";
@@ -110,6 +111,7 @@ export function Desktop({
   const [selection, setSelection] = useState<string[]>([]);
   const [menu, setMenu] = useState<Menu | null>(null);
   const [properties, setProperties] = useState<string | null>(null);
+  const [unsupported, setUnsupported] = useState<VfsEntry | null>(null);
   const [band, setBand] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
   const [size, setSize] = useState({ w: 1280, h: 800 });
   const [clipboard, setClipboard] = useState<string | null>(null);
@@ -234,7 +236,11 @@ export function Desktop({
       if (entry.mime === FOLDER_MIME) return onOpen("files");
       if (entry.mime === "application/pdf") return onOpen("pdf");
       const kind = kindOf(entry.name);
-      if (!kind) return onOpen("files");
+      if (!kind) {
+        // Eşleşen uygulama yok: sessizce Dosyalar'a düşmek yerine dürüst kart.
+        setUnsupported(entry);
+        return;
+      }
       requestOpenDoc(kind, entry.id);
       onOpen(KIND_APP[kind]);
     },
@@ -387,7 +393,9 @@ export function Desktop({
       {
         label: "P2P Ağında Paylaş",
         onSelect: () => {
-          window.dispatchEvent(new CustomEvent("tedbirge:share-file", { detail: { id: entry.id } }));
+          window.dispatchEvent(
+            new CustomEvent("tedbirge:share-file", { detail: { id: entry.id } }),
+          );
           onOpen("transfer");
         },
       },
@@ -466,6 +474,9 @@ export function Desktop({
         ) : null}
         {properties ? (
           <AppPropertiesDialog id={properties} onClose={() => setProperties(null)} />
+        ) : null}
+        {unsupported ? (
+          <UnsupportedFileCard entry={unsupported} onClose={() => setUnsupported(null)} />
         ) : null}
       </div>
     );
@@ -559,6 +570,10 @@ export function Desktop({
 
       {properties ? (
         <AppPropertiesDialog id={properties} onClose={() => setProperties(null)} />
+      ) : null}
+
+      {unsupported ? (
+        <UnsupportedFileCard entry={unsupported} onClose={() => setUnsupported(null)} />
       ) : null}
     </div>
   );

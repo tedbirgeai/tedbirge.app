@@ -27,6 +27,17 @@ kapi() { # ad, komut...
 }
 
 kaynak_kapilari() {
+  kapi "Çevrimdışı bağımsızlık: dış yazı tipi/CDN yok" bash -c '
+    set -e
+    if grep -rn "fonts.googleapis.com\|fonts.gstatic.com\|cdn.jsdelivr.net\|unpkg.com" src \
+         --include="*.ts" --include="*.tsx" --include="*.css" | grep -v "^src/.*__tests__"; then
+      echo "::error::Kabukta dış yazı tipi/CDN bağımlılığı var" >&2; exit 1
+    fi
+    grep -q "@fontsource/" src/styles.css'
+  kapi "Canlı önyükleme kurumsal açılış ekranı" bash -c '
+    set -e
+    grep -q "quiet splash" image/build.sh
+    grep -q "plymouth-set-default-theme tedbirge" image/config/hooks/normal/9000-tedbirge.hook.chroot'
   kapi "Kurulum imajı yapılandırması" bash scripts/check-image-config.sh
   kapi "Kurucu güvenlik ve kullanıcı deneyimi sözleşmesi" bash scripts/test-installer-contract.sh
   kapi "Paket listeleri Debian depolarında" python3 scripts/verify-packages.py \
