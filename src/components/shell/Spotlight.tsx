@@ -37,8 +37,10 @@ export function Spotlight({
   onLaunch: (id: string) => void;
 }) {
   const { installed } = useDesktopState();
+  const { contacts } = useContacts();
   const [query, setQuery] = useState("");
   const [files, setFiles] = useState<VfsEntry[]>([]);
+  const [peers, setPeers] = useState<Array<{ id: string; direct: boolean }>>([]);
   const [cursor, setCursor] = useState(0);
   const input = useRef<HTMLInputElement>(null);
 
@@ -49,6 +51,9 @@ export function Spotlight({
     listFiles()
       .then(setFiles)
       .catch(() => setFiles([]));
+    // Mesh düğümleri açılış anında bir kez okunur: arama titremez.
+    const snap = getNodeSnapshot();
+    setPeers(snap.peers.map((p) => ({ id: p.id, direct: p.direct })));
     const t = window.setTimeout(() => input.current?.focus(), 20);
     return () => window.clearTimeout(t);
   }, [open]);
