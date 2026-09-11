@@ -21,7 +21,7 @@ function storageKey(appId: string, key: string): string {
 }
 
 /** Cihazda kalıcı ana gizli değer; yoksa üretilir. */
-function masterSecret(): Uint8Array {
+function masterSecret(): Uint8Array<ArrayBuffer> {
   let b64 = "";
   try {
     b64 = window.localStorage.getItem(MASTER_KEY) ?? "";
@@ -38,7 +38,7 @@ function masterSecret(): Uint8Array {
     }
   }
   const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
+  const out = new Uint8Array(new ArrayBuffer(bin.length));
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
@@ -80,7 +80,7 @@ export async function writeAppData(appId: string, key: string, value: string): P
       new TextEncoder().encode(value),
     ),
   );
-  const packed = new Uint8Array(iv.length + cipher.length);
+  const packed = new Uint8Array(new ArrayBuffer(iv.length + cipher.length));
   packed.set(iv, 0);
   packed.set(cipher, iv.length);
   window.localStorage.setItem(storageKey(appId, key), btoa(String.fromCharCode(...packed)));
@@ -92,7 +92,7 @@ export async function readAppData(appId: string, key: string): Promise<string | 
   if (!raw) return null;
   try {
     const bin = atob(raw);
-    const packed = new Uint8Array(bin.length);
+    const packed = new Uint8Array(new ArrayBuffer(bin.length));
     for (let i = 0; i < bin.length; i++) packed[i] = bin.charCodeAt(i);
     const plain = await crypto.subtle.decrypt(
       { name: "AES-GCM", iv: packed.slice(0, 12) },

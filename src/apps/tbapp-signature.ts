@@ -20,10 +20,10 @@ export function canonicalJson(value: unknown): string {
   return `{${keys.map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`).join(",")}}`;
 }
 
-function fromBase64(text: string): Uint8Array {
+function fromBase64(text: string): Uint8Array<ArrayBuffer> {
   const norm = text.replace(/-/g, "+").replace(/_/g, "/");
   const bin = atob(norm.padEnd(Math.ceil(norm.length / 4) * 4, "="));
-  const out = new Uint8Array(bin.length);
+  const out = new Uint8Array(new ArrayBuffer(bin.length));
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
