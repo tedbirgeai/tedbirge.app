@@ -1,22 +1,27 @@
 /**
- * EVRENSEL ARAMA (Spotlight)
+ * EVRENSEL KOMUTA MERKEZİ (Spotlight Command Palette)
  * ------------------------------------------------------------------
- * Ctrl/Cmd + Boşluk ile ekranın ortasında açılır. Kurulu uygulamaları,
- * cihazdaki yerel dosyaları ve sistem komutlarını tek listede bulur.
- * Tamamen klavyeyle yönetilir; internet gerektirmez.
+ * Ctrl/Cmd + K veya Alt + Boşluk ile ekranın ortasında açılır. Tek arama
+ * çubuğu üzerinden XDG kategorili uygulamalar, cihazdaki yerel dosyalar,
+ * rehberdeki kişiler, mesh düğümleri, terminal komutları ve sistem
+ * komutları taranır. Tamamen klavyeyle yönetilir; internet gerektirmez.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppWindow, FileText, Search, TerminalSquare } from "lucide-react";
+import { AppWindow, FileText, Radio, Search, TerminalSquare, User } from "lucide-react";
 
 import { notifyOk } from "@/lib/shell/notify";
 import { setFocusMode, isFocusMode } from "@/lib/shell/focus-mode";
 import { listFiles, objectUrl, type VfsEntry } from "@/lib/vfs/store";
-import { CATALOG, catalogApp, useDesktopState } from "@/shell/installed";
+import { CATALOG, catalogApp, useDesktopState, xdgOf } from "@/shell/installed";
+import { XDG_LABELS } from "@/shell/xdg";
+import { useContacts } from "@/lib/chat/contacts";
+import { getNodeSnapshot } from "@/lib/node-runtime";
+import { COMMANDS } from "@/lib/terminal/commands";
 
 type Item = {
   key: string;
-  kind: "app" | "file" | "command";
+  kind: "app" | "file" | "command" | "person" | "peer";
   label: string;
   hint: string;
   run: () => void;
