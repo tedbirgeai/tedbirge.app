@@ -864,6 +864,69 @@ if [ -n "$P1" ]; then
     || hata "Tasinabilir EFI acilis dosyasi (BOOTX64.EFI) olusmadi."
 fi
 [ -s "$KOK/var/www/tedbirge/index.html" ] || hata "Arayuz dosyalari kopyalanmadi."
+
+# --- ACILABILIRLIK SOZLESMESI ------------------------------------------------
+# "%100 kuruldu" ancak asagidaki kapilarin tamami gectiginde soylenir. Amac,
+# fiziksel bilgisayarda yeniden baslatildiktan sonra siyah ekran / acilmama
+# durumunun kurulum bitmeden yakalanmasidir.  Hata kodlari: ACL-3xx
+
+# 1) Menü sozdizimi gecerli mi? (bozuk grub.cfg = firmware'de kurtarma kabugu)
+if chroot "$KOK" "${CHROOT_ENV[@]}" sh -c 'command -v grub-script-check >/dev/null'; then
+  chroot "$KOK" "${CHROOT_ENV[@]}" grub-script-check /boot/grub/grub.cfg < /dev/null \
+    || hata "ACL-301: Acilis menusu (grub.cfg) sozdizimi hatali."
+fi
+
+# 2) Menüdeki cekirdek ve acilis diski gercekten diskte duruyor mu?
+MENU_CEKIRDEK=$(grep -oE '/boot/vmlinuz-[^ ]+' "$KOK/boot/grub/grub.cfg" | head -1)
+MENU_INITRD=$(grep -oE '/boot/initrd\.img-[^ ]+' "$KOK/boot/grub/grub.cfg" | head -1)
+[ -n "$MENU_CEKIRDEK" ] && [ -s "$KOK$MENU_CEKIRDEK" ] \
+  || hata "ACL-302: Acilis menusundeki cekirdek dosyasi diskte yok."
+[ -n "$MENU_INITRD" ] && [ -s "$KOK$MENU_INITRD" ] \
+  || hata "ACL-303: Acilis menusundeki acilis diski (initrd) diskte yok."
+grep -q "root=UUID=$KOK_UUID" "$KOK/boot/grub/grub.cfg" \
+  || hata "ACL-304: Acilis menusu kok bolumu UUID ile isaret etmiyor."
+
+# 3) Kurtarma girisleri (siyah ekran icin guvenli goruntu) uretildi mi?
+grep -q 'Guvenli goruntu (nomodeset)' "$KOK/boot/grub/grub.cfg" \
+  || hata "ACL-305: Guvenli goruntu kurtarma secenegi menuye eklenmedi."
+grep -q 'Metin / kurtarma kipi' "$KOK/boot/grub/grub.cfg" \
+  || hata "ACL-306: Metin/kurtarma secenegi menuye eklenmedi."
+
+# 4) Acilis diski gercek disk denetleyicilerini iceriyor mu? (SATA/NVMe/USB)
+if chroot "$KOK" "${CHROOT_ENV[@]}" sh -c 'command -v lsinitramfs >/dev/null'; then
+  ICERIK=$(chroot "$KOK" "${CHROOT_ENV[@]}" lsinitramfs "$MENU_INITRD" 2>/dev/null || true)
+  for m in ahci nvme ext4; do
+    printf '%s\n' "$ICERIK" | grep -q "/$m" \
+      || hata "ACL-307: Acilis diskinde '$m' surucusu yok; disk acilista gorulemez."
+  done
+fi
+
+# 5) Acilis kodu diske gercekten yazildi mi?
+if [ "$MOD" = "UEFI" ]; then
+  [ -s "$KOK/boot/efi/EFI/BOOT/grub.cfg" ] \
+    || hata "ACL-308: ESP uzerindeki koprü menu yazilamadi."
+else
+  dd if="$DEV" bs=512 count=1 2>/dev/null | grep -aq 'GRUB' \
+    || hata "ACL-309: BIOS acilis kodu diskin ilk sektorune yazilamamis."
+fi
+
+# 6) Dosya sistemleri temiz ayrilip yeniden okunabiliyor mu?
+sync
+if [ "$MOD" = "UEFI" ] && [ -n "$P1" ]; then
+  umount "$KOK/boot/efi" 2>/dev/null || hata "ACL-310: EFI bolumu temiz ayrilamadi."
+  mount "$P1" "$KOK/boot/efi" || hata "ACL-311: EFI bolumu yeniden baglanamadi."
+  [ -s "$KOK/boot/efi/EFI/BOOT/BOOTX64.EFI" ] \
+    || hata "ACL-312: EFI acilis dosyasi yeniden okunamadi."
+fi
+
+{
+  echo "--- Tedbirge kurulum dogrulama $(date -u +%Y-%m-%dT%H:%M:%SZ) ---"
+  echo "disk=$DEV kip=$MOD kok=$KOK_UUID takas=${SWAP_UUID:-yok}"
+  echo "cekirdek=$MENU_CEKIRDEK initrd=$MENU_INITRD"
+  echo "gecen kapilar: ACL-301..312"
+} >> "$LOG" 2>/dev/null || true
+mkdir -p "$KOK/var/log/tedbirge" 2>/dev/null || true
+cp "$LOG" "$KOK/var/log/tedbirge/kurulum.log" 2>/dev/null || true
 if [ -n "$SWAP_UUID" ]; then
   grep -q "UUID=$SWAP_UUID" "$KOK/etc/fstab" || hata "Takas bolumu fstab'a yazilamadi."
   grep -q "RESUME=UUID=$SWAP_UUID" "$KOK/etc/initramfs-tools/conf.d/resume" \
