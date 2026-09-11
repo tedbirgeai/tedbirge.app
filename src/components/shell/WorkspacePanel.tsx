@@ -42,7 +42,6 @@ import { TransfersApp } from "@/components/shell/apps/TransfersApp";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
 import { getNodeSnapshot } from "@/lib/node-runtime";
 import { deviceScopeLabel } from "@/lib/identity/device";
-import { useShell } from "@/shell/shell-context";
 import { useIsCompact } from "@/hooks/use-mobile";
 import { useEdgeBackGesture } from "@/hooks/useSwipeGesture";
 import { webApp } from "@/shell/web-apps";
