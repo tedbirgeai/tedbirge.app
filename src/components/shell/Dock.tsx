@@ -1,30 +1,32 @@
 /**
- * DOCK (Alt Görev Çubuğu)
+ * YÜZEN CAM DOCK (Floating Glass Dock)
  * ------------------------------------------------------------------
- * Cam yüzeyli sabit şerit. Solda her koşulda görünen Anasayfa düğmesi,
- * yanında üç kişiselleştirilebilir uygulama yuvası (sürükle-bırak),
- * ardından kurulu uygulamalar ve açık pencere göstergeleri, sağda
- * Mağaza. Tüm dokunma hedefleri en az 48×48 px'dir.
+ * Ekranın altından 8 px yukarıda yüzen, 46 px yüksekliğinde cam şerit.
+ * Solda her koşulda görünen Anasayfa düğmesi, yanında sabitlenmiş
+ * uygulamalar (sürükle-bırak ile sıralanır ve sabitlenir), ardından açık
+ * pencere göstergeleri, sağda Mağaza. Tüm dokunma hedefleri en az
+ * 44×44 px'dir; çalışan uygulamaların altında aktiflik göstergesi vardır.
  */
 
 import { useRef, useState } from "react";
 import { House } from "lucide-react";
 
 import { AppIcon } from "@/components/shell/app-icons";
-import { ContextMenu } from "@/components/shell/ContextMenu";
+import { ContextMenu, type MenuItem } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
 import { catalogApp } from "@/shell/installed";
-import { setDockSlot, swapDockSlots, useDockSlots } from "@/shell/dock-slots";
+import { movePin, pinApp, useDockSlots } from "@/shell/dock-slots";
 import {
   closeWindow,
   focusWindow,
   minimizeAll,
   restoreMany,
   restoreWindow,
+  toggleMaximize,
   type WindowRecord,
 } from "@/shell/windows";
 import { pushUndo } from "@/lib/shell/undo-stack";
-import { notify } from "@/lib/shell/notify";
+import { notify, notifyOk } from "@/lib/shell/notify";
 import { useIsCompact } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
@@ -41,9 +43,10 @@ export function Dock({
 }) {
   const slots = useDockSlots();
   const compact = useIsCompact();
-  const [menu, setMenu] = useState<{ x: number; y: number; appId: string } | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; appId: string | null } | null>(null);
   const [properties, setProperties] = useState<string | null>(null);
   const [dropSlot, setDropSlot] = useState<number | null>(null);
+  const [dropZone, setDropZone] = useState(false);
   const hidden = useRef<string[]>([]);
   // Orta bölüm yalnızca O AN AÇIK pencereleri gösterir; kurulu tüm sistem
   // uygulamaları alt çubuğa dizilmez (Nielsen #8 — sade arayüz).
@@ -88,6 +91,47 @@ export function Dock({
     focusWindow(win.id);
   };
 
+  /** Dock zemini: uygulama, pencere ve masaüstü eylemleri. */
+  const dockMenu = (): MenuItem[] => [
+    { label: "Masaüstünü Göster", onSelect: goHome },
+    {
+      label: "Tüm Pencereleri Geri Getir",
+      disabled: !windows.some((w) => w.minimized),
+      onSelect: () => restoreMany(windows.filter((w) => w.minimized).map((w) => w.id)),
+    },
+    { kind: "sep" },
+    { label: "Görev Yöneticisi", onSelect: () => onLaunch("system") },
+    { label: "Mağazayı Aç", onSelect: onStore },
+  ];
+
+  /** Uygulama simgesi menüsü: sabitleme ve pencere eylemleri eklenir. */
+  const itemMenu = (id: string): MenuItem[] => {
+    const win = windows.find((w) => w.appId === id);
+    return appMenuItems({
+      id,
+      onOpen: onLaunch,
+      onOpenNew: onLaunchNew,
+      onProperties: (appId) => setProperties(appId),
+      extra: [
+        {
+          label: "Pencereyi Küçült/Büyüt",
+          disabled: !win,
+          onSelect: () => {
+            if (win) toggleMaximize(win.id);
+          },
+        },
+        {
+          label: "Pencereyi Kapat",
+          disabled: !win,
+          onSelect: () => {
+            if (win) closeWindow(win.id);
+          },
+        },
+        { label: "Görev Yöneticisi", onSelect: () => onLaunch("system") },
+      ],
+    });
+  };
+
   const renderItem = (id: string, opts?: { slot?: number }) => {
     const app = catalogApp(id);
     const win = windows.find((w) => w.appId === id);
@@ -95,9 +139,9 @@ export function Dock({
     const slot = opts?.slot;
     return (
       <button
-        key={slot != null ? `slot-${slot}` : id}
+        key={slot != null ? `slot-${slot}-${id}` : id}
         type="button"
-        title={`${label}${slot != null ? " · sürükleyerek değiştirin" : ""}`}
+        title={`${label}${slot != null ? " · sürükleyerek sıralayın" : ""}`}
         aria-label={label}
         draggable
         onDragStart={(e) => {
@@ -118,11 +162,13 @@ export function Dock({
           slot != null
             ? (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 setDropSlot(null);
                 const from = e.dataTransfer.getData("text/tbos-slot");
-                const app = e.dataTransfer.getData("text/tbos-app");
-                if (from) swapDockSlots(Number(from), slot);
-                else if (app) setDockSlot(slot, app);
+                const dragged = e.dataTransfer.getData("text/tbos-app");
+                if (from) movePin(Number(from), slot);
+                else if (dragged && pinApp(dragged, slot))
+                  notifyOk("Dock'a sabitlendi", catalogApp(dragged)?.label ?? dragged);
               }
             : undefined
         }
@@ -132,19 +178,21 @@ export function Dock({
           e.stopPropagation();
           setMenu({ x: e.clientX, y: e.clientY - 8, appId: id });
         }}
-        className={`tbos-dock-item group relative grid min-h-12 min-w-12 shrink-0 place-items-center rounded-xl px-2 py-1.5 ${
+        className={`tbos-dock-item group relative grid min-h-11 min-w-11 shrink-0 place-items-center rounded-xl px-2 py-1 ${
           dropSlot === slot && slot != null ? "tbos-dock-item--drop" : ""
         }`}
       >
         <AppIcon id={id} className="h-5 w-5" />
-        <span className="mt-0.5 hidden max-w-16 truncate font-osmono text-[10px] text-[var(--tb-muted)] sm:block">
-          {label}
-        </span>
+        <span className="sr-only">{label}</span>
         <span
           aria-hidden
-          className={`mt-0.5 block h-1 w-1 rounded-full ${
-            win ? "bg-[var(--tb-accent)]" : "bg-transparent"
-          } ${win?.minimized ? "opacity-40" : ""}`}
+          className={`mt-1 block rounded-full transition-all ${
+            win
+              ? win.minimized
+                ? "h-1 w-1 bg-[var(--tb-accent)] opacity-50"
+                : "h-1 w-3 bg-[var(--tb-accent)]"
+              : "h-1 w-1 bg-transparent"
+          }`}
         />
       </button>
     );
@@ -155,50 +203,69 @@ export function Dock({
       className="pointer-events-none relative z-[95] flex shrink-0 flex-col items-center px-2 pb-2"
       onContextMenu={(e) => e.preventDefault()}
     >
-      <div className="tbos-dock pointer-events-auto flex max-w-full items-end gap-3 px-2 py-1.5">
+      <div
+        className={`tbos-dock tbos-dock--float pointer-events-auto flex max-w-full items-center gap-2 px-2 ${
+          dropZone ? "tbos-dock--dropzone" : ""
+        }`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDropZone(true);
+        }}
+        onDragLeave={() => setDropZone(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDropZone(false);
+          const dragged = e.dataTransfer.getData("text/tbos-app");
+          if (dragged && pinApp(dragged))
+            notifyOk("Dock'a sabitlendi", catalogApp(dragged)?.label ?? dragged);
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setMenu({ x: e.clientX, y: e.clientY - 8, appId: null });
+        }}
+      >
         {/* Sol alt köşe: her koşulda sabit Anasayfa düğmesi. */}
         <button
           type="button"
           onClick={goHome}
           title="Anasayfa · tüm pencereleri topla"
           aria-label="Anasayfa"
-          className="tbos-dock-item tbos-dock-home grid min-h-12 min-w-12 shrink-0 place-items-center rounded-xl px-2 py-1.5 text-[var(--tb-accent)]"
+          className="tbos-dock-item tbos-dock-home grid min-h-11 min-w-11 shrink-0 place-items-center rounded-xl px-2 py-1 text-[var(--tb-accent)]"
         >
           <House className="h-5 w-5" aria-hidden />
-          <span className="mt-0.5 hidden font-osmono text-[10px] sm:block">Ana</span>
-          <span className="mt-0.5 block h-1 w-1" aria-hidden />
+          <span className="mt-1 block h-1 w-1" aria-hidden />
         </button>
 
-        {/* Üç sabit, kişiselleştirilebilir yuva. */}
-        <div className="flex shrink-0 items-end gap-3">
+        {/* Sabitlenmiş uygulamalar: sürükleyerek sırala, sürükleyip sabitle. */}
+        <div className="flex shrink-0 items-center gap-2">
           {slots.map((id, i) => renderItem(id, { slot: i }))}
         </div>
 
-        <span className="mx-0.5 h-8 w-px shrink-0 bg-[var(--tb-border)]" />
+        <span className="mx-0.5 h-7 w-px shrink-0 bg-[var(--tb-border)]" />
 
-        <div className="flex min-w-0 items-end gap-3 overflow-x-auto">
+        <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
           {ids.map((id) => renderItem(id))}
         </div>
 
-        <span className="mx-0.5 h-8 w-px shrink-0 bg-[var(--tb-border)]" />
+        <span className="mx-0.5 h-7 w-px shrink-0 bg-[var(--tb-border)]" />
 
         <button
           type="button"
           onClick={onStore}
           title="Tedbirge Mağaza"
           aria-label="Tedbirge Mağaza"
-          className="tbos-dock-item grid min-h-12 min-w-12 shrink-0 place-items-center rounded-xl px-2 py-1.5 text-[var(--tb-accent)]"
+          className="tbos-dock-item grid min-h-11 min-w-11 shrink-0 place-items-center rounded-xl px-2 py-1 text-[var(--tb-accent)]"
         >
           <AppIcon id="store" className="h-5 w-5" />
-          <span className="mt-0.5 hidden font-osmono text-[10px] sm:block">Mağaza</span>
-          <span className="mt-0.5 block h-1 w-1" aria-hidden />
+          <span className="mt-1 block h-1 w-1" aria-hidden />
         </button>
       </div>
 
       {/* Alt tutamaç: yatay kaydırma ile uygulamalar arası geçiş. */}
       <div
         aria-hidden
-        className="pointer-events-auto mt-1 flex h-5 w-40 max-w-[60%] touch-pan-y items-center justify-center"
+        className="pointer-events-auto mt-1 flex h-4 w-40 max-w-[60%] touch-pan-y items-center justify-center"
         {...swipe}
       >
         <span className="block h-1 w-24 rounded-full bg-[var(--tb-border)]" />
@@ -209,13 +276,8 @@ export function Dock({
           <ContextMenu
             x={menu.x}
             y={menu.y}
-            items={appMenuItems({
-              id: menu.appId,
-              onOpen: onLaunch,
-              onOpenNew: onLaunchNew,
-              onProperties: (id) => setProperties(id),
-            })}
-            ariaLabel="Uygulama menüsü"
+            items={menu.appId ? itemMenu(menu.appId) : dockMenu()}
+            ariaLabel={menu.appId ? "Uygulama menüsü" : "Dock menüsü"}
             onClose={() => setMenu(null)}
           />
         </div>

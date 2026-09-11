@@ -5,7 +5,7 @@
  * uygulamasına ait sunum parçalarını taşır; kabuk kodu bunları bilmez.
  * Mantık aynen taşınmıştır, davranış değişmemiştir.
  */
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Check,
   CheckCheck,
@@ -170,8 +170,12 @@ function StatusIcon({ msg }: { msg: ChatMessage }) {
   );
 }
 
-/** Tek mesaj balonu — yanıt alıntısı, tepkiler ve hızlı eylemler. */
-export function MessageRow({
+/**
+ * Tek mesaj balonu — yanıt alıntısı, tepkiler ve hızlı eylemler.
+ * `memo` ile sarılıdır: mesh ağ durumu değiştiğinde akış yeniden
+ * çizilmez, yalnız verisi değişen balon güncellenir (titreme önlenir).
+ */
+function MessageRowBase({
   msg,
   authorName,
   showAuthor,
@@ -583,6 +587,8 @@ export function MessageRow({
     </div>
   );
 }
+
+export const MessageRow = memo(MessageRowBase);
 
 export function MenuItem({
   icon,

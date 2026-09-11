@@ -8,7 +8,7 @@ import { COMMUNITY_NODE_LIMIT } from "@/lib/paddle-catalog";
 import { DesktopRail } from "@/components/chat/DesktopRail";
 import { NewChatSheet } from "@/components/chat/NewChatSheet";
 import { SplashScreen } from "@/components/chat/SplashScreen";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@/components/shell/OsLink";
 import { toast } from "sonner";
 
@@ -228,6 +228,13 @@ function ChatAppInner() {
   const [groupMode, setGroupMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  // Sabit kimlikli geri çağrı: mesaj balonları (memo) boşuna yeniden çizilmez.
+  const startEdit = useCallback((msg: ChatMessage) => {
+    setEditing(msg);
+    setReplyTo(null);
+    setDraft(msg.text);
+    inputRef.current?.focus();
+  }, []);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [atBottom, setAtBottom] = useState(true);
@@ -1906,12 +1913,7 @@ function ChatAppInner() {
                         translateTo={privacy.autoTranslateTo || undefined}
                         onReply={setReplyTo}
                         onImage={setLightbox}
-                        onEdit={(msg) => {
-                          setEditing(msg);
-                          setReplyTo(null);
-                          setDraft(msg.text);
-                          inputRef.current?.focus();
-                        }}
+                        onEdit={startEdit}
                         onForward={setForwardMsg}
                       />
                     </div>

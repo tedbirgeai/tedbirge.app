@@ -100,6 +100,8 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  /** Hızlı Bakış (Quick Look): Boşluk tuşu ile büyük önizleme. */
+  const [quickLook, setQuickLook] = useState(false);
 
   const refresh = useCallback(() => {
     listFiles()
@@ -138,6 +140,28 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
   }, [files, folder, q]);
 
   const current = visible.find((f) => f.id === selected) ?? null;
+
+  // Boşluk: seçili dosyanın Hızlı Bakış önizlemesini açar/kapatır.
+  useEffect(() => {
+    if (!selected) {
+      setQuickLook(false);
+      return;
+    }
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing =
+        !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      if (typing) return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        setQuickLook((v) => !v);
+      } else if (e.key === "Escape") {
+        setQuickLook(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selected]);
 
   const add = useCallback(
     async (list: FileList | null) => {
@@ -192,7 +216,7 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
         setOver(false);
         void add(e.dataTransfer.files);
       }}
-      className={`flex min-h-0 flex-1 flex-col ${
+      className={`relative flex min-h-0 flex-1 flex-col ${
         over ? "outline-2 outline-dashed outline-[var(--tb-accent)]" : ""
       }`}
     >
@@ -400,6 +424,31 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
           ) : null}
         </div>
       </div>
+
+      {/* Hızlı Bakış: seçili dosyanın büyük önizlemesi (Boşluk / Esc). */}
+      {quickLook && current ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${current.name} hızlı bakış`}
+          onPointerDown={(e) => {
+            if (e.target === e.currentTarget) setQuickLook(false);
+          }}
+          className="absolute inset-0 z-[120] grid place-items-center bg-[color-mix(in_srgb,var(--tb-bg)_60%,transparent)] p-4 backdrop-blur-sm"
+        >
+          <div className="tbos-window max-h-full w-full max-w-2xl overflow-auto rounded-2xl p-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="min-w-0 truncate text-[14px] font-semibold text-[var(--tb-text)]">
+                {current.name}
+              </p>
+              <span className="shrink-0 font-osmono text-[11px] text-[var(--tb-muted)]">
+                {human(current.size)} · Boşluk ile kapat
+              </span>
+            </div>
+            <Preview entry={current} />
+          </div>
+        </div>
+      ) : null}
 
       {/* Nielsen #5: yıkıcı işlem iki aşamalı onay + geri alma ile korunur. */}
       <ConfirmDialog

@@ -1,22 +1,27 @@
 /**
- * EVRENSEL ARAMA (Spotlight)
+ * EVRENSEL KOMUTA MERKEZİ (Spotlight Command Palette)
  * ------------------------------------------------------------------
- * Ctrl/Cmd + Boşluk ile ekranın ortasında açılır. Kurulu uygulamaları,
- * cihazdaki yerel dosyaları ve sistem komutlarını tek listede bulur.
- * Tamamen klavyeyle yönetilir; internet gerektirmez.
+ * Ctrl/Cmd + K veya Alt + Boşluk ile ekranın ortasında açılır. Tek arama
+ * çubuğu üzerinden XDG kategorili uygulamalar, cihazdaki yerel dosyalar,
+ * rehberdeki kişiler, mesh düğümleri, terminal komutları ve sistem
+ * komutları taranır. Tamamen klavyeyle yönetilir; internet gerektirmez.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppWindow, FileText, Search, TerminalSquare } from "lucide-react";
+import { AppWindow, FileText, Radio, Search, TerminalSquare, User } from "lucide-react";
 
 import { notifyOk } from "@/lib/shell/notify";
 import { setFocusMode, isFocusMode } from "@/lib/shell/focus-mode";
 import { listFiles, objectUrl, type VfsEntry } from "@/lib/vfs/store";
-import { CATALOG, catalogApp, useDesktopState } from "@/shell/installed";
+import { CATALOG, catalogApp, useDesktopState, xdgOf } from "@/shell/installed";
+import { XDG_LABELS } from "@/shell/xdg";
+import { useContacts } from "@/lib/chat/contacts";
+import { getNodeSnapshot } from "@/lib/node-runtime";
+import { COMMANDS } from "@/lib/terminal/commands";
 
 type Item = {
   key: string;
-  kind: "app" | "file" | "command";
+  kind: "app" | "file" | "command" | "person" | "peer";
   label: string;
   hint: string;
   run: () => void;
@@ -32,8 +37,10 @@ export function Spotlight({
   onLaunch: (id: string) => void;
 }) {
   const { installed } = useDesktopState();
+  const { contacts } = useContacts();
   const [query, setQuery] = useState("");
   const [files, setFiles] = useState<VfsEntry[]>([]);
+  const [peers, setPeers] = useState<Array<{ id: string; direct: boolean }>>([]);
   const [cursor, setCursor] = useState(0);
   const input = useRef<HTMLInputElement>(null);
 
@@ -44,6 +51,9 @@ export function Spotlight({
     listFiles()
       .then(setFiles)
       .catch(() => setFiles([]));
+    // Mesh düğümleri açılış anında bir kez okunur: arama titremez.
+    const snap = getNodeSnapshot();
+    setPeers(snap.peers.map((p) => ({ id: p.nodeId, direct: p.direct })));
     const t = window.setTimeout(() => input.current?.focus(), 20);
     return () => window.clearTimeout(t);
   }, [open]);
@@ -65,7 +75,7 @@ export function Spotlight({
         key: `app:${a.id}`,
         kind: "app" as const,
         label: a.label,
-        hint: "Uygulama",
+        hint: XDG_LABELS[xdgOf(a.id)],
         run: () => onLaunch(a.id),
       }));
 
@@ -75,6 +85,39 @@ export function Spotlight({
       label: f.name,
       hint: "Yerel dosya",
       run: () => void openFile(f),
+    }));
+
+    const people: Item[] = contacts.map((c) => ({
+      key: `person:${c.peerId}`,
+      kind: "person" as const,
+      label: c.displayName,
+      hint: `Kişi · ${c.shortId}`,
+      run: () => onLaunch("messenger"),
+    }));
+
+    const peerItems: Item[] = peers.map((p) => ({
+      key: `peer:${p.id}`,
+      kind: "peer" as const,
+      label: p.id,
+      hint: p.direct ? "Mesh düğümü · doğrudan" : "Mesh düğümü · röle",
+      run: () => onLaunch("mesh"),
+    }));
+
+    const terminal: Item[] = COMMANDS.map((c) => ({
+      key: `term:${c.name}`,
+      kind: "command" as const,
+      label: c.name,
+      hint: `Terminal · ${c.summary}`,
+      run: () => {
+        onLaunch("terminal");
+        window.setTimeout(
+          () =>
+            window.dispatchEvent(
+              new CustomEvent("tedbirge:terminal-prefill", { detail: { command: c.name } }),
+            ),
+          120,
+        );
+      },
     }));
 
     const commands: Item[] = [
@@ -112,10 +155,15 @@ export function Spotlight({
       },
     ];
 
-    const all = [...apps, ...fileItems, ...commands];
+    const all = [...apps, ...fileItems, ...people, ...peerItems, ...commands, ...terminal];
     if (!q) return all.slice(0, 12);
-    return all.filter((i) => i.label.toLocaleLowerCase("tr").includes(q)).slice(0, 12);
-  }, [query, installed, files, onLaunch, openFile]);
+    return all
+      .filter(
+        (i) =>
+          i.label.toLocaleLowerCase("tr").includes(q) || i.hint.toLocaleLowerCase("tr").includes(q),
+      )
+      .slice(0, 24);
+  }, [query, installed, files, contacts, peers, onLaunch, openFile]);
 
   useEffect(() => {
     setCursor((c) => Math.min(c, Math.max(0, items.length - 1)));
@@ -160,7 +208,7 @@ export function Spotlight({
                 onClose();
               }
             }}
-            placeholder="Uygulama, dosya veya komut arayın…"
+            placeholder="Uygulama, dosya, kişi, düğüm veya komut arayın…"
             aria-label="Arama"
             className="min-w-0 flex-1 bg-transparent text-[15px] text-[var(--tb-text)] outline-none"
           />
@@ -168,7 +216,15 @@ export function Spotlight({
         <ul className="max-h-[46vh] overflow-y-auto py-1">
           {items.map((item, i) => {
             const Icon =
-              item.kind === "app" ? AppWindow : item.kind === "file" ? FileText : TerminalSquare;
+              item.kind === "app"
+                ? AppWindow
+                : item.kind === "file"
+                  ? FileText
+                  : item.kind === "person"
+                    ? User
+                    : item.kind === "peer"
+                      ? Radio
+                      : TerminalSquare;
             return (
               <li key={item.key}>
                 <button

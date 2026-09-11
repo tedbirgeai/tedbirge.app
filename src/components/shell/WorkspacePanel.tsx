@@ -115,7 +115,11 @@ export function WorkspacePanel() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const meta = e.ctrlKey || e.metaKey;
-      if (meta && (e.code === "Space" || e.key.toLowerCase() === "k")) {
+      // Cmd/Ctrl + K, Cmd/Ctrl + Boşluk veya Alt + Boşluk → komuta merkezi.
+      if (
+        (meta && (e.code === "Space" || e.key.toLowerCase() === "k")) ||
+        (e.altKey && e.code === "Space")
+      ) {
         e.preventDefault();
         setSpotlight((v) => !v);
         return;
