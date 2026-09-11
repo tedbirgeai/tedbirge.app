@@ -21,13 +21,7 @@ function formatBytes(n: number): string {
   return `${(n / 1024 ** i).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
-export function UnsupportedFileCard({
-  entry,
-  onClose,
-}: {
-  entry: VfsEntry;
-  onClose: () => void;
-}) {
+export function UnsupportedFileCard({ entry, onClose }: { entry: VfsEntry; onClose: () => void }) {
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 

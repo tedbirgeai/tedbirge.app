@@ -393,7 +393,9 @@ export function Desktop({
       {
         label: "P2P Ağında Paylaş",
         onSelect: () => {
-          window.dispatchEvent(new CustomEvent("tedbirge:share-file", { detail: { id: entry.id } }));
+          window.dispatchEvent(
+            new CustomEvent("tedbirge:share-file", { detail: { id: entry.id } }),
+          );
           onOpen("transfer");
         },
       },

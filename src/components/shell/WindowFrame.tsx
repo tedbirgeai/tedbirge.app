@@ -293,7 +293,6 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
         aria-hidden={hidden || undefined}
         inert={hidden || undefined}
       >
-
         <div
           className="flex shrink-0 cursor-grab items-center justify-between gap-3 px-3 py-2 active:cursor-grabbing"
           style={{ borderBottom: "1px solid var(--border)", touchAction: "none" }}
