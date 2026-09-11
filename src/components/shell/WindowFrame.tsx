@@ -253,11 +253,23 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
     setDragging(false);
   }, []);
 
-  if (win.minimized) return null;
+  // Küçültülen pencere DOM'dan sökülmez: müzik, aktarım, sohbet gibi işler
+  // arka planda çalışmaya devam etsin diye yalnızca görünmez kılınır.
+  const hidden = win.minimized;
 
   const style = win.maximized
     ? { left: 0, top: 0, width: "100%", height: "100%", zIndex: win.z }
     : { left: win.x, top: win.y, width: win.w, height: win.h, zIndex: win.z };
+
+  const hiddenStyle = hidden
+    ? {
+        ...style,
+        visibility: "hidden" as const,
+        pointerEvents: "none" as const,
+        opacity: 0,
+        zIndex: -1,
+      }
+    : style;
 
   return (
     <>
