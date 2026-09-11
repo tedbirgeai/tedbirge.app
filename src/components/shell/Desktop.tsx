@@ -40,10 +40,14 @@ import {
   type OfficeKind,
 } from "@/lib/office/documents";
 import {
+  DOCK_CLEARANCE,
   alignToGrid,
+  clampToGrid,
+  flowIntoGrid,
   isLocked,
   metrics,
   setPosition,
+  setPositions,
   setSort,
   setView,
   snap,
