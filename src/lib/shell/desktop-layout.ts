@@ -218,13 +218,7 @@ export function setPositions(next: Record<string, Point>) {
 }
 
 /** Serbest konumu en yakın ızgara hücresine oturtur. */
-export function snap(
-  pos: Point,
-  view: ViewMode,
-  top: number,
-  bottom?: number,
-  side = 16,
-): Point {
+export function snap(pos: Point, view: ViewMode, top: number, bottom?: number, side = 16): Point {
   const m = metrics(view);
   const cw = m.w + m.gap;
   const ch = m.h + m.gap;
@@ -232,7 +226,7 @@ export function snap(
   const x = Math.max(0, side + Math.round((pos.x - side) / cw) * cw);
   let y = Math.max(top, Math.round((pos.y - top) / ch) * ch + top);
   if (typeof bottom === "number" && bottom > top) {
-    const maxY = Math.max(top, Math.floor((bottom - DOCK_CLEARANCE - m.h) / ch) * ch + top);
+    const maxY = Math.max(top, Math.floor((bottom - DOCK_CLEARANCE - top - m.h) / ch) * ch + top);
     y = Math.min(y, maxY);
   }
   return { x, y };
