@@ -40,7 +40,7 @@ import { Onboarding } from "@/components/shell/Onboarding";
 import { objectUrl, readFile, requestPersistentStorage } from "@/lib/vfs/store";
 import { TransfersApp } from "@/components/shell/apps/TransfersApp";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
-import { describeNode } from "@/lib/node-runtime";
+import { getNodeSnapshot } from "@/lib/node-runtime";
 import { deviceScopeLabel } from "@/lib/identity/device";
 import { useShell } from "@/shell/shell-context";
 import { useIsCompact } from "@/hooks/use-mobile";
@@ -94,8 +94,8 @@ export function WorkspacePanel() {
   const [relay, setRelay] = useState(false);
   const [mesh, setMesh] = useState(false);
   const [packages, setPackages] = useState(false);
-  const { node } = useShell();
-  const status = describeNode(node);
+  // Ağ durumu bilinçli olarak okunmaz: eş sinyali masaüstünü yeniden
+  // çizmemelidir. Üst bardaki gösterge kendi deposuna abonedir.
   // Telefon ve tablet: pencere yöneticisi yerine tam ekran kart düzeni.
   const isMobile = useIsCompact();
   const windows = useWindows();
@@ -173,7 +173,7 @@ export function WorkspacePanel() {
         return;
       }
       if (appId === "messenger") {
-        const peer = node.peers.find((p) => p.direct);
+        const peer = getNodeSnapshot().peers.find((p) => p.direct);
         if (!peer) return notify("Bağlı cihaz yok", "Önce bir cihazla eşleşin.");
         const file = await readFile(meta.id);
         if (!file) return notifyError("Dosya okunamadı", meta.name);
@@ -185,7 +185,7 @@ export function WorkspacePanel() {
         }
       }
     },
-    [node.peers],
+    [],
   );
 
   const visible = windows.filter((w) => !w.minimized);
@@ -195,9 +195,6 @@ export function WorkspacePanel() {
     <div className="tbos flex min-h-0 flex-1 flex-col">
       <AppErrorBoundary title="Sistem çubuğu" appId="shell.systembar">
         <SystemBar
-          status={status.text}
-          peers={status.directPeers}
-          rttMs={node.rttMs}
           onSettings={() => launch("settings")}
           onProfile={() => launch("profile")}
           onPersonalize={() => launch("wallpaper")}
