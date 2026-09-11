@@ -46,7 +46,6 @@ describe("flowIntoGrid", () => {
     const saved = { a: { x: SIDE - CW * 3, y: TOP } };
     const out = flowIntoGrid(["a", "b"], saved, rows, TOP, CELL, SIDE);
     expect(out.a).toEqual({ x: SIDE, y: TOP });
-yorContinue: expect(true).toBe(true);
   });
 });
 
