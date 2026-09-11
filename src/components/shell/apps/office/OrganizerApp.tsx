@@ -26,7 +26,9 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 function parseAgenda(text: string): Agenda {
   try {
-    const data = JSON.parse(text) as Agenda | Array<{ text?: string; due?: string; done?: boolean }>;
+    const data = JSON.parse(text) as
+      | Agenda
+      | Array<{ text?: string; due?: string; done?: boolean }>;
     if (Array.isArray(data))
       return {
         v: 2,
@@ -108,7 +110,11 @@ export function OrganizerApp() {
               active={view === "ay"}
               icon={<CalendarDays className="h-4 w-4" />}
             />
-            <ToolButton onClick={() => setView("hafta")} label="Haftalık" active={view === "hafta"} />
+            <ToolButton
+              onClick={() => setView("hafta")}
+              label="Haftalık"
+              active={view === "hafta"}
+            />
             <ToolButton onClick={() => setView("gun")} label="Günlük" active={view === "gun"} />
             <ToolButton
               onClick={() => setView("pano")}
@@ -206,7 +212,10 @@ export function OrganizerApp() {
         {view === "ay" ? (
           <div className="grid grid-cols-7 gap-1.5">
             {["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map((d) => (
-              <span key={d} className="px-1 font-osmono text-[10px] text-[var(--tb-muted)] uppercase">
+              <span
+                key={d}
+                className="px-1 font-osmono text-[10px] text-[var(--tb-muted)] uppercase"
+              >
                 {d}
               </span>
             ))}

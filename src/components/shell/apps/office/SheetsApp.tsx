@@ -27,10 +27,12 @@ export function colName(index: number): string {
 }
 
 function colIndex(name: string): number {
-  return name
-    .toUpperCase()
-    .split("")
-    .reduce((acc, ch) => acc * 26 + (ch.charCodeAt(0) - 64), 0) - 1;
+  return (
+    name
+      .toUpperCase()
+      .split("")
+      .reduce((acc, ch) => acc * 26 + (ch.charCodeAt(0) - 64), 0) - 1
+  );
 }
 
 /** Eski CSV belgelerini çok sayfalı yapıya yükseltir. */
@@ -114,16 +116,19 @@ export function evaluate(
     const right = Number(evaluate(`=${cond[3]}`, cells, seen));
     const op = cond[2]!;
     const ok =
-      op === "=" ? left === right
-      : op === "<>" ? left !== right
-      : op === "<" ? left < right
-      : op === ">" ? left > right
-      : op === "<=" ? left <= right
-      : left >= right;
+      op === "="
+        ? left === right
+        : op === "<>"
+          ? left !== right
+          : op === "<"
+            ? left < right
+            : op === ">"
+              ? left > right
+              : op === "<="
+                ? left <= right
+                : left >= right;
     const branch = (ok ? cond[4] : cond[5])!.trim();
-    return /^["'].*["']$/.test(branch)
-      ? branch.slice(1, -1)
-      : evaluate(`=${branch}`, cells, seen);
+    return /^["'].*["']$/.test(branch) ? branch.slice(1, -1) : evaluate(`=${branch}`, cells, seen);
   }
 
   const expr = body.replace(/[A-Z]+\d+/gi, (ref) => String(valueOf(ref)));
@@ -149,10 +154,7 @@ export function SheetsApp() {
 
   useEffect(() => setDraft(cells[active] ?? ""), [active, cells]);
 
-  const writeBook = useCallback(
-    (next: Book) => editor.setText(JSON.stringify(next)),
-    [editor],
-  );
+  const writeBook = useCallback((next: Book) => editor.setText(JSON.stringify(next)), [editor]);
 
   const setCell = useCallback(
     (ref: string, value: string) => {

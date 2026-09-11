@@ -8,7 +8,16 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FileUp, Highlighter, MousePointer2, Pencil, Printer, Save, StickyNote, Trash2 } from "lucide-react";
+import {
+  FileUp,
+  Highlighter,
+  MousePointer2,
+  Pencil,
+  Printer,
+  Save,
+  StickyNote,
+  Trash2,
+} from "lucide-react";
 
 import { displayName } from "@/lib/office/documents";
 import { notifyError, notifyOk } from "@/lib/shell/notify";
@@ -223,18 +232,48 @@ export function PdfStudioApp() {
         className="flex flex-wrap items-center gap-1.5 border-b p-2"
         style={{ borderColor: "var(--border)" }}
       >
-        <Btn onClick={() => fileRef.current?.click()} icon={<FileUp className="h-4 w-4" />} label="PDF ekle" />
+        <Btn
+          onClick={() => fileRef.current?.click()}
+          icon={<FileUp className="h-4 w-4" />}
+          label="PDF ekle"
+        />
         <span className="mx-1 h-5 w-px" style={{ background: "var(--border)" }} />
-        <Btn onClick={() => setTool("sec")} icon={<MousePointer2 className="h-4 w-4" />} label="Seç" on={tool === "sec"} />
-        <Btn onClick={() => setTool("vurgu")} icon={<Highlighter className="h-4 w-4" />} label="Vurgula" on={tool === "vurgu"} />
-        <Btn onClick={() => setTool("not")} icon={<StickyNote className="h-4 w-4" />} label="Not" on={tool === "not"} />
-        <Btn onClick={() => setTool("cizim")} icon={<Pencil className="h-4 w-4" />} label="Çizim" on={tool === "cizim"} />
+        <Btn
+          onClick={() => setTool("sec")}
+          icon={<MousePointer2 className="h-4 w-4" />}
+          label="Seç"
+          on={tool === "sec"}
+        />
+        <Btn
+          onClick={() => setTool("vurgu")}
+          icon={<Highlighter className="h-4 w-4" />}
+          label="Vurgula"
+          on={tool === "vurgu"}
+        />
+        <Btn
+          onClick={() => setTool("not")}
+          icon={<StickyNote className="h-4 w-4" />}
+          label="Not"
+          on={tool === "not"}
+        />
+        <Btn
+          onClick={() => setTool("cizim")}
+          icon={<Pencil className="h-4 w-4" />}
+          label="Çizim"
+          on={tool === "cizim"}
+        />
         <span className="mx-1 h-5 w-px" style={{ background: "var(--border)" }} />
         <Btn onClick={() => setZoom((z) => Math.max(0.5, z - 0.2))} label="−" />
-        <span className="font-osmono text-[11px] text-[var(--tb-muted)]">%{Math.round(zoom * 100)}</span>
+        <span className="font-osmono text-[11px] text-[var(--tb-muted)]">
+          %{Math.round(zoom * 100)}
+        </span>
         <Btn onClick={() => setZoom((z) => Math.min(3, z + 0.2))} label="+" />
         <span className="mx-1 h-5 w-px" style={{ background: "var(--border)" }} />
-        <Btn onClick={() => void saveMarks()} icon={<Save className="h-4 w-4" />} label="VFS'ye kaydet" />
+        <Btn
+          onClick={() => void saveMarks()}
+          icon={<Save className="h-4 w-4" />}
+          label="VFS'ye kaydet"
+        />
         <Btn onClick={() => window.print()} icon={<Printer className="h-4 w-4" />} label="Yazdır" />
         <Btn
           onClick={() => {

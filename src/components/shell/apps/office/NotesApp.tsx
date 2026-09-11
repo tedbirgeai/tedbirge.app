@@ -92,11 +92,11 @@ export function NotesApp() {
       content: (
         <>
           <RibbonGroup label="Blok">
-            {(["h1", "h2", "text", "bullet", "todo", "quote", "code", "divider"] as BlockType[]).map(
-              (t) => (
-                <ToolButton key={t} onClick={() => addAfter(null, t)} label={TYPE_LABEL[t]} />
-              ),
-            )}
+            {(
+              ["h1", "h2", "text", "bullet", "todo", "quote", "code", "divider"] as BlockType[]
+            ).map((t) => (
+              <ToolButton key={t} onClick={() => addAfter(null, t)} label={TYPE_LABEL[t]} />
+            ))}
           </RibbonGroup>
           <RibbonGroup label="Not">
             <ToolButton
@@ -207,7 +207,9 @@ export function NotesApp() {
                     setBlocks(note.blocks.filter((x) => x.id !== b.id));
                   }
                 }}
-                placeholder={b.type === "text" ? "Yazın veya / ile blok ekleyin" : TYPE_LABEL[b.type]}
+                placeholder={
+                  b.type === "text" ? "Yazın veya / ile blok ekleyin" : TYPE_LABEL[b.type]
+                }
                 aria-label={TYPE_LABEL[b.type]}
                 className={`min-w-0 flex-1 resize-none bg-transparent outline-none ${
                   b.type === "h1"
