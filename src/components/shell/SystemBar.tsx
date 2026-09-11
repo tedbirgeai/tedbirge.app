@@ -28,18 +28,11 @@ import { useOnline } from "@/lib/pwa/offline-status";
 import { useBattery, useDiskActivity } from "@/lib/shell/device-status";
 
 export function SystemBar({
-  status,
-  peers,
-  rttMs = null,
   onSettings,
   onPersonalize,
   onSearch,
   onProfile,
 }: {
-  status: string;
-  peers: number;
-  /** Son ölçülen gidiş-dönüş gecikmesi (ms); yoksa gizlenir. */
-  rttMs?: number | null;
   /** Sistem Ayarları uygulamasını açar. */
   onSettings: () => void;
   /** Kontrol merkezinden görünüm ayarlarını açar. */
