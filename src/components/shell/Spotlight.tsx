@@ -155,10 +155,16 @@ export function Spotlight({
       },
     ];
 
-    const all = [...apps, ...fileItems, ...commands];
+    const all = [...apps, ...fileItems, ...people, ...peerItems, ...commands, ...terminal];
     if (!q) return all.slice(0, 12);
-    return all.filter((i) => i.label.toLocaleLowerCase("tr").includes(q)).slice(0, 12);
-  }, [query, installed, files, onLaunch, openFile]);
+    return all
+      .filter(
+        (i) =>
+          i.label.toLocaleLowerCase("tr").includes(q) ||
+          i.hint.toLocaleLowerCase("tr").includes(q),
+      )
+      .slice(0, 24);
+  }, [query, installed, files, contacts, peers, onLaunch, openFile]);
 
   useEffect(() => {
     setCursor((c) => Math.min(c, Math.max(0, items.length - 1)));
@@ -203,7 +209,7 @@ export function Spotlight({
                 onClose();
               }
             }}
-            placeholder="Uygulama, dosya veya komut arayın…"
+            placeholder="Uygulama, dosya, kişi, düğüm veya komut arayın…"
             aria-label="Arama"
             className="min-w-0 flex-1 bg-transparent text-[15px] text-[var(--tb-text)] outline-none"
           />
