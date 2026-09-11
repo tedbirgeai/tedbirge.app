@@ -216,7 +216,7 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
         setOver(false);
         void add(e.dataTransfer.files);
       }}
-      className={`flex min-h-0 flex-1 flex-col ${
+      className={`relative flex min-h-0 flex-1 flex-col ${
         over ? "outline-2 outline-dashed outline-[var(--tb-accent)]" : ""
       }`}
     >
