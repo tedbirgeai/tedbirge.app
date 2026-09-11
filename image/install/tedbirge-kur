@@ -932,7 +932,8 @@ if [ "$MOD" = "UEFI" ]; then
   [ -s "$KOK/boot/efi/EFI/BOOT/grub.cfg" ] \
     || hata "ACL-308: ESP uzerindeki koprü menu yazilamadi."
 else
-  dd if="$DEV" bs=512 count=1 2>/dev/null | grep -aq 'GRUB' \
+  MBR_ILK=$(dd if="$DEV" bs=512 count=1 2>/dev/null | tr -d '\0' || true)
+  grep -aq 'GRUB' <<<"$MBR_ILK" \
     || hata "ACL-309: BIOS acilis kodu diskin ilk sektorune yazilamamis."
 fi
 
