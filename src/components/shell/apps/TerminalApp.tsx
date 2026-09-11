@@ -44,6 +44,18 @@ export function TerminalApp() {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [lines]);
 
+  // Evrensel arama bir komut seçtiğinde giriş satırına hazır yazılır.
+  useEffect(() => {
+    const onPrefill = (e: Event) => {
+      const cmd = (e as CustomEvent<{ command?: string }>).detail?.command;
+      if (!cmd) return;
+      setInput(cmd);
+      inputRef.current?.focus();
+    };
+    window.addEventListener("tedbirge:terminal-prefill", onPrefill);
+    return () => window.removeEventListener("tedbirge:terminal-prefill", onPrefill);
+  }, []);
+
   const submit = useCallback(
     async (raw: string) => {
       setLines((l) => [...l, { text: `${cwd} $ ${raw}`, tone: "accent" }]);
