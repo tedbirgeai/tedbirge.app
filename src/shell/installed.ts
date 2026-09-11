@@ -10,6 +10,7 @@ import { useSyncExternalStore } from "react";
 
 import { deviceScopeLabel } from "@/lib/identity/device";
 import { WEB_APPS, type AppCategory } from "@/shell/web-apps";
+import { xdgCategory, type XdgCategory } from "@/shell/xdg";
 
 export type CatalogApp = {
   id: string;
@@ -188,6 +189,17 @@ export function catalogApp(id: string): CatalogApp | undefined {
   // "Bilgisayarım" etiketi cihaz türüne göre isimlendirilir.
   if (app.id === "computer") return { ...app, label: deviceScopeLabel() };
   return app;
+}
+
+/** Uygulamanın freedesktop.org (XDG) ana kategorisi. */
+export function xdgOf(id: string): XdgCategory {
+  const app = CATALOG.find((a) => a.id === id);
+  return xdgCategory(id, app?.category ?? "araclar");
+}
+
+/** Katalog kayıtları XDG kategorisine göre gruplanır. */
+export function catalogByXdg(category: XdgCategory): CatalogApp[] {
+  return CATALOG.filter((a) => xdgOf(a.id) === category);
 }
 
 export const CATEGORY_LABELS: Record<AppCategory, string> = {
