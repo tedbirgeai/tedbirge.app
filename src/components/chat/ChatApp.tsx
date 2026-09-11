@@ -1906,12 +1906,7 @@ function ChatAppInner() {
                         translateTo={privacy.autoTranslateTo || undefined}
                         onReply={setReplyTo}
                         onImage={setLightbox}
-                        onEdit={(msg) => {
-                          setEditing(msg);
-                          setReplyTo(null);
-                          setDraft(msg.text);
-                          inputRef.current?.focus();
-                        }}
+                        onEdit={startEdit}
                         onForward={setForwardMsg}
                       />
                     </div>
