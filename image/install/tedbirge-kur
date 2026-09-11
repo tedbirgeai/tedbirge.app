@@ -899,7 +899,15 @@ if chroot "$KOK" "${CHROOT_ENV[@]}" sh -c 'command -v lsinitramfs >/dev/null'; t
     printf '%s\n' "$ICERIK" | grep -q "/$m" \
       || hata "ACL-307: Acilis diskinde '$m' surucusu yok; disk acilista gorulemez."
   done
+  # USB klavye/fare: kurtarma menusunde giris olmadan sistem yonetilemez.
+  printf '%s\n' "$ICERIK" | grep -q "/usbhid" \
+    || echo "! Uyari: acilis diskinde usbhid yok; kurtarma ekraninda USB klavye gec taninabilir."
 fi
+
+# 4b) Kurulu kokte gercek bir init var mi? Yoksa cekirdek "Attempted to kill
+# init" ile durur ve ekran siyah kalir.
+[ -e "$KOK/sbin/init" ] || [ -e "$KOK/usr/sbin/init" ] || [ -e "$KOK/lib/systemd/systemd" ] \
+  || hata "ACL-313: Kurulu sistemde /sbin/init yok; sistem acilamaz."
 
 # 5) Acilis kodu diske gercekten yazildi mi?
 if [ "$MOD" = "UEFI" ]; then
@@ -923,7 +931,7 @@ fi
   echo "--- Tedbirge kurulum dogrulama $(date -u +%Y-%m-%dT%H:%M:%SZ) ---"
   echo "disk=$DEV kip=$MOD kok=$KOK_UUID takas=${SWAP_UUID:-yok}"
   echo "cekirdek=$MENU_CEKIRDEK initrd=$MENU_INITRD"
-  echo "gecen kapilar: ACL-301..312"
+  echo "gecen kapilar: ACL-301..313"
 } >> "$LOG" 2>/dev/null || true
 mkdir -p "$KOK/var/log/tedbirge" 2>/dev/null || true
 cp "$LOG" "$KOK/var/log/tedbirge/kurulum.log" 2>/dev/null || true
