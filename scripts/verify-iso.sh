@@ -16,12 +16,12 @@ need unsquashfs
 PVD=$(xorriso -indev "$ISO" -pvd_info 2>&1) || fail "ISO üst bilgisi okunamadı."
 printf '%s\n' "$PVD"
 # Sürüm başına etiket: TEDBIRGE_WS (workstation) veya TEDBIRGE_TOUCH (touch).
-printf '%s\n' "$PVD" | grep -qE "TEDBIRGE_(WS|TOUCH)" || fail "ISO birim etiketi TEDBIRGE_WS/TEDBIRGE_TOUCH değil."
+grep -qE "TEDBIRGE_(WS|TOUCH)" <<<"$PVD" || fail "ISO birim etiketi TEDBIRGE_WS/TEDBIRGE_TOUCH değil."
 
 ELTORITO=$(xorriso -indev "$ISO" -report_el_torito plain 2>&1) || fail "El Torito kaydı okunamadı."
 printf '%s\n' "$ELTORITO"
-printf '%s\n' "$ELTORITO" | grep -qiE 'BIOS' || fail "ISO içinde BIOS önyükleme kaydı yok."
-printf '%s\n' "$ELTORITO" | grep -qiE 'UEFI|EFI' || fail "ISO içinde UEFI önyükleme kaydı yok."
+grep -qiE 'BIOS' <<<"$ELTORITO" || fail "ISO içinde BIOS önyükleme kaydı yok."
+grep -qiE 'UEFI|EFI' <<<"$ELTORITO" || fail "ISO içinde UEFI önyükleme kaydı yok."
 
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT

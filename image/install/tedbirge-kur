@@ -900,12 +900,15 @@ grep -q 'Metin / kurtarma kipi' "$KOK/boot/grub/grub.cfg" \
 if chroot "$KOK" "${CHROOT_ENV[@]}" sh -c 'command -v lsinitramfs >/dev/null'; then
   ICERIK=$(chroot "$KOK" "${CHROOT_ENV[@]}" lsinitramfs "$MENU_INITRD" 2>/dev/null || true)
   for m in ahci nvme ext4; do
-    printf '%s\n' "$ICERIK" | grep -q "/$m" \
+    # NOT: boru (pipe) kullanilmaz; grep -q erken cikinca yazan taraf SIGPIPE
+    # alir ve 'set -o pipefail' yuzunden dogru surucu varken bile hata sanilir.
+    grep -q "/$m" <<<"$ICERIK" \
       || hata "ACL-307: Acilis diskinde '$m' surucusu yok; disk acilista gorulemez."
   done
   # USB klavye/fare: kurtarma menusunde giris olmadan sistem yonetilemez.
-  printf '%s\n' "$ICERIK" | grep -q "/usbhid" \
+  grep -q "/usbhid" <<<"$ICERIK" \
     || echo "! Uyari: acilis diskinde usbhid yok; kurtarma ekraninda USB klavye gec taninabilir."
+
 fi
 
 # 4b) Kurulu kokte gercek bir init var mi? Yoksa cekirdek "Attempted to kill
