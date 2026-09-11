@@ -605,7 +605,8 @@ kopyalama_hatasi() { # rc
     HATA_KODU="KUR-205"
     hata "Hedef bolum kurulum sirasinda kullanimdan dustu. Diski yeniden secip kurulumu tekrarlayin."
   fi
-  if dmesg 2>/dev/null | tail -n 200 | grep -qiE "I/O error|medium error|ata[0-9]+.*failed|blk_update_request"; then
+  DMESG_SON=$(dmesg 2>/dev/null | tail -n 200 || true)
+  if grep -qiE "I/O error|medium error|ata[0-9]+.*failed|blk_update_request" <<<"$DMESG_SON"; then
     HATA_KODU="KUR-202"
     hata "Disk yazma hatasi bildirdi. Disk saglikli olmayabilir; baska bir disk deneyin veya kabloyu degistirin."
   fi
@@ -897,18 +898,28 @@ grep -q 'Metin / kurtarma kipi' "$KOK/boot/grub/grub.cfg" \
   || hata "ACL-306: Metin/kurtarma secenegi menuye eklenmedi."
 
 # 4) Acilis diski gercek disk denetleyicilerini iceriyor mu? (SATA/NVMe/USB)
+# NOT: boru (pipe) kullanilmaz; grep -q erken cikinca yazan taraf SIGPIPE alir
+# ve 'set -o pipefail' yuzunden dogru surucu varken bile hata sanilir. Listeleme
+# bos donerse modul denetimi diskten yapilir; kurulum bosuna durdurulmaz.
 if chroot "$KOK" "${CHROOT_ENV[@]}" sh -c 'command -v lsinitramfs >/dev/null'; then
   ICERIK=$(chroot "$KOK" "${CHROOT_ENV[@]}" lsinitramfs "$MENU_INITRD" 2>/dev/null || true)
+  if [ -z "$ICERIK" ]; then
+    echo "! Uyari: acilis diski icerigi listelenemedi; modul denetimi diskten yapilacak."
+    ICERIK=$(ls -1 "$KOK"/lib/modules/*/kernel/drivers/ata/ \
+      "$KOK"/lib/modules/*/kernel/drivers/nvme/host/ \
+      "$KOK"/lib/modules/*/kernel/fs/ext4/ 2>/dev/null || true)
+  fi
   for m in ahci nvme ext4; do
-    # NOT: boru (pipe) kullanilmaz; grep -q erken cikinca yazan taraf SIGPIPE
-    # alir ve 'set -o pipefail' yuzunden dogru surucu varken bile hata sanilir.
-    grep -q "/$m" <<<"$ICERIK" \
-      || hata "ACL-307: Acilis diskinde '$m' surucusu yok; disk acilista gorulemez."
+    case "$ICERIK" in
+      *"$m"*) : ;;
+      *) hata "ACL-307: Acilis diskinde '$m' surucusu yok; disk acilista gorulemez." ;;
+    esac
   done
   # USB klavye/fare: kurtarma menusunde giris olmadan sistem yonetilemez.
-  grep -q "/usbhid" <<<"$ICERIK" \
-    || echo "! Uyari: acilis diskinde usbhid yok; kurtarma ekraninda USB klavye gec taninabilir."
-
+  case "$ICERIK" in
+    *usbhid*) : ;;
+    *) echo "! Uyari: acilis diskinde usbhid yok; kurtarma ekraninda USB klavye gec taninabilir." ;;
+  esac
 fi
 
 # 4b) Kurulu kokte gercek bir init var mi? Yoksa cekirdek "Attempted to kill
@@ -921,7 +932,8 @@ if [ "$MOD" = "UEFI" ]; then
   [ -s "$KOK/boot/efi/EFI/BOOT/grub.cfg" ] \
     || hata "ACL-308: ESP uzerindeki koprü menu yazilamadi."
 else
-  dd if="$DEV" bs=512 count=1 2>/dev/null | grep -aq 'GRUB' \
+  MBR_ILK=$(dd if="$DEV" bs=512 count=1 2>/dev/null | tr -d '\0' || true)
+  grep -aq 'GRUB' <<<"$MBR_ILK" \
     || hata "ACL-309: BIOS acilis kodu diskin ilk sektorune yazilamamis."
 fi
 
