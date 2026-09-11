@@ -36,20 +36,16 @@ import {
 export function ControlCenter({
   open,
   onClose,
-  status,
-  peers,
-  rttMs,
   onPersonalize,
   onNetwork,
 }: {
   open: boolean;
   onClose: () => void;
-  status: string;
-  peers: number;
-  rttMs: number | null;
   onPersonalize: () => void;
   onNetwork: () => void;
 }) {
+  // Ağ durumu kabuktan değil, kendi sönümlenmiş deposundan okunur.
+  const { text: status, peers, rttMs } = usePeerStatus();
   const { brightness, night } = useWallpaper();
   const volume = useVolume();
   const focus = useFocusMode();
