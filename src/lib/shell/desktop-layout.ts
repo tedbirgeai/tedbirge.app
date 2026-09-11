@@ -198,12 +198,12 @@ export function clampToGrid(
   pos: Point,
   view: ViewMode,
   top: number,
-  area: { width: number; height: number },
+  area: { w: number; h: number },
 ): Point | null {
   const m = metrics(view);
-  const maxY = Math.max(top, area.height - DOCK_CLEARANCE - m.h);
-  const maxX = Math.max(0, area.width - m.w);
-  if (pos.x > area.width || pos.y > area.height) return null;
+  const maxY = Math.max(top, area.h - DOCK_CLEARANCE - m.h);
+  const maxX = Math.max(0, area.w - m.w);
+  if (pos.x > area.w || pos.y > area.h) return null;
   return {
     x: Math.min(maxX, Math.max(0, pos.x)),
     y: Math.min(maxY, Math.max(top, pos.y)),
@@ -218,11 +218,18 @@ export function setPositions(next: Record<string, Point>) {
 }
 
 /** Serbest konumu en yakın ızgara hücresine oturtur. */
-export function snap(pos: Point, view: ViewMode, top: number, bottom?: number): Point {
+export function snap(
+  pos: Point,
+  view: ViewMode,
+  top: number,
+  bottom?: number,
+  side = 16,
+): Point {
   const m = metrics(view);
   const cw = m.w + m.gap;
   const ch = m.h + m.gap;
-  let x = Math.max(0, Math.round(pos.x / cw) * cw);
+  // Akış ızgarası `side` pikselden başlar; snap aynı hücrelere oturur.
+  const x = Math.max(0, side + Math.round((pos.x - side) / cw) * cw);
   let y = Math.max(top, Math.round((pos.y - top) / ch) * ch + top);
   if (typeof bottom === "number" && bottom > top) {
     const maxY = Math.max(top, Math.floor((bottom - DOCK_CLEARANCE - m.h) / ch) * ch + top);

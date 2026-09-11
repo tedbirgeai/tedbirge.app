@@ -7,12 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import {
-  DOCK_CLEARANCE,
-  clampToGrid,
-  flowIntoGrid,
-  snap,
-} from "@/lib/shell/desktop-layout";
+import { DOCK_CLEARANCE, clampToGrid, flowIntoGrid, snap } from "@/lib/shell/desktop-layout";
 
 const TOP = 160;
 const SIDE = 16;

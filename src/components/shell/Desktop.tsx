@@ -217,7 +217,7 @@ export function Desktop({
       if (c.x !== p.x || c.y !== p.y) dirty = true;
     }
     if (dirty) setPositions(next);
-  }, [size.w, size.h, layout.view]);
+  }, [size, layout.view]);
 
   /* ------------------------------------------------------- seçim kutusu */
   const startBand = (e: React.PointerEvent<HTMLDivElement>) => {
