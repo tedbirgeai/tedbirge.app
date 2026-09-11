@@ -238,6 +238,7 @@ export const Route = createFileRoute("/api/public/relay")({
             const CHUNK = 5;
             let stored = 0;
             let lastError: unknown = null;
+            const failed: string[] = [];
             for (let i = 0; i < rows.length; i += CHUNK) {
               const chunk = rows.slice(i, i + CHUNK);
               let ok = false;
@@ -250,6 +251,7 @@ export const Route = createFileRoute("/api/public/relay")({
                 else lastError = error;
               }
               if (ok) stored += chunk.length;
+              else failed.push(...chunk.map((r) => r.pkt_id));
             }
             if (stored === 0) return storageUnavailable("zarf kuyruğu", lastError);
 
