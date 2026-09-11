@@ -767,7 +767,9 @@ cat >> "$KOK/etc/grub.d/11_tedbirge_kurtarma" <<'EOF'
 CEKIRDEK=$(ls -1 /boot/vmlinuz-* 2>/dev/null | sort -V | tail -1)
 INITRD=$(ls -1 /boot/initrd.img-* 2>/dev/null | sort -V | tail -1)
 [ -n "$CEKIRDEK" ] && [ -n "$INITRD" ] || exit 0
-ORTAK="root=UUID=$KOK_UUID ro console=tty0 console=ttyS0,115200n8"
+# Kurtarma girdilerinde acilis ekrani KAPALI olur: sorun giderirken ham
+# cekirdek/servis metni gorunmelidir (nosplash + ayrintili gunluk).
+ORTAK="root=UUID=$KOK_UUID ro console=tty0 console=ttyS0,115200n8 nosplash systemd.show_status=true loglevel=7"
 
 giris() { # baslik, ek parametreler
   cat <<MENU
