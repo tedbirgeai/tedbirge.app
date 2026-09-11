@@ -121,6 +121,24 @@ export async function installTbApp(
   return kayit;
 }
 
+/**
+ * Kurulum akışı: imzasız paket için kullanıcıdan açık geliştirici modu
+ * onayı alınır. Onay verilmezse paket kurulmaz.
+ */
+export async function installTbAppWithConsent(
+  m: TbAppManifest,
+  onay: (durum: SignatureState) => boolean | Promise<boolean>,
+): Promise<TbAppManifest> {
+  const signature = await verifyTbAppSignature(m);
+  if (signature === "invalid")
+    throw new TbAppError("Paket imzası geçersiz — kurulum durduruldu.");
+  if (signature !== "verified") {
+    const kabul = await onay(signature);
+    if (!kabul) throw new TbAppError("Doğrulanmamış paket kurulmadı.");
+  }
+  return installTbApp(m, true);
+}
+
 export function uninstallTbApp(id: string) {
   persist(installedTbApps().filter((x) => x.id !== id));
   // Uygulamanın şifreli özel alanı da silinir.

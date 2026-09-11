@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { CapabilityDialog } from "@/components/shell/CapabilityDialog";
 import { onAppOffer, type AppOffer } from "@/apps/distribution";
 import { TRUST_LABELS, canInstall } from "@/apps/package";
-import { installTbApp, instantiateTbApp } from "@/apps/tbapp";
+import { installTbAppWithConsent, instantiateTbApp } from "@/apps/tbapp";
 import { grantCapabilities } from "@/shell/permissions";
 import type { Capability } from "@/kernel/capabilities";
 
@@ -105,7 +105,15 @@ export function AppOfferHost() {
           const pkg = asking?.pkg;
           setAsking(null);
           if (!pkg) return;
-          installTbApp(pkg);
+          void installTbAppWithConsent(pkg, (durum) =>
+            window.confirm(
+              durum === "unsigned"
+                ? `${pkg.name} imzasız bir paket. Yine de kurulsun mu?`
+                : `${pkg.name} paketinin imzası bu cihazda doğrulanamadı. Yine de kurulsun mu?`,
+            ),
+          ).catch((e: unknown) =>
+            toast.error(e instanceof Error ? e.message : "Paket kurulamadı."),
+          );
           grantCapabilities(pkg.id, granted);
           void instantiateTbApp(pkg, granted)
             .then((inst) => {
