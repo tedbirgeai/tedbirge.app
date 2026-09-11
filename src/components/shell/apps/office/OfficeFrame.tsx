@@ -59,6 +59,7 @@ export function useOfficeEditor(kind: OfficeKind) {
 
   const open = useCallback(
     async (docId: string, docTitle: string) => {
+      blankOnPurpose.current = false;
       const body = await openDoc(docId);
       setId(docId);
       setTitle(docTitle);
