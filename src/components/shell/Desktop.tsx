@@ -472,6 +472,9 @@ export function Desktop({
         {properties ? (
           <AppPropertiesDialog id={properties} onClose={() => setProperties(null)} />
         ) : null}
+        {unsupported ? (
+          <UnsupportedFileCard entry={unsupported} onClose={() => setUnsupported(null)} />
+        ) : null}
       </div>
     );
   }
