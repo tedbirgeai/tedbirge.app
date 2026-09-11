@@ -272,6 +272,11 @@ export function useDesktopState(): State {
   );
 }
 
+/** Uygulama masaüstünde kurulu mu (React dışı okuma). */
+export function isInstalled(id: string): boolean {
+  return state.installed.includes(id);
+}
+
 export function installApp(id: string) {
   if (!catalogApp(id) || state.installed.includes(id)) return;
   state.installed = [...state.installed, id];

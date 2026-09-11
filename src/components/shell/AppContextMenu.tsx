@@ -89,7 +89,7 @@ export function AppPropertiesDialog({ id, onClose }: { id: string; onClose: () =
     ["Ad", app?.label ?? id],
     ["Kimlik", id],
     ["Tür", web ? "Harici web uygulaması" : (manifest?.kind ?? "yerleşik")],
-    ["Kategori", app?.category ?? "—"],
+    ["Kategori", app ? `${XDG_LABELS[xdgOf(id)]} (${xdgOf(id)})` : "—"],
     ["Açıklama", app?.hint ?? "—"],
     ...(web ? ([["Hedef", web.url]] as Array<[string, string]>) : []),
     ...(web ? ([["Geçit", gatewayUrl(web.url)]] as Array<[string, string]>) : []),
