@@ -141,6 +141,28 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
 
   const current = visible.find((f) => f.id === selected) ?? null;
 
+  // Boşluk: seçili dosyanın Hızlı Bakış önizlemesini açar/kapatır.
+  useEffect(() => {
+    if (!selected) {
+      setQuickLook(false);
+      return;
+    }
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing =
+        !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      if (typing) return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        setQuickLook((v) => !v);
+      } else if (e.key === "Escape") {
+        setQuickLook(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selected]);
+
   const add = useCallback(
     async (list: FileList | null) => {
       if (!list?.length) return;
