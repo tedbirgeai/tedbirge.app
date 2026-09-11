@@ -53,7 +53,7 @@ export function Spotlight({
       .catch(() => setFiles([]));
     // Mesh düğümleri açılış anında bir kez okunur: arama titremez.
     const snap = getNodeSnapshot();
-    setPeers(snap.peers.map((p) => ({ id: p.id, direct: p.direct })));
+    setPeers(snap.peers.map((p) => ({ id: p.nodeId, direct: p.direct })));
     const t = window.setTimeout(() => input.current?.focus(), 20);
     return () => window.clearTimeout(t);
   }, [open]);
