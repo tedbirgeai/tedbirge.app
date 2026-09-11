@@ -17,4 +17,6 @@
 - [x] Kopyalama hatalarını gerçek nedene göre sınıflandır (bozuk imaj / yazma hatası / bağlantı kaybı / yer yok)
 - [x] Kopyalama sırasında sürekli ilerleme, dosya sayısı, geçen süre ve faaliyet göstergesi
 - [x] Kurulum ekranlarında konsol fare desteği (gpm)
+- [x] Kurulum sonunda gerçek açılabilirlik denetimleri (ACL-301..312) ve kurtarma menüsü
+- [x] ISO iş akışında yarım kalan doğrulamanın iptalini kapat
 - [ ] Gerçek donanımda yeni ISO ile kurulum kabulü (fiziksel disk gerektirir)

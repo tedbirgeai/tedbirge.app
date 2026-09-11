@@ -27,7 +27,9 @@ permissions:
 
 concurrency:
   group: tedbirge-iso-${{ github.ref }}
-  cancel-in-progress: true
+  # Kalici kurulum + ikinci acilis testi uzun surer; yarim kalan dogrulama
+  # yayina yanlis guven verir. Bu yuzden calisan is asla iptal edilmez.
+  cancel-in-progress: false
 
 jobs:
   build:
