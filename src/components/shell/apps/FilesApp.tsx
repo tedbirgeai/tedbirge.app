@@ -100,6 +100,8 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  /** Hızlı Bakış (Quick Look): Boşluk tuşu ile büyük önizleme. */
+  const [quickLook, setQuickLook] = useState(false);
 
   const refresh = useCallback(() => {
     listFiles()
