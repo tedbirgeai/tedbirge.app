@@ -45,13 +45,13 @@ describe("flowIntoGrid", () => {
 });
 
 describe("clampToGrid", () => {
-  const area = { width: 1280, height: 800 };
+  const area = { w: 1280, h: 800 };
 
   it("dock alanına giren konumu yukarı iter", () => {
     const deep = { x: SIDE, y: 800 - 40 - CELL.h }; // dock payının altında
     const c = clampToGrid(deep, "orta", TOP, area);
     expect(c).not.toBeNull();
-    expect(c!.y + CELL.h).toBeLessThanOrEqual(area.height - DOCK_CLEARANCE);
+    expect(c!.y + CELL.h).toBeLessThanOrEqual(area.h - DOCK_CLEARANCE);
   });
 
   it("ekranın tamamen dışındaki konumu düşürür", () => {
@@ -71,7 +71,7 @@ describe("snap", () => {
     expect(s.y + CELL.h).toBeLessThanOrEqual(800 - DOCK_CLEARANCE);
   });
 
-  it("alt sınır verilmeyince eski davranış korunur", () => {
+  it("akış ızgarasına oturan konum değişmez", () => {
     const s = snap({ x: SIDE + CW * 2, y: TOP + CH * 3 }, "orta", TOP);
     expect(s).toEqual({ x: SIDE + CW * 2, y: TOP + CH * 3 });
   });
