@@ -102,8 +102,16 @@ export async function pushRelayEnvelopes(
   items: { pktId: string; to: string; from: string; envelope: string; priority: number }[],
 ): Promise<boolean> {
   if (!items.length) return false;
-  const res = await call<{ ok: boolean }>({ action: "push", items });
-  return Boolean(res?.ok);
+  const res = await call<{ ok: boolean; stored?: number; total?: number; failed?: string[] }>({
+    action: "push",
+    items,
+  });
+  if (!res?.ok) return false;
+  // Zarflarin bir kismi yazilamadiysa teslim basarili sayilmaz: cagiran
+  // katman yeniden denesin, aksi halde mesaj sessizce kaybolur.
+  if (res.failed?.length) return false;
+  if (typeof res.stored === "number" && res.stored < items.length) return false;
+  return true;
 }
 
 export async function pullRelayEnvelopes(
