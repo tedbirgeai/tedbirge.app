@@ -116,6 +116,9 @@ export function toggleLock(id: string): boolean {
   return next.includes(id);
 }
 
+/** Yüzen dock için alt güvenli pay: dock 46 px + 8 px alt boşluk + pay. */
+export const DOCK_CLEARANCE = 72;
+
 /** Görünüm kipine göre simge kutusu ölçüleri. */
 export function metrics(view: ViewMode) {
   return view === "buyuk"
@@ -123,12 +126,108 @@ export function metrics(view: ViewMode) {
     : { w: 92, h: 104, glyph: 48, gap: 8 };
 }
 
+/**
+ * Simgeleri ızgaraya dolan (auto-fill) düzenle yerleştirir.
+ * ------------------------------------------------------------------
+ * Kayıtlı (sürüklenmiş) konumların kapladığı hücreler korunur; kayıtsız
+ * simgeler sütun sütun (yukarıdan aşağı) ilk BOŞ hücreye akar. Böylece
+ * sürüklenen bir simgenin üzerine hiçbir simge binmez.
+ *
+ * @param keys   Yerleştirilecek simge anahtarları (sıralı).
+ * @param saved  localStorage'dan gelen kayıtlı konumlar.
+ * @param rows   Güvenli alana sığan satır sayısı.
+ * @param top    Izgaranın başladığı üst pay (piksel).
+ * @param cell   Simge kutusu ölçüleri (metrics çıktısı).
+ * @param side   Yatay güvenli pay.
+ */
+export function flowIntoGrid(
+  keys: string[],
+  saved: Record<string, Point>,
+  rows: number,
+  top: number,
+  cell: { w: number; h: number; gap: number },
+  side = 16,
+): Record<string, Point> {
+  const cw = cell.w + cell.gap;
+  const ch = cell.h + cell.gap;
+  const occupied = new Set<string>();
+  const result: Record<string, Point> = {};
+  const wanted = new Set(keys);
+
+  for (const [key, pos] of Object.entries(saved)) {
+    if (!wanted.has(key)) continue;
+    const col = Math.round((pos.x - side) / cw);
+    const row = Math.round((pos.y - top) / ch);
+    if (col < 0 || row < 0) continue; // ızgara dışı: yeniden akışa düşer
+    occupied.add(`${col}:${row}`);
+    result[key] = { x: side + col * cw, y: top + row * ch };
+  }
+
+  let cursor = 0;
+  const cap = rows * 512; // taşma sigortası: sonsuz döngüyü engeller
+  for (const key of keys) {
+    if (result[key]) continue;
+    let placed = false;
+    while (cursor < cap) {
+      const col = Math.floor(cursor / rows);
+      const row = cursor % rows;
+      cursor += 1;
+      if (occupied.has(`${col}:${row}`)) continue;
+      occupied.add(`${col}:${row}`);
+      result[key] = { x: side + col * cw, y: top + row * ch };
+      placed = true;
+      break;
+    }
+    if (!placed) {
+      // Izgara tükendi: kuyruk sağ tarafa dizilmeye devam eder.
+      const col = Math.floor(cursor / rows);
+      const row = cursor % rows;
+      cursor += 1;
+      result[key] = { x: side + col * cw, y: top + row * ch };
+    }
+  }
+  return result;
+}
+
+/**
+ * Kayıtlı konumu güvenli alan içine sıkıştırır.
+ * Alt sınır dock payını içerir. Konum güvenli alanın tamamen dışındaysa
+ * `null` döner; simge yeniden akışa düşer.
+ */
+export function clampToGrid(
+  pos: Point,
+  view: ViewMode,
+  top: number,
+  area: { w: number; h: number },
+): Point | null {
+  const m = metrics(view);
+  const maxY = Math.max(top, area.h - DOCK_CLEARANCE - m.h);
+  const maxX = Math.max(0, area.w - m.w);
+  if (pos.x > area.w || pos.y > area.h) return null;
+  return {
+    x: Math.min(maxX, Math.max(0, pos.x)),
+    y: Math.min(maxY, Math.max(top, pos.y)),
+  };
+}
+
+/** Birden çok kayıtlı konumu tek seferde yazar (yeniden hizalama için). */
+export function setPositions(next: Record<string, Point>) {
+  state.positions = { ...next };
+  persist();
+  emit();
+}
+
 /** Serbest konumu en yakın ızgara hücresine oturtur. */
-export function snap(pos: Point, view: ViewMode, top: number): Point {
+export function snap(pos: Point, view: ViewMode, top: number, bottom?: number, side = 16): Point {
   const m = metrics(view);
   const cw = m.w + m.gap;
   const ch = m.h + m.gap;
-  const x = Math.max(0, Math.round(pos.x / cw) * cw);
-  const y = Math.max(top, Math.round((pos.y - top) / ch) * ch + top);
+  // Akış ızgarası `side` pikselden başlar; snap aynı hücrelere oturur.
+  const x = Math.max(0, side + Math.round((pos.x - side) / cw) * cw);
+  let y = Math.max(top, Math.round((pos.y - top) / ch) * ch + top);
+  if (typeof bottom === "number" && bottom > top) {
+    const maxY = Math.max(top, Math.floor((bottom - DOCK_CLEARANCE - top - m.h) / ch) * ch + top);
+    y = Math.min(y, maxY);
+  }
   return { x, y };
 }

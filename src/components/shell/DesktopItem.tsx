@@ -127,7 +127,7 @@ export function DesktopItem({
         {glyph}
         {badge ? <span className="absolute -right-1 -bottom-1">{badge}</span> : null}
       </span>
-      <span className="w-full truncate text-center text-xs font-medium text-[var(--tb-text)] drop-shadow-md">
+      <span className="line-clamp-2 min-h-8 w-full text-center text-xs font-medium leading-4 text-[var(--tb-text)] drop-shadow-md">
         {label}
       </span>
     </button>

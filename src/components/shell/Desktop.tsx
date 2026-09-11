@@ -40,10 +40,14 @@ import {
   type OfficeKind,
 } from "@/lib/office/documents";
 import {
+  DOCK_CLEARANCE,
   alignToGrid,
+  clampToGrid,
+  flowIntoGrid,
   isLocked,
   metrics,
   setPosition,
+  setPositions,
   setSort,
   setView,
   snap,
@@ -172,18 +176,48 @@ export function Desktop({
   const m = metrics(layout.view);
   const cw = m.w + m.gap;
   const ch = m.h + m.gap;
-  const rows = Math.max(1, Math.floor((size.h - TOP_PAD - SIDE_PAD) / ch));
+  /* Alt güvenli alan: yüzen dock'un üzerine son sıra inmez. */
+  const rows = Math.max(1, Math.floor((size.h - TOP_PAD - DOCK_CLEARANCE) / ch));
+
+  /* Dolan yerleşim: sürüklenen simgelerin hücreleri korunur,
+     diğerleri ilk boş hücreye akar — üzerine binme olamaz. */
+  const positions = useMemo(
+    () =>
+      flowIntoGrid(
+        items.map((it) => it.key),
+        layout.positions,
+        rows,
+        TOP_PAD,
+        { w: m.w, h: m.h, gap: m.gap },
+        SIDE_PAD,
+      ),
+    [items, layout.positions, rows, m.w, m.h, m.gap],
+  );
 
   const positionOf = useCallback(
-    (key: string, index: number) => {
-      const saved = layout.positions[key];
-      if (saved) return saved;
-      const col = Math.floor(index / rows);
-      const row = index % rows;
-      return { x: SIDE_PAD + col * cw, y: TOP_PAD + row * ch };
-    },
-    [layout.positions, rows, cw, ch],
+    (key: string) => positions[key] ?? { x: SIDE_PAD, y: TOP_PAD },
+    [positions],
   );
+
+  /* Yüzey boyutu veya görünüm değişince sınırlar dışına çıkan kayıtlı
+     konumlar güvenli alana sıkıştırılır; tamamen dışarıdakiler akışa düşer. */
+  const layoutRef = useRef(layout);
+  layoutRef.current = layout;
+  useEffect(() => {
+    const l = layoutRef.current;
+    const next: Record<string, { x: number; y: number }> = {};
+    let dirty = false;
+    for (const [key, p] of Object.entries(l.positions)) {
+      const c = clampToGrid(p, l.view, TOP_PAD, size);
+      if (!c) {
+        dirty = true;
+        continue;
+      }
+      next[key] = c;
+      if (c.x !== p.x || c.y !== p.y) dirty = true;
+    }
+    if (dirty) setPositions(next);
+  }, [size, layout.view]);
 
   /* ------------------------------------------------------- seçim kutusu */
   const startBand = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -206,8 +240,8 @@ export function Desktop({
     const top = Math.min(box.y1, box.y2);
     const bottom = Math.max(box.y1, box.y2);
     const hit = items
-      .filter((it, i) => {
-        const p = positionOf(it.key, i);
+      .filter((it) => {
+        const p = positionOf(it.key);
         return p.x < right && p.x + m.w > left && p.y < bottom && p.y + m.h > top;
       })
       .map((it) => it.key);
@@ -499,8 +533,8 @@ export function Desktop({
         setMenu({ x: e.clientX - r.left, y: e.clientY - r.top });
       }}
     >
-      {items.map((it, index) => {
-        const pos = positionOf(it.key, index);
+      {items.map((it) => {
+        const pos = positionOf(it.key);
         return (
           <DesktopItem
             key={it.key}
@@ -538,7 +572,7 @@ export function Desktop({
       })}
 
       {/* Sürükleme bitince simge en yakın ızgara hücresine oturur. */}
-      <GridSnapper items={items} view={layout.view} />
+      <GridSnapper items={items} view={layout.view} bottom={size.h} />
 
       {band ? (
         <div
@@ -580,19 +614,27 @@ export function Desktop({
 }
 
 /** İşaretçi bırakıldığında serbest konumları ızgaraya oturtur. */
-function GridSnapper({ items, view }: { items: Item[]; view: "buyuk" | "orta" }) {
+function GridSnapper({
+  items,
+  view,
+  bottom,
+}: {
+  items: Item[];
+  view: "buyuk" | "orta";
+  bottom: number;
+}) {
   const layout = useDesktopLayout();
   useEffect(() => {
     const onUp = () => {
       for (const it of items) {
         const p = layout.positions[it.key];
         if (!p) continue;
-        const s = snap(p, view, TOP_PAD);
+        const s = snap(p, view, TOP_PAD, bottom);
         if (s.x !== p.x || s.y !== p.y) setPosition(it.key, s);
       }
     };
     window.addEventListener("pointerup", onUp);
     return () => window.removeEventListener("pointerup", onUp);
-  }, [items, layout.positions, view]);
+  }, [items, layout.positions, view, bottom]);
   return null;
 }
