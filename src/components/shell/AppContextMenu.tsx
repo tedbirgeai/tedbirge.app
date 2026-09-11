@@ -10,7 +10,9 @@ import { X } from "lucide-react";
 import { AppIcon } from "@/components/shell/app-icons";
 import type { MenuItem } from "@/components/shell/ContextMenu";
 import { getApp } from "@/apps/registry";
-import { catalogApp, uninstallApp } from "@/shell/installed";
+import { catalogApp, installApp, uninstallApp, xdgOf } from "@/shell/installed";
+import { isPinned, pinApp, unpinApp } from "@/shell/dock-slots";
+import { XDG_LABELS } from "@/shell/xdg";
 import { webApp } from "@/shell/web-apps";
 import { notifyOk } from "@/lib/shell/notify";
 import { gatewayUrl } from "@/lib/shell/embed-strategy";
@@ -20,14 +22,19 @@ export function appMenuItems({
   onOpen,
   onOpenNew,
   onProperties,
+  extra = [],
 }: {
   id: string;
   onOpen: (id: string) => void;
   onOpenNew: (id: string) => void;
   onProperties: (id: string) => void;
+  /** Çağıran yüzeye özgü ek maddeler (ör. Dock pencere eylemleri). */
+  extra?: MenuItem[];
 }): MenuItem[] {
   const app = catalogApp(id);
   const web = webApp(id);
+  const pinned = isPinned(id);
+  const installed = isInstalled(id);
   return [
     { label: "Uygulamayı Aç", onSelect: () => onOpen(id) },
     { label: "Yeni Pencerede Aç", onSelect: () => onOpenNew(id) },
@@ -36,6 +43,28 @@ export function appMenuItems({
       disabled: !web,
       onSelect: () => {
         if (web) window.open(web.url, "_blank", "noopener,noreferrer");
+      },
+    },
+    ...(extra.length ? ([{ kind: "sep" }, ...extra] as MenuItem[]) : []),
+    { kind: "sep" },
+    {
+      label: pinned ? "Dock'tan Kaldır" : "Dock'a Sabitle",
+      onSelect: () => {
+        const ok = pinned ? unpinApp(id) : pinApp(id);
+        if (ok) notifyOk(pinned ? "Dock'tan kaldırıldı" : "Dock'a sabitlendi", app?.label ?? id);
+        else
+          notifyOk(
+            "İşlem yapılamadı",
+            pinned ? "Dock'ta en az bir uygulama kalmalı" : "Dock sabitleme sınırına ulaşıldı",
+          );
+      },
+    },
+    {
+      label: "Masaüstüne Kısayol Ekle",
+      disabled: installed,
+      onSelect: () => {
+        installApp(id);
+        notifyOk("Kısayol eklendi", `${app?.label ?? id} masaüstünde`);
       },
     },
     { kind: "sep" },
