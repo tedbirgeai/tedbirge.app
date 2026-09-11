@@ -10,7 +10,7 @@ import { X } from "lucide-react";
 import { AppIcon } from "@/components/shell/app-icons";
 import type { MenuItem } from "@/components/shell/ContextMenu";
 import { getApp } from "@/apps/registry";
-import { catalogApp, installApp, uninstallApp, xdgOf } from "@/shell/installed";
+import { catalogApp, installApp, isInstalled, uninstallApp, xdgOf } from "@/shell/installed";
 import { isPinned, pinApp, unpinApp } from "@/shell/dock-slots";
 import { XDG_LABELS } from "@/shell/xdg";
 import { webApp } from "@/shell/web-apps";
