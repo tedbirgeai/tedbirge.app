@@ -63,6 +63,19 @@ zorunlu 'Kurulumu yeniden baslat' "$SONRASI" "Yeniden deneme menüsü yok"
 zorunlu 'canli masaustune don' "$SONRASI" "Canlı masaüstü menüsü yok"
 zorunlu 'TEDBIRGE_DESKTOP_READY' "$KIOSK" "Masaüstü hazır sinyali yok"
 zorunlu 'tedbirge-installer-complete' "$KUR" "Başarılı yeniden başlatma işareti yok"
+
+# Açılabilirlik sözleşmesi: "%100 kuruldu" ancak bu kapılar geçilirse söylenir.
+for kod in ACL-301 ACL-302 ACL-303 ACL-304 ACL-305 ACL-306 ACL-307 ACL-309; do
+  zorunlu "$kod" "$KUR" "Açılabilirlik denetimi $kod eksik"
+done
+zorunlu 'grub-script-check' "$KUR" "Açılış menüsü sözdizimi doğrulanmıyor"
+zorunlu 'lsinitramfs' "$KUR" "Açılış diski sürücü içeriği denetlenmiyor"
+zorunlu '11_tedbirge_kurtarma' "$KUR" "Kurtarma açılış seçenekleri üretilmiyor"
+zorunlu 'Guvenli goruntu \(nomodeset\)' "$KUR" "Güvenli görüntü seçeneği yok"
+zorunlu 'Metin / kurtarma kipi' "$KUR" "Metin/kurtarma seçeneği yok"
+if grep -qE '^\s*cancel-in-progress: true' .github/workflows/build-iso.yml; then
+  echo "HATA: ISO iş akışı yarım kalan doğrulamayı iptal ediyor" >&2; exit 1
+fi
 if grep -qE 'exec /bin/login|(^|[[:space:]])startx([[:space:]]|$)' "$SONRASI"; then
   echo "HATA: kullanıcı hâlâ komut satırı/Xsession yoluna bırakılıyor" >&2
   exit 1
