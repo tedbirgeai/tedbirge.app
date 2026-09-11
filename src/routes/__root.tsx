@@ -128,13 +128,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "icon", href: "/icon-192.png", type: "image/png", sizes: "192x192" },
-
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap",
-      },
+      // Yazı tipleri src/styles.css içinden yerel paketle yüklenir (çevrimdışı).
     ],
   }),
   shellComponent: RootShell,
