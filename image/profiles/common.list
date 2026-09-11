@@ -25,6 +25,11 @@ firmware-sof-signed
 firmware-atheros
 firmware-amd-graphics
 
+# --- kurumsal acilis/kapanis ekrani (Plymouth)
+plymouth
+plymouth-themes
+plymouth-label
+
 # --- grafik yığını
 xserver-xorg
 xserver-xorg-input-libinput
