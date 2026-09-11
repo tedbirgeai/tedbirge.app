@@ -113,7 +113,7 @@ export function useOfficeEditor(kind: OfficeKind) {
 
   /* İlk açılışta son belge gelir; hiç belge yoksa boş belge açılır. */
   useEffect(() => {
-    if (id !== null || dirty) return;
+    if (id !== null || dirty || blankOnPurpose.current) return;
     const first = docs[0];
     if (first) void open(first.id, first.title);
   }, [docs, id, dirty, open]);
