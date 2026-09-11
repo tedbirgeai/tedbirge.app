@@ -75,7 +75,7 @@ export function Spotlight({
         key: `app:${a.id}`,
         kind: "app" as const,
         label: a.label,
-        hint: "Uygulama",
+        hint: XDG_LABELS[xdgOf(a.id)],
         run: () => onLaunch(a.id),
       }));
 
@@ -85,6 +85,39 @@ export function Spotlight({
       label: f.name,
       hint: "Yerel dosya",
       run: () => void openFile(f),
+    }));
+
+    const people: Item[] = contacts.map((c) => ({
+      key: `person:${c.peerId}`,
+      kind: "person" as const,
+      label: c.displayName,
+      hint: `Kişi · ${c.shortId}`,
+      run: () => onLaunch("messenger"),
+    }));
+
+    const peerItems: Item[] = peers.map((p) => ({
+      key: `peer:${p.id}`,
+      kind: "peer" as const,
+      label: p.id,
+      hint: p.direct ? "Mesh düğümü · doğrudan" : "Mesh düğümü · röle",
+      run: () => onLaunch("mesh"),
+    }));
+
+    const terminal: Item[] = COMMANDS.map((c) => ({
+      key: `term:${c.name}`,
+      kind: "command" as const,
+      label: c.name,
+      hint: `Terminal · ${c.summary}`,
+      run: () => {
+        onLaunch("terminal");
+        window.setTimeout(
+          () =>
+            window.dispatchEvent(
+              new CustomEvent("tedbirge:terminal-prefill", { detail: { command: c.name } }),
+            ),
+          120,
+        );
+      },
     }));
 
     const commands: Item[] = [
