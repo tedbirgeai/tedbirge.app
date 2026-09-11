@@ -605,7 +605,8 @@ kopyalama_hatasi() { # rc
     HATA_KODU="KUR-205"
     hata "Hedef bolum kurulum sirasinda kullanimdan dustu. Diski yeniden secip kurulumu tekrarlayin."
   fi
-  if dmesg 2>/dev/null | tail -n 200 | grep -qiE "I/O error|medium error|ata[0-9]+.*failed|blk_update_request"; then
+  DMESG_SON=$(dmesg 2>/dev/null | tail -n 200 || true)
+  if grep -qiE "I/O error|medium error|ata[0-9]+.*failed|blk_update_request" <<<"$DMESG_SON"; then
     HATA_KODU="KUR-202"
     hata "Disk yazma hatasi bildirdi. Disk saglikli olmayabilir; baska bir disk deneyin veya kabloyu degistirin."
   fi
