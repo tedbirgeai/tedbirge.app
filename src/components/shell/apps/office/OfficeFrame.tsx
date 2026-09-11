@@ -46,7 +46,11 @@ export function useOfficeEditor(kind: OfficeKind) {
     setDirty(true);
   }, []);
 
+  /* Kullanici bilerek bos belge actiginda son belge geri yuklenmemeli. */
+  const blankOnPurpose = useRef(false);
+
   const create = useCallback(() => {
+    blankOnPurpose.current = true;
     setId(null);
     setTitle(info.defaultName);
     setText(info.empty);
