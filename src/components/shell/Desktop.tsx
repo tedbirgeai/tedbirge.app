@@ -110,6 +110,7 @@ export function Desktop({
   const [selection, setSelection] = useState<string[]>([]);
   const [menu, setMenu] = useState<Menu | null>(null);
   const [properties, setProperties] = useState<string | null>(null);
+  const [unsupported, setUnsupported] = useState<VfsEntry | null>(null);
   const [band, setBand] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
   const [size, setSize] = useState({ w: 1280, h: 800 });
   const [clipboard, setClipboard] = useState<string | null>(null);
