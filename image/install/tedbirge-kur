@@ -696,7 +696,9 @@ SWAP_UUID=""
 
 # Canli acilis bilesenleri kalici sistemde kapatilir.
 rm -f "$KOK/etc/systemd/system/multi-user.target.wants/live-config.service" 2>/dev/null
-CEKIRDEK_SATIRI="console=tty0 console=ttyS0,115200n8 quiet"
+# Kurumsal acilis: ham cekirdek/servis metni yerine Tedbirge acilis ekrani.
+# Guvenli/kurtarma menu girdileri bu satiri kullanmaz (nosplash ile metin akar).
+CEKIRDEK_SATIRI="console=tty0 console=ttyS0,115200n8 quiet splash loglevel=3 rd.systemd.show_status=false systemd.show_status=false udev.log_level=3"
 [ -n "$SWAP_UUID" ] && CEKIRDEK_SATIRI="$CEKIRDEK_SATIRI resume=UUID=$SWAP_UUID"
 
 # /etc/default/grub anahtarlari: varsa degistirilir, yoksa eklenir. GRUB'un
