@@ -46,7 +46,11 @@ export function useOfficeEditor(kind: OfficeKind) {
     setDirty(true);
   }, []);
 
+  /* Kullanici bilerek bos belge actiginda son belge geri yuklenmemeli. */
+  const blankOnPurpose = useRef(false);
+
   const create = useCallback(() => {
+    blankOnPurpose.current = true;
     setId(null);
     setTitle(info.defaultName);
     setText(info.empty);
@@ -55,6 +59,7 @@ export function useOfficeEditor(kind: OfficeKind) {
 
   const open = useCallback(
     async (docId: string, docTitle: string) => {
+      blankOnPurpose.current = false;
       const body = await openDoc(docId);
       setId(docId);
       setTitle(docTitle);
@@ -108,7 +113,7 @@ export function useOfficeEditor(kind: OfficeKind) {
 
   /* İlk açılışta son belge gelir; hiç belge yoksa boş belge açılır. */
   useEffect(() => {
-    if (id !== null || dirty) return;
+    if (id !== null || dirty || blankOnPurpose.current) return;
     const first = docs[0];
     if (first) void open(first.id, first.title);
   }, [docs, id, dirty, open]);
