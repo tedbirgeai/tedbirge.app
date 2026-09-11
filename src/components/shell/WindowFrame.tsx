@@ -273,7 +273,7 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
 
   return (
     <>
-      {snap ? (
+      {snap && !hidden ? (
         <div
           aria-hidden
           className="tbos-snap-preview pointer-events-none absolute rounded-2xl"
@@ -284,13 +284,16 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
       <div
         ref={root}
         className="tbos-window absolute flex min-h-0 flex-col overflow-hidden rounded-2xl shadow-2xl"
-        style={style}
+        style={hiddenStyle}
         onPointerDown={() => focusWindow(win.id)}
         onKeyDown={trapTab}
         tabIndex={-1}
         role="dialog"
         aria-label={win.title}
+        aria-hidden={hidden || undefined}
+        inert={hidden || undefined}
       >
+
         <div
           className="flex shrink-0 cursor-grab items-center justify-between gap-3 px-3 py-2 active:cursor-grabbing"
           style={{ borderBottom: "1px solid var(--border)", touchAction: "none" }}
