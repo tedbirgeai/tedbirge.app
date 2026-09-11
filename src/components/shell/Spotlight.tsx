@@ -217,7 +217,15 @@ export function Spotlight({
         <ul className="max-h-[46vh] overflow-y-auto py-1">
           {items.map((item, i) => {
             const Icon =
-              item.kind === "app" ? AppWindow : item.kind === "file" ? FileText : TerminalSquare;
+              item.kind === "app"
+                ? AppWindow
+                : item.kind === "file"
+                  ? FileText
+                  : item.kind === "person"
+                    ? User
+                    : item.kind === "peer"
+                      ? Radio
+                      : TerminalSquare;
             return (
               <li key={item.key}>
                 <button
