@@ -771,8 +771,8 @@ giris() { # baslik, ek parametreler
   cat <<MENU
 menuentry '$1' {
 	search --no-floppy --fs-uuid --set=root $KOK_UUID
-	linux ${CEKIRDEK#/boot} $ORTAK $2
-	initrd ${INITRD#/boot}
+	linux $CEKIRDEK $ORTAK $2
+	initrd $INITRD
 }
 MENU
 }
@@ -784,10 +784,6 @@ giris 'Metin / kurtarma kipi' 'systemd.unit=multi-user.target nomodeset single'
 echo "}"
 EOF
 chmod +x "$KOK/etc/grub.d/11_tedbirge_kurtarma"
-# GRUB'un /boot ayri bolumde olmadigi kurulumda yollari dogru cozmesi icin
-# menu girisleri /boot onekiyle degil, kok bolume gore yazilir.
-sed -i "s|linux \${CEKIRDEK#/boot}|linux /boot\${CEKIRDEK#/boot}|; s|initrd \${INITRD#/boot}|initrd /boot\${INITRD#/boot}|" \
-  "$KOK/etc/grub.d/11_tedbirge_kurtarma"
 
 # ------------------------------------------------------------ acilis yukleyici
 ILERLE 65 "Acilis yukleyicisi kuruluyor ($MOD)"
