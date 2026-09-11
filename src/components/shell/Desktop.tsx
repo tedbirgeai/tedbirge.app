@@ -14,6 +14,7 @@ import { AppIcon } from "@/components/shell/app-icons";
 import { DesktopItem } from "@/components/shell/DesktopItem";
 import { DesktopPager } from "@/components/shell/DesktopPager";
 import { DesktopIcon } from "@/components/shell/DesktopIcon";
+import { UnsupportedFileCard } from "@/components/shell/UnsupportedFileCard";
 import { useIsCompact } from "@/hooks/use-mobile";
 import { DesktopWidgets } from "@/components/shell/DesktopWidgets";
 import { ClockWidget } from "@/components/shell/ClockWidget";
