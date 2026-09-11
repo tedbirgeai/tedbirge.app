@@ -170,8 +170,12 @@ function StatusIcon({ msg }: { msg: ChatMessage }) {
   );
 }
 
-/** Tek mesaj balonu — yanıt alıntısı, tepkiler ve hızlı eylemler. */
-export function MessageRow({
+/**
+ * Tek mesaj balonu — yanıt alıntısı, tepkiler ve hızlı eylemler.
+ * `memo` ile sarılıdır: mesh ağ durumu değiştiğinde akış yeniden
+ * çizilmez, yalnız verisi değişen balon güncellenir (titreme önlenir).
+ */
+function MessageRowBase({
   msg,
   authorName,
   showAuthor,
