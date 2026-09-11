@@ -274,7 +274,8 @@ export const Route = createFileRoute("/api/public/relay")({
             } catch {
               /* bildirim gönderilemese de mesaj kuyrukta durur */
             }
-            return json({ ok: true, stored });
+            // Kismi basari acikca bildirilir: istemci eksik zarflari yeniden dener.
+            return json({ ok: true, stored, total: rows.length, failed });
           }
 
           // pull
