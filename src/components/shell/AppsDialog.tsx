@@ -21,7 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { CapabilityDialog } from "@/components/shell/CapabilityDialog";
 import type { Capability } from "@/kernel/capabilities";
 import {
-  installTbApp,
+  installTbAppWithConsent,
   installedTbApps,
   instantiateTbApp,
   readTbAppFile,
@@ -211,12 +211,23 @@ export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => vo
         onCancel={() => setPending(null)}
         onApprove={(granted) => {
           if (!pending) return;
-          installTbApp(pending);
-          grantCapabilities(pending.id, granted);
-          setApps(installedTbApps());
           const m = pending;
           setPending(null);
-          void run(m, granted);
+          void installTbAppWithConsent(m, (durum) =>
+            window.confirm(
+              durum === "unsigned"
+                ? `${m.name} imzasız bir paket. Yine de kurulsun mu?`
+                : `${m.name} paketinin imzası bu cihazda doğrulanamadı. Yine de kurulsun mu?`,
+            ),
+          )
+            .then(() => {
+              grantCapabilities(m.id, granted);
+              setApps(installedTbApps());
+              void run(m, granted);
+            })
+            .catch((e: unknown) =>
+              toast.error(e instanceof Error ? e.message : "Paket kurulamadı."),
+            );
         }}
       />
     </>

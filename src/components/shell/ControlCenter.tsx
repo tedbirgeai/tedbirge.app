@@ -22,6 +22,7 @@ import {
 
 import { applySystemVolume, isSoundMuted, setSoundMuted, tapSound } from "@/lib/chat/sounds";
 import { notify } from "@/lib/shell/notify";
+import { usePeerStatus } from "@/lib/shell/peer-status";
 import { setFocusMode, useFocusMode } from "@/lib/shell/focus-mode";
 import { setVolume, useVolume } from "@/lib/ui/audio-gain";
 import { getTheme, setTheme, THEMES } from "@/lib/ui/theme";
@@ -36,20 +37,16 @@ import {
 export function ControlCenter({
   open,
   onClose,
-  status,
-  peers,
-  rttMs,
   onPersonalize,
   onNetwork,
 }: {
   open: boolean;
   onClose: () => void;
-  status: string;
-  peers: number;
-  rttMs: number | null;
   onPersonalize: () => void;
   onNetwork: () => void;
 }) {
+  // Ağ durumu kabuktan değil, kendi sönümlenmiş deposundan okunur.
+  const { text: status, peers, rttMs } = usePeerStatus();
   const { brightness, night } = useWallpaper();
   const volume = useVolume();
   const focus = useFocusMode();

@@ -696,7 +696,9 @@ SWAP_UUID=""
 
 # Canli acilis bilesenleri kalici sistemde kapatilir.
 rm -f "$KOK/etc/systemd/system/multi-user.target.wants/live-config.service" 2>/dev/null
-CEKIRDEK_SATIRI="console=tty0 console=ttyS0,115200n8 quiet"
+# Kurumsal acilis: ham cekirdek/servis metni yerine Tedbirge acilis ekrani.
+# Guvenli/kurtarma menu girdileri bu satiri kullanmaz (nosplash ile metin akar).
+CEKIRDEK_SATIRI="console=tty0 console=ttyS0,115200n8 quiet splash loglevel=3 rd.systemd.show_status=false systemd.show_status=false udev.log_level=3"
 [ -n "$SWAP_UUID" ] && CEKIRDEK_SATIRI="$CEKIRDEK_SATIRI resume=UUID=$SWAP_UUID"
 
 # /etc/default/grub anahtarlari: varsa degistirilir, yoksa eklenir. GRUB'un
@@ -765,7 +767,9 @@ cat >> "$KOK/etc/grub.d/11_tedbirge_kurtarma" <<'EOF'
 CEKIRDEK=$(ls -1 /boot/vmlinuz-* 2>/dev/null | sort -V | tail -1)
 INITRD=$(ls -1 /boot/initrd.img-* 2>/dev/null | sort -V | tail -1)
 [ -n "$CEKIRDEK" ] && [ -n "$INITRD" ] || exit 0
-ORTAK="root=UUID=$KOK_UUID ro console=tty0 console=ttyS0,115200n8"
+# Kurtarma girdilerinde acilis ekrani KAPALI olur: sorun giderirken ham
+# cekirdek/servis metni gorunmelidir (nosplash + ayrintili gunluk).
+ORTAK="root=UUID=$KOK_UUID ro console=tty0 console=ttyS0,115200n8 nosplash systemd.show_status=true loglevel=7"
 
 giris() { # baslik, ek parametreler
   cat <<MENU
@@ -899,7 +903,15 @@ if chroot "$KOK" "${CHROOT_ENV[@]}" sh -c 'command -v lsinitramfs >/dev/null'; t
     printf '%s\n' "$ICERIK" | grep -q "/$m" \
       || hata "ACL-307: Acilis diskinde '$m' surucusu yok; disk acilista gorulemez."
   done
+  # USB klavye/fare: kurtarma menusunde giris olmadan sistem yonetilemez.
+  printf '%s\n' "$ICERIK" | grep -q "/usbhid" \
+    || echo "! Uyari: acilis diskinde usbhid yok; kurtarma ekraninda USB klavye gec taninabilir."
 fi
+
+# 4b) Kurulu kokte gercek bir init var mi? Yoksa cekirdek "Attempted to kill
+# init" ile durur ve ekran siyah kalir.
+[ -e "$KOK/sbin/init" ] || [ -e "$KOK/usr/sbin/init" ] || [ -e "$KOK/lib/systemd/systemd" ] \
+  || hata "ACL-313: Kurulu sistemde /sbin/init yok; sistem acilamaz."
 
 # 5) Acilis kodu diske gercekten yazildi mi?
 if [ "$MOD" = "UEFI" ]; then
@@ -923,7 +935,7 @@ fi
   echo "--- Tedbirge kurulum dogrulama $(date -u +%Y-%m-%dT%H:%M:%SZ) ---"
   echo "disk=$DEV kip=$MOD kok=$KOK_UUID takas=${SWAP_UUID:-yok}"
   echo "cekirdek=$MENU_CEKIRDEK initrd=$MENU_INITRD"
-  echo "gecen kapilar: ACL-301..312"
+  echo "gecen kapilar: ACL-301..313"
 } >> "$LOG" 2>/dev/null || true
 mkdir -p "$KOK/var/log/tedbirge" 2>/dev/null || true
 cp "$LOG" "$KOK/var/log/tedbirge/kurulum.log" 2>/dev/null || true

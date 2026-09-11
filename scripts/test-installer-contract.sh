@@ -81,4 +81,23 @@ if grep -qE 'exec /bin/login|(^|[[:space:]])startx([[:space:]]|$)' "$SONRASI"; t
   exit 1
 fi
 
+# Kurumsal açılış/kapanış ekranı ve init güvencesi.
+zorunlu 'ACL-313' "$KUR" "Kurulu sistemde /sbin/init denetimi yok"
+zorunlu 'quiet splash' "$KUR" "Kurulu sistem kurumsal açılış ekranıyla açılmıyor"
+zorunlu 'nosplash' "$KUR" "Kurtarma girdilerinde ayrıntılı günlük kapalı"
+grep -qx 'plymouth' image/profiles/common.list || {
+  echo "HATA: açılış ekranı (plymouth) paket listesinde yok" >&2; exit 1; }
+for f in image/config/includes.chroot/usr/share/plymouth/themes/tedbirge/tedbirge.plymouth \
+         image/config/includes.chroot/usr/share/plymouth/themes/tedbirge/tedbirge.script \
+         image/config/includes.chroot/etc/modprobe.d/tedbirge-firmware.conf; do
+  [ -s "$f" ] || { echo "HATA: eksik dosya $f" >&2; exit 1; }
+done
+grep -q "Hoş Geldiniz" image/config/includes.chroot/usr/share/plymouth/themes/tedbirge/tedbirge.script || {
+  echo "HATA: açılış ekranında karşılama metni yok" >&2; exit 1; }
+grep -q "Kapanıyor" image/config/includes.chroot/usr/share/plymouth/themes/tedbirge/tedbirge.script || {
+  echo "HATA: kapanış ekranı metni yok" >&2; exit 1; }
+grep -q 'plymouth-set-default-theme tedbirge' image/config/hooks/normal/9000-tedbirge.hook.chroot || {
+  echo "HATA: Tedbirge açılış teması varsayılan yapılmıyor" >&2; exit 1; }
+
+
 echo "Kurulum güvenlik ve kullanıcı deneyimi sözleşmesi doğrulandı."

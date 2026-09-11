@@ -172,6 +172,19 @@ export function bootNodeRuntime() {
   if (isAutoStartEnabled()) void startNode();
 }
 
+/** Tepkisel olmayan okuma: geçerli düğüm anlık görüntüsü. */
+export function getNodeSnapshot(): BrowserNodeState {
+  return snapshot;
+}
+
+/** Düğüm değişikliklerine abone olur (React dışı depolar için). */
+export function subscribeNode(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => {
+    listeners.delete(cb);
+  };
+}
+
 export function useNodeRuntime() {
   return useSyncExternalStore(
     (cb) => {

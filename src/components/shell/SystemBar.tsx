@@ -20,26 +20,20 @@ import {
 import { BareMetalIsoButton } from "@/components/shell/BareMetalIso";
 import { InstallSystemButton } from "@/components/shell/InstallSystemButton";
 import { ControlCenter } from "@/components/shell/ControlCenter";
+import { PeerStatusIndicator } from "@/components/shell/PeerStatusIndicator";
 import { NetworkControl } from "@/components/shell/NetworkControl";
 import { NotificationsPanel } from "@/components/shell/NotificationsPanel";
 import { useUnreadNoticeCount } from "@/lib/shell/notifications";
-import { useClock, useMemoryMb } from "@/lib/shell/telemetry-store";
+import { useClock } from "@/lib/shell/telemetry-store";
 import { useOnline } from "@/lib/pwa/offline-status";
 import { useBattery, useDiskActivity } from "@/lib/shell/device-status";
 
 export function SystemBar({
-  status,
-  peers,
-  rttMs = null,
   onSettings,
   onPersonalize,
   onSearch,
   onProfile,
 }: {
-  status: string;
-  peers: number;
-  /** Son ölçülen gidiş-dönüş gecikmesi (ms); yoksa gizlenir. */
-  rttMs?: number | null;
   /** Sistem Ayarları uygulamasını açar. */
   onSettings: () => void;
   /** Kontrol merkezinden görünüm ayarlarını açar. */
@@ -56,7 +50,7 @@ export function SystemBar({
   const online = useOnline();
   // Saat ve bellek tek paylaşımlı 1 sn zamanlayıcıdan gelir (titreme yok).
   const clock = useClock();
-  const memMb = useMemoryMb();
+  
   const battery = useBattery();
   const diskBusy = useDiskActivity();
 
@@ -113,17 +107,8 @@ export function SystemBar({
           aria-expanded={control}
           className="wa-press hidden min-h-12 min-w-0 items-center gap-1.5 rounded-lg px-1.5 py-0.5 sm:flex"
         >
-          {/* Sabit ölçülü şerit: sayaç değişimleri komşu öğeleri kaydırmaz. */}
-          <span className="flex items-center gap-1 font-osmono text-[11px] leading-4 text-[var(--tb-muted)] tabular-nums">
-            <span className="inline-block w-[min(34vw,220px)] truncate text-left">{status}</span>
-            <span className="inline-block w-[62px] shrink-0 text-right">{peers} cihaz</span>
-            <span className="inline-block w-[62px] shrink-0 text-right">
-              {rttMs != null ? `${rttMs} ms` : ""}
-            </span>
-            <span className="inline-block w-[62px] shrink-0 text-right">
-              {memMb != null ? `${memMb} MB` : ""}
-            </span>
-          </span>
+          {/* Ağ göstergesi kendi sönümlenmiş deposuna abonedir. */}
+          <PeerStatusIndicator />
         </button>
       </div>
 
@@ -132,9 +117,6 @@ export function SystemBar({
       <ControlCenter
         open={control}
         onClose={() => setControl(false)}
-        status={status}
-        peers={peers}
-        rttMs={rttMs}
         onPersonalize={onPersonalize}
         onNetwork={() => setNetwork(true)}
       />

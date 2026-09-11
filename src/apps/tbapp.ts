@@ -22,6 +22,8 @@ import { ALL_CAPABILITIES, type Capability } from "@/kernel/capabilities";
 import { grantKernel } from "@/kernel/capabilities";
 import type { Kernel } from "@/kernel/contract";
 import { registerApp, type AppManifest } from "@/apps/registry";
+import { verifyTbAppSignature, type SignatureState } from "@/apps/tbapp-signature";
+import { clearAppData } from "@/lib/apps/appdata";
 
 export type TbAppManifest = {
   id: string;
@@ -34,6 +36,8 @@ export type TbAppManifest = {
   spk?: string;
   /** Faz D: paket imzası (varsa). */
   sig?: string;
+  /** Kurulum sırasında saptanan imza durumu. */
+  signature?: SignatureState;
 };
 
 export class TbAppError extends Error {}
@@ -93,15 +97,52 @@ function persist(list: TbAppManifest[]) {
   }
 }
 
-export function installTbApp(m: TbAppManifest) {
+/**
+ * Paketi kurar. İmzası geçersiz paket asla kurulmaz; imzasız paket yalnız
+ * `gelistirmeModu` açıkça onaylandığında kurulur ve "doğrulanmamış" olarak
+ * işaretlenir.
+ */
+export async function installTbApp(
+  m: TbAppManifest,
+  gelistirmeModu = false,
+): Promise<TbAppManifest> {
+  const signature = await verifyTbAppSignature(m);
+  if (signature === "invalid")
+    throw new TbAppError("Paket imzası geçersiz — kurulum durduruldu.");
+  if (signature !== "verified" && !gelistirmeModu)
+    throw new TbAppError(
+      "Paket imzasız. Kurmak için geliştirici modunu onaylamanız gerekir.",
+    );
+  const kayit: TbAppManifest = { ...m, signature };
   const list = installedTbApps().filter((x) => x.id !== m.id);
-  list.push(m);
+  list.push(kayit);
   persist(list);
-  registerApp(toShellApp(m, list.length));
+  registerApp(toShellApp(kayit, list.length));
+  return kayit;
+}
+
+/**
+ * Kurulum akışı: imzasız paket için kullanıcıdan açık geliştirici modu
+ * onayı alınır. Onay verilmezse paket kurulmaz.
+ */
+export async function installTbAppWithConsent(
+  m: TbAppManifest,
+  onay: (durum: SignatureState) => boolean | Promise<boolean>,
+): Promise<TbAppManifest> {
+  const signature = await verifyTbAppSignature(m);
+  if (signature === "invalid")
+    throw new TbAppError("Paket imzası geçersiz — kurulum durduruldu.");
+  if (signature !== "verified") {
+    const kabul = await onay(signature);
+    if (!kabul) throw new TbAppError("Doğrulanmamış paket kurulmadı.");
+  }
+  return installTbApp(m, true);
 }
 
 export function uninstallTbApp(id: string) {
   persist(installedTbApps().filter((x) => x.id !== id));
+  // Uygulamanın şifreli özel alanı da silinir.
+  clearAppData(id);
 }
 
 function toShellApp(m: TbAppManifest, order: number): AppManifest {

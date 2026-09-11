@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Tedbirge WebOS
+Description=Tedbirge(R) WebOS kurumsal acilis ve kapanis ekrani
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/tedbirge
+ScriptFile=/usr/share/plymouth/themes/tedbirge/tedbirge.script

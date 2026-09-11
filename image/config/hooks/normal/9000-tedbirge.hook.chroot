@@ -100,4 +100,19 @@ for f in /opt/tedbirge/gozcu.sh /etc/systemd/system/tedbirge-gozcu.service; do
 done
 [ -x /usr/lib/systemd/systemd ] || { echo "! systemd yok — init olusmaz" >&2; exit 1; }
 
+# --- Kurumsal acilis/kapanis ekrani: Tedbirge temasi varsayilan yapilir.
+if command -v plymouth-set-default-theme >/dev/null 2>&1; then
+  [ -s /usr/share/plymouth/themes/tedbirge/tedbirge.script ] \
+    || { echo "! Acilis ekrani temasi eksik" >&2; exit 1; }
+  plymouth-set-default-theme tedbirge \
+    || { echo "! Acilis ekrani temasi ayarlanamadi" >&2; exit 1; }
+  # Tema initramfs'e gomulur; aksi halde acilisin ilk saniyeleri ham metin akar.
+  update-initramfs -u || { echo "! initramfs guncellenemedi" >&2; exit 1; }
+  [ "$(plymouth-set-default-theme 2>/dev/null)" = "tedbirge" ] \
+    || { echo "! Varsayilan acilis temasi Tedbirge degil" >&2; exit 1; }
+else
+  echo "! plymouth kurulmadi — kurumsal acilis ekrani olusmaz" >&2
+  exit 1
+fi
+
 echo "-- Tedbirge yapilandirmasi tamam"

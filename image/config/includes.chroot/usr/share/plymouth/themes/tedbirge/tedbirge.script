@@ -1,0 +1,94 @@
+# Tedbirge(R) WebOS — kurumsal acilis / kapanis ekrani.
+#
+# Ilke: SAHTE YUZDE YOK. Ekranda yalnizca sistemin gercekten bildirdigi
+# durum yazilari (udev, disk denetimi, servisler, kapanis) gosterilir.
+# Ilerleme hissi donen bir gosterge ile verilir, uydurma bir sayi ile degil.
+
+# Kristal koyu arka plan (Tedbirge palet degeri).
+Window.SetBackgroundTopColor(0.03, 0.06, 0.09);
+Window.SetBackgroundBottomColor(0.01, 0.03, 0.05);
+
+genislik = Window.GetWidth();
+yukseklik = Window.GetHeight();
+
+# --- Marka yazisi -----------------------------------------------------------
+baslik = Image.Text("Tedbirge® WebOS", 0.85, 0.95, 1.0, 1, "Sans 28");
+baslik_go = Sprite(baslik);
+baslik_go.SetX(genislik / 2 - baslik.GetWidth() / 2);
+baslik_go.SetY(yukseklik / 2 - baslik.GetHeight() - 40);
+
+karsilama_metni = "Tedbirge'ye Hoş Geldiniz";
+karsilama = Image.Text(karsilama_metni, 0.55, 0.78, 0.85, 1, "Sans 13");
+karsilama_go = Sprite(karsilama);
+karsilama_go.SetX(genislik / 2 - karsilama.GetWidth() / 2);
+karsilama_go.SetY(yukseklik / 2 - 4);
+
+# --- Etkinlik gostergesi (donen nokta seridi) --------------------------------
+nokta_sayisi = 5;
+noktalar = [];
+adim = 0;
+for (i = 0; i < nokta_sayisi; i++) {
+  n = Image.Text("•", 0.35, 0.85, 0.95, 1, "Sans 20");
+  s = Sprite(n);
+  s.SetX(genislik / 2 - (nokta_sayisi * 16) / 2 + i * 16);
+  s.SetY(yukseklik / 2 + 42);
+  s.SetOpacity(0.25);
+  noktalar[i] = s;
+}
+
+durum_go = Sprite();
+durum_go.SetOpacity(1);
+
+fun durum_yaz(metin) {
+  d = Image.Text(metin, 0.55, 0.70, 0.78, 1, "Sans 11");
+  durum_go.SetImage(d);
+  durum_go.SetX(genislik / 2 - d.GetWidth() / 2);
+  durum_go.SetY(yukseklik / 2 + 84);
+}
+
+fun yenile() {
+  adim++;
+  etkin = (adim / 6) % nokta_sayisi;
+  for (i = 0; i < nokta_sayisi; i++) {
+    if (i == etkin) {
+      noktalar[i].SetOpacity(1.0);
+    } else {
+      noktalar[i].SetOpacity(0.25);
+    }
+  }
+}
+Plymouth.SetRefreshFunction(yenile);
+
+# --- Sistemin gercek bildirimleri -------------------------------------------
+fun durum_guncelle(durum) {
+  durum_yaz(durum);
+}
+Plymouth.SetUpdateStatusFunction(durum_guncelle);
+
+fun mesaj(metin) {
+  durum_yaz(metin);
+}
+Plymouth.SetMessageFunction(mesaj);
+
+# --- Kapanis / yeniden baslatma ---------------------------------------------
+fun kip_degisti() {
+  kip = Plymouth.GetMode();
+  if (kip == "shutdown" || kip == "reboot") {
+    k = Image.Text("Tedbirge Kapanıyor…", 0.55, 0.78, 0.85, 1, "Sans 13");
+    karsilama_go.SetImage(k);
+    karsilama_go.SetX(genislik / 2 - k.GetWidth() / 2);
+    durum_yaz("Veriler diske yazılıyor, lütfen bekleyin.");
+  }
+}
+Plymouth.SetDisplayNormalFunction(kip_degisti);
+kip_degisti();
+
+# --- Parola sorulursa (sifreli disk) ----------------------------------------
+fun parola_sor(istem, silinmis) {
+  gizli = "";
+  for (i = 0; i < silinmis; i++) { gizli += "•"; }
+  durum_yaz(istem + " " + gizli);
+}
+Plymouth.SetDisplayPasswordFunction(parola_sor);
+
+durum_yaz("Donanım hazırlanıyor…");
