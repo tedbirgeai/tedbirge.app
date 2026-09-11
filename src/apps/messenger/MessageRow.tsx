@@ -5,7 +5,7 @@
  * uygulamasına ait sunum parçalarını taşır; kabuk kodu bunları bilmez.
  * Mantık aynen taşınmıştır, davranış değişmemiştir.
  */
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Check,
   CheckCheck,
@@ -587,6 +587,8 @@ function MessageRowBase({
     </div>
   );
 }
+
+export const MessageRow = memo(MessageRowBase);
 
 export function MenuItem({
   icon,
