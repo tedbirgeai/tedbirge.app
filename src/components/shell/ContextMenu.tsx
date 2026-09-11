@@ -78,7 +78,10 @@ function Panel({
             {it.children && open === it.label ? (
               <div
                 className="tbos-window tbos-ctx absolute top-0 z-10 w-56 rounded-xl p-1 shadow-2xl backdrop-blur-xl"
-                style={{ left: level % 2 === 0 ? "100%" : undefined, right: level % 2 ? "100%" : undefined }}
+                style={{
+                  left: level % 2 === 0 ? "100%" : undefined,
+                  right: level % 2 ? "100%" : undefined,
+                }}
               >
                 <Panel
                   items={it.children}

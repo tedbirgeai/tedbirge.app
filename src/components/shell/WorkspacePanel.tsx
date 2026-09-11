@@ -155,37 +155,34 @@ export function WorkspacePanel() {
   const launchNew = useCallback((id: string) => launch(id, true), [launch]);
 
   /** Dosyalar penceresinden sürüklenen dosyayı hedef uygulamaya iletir. */
-  const dropFile = useCallback(
-    async (appId: string, raw: string) => {
-      let meta: { id: string; name: string } | null = null;
+  const dropFile = useCallback(async (appId: string, raw: string) => {
+    let meta: { id: string; name: string } | null = null;
+    try {
+      meta = JSON.parse(raw) as { id: string; name: string };
+    } catch {
+      return;
+    }
+    if (!meta?.id) return;
+    if (appId === "media") {
+      const url = await objectUrl(meta.id);
+      if (!url) return notifyError("Dosya açılamadı", meta.name);
+      window.dispatchEvent(new CustomEvent("tedbirge:open-media", { detail: { url } }));
+      notifyOk("Medyada açıldı", meta.name);
+      return;
+    }
+    if (appId === "messenger") {
+      const peer = getNodeSnapshot().peers.find((p) => p.direct);
+      if (!peer) return notify("Bağlı cihaz yok", "Önce bir cihazla eşleşin.");
+      const file = await readFile(meta.id);
+      if (!file) return notifyError("Dosya okunamadı", meta.name);
       try {
-        meta = JSON.parse(raw) as { id: string; name: string };
-      } catch {
-        return;
+        await sendFileToPeer(peer.nodeId, file);
+        notifyOk("Gönderiliyor", `${meta.name} → ${peer.nodeId.slice(0, 10)}`);
+      } catch (err) {
+        notifyError("Gönderim başarısız", err instanceof Error ? err.message : undefined);
       }
-      if (!meta?.id) return;
-      if (appId === "media") {
-        const url = await objectUrl(meta.id);
-        if (!url) return notifyError("Dosya açılamadı", meta.name);
-        window.dispatchEvent(new CustomEvent("tedbirge:open-media", { detail: { url } }));
-        notifyOk("Medyada açıldı", meta.name);
-        return;
-      }
-      if (appId === "messenger") {
-        const peer = getNodeSnapshot().peers.find((p) => p.direct);
-        if (!peer) return notify("Bağlı cihaz yok", "Önce bir cihazla eşleşin.");
-        const file = await readFile(meta.id);
-        if (!file) return notifyError("Dosya okunamadı", meta.name);
-        try {
-          await sendFileToPeer(peer.nodeId, file);
-          notifyOk("Gönderiliyor", `${meta.name} → ${peer.nodeId.slice(0, 10)}`);
-        } catch (err) {
-          notifyError("Gönderim başarısız", err instanceof Error ? err.message : undefined);
-        }
-      }
-    },
-    [],
-  );
+    }
+  }, []);
 
   const visible = windows.filter((w) => !w.minimized);
   const top = visible.length ? visible.reduce((a, b) => (a.z > b.z ? a : b)) : null;

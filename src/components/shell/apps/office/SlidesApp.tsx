@@ -41,7 +41,16 @@ function parseDeck(text: string): Deck {
           id: uid(),
           objects: [
             { id: uid(), type: "text", x: 80, y: 90, w: 800, h: 90, text: s.title ?? "", size: 44 },
-            { id: uid(), type: "text", x: 80, y: 210, w: 800, h: 240, text: s.body ?? "", size: 24 },
+            {
+              id: uid(),
+              type: "text",
+              x: 80,
+              y: 210,
+              w: 800,
+              h: 240,
+              text: s.body ?? "",
+              size: 24,
+            },
           ],
         })),
       };
@@ -167,7 +176,9 @@ export function SlidesApp() {
         suppressContentEditableWarning
         onBlur={(e) =>
           patchSlide(
-            slide.objects.map((x) => (x.id === o.id ? { ...x, text: e.currentTarget.innerText } : x)),
+            slide.objects.map((x) =>
+              x.id === o.id ? { ...x, text: e.currentTarget.innerText } : x,
+            ),
           )
         }
         className="whitespace-pre-wrap outline-none"
@@ -291,7 +302,12 @@ export function SlidesApp() {
           >
             <div
               className="absolute top-0 left-0"
-              style={{ width: W, height: H, transform: `scale(${scale})`, transformOrigin: "top left" }}
+              style={{
+                width: W,
+                height: H,
+                transform: `scale(${scale})`,
+                transformOrigin: "top left",
+              }}
               onPointerMove={onPointerMove}
               onPointerUp={() => (drag.current = null)}
             >
@@ -300,7 +316,9 @@ export function SlidesApp() {
                   key={o.id}
                   onPointerDown={(e) => {
                     setSel(o.id);
-                    const host = (e.currentTarget.parentElement as HTMLElement).getBoundingClientRect();
+                    const host = (
+                      e.currentTarget.parentElement as HTMLElement
+                    ).getBoundingClientRect();
                     drag.current = {
                       id: o.id,
                       dx: (e.clientX - host.left) / scale - o.x,

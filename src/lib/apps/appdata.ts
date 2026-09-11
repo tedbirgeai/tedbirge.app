@@ -50,9 +50,7 @@ function appKey(appId: string): Promise<CryptoKey> {
   const cached = keyCache.get(appId);
   if (cached) return cached;
   const promise = (async () => {
-    const base = await crypto.subtle.importKey("raw", masterSecret(), "HKDF", false, [
-      "deriveKey",
-    ]);
+    const base = await crypto.subtle.importKey("raw", masterSecret(), "HKDF", false, ["deriveKey"]);
     return crypto.subtle.deriveKey(
       {
         name: "HKDF",

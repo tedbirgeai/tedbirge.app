@@ -165,7 +165,11 @@ export function WriterApp() {
           </RibbonGroup>
 
           <RibbonGroup label="Biçim">
-            <ToolButton onClick={() => cmd("bold")} icon={<Bold className="h-4 w-4" />} title="Kalın" />
+            <ToolButton
+              onClick={() => cmd("bold")}
+              icon={<Bold className="h-4 w-4" />}
+              title="Kalın"
+            />
             <ToolButton
               onClick={() => cmd("italic")}
               icon={<Italic className="h-4 w-4" />}
@@ -251,7 +255,11 @@ export function WriterApp() {
       label: "Düzen",
       content: (
         <>
-          <ToolButton onClick={() => cmd("undo")} icon={<Undo2 className="h-4 w-4" />} label="Geri" />
+          <ToolButton
+            onClick={() => cmd("undo")}
+            icon={<Undo2 className="h-4 w-4" />}
+            label="Geri"
+          />
           <ToolButton
             onClick={() => cmd("redo")}
             icon={<Redo2 className="h-4 w-4" />}

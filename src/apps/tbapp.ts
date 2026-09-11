@@ -107,12 +107,9 @@ export async function installTbApp(
   gelistirmeModu = false,
 ): Promise<TbAppManifest> {
   const signature = await verifyTbAppSignature(m);
-  if (signature === "invalid")
-    throw new TbAppError("Paket imzası geçersiz — kurulum durduruldu.");
+  if (signature === "invalid") throw new TbAppError("Paket imzası geçersiz — kurulum durduruldu.");
   if (signature !== "verified" && !gelistirmeModu)
-    throw new TbAppError(
-      "Paket imzasız. Kurmak için geliştirici modunu onaylamanız gerekir.",
-    );
+    throw new TbAppError("Paket imzasız. Kurmak için geliştirici modunu onaylamanız gerekir.");
   const kayit: TbAppManifest = { ...m, signature };
   const list = installedTbApps().filter((x) => x.id !== m.id);
   list.push(kayit);
@@ -130,8 +127,7 @@ export async function installTbAppWithConsent(
   onay: (durum: SignatureState) => boolean | Promise<boolean>,
 ): Promise<TbAppManifest> {
   const signature = await verifyTbAppSignature(m);
-  if (signature === "invalid")
-    throw new TbAppError("Paket imzası geçersiz — kurulum durduruldu.");
+  if (signature === "invalid") throw new TbAppError("Paket imzası geçersiz — kurulum durduruldu.");
   if (signature !== "verified") {
     const kabul = await onay(signature);
     if (!kabul) throw new TbAppError("Doğrulanmamış paket kurulmadı.");

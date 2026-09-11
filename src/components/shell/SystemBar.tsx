@@ -50,7 +50,7 @@ export function SystemBar({
   const online = useOnline();
   // Saat ve bellek tek paylaşımlı 1 sn zamanlayıcıdan gelir (titreme yok).
   const clock = useClock();
-  
+
   const battery = useBattery();
   const diskBusy = useDiskActivity();
 
