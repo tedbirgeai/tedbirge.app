@@ -228,6 +228,13 @@ function ChatAppInner() {
   const [groupMode, setGroupMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  // Sabit kimlikli geri çağrı: mesaj balonları (memo) boşuna yeniden çizilmez.
+  const startEdit = useCallback((msg: ChatMessage) => {
+    setEditing(msg);
+    setReplyTo(null);
+    setDraft(msg.text);
+    inputRef.current?.focus();
+  }, []);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [atBottom, setAtBottom] = useState(true);
