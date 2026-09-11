@@ -20,10 +20,11 @@ import {
 import { BareMetalIsoButton } from "@/components/shell/BareMetalIso";
 import { InstallSystemButton } from "@/components/shell/InstallSystemButton";
 import { ControlCenter } from "@/components/shell/ControlCenter";
+import { PeerStatusIndicator } from "@/components/shell/PeerStatusIndicator";
 import { NetworkControl } from "@/components/shell/NetworkControl";
 import { NotificationsPanel } from "@/components/shell/NotificationsPanel";
 import { useUnreadNoticeCount } from "@/lib/shell/notifications";
-import { useClock, useMemoryMb } from "@/lib/shell/telemetry-store";
+import { useClock } from "@/lib/shell/telemetry-store";
 import { useOnline } from "@/lib/pwa/offline-status";
 import { useBattery, useDiskActivity } from "@/lib/shell/device-status";
 
@@ -49,7 +50,7 @@ export function SystemBar({
   const online = useOnline();
   // Saat ve bellek tek paylaşımlı 1 sn zamanlayıcıdan gelir (titreme yok).
   const clock = useClock();
-  const memMb = useMemoryMb();
+  
   const battery = useBattery();
   const diskBusy = useDiskActivity();
 
