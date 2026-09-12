@@ -20,3 +20,4 @@
 - [x] Kurulum sonunda gerçek açılabilirlik denetimleri (ACL-301..312) ve kurtarma menüsü
 - [x] ISO iş akışında yarım kalan doğrulamanın iptalini kapat
 - [ ] Gerçek donanımda yeni ISO ile kurulum kabulü (fiziksel disk gerektirir)
+- [ ] Kurulum sonrası gerçek görüntülü masaüstü açılışını doğrula; GPU/ekran hatasında otomatik güvenli moda dön
