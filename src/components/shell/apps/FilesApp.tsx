@@ -15,6 +15,7 @@ import { pushUndo } from "@/lib/shell/undo-stack";
 import { useShell } from "@/shell/shell-context";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
 import { notifyError, notifyOk } from "@/lib/shell/notify";
+import { baseName, childrenOf } from "@/lib/vfs/tree";
 import {
   deleteFile,
   listFiles,
@@ -132,14 +133,25 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
     return map;
   }, [files]);
 
+  /** Mount edilmiş proje ağacında gezinme (yalnız "repo" kökü). */
+  const tree = useMemo(() => {
+    if (folder !== "repo" || q.trim()) return null;
+    return childrenOf(
+      files.filter((f) => f.folder === "repo"),
+      dir,
+    );
+  }, [files, folder, q, dir]);
+
   const visible = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");
+    if (tree && !needle) return tree.files;
     return files
       .filter((f) => (needle ? true : f.folder === folder))
       .filter((f) => (needle ? f.name.toLocaleLowerCase("tr").includes(needle) : true));
-  }, [files, folder, q]);
+  }, [files, folder, q, tree]);
 
   const current = visible.find((f) => f.id === selected) ?? null;
+
 
   // Boşluk: seçili dosyanın Hızlı Bakış önizlemesini açar/kapatır.
   useEffect(() => {
