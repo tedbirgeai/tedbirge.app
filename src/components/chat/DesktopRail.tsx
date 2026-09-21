@@ -1,6 +1,5 @@
 import { Activity, Boxes, FileUp, MessageCircle, Phone, Settings, Users } from "lucide-react";
 
-import { Avatar } from "@/components/chat/Avatar";
 import { pressFeedback } from "@/lib/chat/sounds";
 import type { MobileTab } from "@/components/chat/MobileTabBar";
 import { RAIL_APPS } from "@/shell/apps";
@@ -17,8 +16,6 @@ const ITEMS = RAIL_APPS;
 export function DesktopRail({
   value,
   onChange,
-  meName,
-  meAvatar,
   unread,
   onSettings,
   onApps,
@@ -27,8 +24,6 @@ export function DesktopRail({
 }: {
   value: MobileTab;
   onChange: (tab: MobileTab) => void;
-  meName: string;
-  meAvatar?: string | undefined;
   unread?: number;
   onSettings: () => void;
   onApps?: () => void;
@@ -120,7 +115,6 @@ export function DesktopRail({
         >
           <Settings className="h-6 w-6" />
         </button>
-
       </div>
     </nav>
   );

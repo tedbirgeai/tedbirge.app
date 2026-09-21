@@ -120,6 +120,13 @@ export const LOCAL_APPS: CatalogApp[] = [
   },
   { id: "mesh", label: "Ağ", hint: "Mesh durumu", category: "araclar", builtin: false },
   { id: "relay", label: "Röle", hint: "Taşıma ayarları", category: "araclar", builtin: false },
+  {
+    id: "limen",
+    label: "LIMEN",
+    hint: "P2P Git, delta sync ve güvenli sentez",
+    category: "araclar",
+    builtin: true,
+  },
   // Gömülü ofis süreçleri: imaj içinde gelir, dış ağ bağımlılığı yoktur.
   {
     id: "writer",

@@ -74,10 +74,10 @@ describe("JSON-RPC 2.0 sunucusu", () => {
 });
 
 describe("LLM adaptörleri", () => {
-  it("araç şemaları aynı parametreleri paylaşır", () => {
+  it("araç şemaları aynı parametreleri paylaşır", async () => {
     expect(openAiTool().function.name).toBe("axiom_verify");
     expect(anthropicTool().input_schema).toEqual(openAiTool().function.parameters);
-    expect(toolCatalogue().mcp).toBe("/api/public/v1/mcp/verify");
+    expect((await toolCatalogue()).mcp).toBe("/api/public/v1/mcp/verify");
   });
 
   it("araç çağrısını JSON-RPC isteğine çevirir", () => {

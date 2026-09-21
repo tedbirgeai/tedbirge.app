@@ -52,6 +52,7 @@ const DESKTOP_CAPS: Record<string, Capability[]> = {
   apps: ["status.read"],
   mesh: ["mesh.route", "status.read"],
   relay: ["mesh.route", "status.read"],
+  limen: ["mesh.send", "mesh.receive", "mesh.route", "identity.read", "status.read"],
 };
 
 const registry = new Map<string, AppManifest>([

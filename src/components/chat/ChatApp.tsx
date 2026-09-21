@@ -2,9 +2,6 @@ import { SyncWarningBar } from "@/components/chat/SyncStatusPanel";
 import { Avatar } from "@/components/chat/Avatar";
 import { MobileTabBar, type MobileTab } from "@/components/chat/MobileTabBar";
 import { CallsPanel } from "@/components/chat/CallsPanel";
-import { CommunitiesPanel } from "@/components/chat/CommunitiesPanel";
-import { MePanel } from "@/components/chat/MePanel";
-import { COMMUNITY_NODE_LIMIT } from "@/lib/paddle-catalog";
 import { DesktopRail } from "@/components/chat/DesktopRail";
 import { NewChatSheet } from "@/components/chat/NewChatSheet";
 import { SplashScreen } from "@/components/chat/SplashScreen";
@@ -137,7 +134,6 @@ import { AppOfferHost } from "@/components/shell/AppOfferHost";
 import { RelaySettingsDialog } from "@/components/shell/RelaySettingsDialog";
 import { MeshStatusDialog } from "@/components/shell/MeshStatusDialog";
 import { FileTransferDialog } from "@/components/shell/FileTransferDialog";
-import { FeedPanel } from "@/components/shell/FeedPanel";
 import { PhoneOnboarding } from "@/components/chat/PhoneOnboarding";
 import { humanSize } from "@/lib/chat/media";
 import {
@@ -578,15 +574,7 @@ function ChatAppInner() {
     () => allConversations.reduce((sum, c) => sum + (c.unread || 0), 0),
     [allConversations],
   );
-  const communityRows = useMemo(
-    () =>
-      allConversations
-        .filter((c) => c.group)
-        .map((c) => ({ id: c.id, title: c.title, members: c.members?.length ?? 0 })),
-    [allConversations],
-  );
-
-  const active = chat.conversations.find((c) => c.id === activeId) ?? null;
+    const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
   // `profileTick` yalnızca ad değiştiğinde yeniden okumayı tetikler.
   void profileTick;
@@ -805,8 +793,6 @@ function ChatAppInner() {
         <DesktopRail
           value={mobileTab}
           onChange={setMobileTab}
-          meName={me}
-          meAvatar={getMyAvatar() || undefined}
           unread={totalUnread}
           onSettings={() => setSettingsOpen(true)}
           onApps={() => surface.open("apps")}
@@ -879,15 +865,7 @@ function ChatAppInner() {
             className="px-4 pb-2 text-[34px] font-extrabold leading-none tracking-tight md:hidden"
             style={{ color: "var(--wa-text)", background: "var(--wa-panel)" }}
           >
-            {mobileTab === "calls"
-              ? "Aramalar"
-              : mobileTab === "communities"
-                ? "Topluluklar"
-                : mobileTab === "feed"
-                  ? "Akış"
-                  : mobileTab === "me"
-                    ? "Siz"
-                    : "Sohbetler"}
+            {mobileTab === "calls" ? "Aramalar & Toplantılar" : mobileTab === "me" ? "Kişiler" : "Sohbetler"}
           </h2>
 
           <div
@@ -1464,86 +1442,69 @@ function ChatAppInner() {
             </div>
           )}
 
-          {/* Topluluklar sekmesi */}
-          {mobileTab === "communities" && (
-            <div className="flex min-h-0 flex-1 flex-col">
-              <CommunitiesPanel
-                groups={communityRows}
-                onOpen={(id) => {
-                  setMobileTab("chats");
-                  setActiveId(id);
-                }}
-                onCreate={() => {
-                  setMobileTab("chats");
-                  setGroupMode(true);
-                }}
-              />
-            </div>
-          )}
-
-          {/* Topluluk / Sosyal akış sekmesi */}
-          {mobileTab === "feed" && (
-            <div className="flex min-h-0 flex-1 flex-col">
-              <FeedPanel meName={me} onTransfer={() => surface.open("transfer")} />
-            </div>
-          )}
-
-          {/* Siz sekmesi */}
+          {/* Kişiler sekmesi */}
           {mobileTab === "me" && (
-            <div className="flex min-h-0 flex-1 flex-col">
-              <MePanel
-                name={me}
-                avatar={getMyAvatar() || undefined}
-                personId={getPersonId()}
-                about={getAbout()}
-                soundOff={soundOff}
-                onAvatarPick={() => myAvatarInput.current?.click()}
-                onProfile={() => setProfileOpen(true)}
-                onQr={() => setQrOpen(true)}
-                onSearch={() => setSearchOpen(true)}
-                onContacts={() => setContactsOpen(true)}
-                onLists={() => setContactsOpen(true)}
-                onBroadcast={() => {
-                  setMobileTab("chats");
-                  setGroupMode(true);
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+              <div
+                className="flex items-center justify-between gap-2 px-4 py-3"
+                style={{ borderBottom: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-[15px] font-semibold">Kişiler</p>
+                  <p className="truncate text-[12px]" style={{ color: "var(--wa-muted)" }}>
+                    {contactBook.contacts.length} kayıt · {peers.length} yakın düğüm
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setNewContactOpen(true)}
+                    className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-white"
+                    style={{ background: "var(--wa-accent)" }}
+                    aria-label="Yeni kişi"
+                    title="Yeni kişi"
+                  >
+                    <BookUser className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQrOpen(true)}
+                    className="wa-press flex h-10 w-10 items-center justify-center rounded-full"
+                    style={{ border: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
+                    aria-label="Karekod ile eşleş"
+                    title="Karekod ile eşleş"
+                  >
+                    <Radio className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+              <DirectoryPanel
+                query={query}
+                peers={peers}
+                labelOf={nameOf}
+                onOpenPeer={(pid, name) => {
+                  repairCrossLinks();
+                  const picked = humanName(name ?? chat.aliases[pid], "");
+                  if (picked && !isTechnicalLabel(picked)) setNickname(pid, picked);
+                  void ensureDirectConversation(pid, picked || undefined).then((c) => {
+                    setMobileTab("chats");
+                    setActiveId(c.id);
+                  });
                 }}
-                onSettings={() => {
-                  setSettingsTab("profil");
-                  setSettingsOpen(true);
-                }}
-                onPairing={() => {
-                  setSettingsTab("profil");
-                  setSettingsOpen(true);
-                }}
-                onNotifications={() => {
-                  setSettingsTab("bildirim");
-                  setSettingsOpen(true);
-                }}
-                onStorage={() => {
-                  setSettingsTab("depolama");
-                  setSettingsOpen(true);
-                }}
-                onHelp={() => {
-                  setSettingsTab("hakkinda");
-                  setSettingsOpen(true);
-                }}
-                onInvite={() => void shareInvite()}
-                onApps={() => surface.open("apps")}
-                onRelay={() => surface.open("relay")}
-                onMeshStatus={() => surface.open("meshStatus")}
-                onTransfer={() => surface.open("transfer")}
-                onFeed={() => setMobileTab("feed")}
-                onSubscription={() => window.open("/fiyatlandirma", "_blank", "noopener")}
-                planLabel={`Community · ${COMMUNITY_NODE_LIMIT} cihaz ücretsiz`}
-                deviceCount={Object.keys(pairing.trusted).length}
-                chatCount={totalUnread}
-                onToggleSound={() => setSoundOff((v) => !v)}
-                onSelfNote={() => {
+                onOpenSelfNote={() => {
                   setMobileTab("chats");
                   void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
                 }}
-                version={BUILD_LABEL}
+                onShareInvite={() => void shareInvite()}
               />
+              <div
+                className="mt-auto flex flex-wrap gap-2 px-4 py-3 text-[11px]"
+                style={{ borderTop: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
+              >
+                <button type="button" onClick={() => setProfileOpen(true)} className="wa-press rounded-full px-3 py-1.5" style={{ border: "1px solid var(--wa-border)" }}>Profil</button>
+                <button type="button" onClick={() => setSettingsOpen(true)} className="wa-press rounded-full px-3 py-1.5" style={{ border: "1px solid var(--wa-border)" }}>Ayarlar</button>
+                <button type="button" onClick={() => void shareInvite()} className="wa-press rounded-full px-3 py-1.5" style={{ border: "1px solid var(--wa-border)" }}>Davet</button>
+              </div>
             </div>
           )}
         </aside>
@@ -2219,8 +2180,6 @@ function ChatAppInner() {
         <MobileTabBar
           value={mobileTab}
           onChange={setMobileTab}
-          meName={me}
-          meAvatar={getMyAvatar() || undefined}
           unread={totalUnread}
         />
       )}
@@ -2279,7 +2238,6 @@ function ChatAppInner() {
           setGroupMode(true);
         }}
         onNewContact={() => setNewContactOpen(true)}
-        onNewCommunity={() => setMobileTab("communities")}
       />
 
       {/* Arama ekranları: yeni arama, tuş takımı, bağlantı, planlama */}

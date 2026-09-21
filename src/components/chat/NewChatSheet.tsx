@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Search, UserPlus, Users, UsersRound, X } from "lucide-react";
+import { Search, UserPlus, Users, X } from "lucide-react";
 
 import { Avatar } from "@/components/chat/Avatar";
 import { getAvatar } from "@/lib/chat/avatars";
@@ -19,14 +19,12 @@ export function NewChatSheet({
   onOpenChat,
   onNewGroup,
   onNewContact,
-  onNewCommunity,
 }: {
   open: boolean;
   onClose: () => void;
   onOpenChat: (peerId: string, name: string) => void;
   onNewGroup: () => void;
   onNewContact: () => void;
-  onNewCommunity: () => void;
 }) {
   const { contacts } = useContacts();
   const [q, setQ] = useState("");
@@ -45,7 +43,6 @@ export function NewChatSheet({
   const actions = [
     { id: "group", label: "Yeni grup", icon: Users, run: onNewGroup },
     { id: "contact", label: "Yeni kişi", icon: UserPlus, run: onNewContact },
-    { id: "community", label: "Yeni topluluk", icon: UsersRound, run: onNewCommunity },
   ];
 
   return (

@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/public/v1/mcp/verify")({
 
       // Keşif: araç şeması ve MCP yolu.
       GET: async ({ request }) =>
-        json(toolCatalogue(), 200, corsHeaders(request, { methods: "POST, GET, OPTIONS" })),
+        json(await toolCatalogue(), 200, corsHeaders(request, { methods: "POST, GET, OPTIONS" })),
 
       POST: async ({ request }) => {
         const cors = corsHeaders(request, { methods: "POST, GET, OPTIONS" });

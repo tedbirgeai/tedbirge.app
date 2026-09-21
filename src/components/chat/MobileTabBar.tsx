@@ -18,14 +18,10 @@ const TABS = MOBILE_APPS;
 export function MobileTabBar({
   value,
   onChange,
-  meName,
-  meAvatar,
   unread,
 }: {
   value: MobileTab;
   onChange: (tab: MobileTab) => void;
-  meName: string;
-  meAvatar?: string | undefined;
   unread?: number;
 }) {
   return (
