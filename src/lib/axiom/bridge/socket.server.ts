@@ -1,0 +1,92 @@
+/* Copyright (c) 2026 Tedbirge Labs / Tedbirge WebOS. All rights reserved.
+ * AXIOM™ is a proprietary product and core engine of Tedbirge WebOS.
+ * Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
+ * Official Hub: https://tedbirge.dev | https://tedbirge.app */
+
+/**
+ * MASAÜSTÜ / BARE-METAL — UNIX ALAN SOKETİ KÖPRÜSÜ
+ * ------------------------------------------------------------------
+ * Yalnız sunucu/masaüstü tarafında yüklenir (dosya adı *.server.ts
+ * olduğu için tarayıcı paketine girmez). Çerçeveleme: her istek ve
+ * yanıt tek satır JSON (satır sonu ile ayrılır).
+ */
+
+import {
+  initialBridgeState,
+  TRUTH_SOCKET_PATH,
+  type BridgeState,
+  type TruthRequest,
+  type TruthResponse,
+} from "@/lib/axiom/bridge/types";
+
+export type SocketBridge = {
+  state(): BridgeState;
+  send(req: TruthRequest): Promise<TruthResponse>;
+  close(): void;
+};
+
+/** Soket yolu: ortam değişkeni varsa o, yoksa varsayılan. */
+export function socketPath(): string {
+  return process.env["TEDBIRGE_TRUTH_SOCK"] ?? TRUTH_SOCKET_PATH;
+}
+
+/**
+ * Soketi açar. Soket yoksa bağlanma başarısız olur ve durum
+ * "sunucu bekleniyor" kalır; çağıran yerel motora düşer.
+ */
+export async function openSocketBridge(): Promise<SocketBridge> {
+  const net = await import("node:net");
+  let state = initialBridgeState("unix");
+  const waiting = new Map<number, (r: TruthResponse) => void>();
+  let buffer = "";
+
+  const socket = net.createConnection(socketPath());
+  socket.setEncoding("utf8");
+  socket.on("connect", () => {
+    state = { ...state, connected: true, note: "Köprü bağlı (yerel soket)" };
+  });
+  socket.on("error", () => {
+    state = { ...state, connected: false, attempts: state.attempts + 1, note: "Sunucu bekleniyor" };
+  });
+  socket.on("close", () => {
+    state = { ...state, connected: false, note: "Sunucu bekleniyor" };
+  });
+  socket.on("data", (chunk: string) => {
+    buffer += chunk;
+    let index = buffer.indexOf("\n");
+    while (index >= 0) {
+      const line = buffer.slice(0, index).trim();
+      buffer = buffer.slice(index + 1);
+      index = buffer.indexOf("\n");
+      if (!line) continue;
+      try {
+        const msg = JSON.parse(line) as TruthResponse;
+        const resolve = waiting.get(msg.id);
+        if (resolve) {
+          waiting.delete(msg.id);
+          resolve(msg);
+        }
+      } catch {
+        /* bozuk çerçeve yok sayılır; günlük tutulmaz */
+      }
+    }
+  });
+
+  return {
+    state: () => state,
+    send(req) {
+      return new Promise<TruthResponse>((resolve, reject) => {
+        if (!state.connected) {
+          reject(new Error("Yerel gerçeklik soketi bağlı değil"));
+          return;
+        }
+        waiting.set(req.id, resolve);
+        socket.write(`${JSON.stringify(req)}\n`);
+      });
+    },
+    close() {
+      socket.destroy();
+      state = { ...state, connected: false, note: "Köprü kapatıldı" };
+    },
+  };
+}

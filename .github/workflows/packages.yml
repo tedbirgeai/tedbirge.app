@@ -1,0 +1,100 @@
+name: Packages
+
+# Masaüstü ve mobil paketler. ISO iş akışı (build-iso.yml) bundan bağımsızdır
+# ve değişmez. İmza sırları yoksa adımlar imzasız/arşiv çıktı üretir.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: packages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  pwa:
+    name: PWA (dist)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bash scripts/build-pwa.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tedbirge-webos-pwa
+          path: dist
+
+  desktop:
+    name: Masaüstü (${{ matrix.hedef }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            hedef: linux
+          - os: windows-latest
+            hedef: windows
+          - os: macos-latest
+            hedef: macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Linux bağımlılıkları
+        if: matrix.hedef == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - run: bun install --frozen-lockfile
+      - name: Paket
+        shell: bash
+        run: bash scripts/build-desktop.sh ${{ matrix.hedef }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tedbirge-webos-${{ matrix.hedef }}
+          path: src-tauri/target/release/bundle/**
+          if-no-files-found: warn
+
+  android:
+    name: Android (.apk)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - run: bun install --frozen-lockfile
+      - name: Paket
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: bash scripts/build-android.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tedbirge-webos-android
+          path: android/app/build/outputs/apk/**
+          if-no-files-found: warn
+
+  ios:
+    name: iOS (.ipa / arşiv)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Paket
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: bash scripts/build-ios.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tedbirge-webos-ios
+          path: build/**
+          if-no-files-found: warn

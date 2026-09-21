@@ -18,6 +18,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArbiterPanel } from "@/components/axiom/ArbiterPanel";
 import { AstView } from "@/components/axiom/AstView";
 import { BillingDashboard } from "@/components/axiom/BillingDashboard";
+import { BridgeStatusCard } from "@/components/axiom/BridgeStatusCard";
+import { LicenseModal } from "@/components/axiom/LicenseModal";
 import { CommandBar } from "@/components/axiom/CommandBar";
 import { ProvenanceBadge } from "@/components/axiom/ProvenanceBadge";
 import { RewardsCard } from "@/components/axiom/RewardsCard";
@@ -33,7 +35,9 @@ import type { KernelAnalysis } from "@/lib/axiom/analyze";
 import { meterRecord } from "@/lib/axiom/billing/meter";
 import { AXIOM_BRAND_BANNER, AXIOM_RAM_LIMIT } from "@/lib/axiom/brand";
 import { t } from "@/lib/axiom/i18n";
+import { loadLicense, shouldPrompt } from "@/lib/axiom/license/policy";
 import { reviewProof } from "@/lib/axiom/net/arbiters";
+import { useAxiomNode } from "@/lib/axiom/net/node";
 import { createRenderer, type Renderer } from "@/lib/axiom/canvas/renderer";
 import type { ByteDigest } from "@/lib/axiom/digest";
 import type { KernelRequest, KernelResponse } from "@/lib/axiom/kernel.worker";
@@ -85,6 +89,14 @@ export function AxiomApp() {
   const [sekme, setSekme] = useState<"console" | "billing" | "network" | "sdk">("console");
   /** Hakem çoğunluğundan geçen doğrulama sayısı (ödül kartı için). */
   const [quorum, setQuorum] = useState(0);
+  /** Lisans penceresi: 6. cihaz görüldüğünde açılır. */
+  const [lisans, setLisans] = useState(false);
+  const node = useAxiomNode();
+
+  // Ücretsiz cihaz sınırı aşıldığında yükseltme penceresi bir kez açılır.
+  useEffect(() => {
+    if (shouldPrompt(node.peers, loadLicense())) setLisans(true);
+  }, [node.peers]);
 
   // Her yeni karar ölçüm defterine ve hakem denetimine girer.
   useEffect(() => {
@@ -375,6 +387,7 @@ export function AxiomApp() {
 
       {sekme === "network" ? (
         <div className="grid gap-3">
+          <BridgeStatusCard />
           <ArbiterPanel result={proof} />
           <div className="grid gap-3 lg:grid-cols-2">
             <SyncStatusCard result={proof} />
@@ -389,7 +402,7 @@ export function AxiomApp() {
         <>
           <div className="grid gap-3 lg:grid-cols-2">
             <LanguageCard lang={analysis?.lang ?? null} />
-            <NodeStatusCard />
+            <NodeStatusCard onOpenLicense={() => setLisans(true)} />
           </div>
 
           <AstView ast={analysis?.ast ?? null} metrics={analysis?.metrics ?? null} />
@@ -463,6 +476,8 @@ export function AxiomApp() {
           </div>
         </>
       )}
+
+      <LicenseModal open={lisans} peers={node.peers} onClose={() => setLisans(false)} />
 
       <div className="pt-1 text-center font-osmono text-[10px] text-[var(--tb-muted)]">
         {AXIOM_BRAND_BANNER}
