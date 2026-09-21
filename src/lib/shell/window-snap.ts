@@ -66,7 +66,12 @@ export function gridColumns(count: number, area: { width: number; height: number
 /** Dokunsal geri bildirim (destekleyen cihazlarda). */
 export function haptic(ms = 8) {
   if (typeof navigator === "undefined") return;
-  const vibrate = (navigator as Navigator & { vibrate?: (p: number) => boolean }).vibrate;
+  const nav = navigator as Navigator & {
+    userActivation?: { hasBeenActive?: boolean };
+    vibrate?: (p: number) => boolean;
+  };
+  if (!nav.userActivation?.hasBeenActive) return;
+  const vibrate = nav.vibrate;
   try {
     vibrate?.call(navigator, ms);
   } catch {

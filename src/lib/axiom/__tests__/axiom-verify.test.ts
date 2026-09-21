@@ -3,7 +3,7 @@
  * Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { matchInvariants } from "@/lib/axiom/invariants";
 import { askAscii } from "@/lib/axiom/lang/ask-ascii";
@@ -25,6 +25,12 @@ function chain(text: string) {
 
 const UYUMLU = "Kapalı sistemde enerji korunur.";
 const CELISKILI = "Bu makine yoktan enerji üretir ve verimi %100 olur.";
+const originalFetch = globalThis.fetch;
+
+afterEach(() => {
+  resetEngineSession();
+  globalThis.fetch = originalFetch;
+});
 
 describe("SMT-LIB üretimi", () => {
   it("nicelikleri ve kontrol komutlarını içerir", () => {
@@ -120,6 +126,22 @@ describe("uçtan uca doğrulama", () => {
     const r = await verify(CELISKILI, ir, matches);
     expect(r.verdict).toBe("409_REFUTED");
     expect(r.seal).toBeNull();
+  });
+
+  it("yerel WASM paketi varsa karar mühürlenir", async () => {
+    resetEngineSession();
+    const wasm = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]);
+    globalThis.fetch = async () =>
+      new Response(wasm, {
+        status: 200,
+        headers: { "content-length": String(wasm.byteLength) },
+      });
+    const { ir, matches } = chain(UYUMLU);
+    const r = await verify(UYUMLU, ir, matches);
+    expect(r.engine).toBe("z3");
+    expect(r.wasmVerified).toBe(true);
+    expect(r.verdict).toBe("200_PROVEN");
+    expect(r.seal).toContain(SEAL_PREFIX);
   });
 
   it("zaman aşımında adım listesi boş kalır (sızıntı yok)", async () => {

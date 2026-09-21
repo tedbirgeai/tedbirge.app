@@ -134,6 +134,26 @@ function lanSignalUrls(): string[] {
   return Array.from(urls);
 }
 
+async function lanSignalReachable(url: string): Promise<boolean> {
+  if (typeof fetch === "undefined" || typeof AbortController === "undefined") return true;
+  const httpUrl = url.replace(/^wss:/, "https:").replace(/^ws:/, "http:");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 450);
+  try {
+    await fetch(httpUrl, {
+      method: "GET",
+      mode: "no-cors",
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Teslim hattındaki her sessiz hata Türkçe tek cümleyle günlüğe düşer. */
 async function logRelayIssue(message: string) {
   try {
@@ -777,43 +797,46 @@ export class BrowserNode {
       if (this.lanSocket && this.lanSocket.readyState <= WebSocket.OPEN) return;
       // Tüm adaylar aynı anda denenir; ilk açılan kazanır, diğerleri kapanır.
       for (const url of lanSignalUrls()) {
-        let ws: WebSocket;
-        try {
-          ws = new WebSocket(url);
-        } catch {
-          continue;
-        }
-        ws.onopen = () => {
-          if (
-            this.lanSocket &&
-            this.lanSocket !== ws &&
-            this.lanSocket.readyState === WebSocket.OPEN
-          ) {
+        void lanSignalReachable(url).then((reachable) => {
+          if (!reachable || (this.lanSocket && this.lanSocket.readyState <= WebSocket.OPEN)) return;
+          let ws: WebSocket;
+          try {
+            ws = new WebSocket(url);
+          } catch {
+            return;
+          }
+          ws.onopen = () => {
+            if (
+              this.lanSocket &&
+              this.lanSocket !== ws &&
+              this.lanSocket.readyState === WebSocket.OPEN
+            ) {
+              try {
+                ws.close();
+              } catch {
+                /* yoksay */
+              }
+              return;
+            }
+            this.lanSocket = ws;
+            announce(ws);
+            this.emit({});
+          };
+          ws.onmessage = (e) => void this.onLanMessage(String(e.data));
+          ws.onclose = () => {
+            if (this.lanSocket === ws) {
+              this.lanSocket = null;
+              this.emit({});
+            }
+          };
+          ws.onerror = () => {
             try {
               ws.close();
             } catch {
               /* yoksay */
             }
-            return;
-          }
-          this.lanSocket = ws;
-          announce(ws);
-          this.emit({});
-        };
-        ws.onmessage = (e) => void this.onLanMessage(String(e.data));
-        ws.onclose = () => {
-          if (this.lanSocket === ws) {
-            this.lanSocket = null;
-            this.emit({});
-          }
-        };
-        ws.onerror = () => {
-          try {
-            ws.close();
-          } catch {
-            /* yoksay */
-          }
-        };
+          };
+        });
       }
     };
     tryConnect();

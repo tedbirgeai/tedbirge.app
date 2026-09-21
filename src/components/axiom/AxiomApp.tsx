@@ -377,10 +377,25 @@ export function AxiomApp() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
-      <div className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-muted)]">
-        {kernelBadge} · Çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve değişmez
-        eşleştirme etkin. Yerel Z3/Lean ikilisi hazır olduğunda mühürlü kanıt üretir; aksi durumda
-        mühürsüz kural denetimiyle güvenli karar kapısı açık kalır.
+      <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-muted)]">
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="text-[var(--tb-cyan-400)]">
+            Faz 1 — Çekirdek Doğrulama Motoru Aktif (Çevrimiçi)
+          </div>
+          <div>
+            {kernelBadge} · Çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve değişmez
+            eşleştirme etkin. Yerel Z3/Lean ikilisi hazır olduğunda mühürlü kanıt üretir; aksi durumda
+            mühürsüz kural denetimiyle güvenli karar kapısı açık kalır.
+          </div>
+        </div>
+        <Button
+          type="button"
+          onClick={restart}
+          variant="outline"
+          className="h-7 shrink-0 border-[var(--tb-cyan-400)] px-2 font-osmono text-[10px] uppercase tracking-wide text-[var(--tb-cyan-400)]"
+        >
+          Servisi Yeniden Başlat
+        </Button>
       </div>
 
       <MemoryProfiler ram={ram} rom={rom} heap={heap} mode={mode} />
@@ -478,6 +493,14 @@ export function AxiomApp() {
               className="border-[var(--tb-cyan-400)] font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)] disabled:opacity-40"
             >
               {verifying ? "Doğrulanıyor…" : "Doğrula"}
+            </Button>
+            <Button
+              type="button"
+              onClick={restart}
+              variant="outline"
+              className="border-[var(--tb-border)] font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+            >
+              Servisi Yeniden Başlat
             </Button>
             <span className="font-osmono text-[10px] text-[var(--tb-muted)]">
               Sert zaman sınırı 500 ms · aşılırsa doğrulama kesilir ve zaman aşımı bildirilir

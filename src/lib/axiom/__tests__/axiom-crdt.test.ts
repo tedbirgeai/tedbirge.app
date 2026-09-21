@@ -2,8 +2,14 @@
 
 import { describe, expect, it } from "vitest";
 
+import {
+  createAxiomOfflineQueue,
+  enqueueProof,
+  flushProofQueue,
+} from "@/lib/p2p/axiom-offline-queue";
 import { apply, createState, delta, live, merge, put, remove } from "@/lib/axiom/sync/crdt";
 import { createQueue, enqueue, flush } from "@/lib/axiom/sync/queue";
+import { createAxiomMesh } from "@/lib/p2p/axiom-mesh";
 
 describe("CRDT birleşmesi", () => {
   it("birleşme sırası sonucu değiştirmez", () => {
@@ -67,5 +73,48 @@ describe("çevrimdışı kuyruk", () => {
     const out = await flush(q, () => false, true);
     expect(out.failed).toBe(1);
     expect(out.state.pending[0]?.attempts).toBe(1);
+  });
+});
+
+describe("AXIOM ispat kuyruğu ve yerel mesh", () => {
+  it("ispat kuyruğu girdi metni taşımadan CID ve mühür gönderir", async () => {
+    let q = enqueueProof(createAxiomOfflineQueue(), {
+      engine: "local",
+      wasmVerified: false,
+      simulated: true,
+      verdict: "422_UNDECIDED",
+      steps: [],
+      ms: 4,
+      cid: "cid:axiom:test",
+      seal: null,
+      smt: "",
+      lean: "",
+    });
+    expect(JSON.stringify(q)).not.toContain("Kapalı sistem");
+    const sent: string[] = [];
+    q = await flushProofQueue(q, (record) => {
+      sent.push(record.cid);
+      return true;
+    });
+    expect(sent).toEqual(["cid:axiom:test"]);
+    expect(q.pending).toHaveLength(0);
+    expect(q.pushed).toBe(1);
+  });
+
+  it("BroadcastChannel yoksa mesh uydurma bağlantı göstermez", async () => {
+    const original = globalThis.BroadcastChannel;
+    Object.defineProperty(globalThis, "BroadcastChannel", { value: undefined, configurable: true });
+    const mesh = createAxiomMesh("test-axiom-mesh");
+    expect(mesh.state().active).toBe(false);
+    expect(await mesh.publish({
+      id: "1",
+      at: 1,
+      cid: "cid:axiom:test",
+      verdict: "422_UNDECIDED",
+      engine: "local",
+      seal: null,
+    })).toBe(false);
+    mesh.close();
+    Object.defineProperty(globalThis, "BroadcastChannel", { value: original, configurable: true });
   });
 });

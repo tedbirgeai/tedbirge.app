@@ -216,8 +216,16 @@ export function startSearching() {
 export function stopRing() {
   if (ringTimer) clearInterval(ringTimer);
   ringTimer = null;
+  const nav =
+    typeof navigator === "undefined"
+      ? null
+      : (navigator as Navigator & {
+          userActivation?: { hasBeenActive?: boolean };
+          vibrate?: (pattern: number | number[]) => boolean;
+        });
+  if (!nav?.userActivation?.hasBeenActive) return;
   try {
-    navigator.vibrate?.(0);
+    nav.vibrate?.(0);
   } catch {
     /* desteklenmiyor */
   }
