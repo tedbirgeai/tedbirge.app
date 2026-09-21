@@ -20,7 +20,9 @@ import {
   type VfsFolder,
 } from "@/lib/vfs/store";
 
-import { ROOT, folderOf, resolvePath, splitTarget } from "./paths";
+import { baseName, childrenOf, entriesUnder, treeAt } from "@/lib/vfs/tree";
+
+import { ROOT, folderOf, resolvePath, splitTarget, subPathOf } from "./paths";
 import type { TerminalHost } from "./host";
 
 export type Tone = "out" | "ok" | "err" | "warn" | "dim" | "accent";
