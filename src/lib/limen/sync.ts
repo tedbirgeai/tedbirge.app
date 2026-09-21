@@ -43,6 +43,7 @@ let state: CrdtState = createState(nodeId);
 let queue: QueueState = createQueue();
 let peers = 1;
 let channel: BroadcastChannel | null = null;
+let netWatch = false;
 
 function emit() {
   listeners.forEach((listener) => listener());
@@ -55,13 +56,13 @@ function ensureChannel() {
     const data = event.data;
     if (data?.type === "limen.hello") {
       peers = Math.max(peers, 2);
-      emit();
+      invalidate();
       return;
     }
     if (data?.type === "limen.delta" && data.delta) {
       const result = apply(state, data.delta);
       state = result.state;
-      if (result.applied > 0) emit();
+      if (result.applied > 0) invalidate();
     }
   });
   channel.postMessage({ type: "limen.hello", node: nodeId } satisfies LimenWire);
@@ -151,7 +152,7 @@ export function stageLimenChange(name: string, mode: LimenMirrorMode = "p2p"): L
     updatedAt: Date.now(),
   });
   queue = enqueue(queue, delta(state));
-  emit();
+  invalidate();
   return snapshot();
 }
 
@@ -173,7 +174,7 @@ export async function flushLimen(): Promise<LimenSyncSnapshot> {
       state = put(state, record.id, { ...record, status: "synced", updatedAt: Date.now() });
     }
   }
-  emit();
+  invalidate();
   return snapshot();
 }
 
