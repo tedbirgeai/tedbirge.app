@@ -64,7 +64,12 @@ export async function verify(
   matches: InvariantMatch[],
   budgetMs: number = VERIFY_TIMEOUT_MS,
 ): Promise<VerifyResult> {
-  const smt = toSmtLib(ir, matches);
+  // SMT-LIB girdisi olduğu gibi çözücüye gider; yeniden çeviri yapılmaz.
+  const smt = isSmtLib(text)
+    ? /\(\s*check-sat\b/i.test(text)
+      ? text.trim()
+      : `${text.trim()}\n(check-sat)\n(get-model)`
+    : toSmtLib(ir, matches);
   const lean = toLean(ir, matches);
   let engine: EngineId = "local";
   let wasmVerified = false;
