@@ -47,7 +47,7 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 
-import { BrandIcon, domainOf } from "@/components/shell/BrandIcon";
+import { BrandIcon, domainOf, hasLocalBrandIcon } from "@/components/shell/BrandIcon";
 import { webApp } from "@/shell/web-apps";
 
 const MAP: Record<string, ComponentType<{ className?: string }>> = {
@@ -93,13 +93,19 @@ const MAP: Record<string, ComponentType<{ className?: string }>> = {
   "web3.market": Coins,
 };
 
+export function isBrandApp(id: string): boolean {
+  const web = webApp(id);
+  if (!web) return false;
+  return hasLocalBrandIcon(web.iconDomain ?? domainOf(web.url));
+}
+
 export function AppIcon({ id, className }: { id: string; className?: string }) {
   const Cmp = MAP[id] ?? (id.startsWith("web3.") ? Wallet : Globe);
   const fallback = <Cmp className={className} />;
   const web = webApp(id);
   if (!web) return fallback;
-  // Harici hedeflerde servisin gerçek logosu kullanılır; katalogda
-  // `iconDomain` varsa (proxy/eşdeğer adresli hedefler) o tercih edilir.
+  // Harici hedeflerde ağdan favicon çekilmez; katalog alan adına göre
+  // yerel SVG amblem kullanılır, eşleşme yoksa yedek simgeye düşülür.
   const domain = web.iconDomain ?? domainOf(web.url);
   return <BrandIcon domain={domain} label={web.label} className={className} fallback={fallback} />;
 }

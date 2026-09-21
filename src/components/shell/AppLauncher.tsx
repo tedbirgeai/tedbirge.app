@@ -1,119 +1,64 @@
 /**
  * UYGULAMA BAŞLATICI (App Launcher)
  * ------------------------------------------------------------------
- * Masaüstünün tek uygulama girişi: yerleşik modüller ve harici web
- * hedefleri tek ızgarada listelenir. Marka adları bileşene gömülmez;
- * web hedefleri `src/shell/web-apps.ts` kataloğundan üretilir.
+ * Masaüstünün tek uygulama girişi: üç ana ürün modülü en üstte, yerleşik
+ * WebOS araçları ve harici web hedefleri aynı premium ikon yüzeyiyle listelenir.
  */
 
-import { useEffect, type ReactNode } from "react";
-import {
-  Activity,
-  Boxes,
-  CalendarCheck,
-  FileText,
-  FileType2,
-  FileUp,
-  FolderOpen,
-  Globe,
-  MessageCircle,
-  Music,
-  PlayCircle,
-  Presentation,
-  Radio,
-  Sigma,
-  StickyNote,
-  Table2,
-  X,
-} from "lucide-react";
+import { useEffect } from "react";
+import { X } from "lucide-react";
 
+import { AppIconSurface, appSecurityLabels } from "@/components/shell/AppIconBadge";
 import { WEB_APPS } from "@/shell/web-apps";
 
-export type LauncherTile = { id: string; label: string; hint: string; icon: ReactNode };
+export type LauncherTile = { id: string; label: string; hint: string; featured?: boolean };
 
 export const LOCAL_TILES: LauncherTile[] = [
   {
     id: "axiom",
     label: "AXIOM",
-    hint: "Deterministik doğrulama çekirdeği",
-    icon: <Sigma className="h-6 w-6" />,
+    hint: "ASK ASCII, Z3/Lean simülasyon ve STATUS: 200_PROVEN mühürü",
+    featured: true,
   },
   {
     id: "messenger",
-    label: "Sohbet",
-    hint: "Mesaj, sesli ve görüntülü arama",
-    icon: <MessageCircle className="h-6 w-6" />,
-  },
-  { id: "music", label: "Müzik", hint: "Cihazdaki parçalar", icon: <Music className="h-6 w-6" /> },
-  {
-    id: "media",
-    label: "Medya",
-    hint: "Video oynatıcı",
-    icon: <PlayCircle className="h-6 w-6" />,
+    label: "Connect Sohbet",
+    hint: "WhatsApp tarzı E2EE mesaj, medya, dosya ve sesli not",
+    featured: true,
   },
   {
-    id: "files",
-    label: "Dosyalar",
-    hint: "Dosya yöneticisi",
-    icon: <FolderOpen className="h-6 w-6" />,
+    id: "calls",
+    label: "Connect HD Arama",
+    hint: "Tek tık 1:1 arama, toplantı odası, ekran paylaşımı ve el kaldırma",
+    featured: true,
   },
-  {
-    id: "transfer",
-    label: "Aktarım",
-    hint: "Eşler arası dosya gönderimi",
-    icon: <FileUp className="h-6 w-6" />,
-  },
-  {
-    id: "apps",
-    label: "Uygulamalar",
-    hint: "Kurulu .tbapp paketleri",
-    icon: <Boxes className="h-6 w-6" />,
-  },
-  { id: "mesh", label: "Ağ", hint: "Düğüm ve mesh durumu", icon: <Activity className="h-6 w-6" /> },
-  { id: "relay", label: "Röle", hint: "Taşıma ayarları", icon: <Radio className="h-6 w-6" /> },
-  {
-    id: "writer",
-    label: "Writer",
-    hint: "Yazı belgeleri (çevrimdışı)",
-    icon: <FileText className="h-6 w-6" />,
-  },
-  {
-    id: "sheets",
-    label: "Sheets",
-    hint: "Hesap tablosu (çevrimdışı)",
-    icon: <Table2 className="h-6 w-6" />,
-  },
-  {
-    id: "slides",
-    label: "Slides",
-    hint: "Sunu hazırlama (çevrimdışı)",
-    icon: <Presentation className="h-6 w-6" />,
-  },
-  {
-    id: "pdf",
-    label: "PDF Studio",
-    hint: "PDF görüntüleme ve yazdırma",
-    icon: <FileType2 className="h-6 w-6" />,
-  },
-  {
-    id: "notes",
-    label: "Notes",
-    hint: "Hızlı notlar",
-    icon: <StickyNote className="h-6 w-6" />,
-  },
-  {
-    id: "organizer",
-    label: "Organizer",
-    hint: "Görev ve randevu ajandası",
-    icon: <CalendarCheck className="h-6 w-6" />,
-  },
+  { id: "files", label: "Dosyalar", hint: "Şifreli VFS ve Quick Look" },
+  { id: "computer", label: "Cihazım", hint: "Düğüm, donanım ve ISO durumu" },
+  { id: "yonetim", label: "Yönetim Portalı", hint: "Ağ, lisans ve kayıtlar" },
+  { id: "settings", label: "Ayarlar", hint: "Sistem, güvenlik, hesap ve görünüm" },
+  { id: "store", label: "Bento Mağaza", hint: "İmzalı .tbapp paketleri" },
+  { id: "transfer", label: "Aktarım", hint: "Eşler arası dosya gönderimi" },
+  { id: "apps", label: "Paketler", hint: "Kurulu .tbapp paketleri" },
+  { id: "mesh", label: "Ağ", hint: "Mesh düğüm ve taşıyıcı durumu" },
+  { id: "relay", label: "Röle", hint: "Store-and-forward taşıma" },
+  { id: "writer", label: "Writer", hint: "Yerel yazı belgeleri" },
+  { id: "sheets", label: "Sheets", hint: "Yerel hesap tabloları" },
+  { id: "slides", label: "Slides", hint: "Yerel sunular" },
+  { id: "pdf", label: "PDF Studio", hint: "PDF görüntüleme ve yazdırma" },
+  { id: "notes", label: "Notes", hint: "Hızlı notlar" },
+  { id: "organizer", label: "Organizer", hint: "Görev ve randevu ajandası" },
+  { id: "terminal", label: "Terminal", hint: "POSIX/DOS uyumlu komut satırı" },
+  { id: "media", label: "Medya", hint: "Video oynatıcı" },
+  { id: "music", label: "Müzik", hint: "Cihazdaki parçalar" },
+  { id: "news", label: "Haberler", hint: "Gündem ve teknoloji başlıkları" },
+  { id: "profile", label: "Profil", hint: "Hesap, abonelik, lisans ve kota" },
+  { id: "wallpaper", label: "Görünüm", hint: "Duvar kâğıdı ve tema" },
 ];
 
 export const WEB_TILES: LauncherTile[] = WEB_APPS.map((a) => ({
   id: a.id,
   label: a.label,
   hint: a.hint,
-  icon: <Globe className="h-6 w-6" />,
 }));
 
 export function AppLauncher({
@@ -142,32 +87,39 @@ export function AppLauncher({
         type="button"
         aria-label="Başlatıcıyı kapat"
         onClick={onClose}
-        className="absolute inset-0 bg-black/45 backdrop-blur-sm"
+        className="absolute inset-0 bg-[color-mix(in_srgb,var(--tb-bg)_58%,transparent)] backdrop-blur-sm"
       />
-      <div
-        className="relative m-0 max-h-[82vh] overflow-y-auto rounded-t-2xl p-4 sm:m-4 sm:rounded-2xl"
-        style={{
-          border: "1px solid var(--border)",
-          background: "var(--tb-panel-solid)",
-        }}
-      >
+      <div className="tbos-launcher relative m-0 max-h-[82vh] overflow-y-auto rounded-t-2xl p-4 sm:m-4 sm:rounded-2xl">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-osmono text-[13px] tracking-wide text-slate-300 uppercase">
-            Uygulamalar
-          </h2>
+          <div>
+            <h2 className="font-osmono text-[13px] uppercase tracking-wide text-[var(--tb-text)]">
+              TEDBİRGE® WEBOS
+            </h2>
+            <p className="mt-1 text-[12px] text-[var(--tb-muted)]">
+              Deterministik AXIOM, Connect sohbet ve HD toplantı modülleri
+            </p>
+          </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Kapat"
-            className="wa-press flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:text-slate-100"
+            className="wa-press flex h-9 w-9 items-center justify-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <Grid tiles={LOCAL_TILES} onLaunch={onLaunch} />
+        <h3 className="mb-3 font-osmono text-[12px] uppercase tracking-wide text-[var(--tb-muted)]">
+          Ana modüller
+        </h3>
+        <Grid tiles={LOCAL_TILES.filter((t) => t.featured)} onLaunch={onLaunch} featured />
 
-        <h3 className="mt-6 mb-3 font-osmono text-[12px] tracking-wide text-slate-500 uppercase">
+        <h3 className="mt-6 mb-3 font-osmono text-[12px] uppercase tracking-wide text-[var(--tb-muted)]">
+          WebOS uygulamaları
+        </h3>
+        <Grid tiles={LOCAL_TILES.filter((t) => !t.featured)} onLaunch={onLaunch} />
+
+        <h3 className="mt-6 mb-3 font-osmono text-[12px] uppercase tracking-wide text-[var(--tb-muted)]">
           Web uygulamaları
         </h3>
         <Grid tiles={WEB_TILES} onLaunch={onLaunch} />
@@ -176,25 +128,49 @@ export function AppLauncher({
   );
 }
 
-function Grid({ tiles, onLaunch }: { tiles: LauncherTile[]; onLaunch: (id: string) => void }) {
+function Grid({
+  tiles,
+  onLaunch,
+  featured = false,
+}: {
+  tiles: LauncherTile[];
+  onLaunch: (id: string) => void;
+  featured?: boolean;
+}) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+    <div className={`grid grid-cols-2 gap-3 ${featured ? "lg:grid-cols-3" : "sm:grid-cols-4 lg:grid-cols-6"}`}>
       {tiles.map((t) => (
         <button
           key={t.id}
           type="button"
           onClick={() => onLaunch(t.id)}
-          className="wa-press flex min-h-24 flex-col justify-between rounded-2xl border border-emerald-500/15 bg-[var(--tb-panel-solid)] p-3 text-left transition-colors hover:border-emerald-500/40"
+          className={`tbos-launcher-tile wa-press flex flex-col rounded-2xl p-3 text-left transition ${featured ? "min-h-32" : "min-h-24"}`}
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
-            {t.icon}
-          </span>
-          <span className="mt-2 block min-w-0">
-            <span className="block truncate text-[15px] font-semibold text-slate-100">
+          <div className="flex items-start justify-between gap-2">
+            <AppIconSurface id={t.id} size="launcher" showBadge={featured || !t.id.startsWith("web.")} />
+            {featured ? (
+              <span className="rounded-full border border-[var(--tb-border)] px-2 py-0.5 font-osmono text-[10px] text-[var(--tb-accent)]">
+                V5 ANA
+              </span>
+            ) : null}
+          </div>
+          <span className="mt-3 block min-w-0">
+            <span className="block truncate text-[15px] font-semibold text-[var(--tb-text)]">
               {t.label}
             </span>
-            <span className="block truncate font-osmono text-[11px] text-slate-500">{t.hint}</span>
+            <span className="mt-1 line-clamp-2 font-osmono text-[11px] text-[var(--tb-muted)]">
+              {t.hint}
+            </span>
           </span>
+          {featured ? (
+            <span className="mt-auto flex flex-wrap gap-1 pt-3">
+              {appSecurityLabels(t.id).slice(0, 2).map((b) => (
+                <span key={b} className="rounded-md border border-[var(--tb-border)] px-1.5 py-0.5 font-osmono text-[10px] text-[var(--tb-muted)]">
+                  {b}
+                </span>
+              ))}
+            </span>
+          ) : null}
         </button>
       ))}
     </div>
