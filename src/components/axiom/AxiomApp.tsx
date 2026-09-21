@@ -15,12 +15,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { AstView } from "@/components/axiom/AstView";
 import { CommandBar } from "@/components/axiom/CommandBar";
+import { InvariantMatrix } from "@/components/axiom/InvariantMatrix";
+import { LanguageCard } from "@/components/axiom/LanguageCard";
 import { MemoryProfiler } from "@/components/axiom/MemoryProfiler";
+import { NodeStatusCard } from "@/components/axiom/NodeStatusCard";
 import { AXIOM_BRAND_BANNER, AXIOM_RAM_LIMIT } from "@/lib/axiom/brand";
 import { createRenderer, type Renderer } from "@/lib/axiom/canvas/renderer";
 import type { ByteDigest } from "@/lib/axiom/digest";
-import type { KernelRequest, KernelResponse } from "@/lib/axiom/kernel.worker";
+import type { KernelAnalysis, KernelRequest, KernelResponse } from "@/lib/axiom/kernel.worker";
 import { sampleMemory, type MemorySample } from "@/lib/axiom/profiler";
 import type { RamStats } from "@/lib/axiom/ram";
 import { ROM_SEED, romStatus, seedRom, type RomStatus } from "@/lib/axiom/rom";
@@ -53,6 +57,8 @@ export function AxiomApp() {
   });
   const [digest, setDigest] = useState<ByteDigest | null>(null);
   const [busy, setBusy] = useState(false);
+  const [analysis, setAnalysis] = useState<KernelAnalysis | null>(null);
+  const [hata, setHata] = useState<string | null>(null);
   const [fps, setFps] = useState(0);
 
   // --- Çekirdek daemon'ı: bayt çözümlemesi ana iş parçacığını kilitlemez.
@@ -68,6 +74,22 @@ export function AxiomApp() {
         setDigest(msg.digest);
         setBusy(false);
       }
+      if (msg.type === "analyze") {
+        setAnalysis(msg.analysis);
+        setDigest(msg.analysis.digest);
+        setHata(null);
+        setBusy(false);
+      }
+      if (msg.type === "error") {
+        setHata(msg.message);
+        setBusy(false);
+      }
+    };
+    // Daemon yüklenemezse arayüz sessizce beklemez: hata görünür olur ve
+    // "Çözümleniyor…" durumu serbest bırakılır.
+    worker.onerror = (err) => {
+      setHata(err.message || "Çekirdek daemon'ı yüklenemedi.");
+      setBusy(false);
     };
     const boot: KernelRequest = { id: (seqRef.current += 1), type: "boot" };
     worker.postMessage(boot);
@@ -156,7 +178,7 @@ export function AxiomApp() {
     const worker = workerRef.current;
     if (!worker) return;
     setBusy(true);
-    const msg: KernelRequest = { id: (seqRef.current += 1), type: "digest", text };
+    const msg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
     worker.postMessage(msg);
   }, []);
 
@@ -165,9 +187,9 @@ export function AxiomApp() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
       <div className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-muted)]">
-        Faz 1 iskelet: değişmez aksiyom tabanı, 50 MB sınırlı ispat önbelleği, çekirdek daemon'ı ve
-        parametrik çizim yüzeyi hazır. Simgesel doğrulama motoru henüz bağlı değildir — çıktılar
-        kanıt değil, bayt çözümlemesidir.
+        Faz 2: çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve değişmez eşleştirme
+        etkin. Simgesel doğrulama motoru hâlâ bağlı değildir — burada KANIT ÜRETİLMEZ; çıktılar yapı
+        çözümlemesi ve değişmez uyarısıdır.
       </div>
 
       <MemoryProfiler ram={ram} rom={rom} heap={heap} mode={mode} />
@@ -181,6 +203,24 @@ export function AxiomApp() {
       </div>
 
       <CommandBar busy={busy} onSubmit={submit} />
+
+      {hata ? (
+        <div
+          role="alert"
+          className="rounded-lg border border-[var(--tb-rose-400)] bg-[var(--tb-bg-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-rose-400)]"
+        >
+          Çözümleme tamamlanamadı: {hata}
+        </div>
+      ) : null}
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        <LanguageCard lang={analysis?.lang ?? null} />
+        <NodeStatusCard />
+      </div>
+
+      <AstView ast={analysis?.ast ?? null} metrics={analysis?.metrics ?? null} />
+
+      <InvariantMatrix matches={analysis?.matches ?? []} />
 
       <div className="grid gap-3 lg:grid-cols-2">
         <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3">
