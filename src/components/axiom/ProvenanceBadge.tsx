@@ -68,7 +68,7 @@ export function ProvenanceBadge({ result }: { result: VerifyResult | null }) {
         <>
           <div
             className="mt-2 overflow-x-auto text-[var(--tb-cyan-400)]"
-            // eslint-disable-next-line react/no-danger -- rozet SVG'si yerel olarak üretilir, kaçışlanır
+            // Rozet SVG'si yerel olarak üretilir ve metinleri kaçışlanır; dış içerik yoktur.
             dangerouslySetInnerHTML={{ __html: badge.svg }}
           />
           <pre className="mt-2 overflow-x-auto rounded border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] p-2 font-osmono text-[10px] text-[var(--tb-text)]">
