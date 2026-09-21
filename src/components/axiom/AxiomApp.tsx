@@ -1,0 +1,238 @@
+/* Copyright (c) 2026 Tedbirge Labs / Tedbirge WebOS. All rights reserved.
+ * AXIOM™ is a proprietary product and core engine of Tedbirge WebOS.
+ * Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
+ * Official Hub: https://tedbirge.dev | https://tedbirge.app */
+
+/**
+ * AXIOM KERNEL v12 — KONSOL PENCERESİ (FAZ 1)
+ * ------------------------------------------------------------------
+ * Bu faz çekirdek iskeletidir: sanal ROM (değişmez aksiyom tabanı),
+ * sanal RAM (50 MB sert sınırlı LRU önbellek), Web Worker daemon'ı ve
+ * parametrik WebGL2 çizim yüzeyi. Doğrulama motoru (Z3 / Lean) henüz
+ * bağlı değildir; arayüz bunu açıkça yazar ve hiçbir çıktı "kanıt"
+ * olarak sunulmaz.
+ */
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { CommandBar } from "@/components/axiom/CommandBar";
+import { MemoryProfiler } from "@/components/axiom/MemoryProfiler";
+import { AXIOM_BRAND_BANNER, AXIOM_RAM_LIMIT } from "@/lib/axiom/brand";
+import { createRenderer, type Renderer } from "@/lib/axiom/canvas/renderer";
+import type { ByteDigest } from "@/lib/axiom/digest";
+import type { KernelRequest, KernelResponse } from "@/lib/axiom/kernel.worker";
+import { sampleMemory, type MemorySample } from "@/lib/axiom/profiler";
+import type { RamStats } from "@/lib/axiom/ram";
+import { ROM_SEED, romStatus, seedRom, type RomStatus } from "@/lib/axiom/rom";
+
+const BOS_RAM: RamStats = {
+  used: 0,
+  limit: AXIOM_RAM_LIMIT,
+  entries: 0,
+  evicted: 0,
+  ratio: 0,
+};
+
+export function AxiomApp() {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const glRef = useRef<HTMLCanvasElement>(null);
+  const textRef = useRef<HTMLCanvasElement>(null);
+  const rendererRef = useRef<Renderer | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const seqRef = useRef(0);
+  /** Çizim döngüsü durumu ref ile okunur: RAM değişimi WebGL bağlamını kurmaz. */
+  const ratioRef = useRef(0);
+
+  const [mode, setMode] = useState("hazırlanıyor");
+  const [ram, setRam] = useState<RamStats>(BOS_RAM);
+  const [rom, setRom] = useState<RomStatus | null>(null);
+  const [heap, setHeap] = useState<MemorySample>({
+    usedBytes: 0,
+    limitBytes: AXIOM_RAM_LIMIT,
+    measured: false,
+  });
+  const [digest, setDigest] = useState<ByteDigest | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [fps, setFps] = useState(0);
+
+  // --- Çekirdek daemon'ı: bayt çözümlemesi ana iş parçacığını kilitlemez.
+  useEffect(() => {
+    const worker = new Worker(new URL("@/lib/axiom/kernel.worker.ts", import.meta.url), {
+      type: "module",
+    });
+    workerRef.current = worker;
+    worker.onmessage = (event: MessageEvent<KernelResponse>) => {
+      const msg = event.data;
+      setRam(msg.ram);
+      if (msg.type === "digest") {
+        setDigest(msg.digest);
+        setBusy(false);
+      }
+    };
+    const boot: KernelRequest = { id: (seqRef.current += 1), type: "boot" };
+    worker.postMessage(boot);
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+    };
+  }, []);
+
+  // --- Sanal ROM: tohum bloklar yazılır, kalıcı depolama izni istenir.
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        await seedRom();
+      } catch {
+        /* IndexedDB kapalı olabilir: durum "kullanılamıyor" görünür */
+      }
+      const status = await romStatus();
+      if (alive) setRom(status);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // --- Çizim: WebGL2 varsa GPU, yoksa yazılım; her iki kip de etiketlenir.
+  useEffect(() => {
+    const host = hostRef.current;
+    const gl = glRef.current;
+    const text = textRef.current;
+    if (!host || !gl || !text) return;
+    const renderer = createRenderer(host, gl, text);
+    rendererRef.current = renderer;
+    setMode(renderer.mode === "webgl2" ? "WebGL2 (GPU)" : "2D (yazılım)");
+
+    let raf = 0;
+    let frames = 0;
+    let last = performance.now();
+    let shown = 0;
+    const loop = () => {
+      const now = performance.now();
+      frames += 1;
+      if (now - last >= 500) {
+        shown = (frames * 1000) / (now - last);
+        frames = 0;
+        last = now;
+        setFps(shown);
+      }
+      renderer.draw({
+        ratio: ratioRef.current,
+        fps: shown,
+        status: "Faz 1 — doğrulama motoru bağlı değil (iskelet)",
+      });
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+
+    const onResize = () => renderer.resize();
+    window.addEventListener("resize", onResize);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(onResize) : null;
+    ro?.observe(host);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+      ro?.disconnect();
+      renderer.dispose();
+      rendererRef.current = null;
+    };
+  }, []);
+
+  // Doluluk oranı yalnız referansa yazılır (yeniden çizim zaten her karede).
+  useEffect(() => {
+    ratioRef.current = ram.ratio;
+  }, [ram.ratio]);
+
+  // --- Bellek örneklemesi: gerçek ölçüm yoksa sanal deftere düşer.
+  useEffect(() => {
+    const tick = () => setHeap(sampleMemory(ram.used, ram.limit));
+    tick();
+    const id = window.setInterval(tick, 2000);
+    return () => window.clearInterval(id);
+  }, [ram.used, ram.limit]);
+
+  const submit = useCallback((text: string) => {
+    const worker = workerRef.current;
+    if (!worker) return;
+    setBusy(true);
+    const msg: KernelRequest = { id: (seqRef.current += 1), type: "digest", text };
+    worker.postMessage(msg);
+  }, []);
+
+  const romListesi = useMemo(() => ROM_SEED, []);
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+      <div className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-muted)]">
+        Faz 1 iskelet: değişmez aksiyom tabanı, 50 MB sınırlı ispat önbelleği, çekirdek daemon'ı ve
+        parametrik çizim yüzeyi hazır. Simgesel doğrulama motoru henüz bağlı değildir — çıktılar
+        kanıt değil, bayt çözümlemesidir.
+      </div>
+
+      <MemoryProfiler ram={ram} rom={rom} heap={heap} mode={mode} />
+
+      <div
+        ref={hostRef}
+        className="relative h-56 shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] sm:h-64"
+      >
+        <canvas ref={glRef} className="absolute inset-0 block" />
+        <canvas ref={textRef} className="absolute inset-0 block" />
+      </div>
+
+      <CommandBar busy={busy} onSubmit={submit} />
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3">
+          <div className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">
+            Bayt çözümlemesi (ASK ASCII/1.0)
+          </div>
+          {digest ? (
+            <dl className="mt-2 space-y-1 font-osmono text-[11px] text-[var(--tb-text)]">
+              <div className="flex justify-between gap-3">
+                <dt className="text-[var(--tb-muted)]">Bayt / karakter</dt>
+                <dd>
+                  {digest.bytes} / {digest.chars}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-[var(--tb-muted)]">Saf ASCII</dt>
+                <dd>{digest.ascii ? "evet" : "hayır (UTF-8 çok baytlı)"}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-[var(--tb-muted)]">Parmak izi</dt>
+                <dd>{digest.fingerprint}</dd>
+              </div>
+              <div>
+                <dt className="text-[var(--tb-muted)]">İlk 16 bayt</dt>
+                <dd className="break-all">{digest.head || "—"}</dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="mt-2 font-osmono text-[11px] text-[var(--tb-muted)]">
+              Çözümleme için bir metin gönderin.
+            </p>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3">
+          <div className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">
+            Değişmez aksiyom tabanı (salt-okunur)
+          </div>
+          <ul className="mt-2 space-y-2">
+            {romListesi.map((b) => (
+              <li key={b.key} className="font-osmono text-[11px]">
+                <div className="text-[var(--tb-text)]">{b.label}</div>
+                <div className="text-[var(--tb-muted)]">{b.body}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="pt-1 text-center font-osmono text-[10px] text-[var(--tb-muted)]">
+        {AXIOM_BRAND_BANNER}
+      </div>
+    </div>
+  );
+}

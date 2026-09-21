@@ -32,6 +32,7 @@ describe("yetenek kapısı", () => {
     const builtins = listApps().filter((a) => a.kind === "builtin");
     expect(builtins.map((a) => a.id).sort()).toEqual([
       "apps",
+      "axiom",
       "calls",
       "chats",
       "communities",

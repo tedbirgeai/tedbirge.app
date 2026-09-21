@@ -100,6 +100,7 @@ const OVERRIDES: Record<string, XdgCategory> = {
 
   // Geliştirme
   terminal: "Development",
+  axiom: "Development",
   apps: "Development",
   "web.code": "Development",
   "web.mdn": "Development",

@@ -24,6 +24,7 @@ import { PdfStudioApp } from "@/components/shell/apps/office/PdfStudioApp";
 import { NotesApp } from "@/components/shell/apps/office/NotesApp";
 import { OrganizerApp } from "@/components/shell/apps/office/OrganizerApp";
 import { TerminalApp } from "@/components/shell/apps/TerminalApp";
+import { AxiomApp } from "@/components/axiom/AxiomApp";
 
 import { WindowFrame } from "@/components/shell/WindowFrame";
 import { AppErrorBoundary } from "@/components/shell/AppErrorBoundary";
@@ -48,6 +49,7 @@ import { webApp } from "@/shell/web-apps";
 import { catalogApp } from "@/shell/installed";
 import { getApp } from "@/apps/registry";
 import { getFontScale } from "@/lib/ui/font-scale";
+import { AXIOM_WINDOW_TITLE } from "@/lib/axiom/brand";
 
 import { closeWindow, openWindow, useWindows, type WindowRecord } from "@/shell/windows";
 
@@ -73,6 +75,7 @@ const WINDOW_TITLES: Record<string, string> = {
   panel: "Panel — Lisans ve Saha",
   yonetim: "Sistem Yönetim Portalı",
   profile: "Profil ve Hesap",
+  axiom: AXIOM_WINDOW_TITLE,
 };
 
 /** Pencere başlığı: "computer" cihaz türüne göre adlandırılır. */
@@ -455,6 +458,7 @@ function AppSurface({
   if (win.appId === "notes") return <NotesApp />;
   if (win.appId === "organizer") return <OrganizerApp />;
   if (win.appId === "terminal") return <TerminalApp />;
+  if (win.appId === "axiom") return <AxiomApp />;
   if (win.appId === "computer")
     return <ComputerApp onMesh={() => onLaunch("mesh")} onLaunch={onLaunch} />;
 

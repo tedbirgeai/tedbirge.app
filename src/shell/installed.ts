@@ -164,6 +164,13 @@ export const LOCAL_APPS: CatalogApp[] = [
     builtin: true,
   },
   {
+    id: "axiom",
+    label: "AXIOM",
+    hint: "Deterministik doğrulama çekirdeği (v12)",
+    category: "araclar",
+    builtin: true,
+  },
+  {
     id: "organizer",
     label: "Organizer",
     hint: "Görev ve randevu ajandası",
