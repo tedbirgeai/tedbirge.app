@@ -68,7 +68,12 @@ export const Route = createFileRoute("/api/public/v1/mcp/verify")({
             cors,
           );
         }
-        const response = await handleMcpRequest(body);
+        // Müşteri anahtarı yalnız özet olarak deftere girer; ham değer tutulmaz.
+        const client =
+          request.headers.get("x-axiom-client") ??
+          request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
+          null;
+        const response = await handleMcpRequest(body, client);
         return json(response, "error" in response ? 400 : 200, cors);
       },
     },
