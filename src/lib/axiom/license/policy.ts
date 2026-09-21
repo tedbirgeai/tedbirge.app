@@ -40,11 +40,7 @@ export const LICENSE_TIERS: LicenseTier[] = [
     label: "Community",
     devices: FREE_DEVICE_LIMIT,
     monthlyUsd: 0,
-    features: [
-      "1–5 cihaz · ücretsiz",
-      "Yerel doğrulama ve çevrimdışı kuyruk",
-      "Topluluk desteği",
-    ],
+    features: ["1–5 cihaz · ücretsiz", "Yerel doğrulama ve çevrimdışı kuyruk", "Topluluk desteği"],
   },
   {
     id: "enterprise",

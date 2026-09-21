@@ -12,7 +12,12 @@ import {
 } from "@/lib/axiom/bridge/types";
 import { createWssBridge, type WsLike } from "@/lib/axiom/bridge/wss";
 
-function fakeSocket(): WsLike & { sent: string[]; open(): void; drop(): void; reply(payload: unknown): void } {
+function fakeSocket(): WsLike & {
+  sent: string[];
+  open(): void;
+  drop(): void;
+  reply(payload: unknown): void;
+} {
   const sent: string[] = [];
   const ws = {
     sent,
@@ -39,7 +44,11 @@ function fakeSocket(): WsLike & { sent: string[]; open(): void; drop(): void; re
   return ws;
 }
 
-const REQ: TruthRequest = { id: 1, method: "axiom.verify", text: "Kapalı sistemde enerji korunur." };
+const REQ: TruthRequest = {
+  id: 1,
+  method: "axiom.verify",
+  text: "Kapalı sistemde enerji korunur.",
+};
 
 describe("gerçeklik köprüsü", () => {
   it("taşıyıcı seçimi: soket > WebSocket > yok", () => {
@@ -78,7 +87,15 @@ describe("gerçeklik köprüsü", () => {
     expect(bridge.state().connected).toBe(true);
     expect(ws.sent).toHaveLength(1);
 
-    ws.reply({ id: 1, verdict: "200_PROVEN", engine: "mock", simulated: true, ms: 3, cid: "a", seal: "s" });
+    ws.reply({
+      id: 1,
+      verdict: "200_PROVEN",
+      engine: "mock",
+      simulated: true,
+      ms: 3,
+      cid: "a",
+      seal: "s",
+    });
     const out = await pending;
     expect(out.verdict).toBe("200_PROVEN");
     expect(bridge.state().latencyMs).not.toBeNull();

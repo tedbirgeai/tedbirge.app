@@ -99,7 +99,8 @@ const DICT: Record<LocaleId, Record<string, string>> = {
     "lic.month": "ay",
     "lic.request": "Yükseltme talebi",
     "lic.requested": "Talep işaretlendi",
-    "lic.requestNote": "Talebiniz bu cihazda işaretlendi. Ödeme sağlayıcısı bağlı olmadığı için tahsilat yapılmaz; yükseltme elle tamamlanır.",
+    "lic.requestNote":
+      "Talebiniz bu cihazda işaretlendi. Ödeme sağlayıcısı bağlı olmadığı için tahsilat yapılmaz; yükseltme elle tamamlanır.",
     "lic.later": "Daha sonra",
     "lic.testMode": "Test kipi · ödeme sağlayıcısı bağlı değil",
     "lic.open": "Lisansı görüntüle",
@@ -193,14 +194,16 @@ const DICT: Record<LocaleId, Record<string, string>> = {
     "sdk.ciPass": "Check passed",
     "sdk.ciFail": "Check failed",
     "lic.title": "Node license required",
-    "lic.body": "The free plan covers 5 devices; the 6th device needs a node license. Connected devices",
+    "lic.body":
+      "The free plan covers 5 devices; the 6th device needs a node license. Connected devices",
     "lic.devices": "devices",
     "lic.unlimited": "Unlimited devices",
     "lic.free": "free",
     "lic.month": "mo",
     "lic.request": "Request upgrade",
     "lic.requested": "Request noted",
-    "lic.requestNote": "Your request is noted on this device. No payment provider is attached, so nothing is charged; the upgrade is completed manually.",
+    "lic.requestNote":
+      "Your request is noted on this device. No payment provider is attached, so nothing is charged; the upgrade is completed manually.",
     "lic.later": "Later",
     "lic.testMode": "Test mode · no payment provider attached",
     "lic.open": "View license",

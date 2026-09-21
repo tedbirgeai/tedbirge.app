@@ -12,6 +12,11 @@ describe("SDK adaptörleri", () => {
     expect(SDK_TARGETS).toHaveLength(8);
     for (const target of SDK_TARGETS) {
       const src = adapterSource(target.id, "https://tedbirge.app");
+      // C hedefi HTTP değil yerel soket köprüsünü kullanır.
+      if (target.id === "c") {
+        expect(src).toContain("tedbirge_truth.h");
+        continue;
+      }
       expect(src).toContain(SDK_MCP_PATH);
       expect(src).toContain("axiom.verify");
       expect(src).not.toContain("http://");

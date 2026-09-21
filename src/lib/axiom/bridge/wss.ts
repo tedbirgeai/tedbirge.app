@@ -55,8 +55,7 @@ export function createWssBridge(options: WssBridgeOptions = {}): WssBridge {
       if (typeof setTimeout !== "undefined") setTimeout(fn, ms);
     });
   const factory =
-    options.factory ??
-    ((target: string) => new WebSocket(target) as unknown as WsLike);
+    options.factory ?? ((target: string) => new WebSocket(target) as unknown as WsLike);
 
   let socket: WsLike | null = null;
   let closed = false;
@@ -65,7 +64,7 @@ export function createWssBridge(options: WssBridgeOptions = {}): WssBridge {
   const waiting = new Map<number, { resolve: (r: TruthResponse) => void; at: number }>();
 
   const emit = (patch: Partial<BridgeState>) => {
-    state = { ...state, ...patch, pending: queue.length + waiting.size };
+    state = { ...state, ...patch, pending: waiting.size };
     options.onState?.(state);
   };
 
@@ -134,7 +133,6 @@ export function createWssBridge(options: WssBridgeOptions = {}): WssBridge {
         emit({});
         connect();
       });
-
     },
     close() {
       closed = true;

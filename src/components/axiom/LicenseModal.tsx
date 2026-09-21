@@ -126,8 +126,11 @@ export function LicenseModal({ open, peers, onClose }: LicenseModalProps) {
                   {tier.label}
                 </div>
                 <div className="mt-1 font-osmono text-[11px] text-[var(--tb-muted)]">
-                  {tier.devices === null ? t("lic.unlimited") : `${tier.devices} ${t("lic.devices")}`}{" "}
-                  · {tier.monthlyUsd === 0 ? t("lic.free") : `$${tier.monthlyUsd}/${t("lic.month")}`}
+                  {tier.devices === null
+                    ? t("lic.unlimited")
+                    : `${tier.devices} ${t("lic.devices")}`}{" "}
+                  ·{" "}
+                  {tier.monthlyUsd === 0 ? t("lic.free") : `$${tier.monthlyUsd}/${t("lic.month")}`}
                 </div>
                 <ul className="mt-2 space-y-1 font-osmono text-[10px] text-[var(--tb-muted)]">
                   {tier.features.map((f) => (
@@ -158,7 +161,9 @@ export function LicenseModal({ open, peers, onClose }: LicenseModalProps) {
         ) : null}
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <span className="font-osmono text-[10px] text-[var(--tb-muted)]">{t("lic.testMode")}</span>
+          <span className="font-osmono text-[10px] text-[var(--tb-muted)]">
+            {t("lic.testMode")}
+          </span>
           <button
             type="button"
             onClick={later}

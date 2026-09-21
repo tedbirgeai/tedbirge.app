@@ -15,7 +15,14 @@ import {
 
 describe("lisans ilkesi", () => {
   beforeEach(() => {
-    if (typeof localStorage !== "undefined") localStorage.clear();
+    // Test ortamında tarayıcı depolaması yoktur: bellek içi karşılığı kurulur.
+    const store = new Map<string, string>();
+    (globalThis as Record<string, unknown>)["localStorage"] = {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+      removeItem: (k: string) => void store.delete(k),
+      clear: () => store.clear(),
+    };
   });
 
   it("5 cihaza kadar ücretsizdir, 6. cihazda abonelik gerekir", () => {

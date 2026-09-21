@@ -88,7 +88,9 @@ export function BridgeStatusCard() {
         </div>
       </dl>
 
-      <p className="mt-2 font-osmono text-[10px] text-[var(--tb-muted)]">{state.note} · {t("bridge.note")}</p>
+      <p className="mt-2 font-osmono text-[10px] text-[var(--tb-muted)]">
+        {state.note} · {t("bridge.note")}
+      </p>
     </div>
   );
 }
