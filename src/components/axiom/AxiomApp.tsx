@@ -34,7 +34,6 @@ import type { RamStats } from "@/lib/axiom/ram";
 import { ROM_SEED, romStatus, seedRom, type RomStatus } from "@/lib/axiom/rom";
 import type { VerifyResult } from "@/lib/axiom/verify/types";
 
-
 const BOS_RAM: RamStats = {
   used: 0,
   limit: AXIOM_RAM_LIMIT,
@@ -145,7 +144,6 @@ export function AxiomApp() {
       workerRef.current = null;
     };
   }, [deneme]);
-
 
   // --- Sanal ROM: tohum bloklar yazılır, kalıcı depolama izni istenir.
   useEffect(() => {
@@ -278,7 +276,6 @@ export function AxiomApp() {
     setDeneme((n) => n + 1);
   }, []);
 
-
   const romListesi = useMemo(() => ROM_SEED, []);
 
   return (
@@ -309,7 +306,8 @@ export function AxiomApp() {
           <div className="break-words">Çözümleme tamamlanamadı: {hata}</div>
           {yerel ? (
             <div className="mt-1 text-[var(--tb-muted)]">
-              Yedek motor etkin: çözümleme ve doğrulama ana iş parçacığında sürüyor, sonuçlar aynıdır.
+              Yedek motor etkin: çözümleme ve doğrulama ana iş parçacığında sürüyor, sonuçlar
+              aynıdır.
             </div>
           ) : null}
           <button
@@ -321,7 +319,6 @@ export function AxiomApp() {
           </button>
         </div>
       ) : null}
-
 
       <div className="grid gap-3 lg:grid-cols-2">
         <LanguageCard lang={analysis?.lang ?? null} />

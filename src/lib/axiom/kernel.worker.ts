@@ -46,7 +46,6 @@ export type KernelResponse =
 
 const ram = new AxiomRam(AXIOM_RAM_LIMIT, AXIOM_RAM_THRESHOLD);
 
-
 self.onmessage = async (event: MessageEvent<KernelRequest>) => {
   const msg = event.data;
   try {
