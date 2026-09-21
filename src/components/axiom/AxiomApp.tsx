@@ -15,8 +15,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { ArbiterPanel } from "@/components/axiom/ArbiterPanel";
 import { AstView } from "@/components/axiom/AstView";
+import { BillingDashboard } from "@/components/axiom/BillingDashboard";
 import { CommandBar } from "@/components/axiom/CommandBar";
+import { ProvenanceBadge } from "@/components/axiom/ProvenanceBadge";
+import { RewardsCard } from "@/components/axiom/RewardsCard";
+import { SdkPanel } from "@/components/axiom/SdkPanel";
+import { SyncStatusCard } from "@/components/axiom/SyncStatusCard";
 import { InvariantMatrix } from "@/components/axiom/InvariantMatrix";
 import { LanguageCard } from "@/components/axiom/LanguageCard";
 import { MemoryProfiler } from "@/components/axiom/MemoryProfiler";
@@ -24,7 +30,10 @@ import { NodeStatusCard } from "@/components/axiom/NodeStatusCard";
 import { ProofViewer } from "@/components/axiom/ProofViewer";
 import { VerifyBoundary } from "@/components/axiom/VerifyBoundary";
 import type { KernelAnalysis } from "@/lib/axiom/analyze";
+import { meterRecord } from "@/lib/axiom/billing/meter";
 import { AXIOM_BRAND_BANNER, AXIOM_RAM_LIMIT } from "@/lib/axiom/brand";
+import { t } from "@/lib/axiom/i18n";
+import { reviewProof } from "@/lib/axiom/net/arbiters";
 import { createRenderer, type Renderer } from "@/lib/axiom/canvas/renderer";
 import type { ByteDigest } from "@/lib/axiom/digest";
 import type { KernelRequest, KernelResponse } from "@/lib/axiom/kernel.worker";
