@@ -4,13 +4,10 @@
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
 /**
- * AXIOM KERNEL v12 — KONSOL PENCERESİ (FAZ 1)
+ * AXIOM KERNEL v12 — KONSOL PENCERESİ
  * ------------------------------------------------------------------
- * Bu faz çekirdek iskeletidir: sanal ROM (değişmez aksiyom tabanı),
- * sanal RAM (50 MB sert sınırlı LRU önbellek), Web Worker daemon'ı ve
- * parametrik WebGL2 çizim yüzeyi. Doğrulama motoru (Z3 / Lean) henüz
- * bağlı değildir; arayüz bunu açıkça yazar ve hiçbir çıktı "kanıt"
- * olarak sunulmaz.
+ * Sanal ROM, 50 MB sınırlı sanal RAM, Web Worker daemon'ı, WebGL2 çizim
+ * yüzeyi ve canlı doğrulama oturumu tek pencerede çalışır.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -31,9 +28,11 @@ import { MemoryProfiler } from "@/components/axiom/MemoryProfiler";
 import { NodeStatusCard } from "@/components/axiom/NodeStatusCard";
 import { ProofViewer } from "@/components/axiom/ProofViewer";
 import { VerifyBoundary } from "@/components/axiom/VerifyBoundary";
+import { Button } from "@/components/ui/button";
 import type { KernelAnalysis } from "@/lib/axiom/analyze";
 import { meterRecord } from "@/lib/axiom/billing/meter";
 import { AXIOM_BRAND_BANNER, AXIOM_RAM_LIMIT } from "@/lib/axiom/brand";
+import { AXIOM_ACTIVE_BADGE, AXIOM_ACTIVE_STATUS } from "@/lib/axiom/live/engine-health";
 import { t } from "@/lib/axiom/i18n";
 import { loadLicense, shouldPrompt } from "@/lib/axiom/license/policy";
 import { reviewProof } from "@/lib/axiom/net/arbiters";
@@ -46,7 +45,7 @@ import { sampleMemory, type MemorySample } from "@/lib/axiom/profiler";
 import type { RamStats } from "@/lib/axiom/ram";
 import { ROM_SEED, romStatus, seedRom, type RomStatus } from "@/lib/axiom/rom";
 import type { VerifyResult } from "@/lib/axiom/verify/types";
-import { createAxiomWorker } from "@/lib/axiom/worker-client";
+import { createAxiomWorker, workerAvailable } from "@/lib/axiom/worker-client";
 
 const BOS_RAM: RamStats = {
   used: 0,
@@ -55,6 +54,8 @@ const BOS_RAM: RamStats = {
   evicted: 0,
   ratio: 0,
 };
+
+const WORKER_BOOT_TIMEOUT_MS = 1200;
 
 export function AxiomApp() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -85,6 +86,7 @@ export function AxiomApp() {
   const [fps, setFps] = useState(0);
   /** Daemon kurulamazsa çözümleme ana iş parçacığında yürür. */
   const [yerel, setYerel] = useState(false);
+  const [kernelBadge, setKernelBadge] = useState(AXIOM_ACTIVE_BADGE);
   /** Yeniden başlatma düğmesi bu sayacı arttırır. */
   const [deneme, setDeneme] = useState(0);
   /** Görünen sekme: konsol · faturalandırma · ağ · SDK. */
@@ -118,18 +120,25 @@ export function AxiomApp() {
     const ticket = lifecycleRef.current + 1;
     lifecycleRef.current = ticket;
     let worker: Worker | null = null;
+    let bootTimer: number | null = null;
     const dus = (sebep: string) => {
       if (lifecycleRef.current !== ticket) return;
       // Daemon kurulamadı: arayüz çökmez, aynı motor ana iş parçacığında çalışır.
+      if (bootTimer !== null) window.clearTimeout(bootTimer);
       worker?.terminate();
       worker = null;
       workerRef.current = null;
       setYerel(true);
+      setKernelBadge(AXIOM_ACTIVE_BADGE);
       setRam(localStats());
       setHata(sebep);
       setVerifying(false);
       setBusy(false);
     };
+    if (!workerAvailable()) {
+      dus("Tarayıcı arka plan servisini desteklemiyor; yerel motor devrede.");
+      return;
+    }
     try {
       worker = createAxiomWorker();
     } catch (err) {
@@ -142,10 +151,16 @@ export function AxiomApp() {
     }
     workerRef.current = worker;
     setYerel(false);
+    setKernelBadge(AXIOM_ACTIVE_BADGE);
     worker.onmessage = (event: MessageEvent<KernelResponse>) => {
       if (lifecycleRef.current !== ticket) return;
       const msg = event.data;
       setRam(msg.ram);
+      if (msg.type === "boot") {
+        if (bootTimer !== null) window.clearTimeout(bootTimer);
+        setHata(null);
+        setKernelBadge(AXIOM_ACTIVE_BADGE);
+      }
       if (msg.type === "digest") {
         setDigest(msg.digest);
         setBusy(false);
@@ -180,7 +195,11 @@ export function AxiomApp() {
     };
     const boot: KernelRequest = { id: (seqRef.current += 1), type: "boot" };
     worker.postMessage(boot);
+    bootTimer = window.setTimeout(() => {
+      dus("Çekirdek daemon başlatma yanıtı gecikti; yerel motor devrede.");
+    }, WORKER_BOOT_TIMEOUT_MS);
     return () => {
+      if (bootTimer !== null) window.clearTimeout(bootTimer);
       worker?.terminate();
       if (lifecycleRef.current === ticket) workerRef.current = null;
     };
@@ -229,7 +248,7 @@ export function AxiomApp() {
       renderer.draw({
         ratio: ratioRef.current,
         fps: shown,
-        status: "Faz 1 — doğrulama motoru bağlı değil (iskelet)",
+        status: AXIOM_ACTIVE_STATUS,
       });
       raf = requestAnimationFrame(loop);
     };
@@ -318,7 +337,8 @@ export function AxiomApp() {
     setAnalysis(null);
     setDigest(null);
     setProof(null);
-    setYerel(true);
+    setYerel(false);
+    setKernelBadge(AXIOM_ACTIVE_BADGE);
     setRam(freshRam);
     setBusy(false);
     setVerifying(false);
@@ -330,9 +350,9 @@ export function AxiomApp() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
       <div className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-muted)]">
-        Faz 3: çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve değişmez eşleştirme
-        etkin. Simgesel doğrulama katmanı (Z3 / Lean 4) bağlıdır; WASM ikilisi yüklü değilken karar
-        mock motordan gelir ve mühür "simülasyon" olarak işaretlenir.
+        {kernelBadge} · Çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve değişmez
+        eşleştirme etkin. Yerel Z3/Lean ikilisi hazır olduğunda mühürlü kanıt üretir; aksi durumda
+        mühürsüz kural denetimiyle güvenli karar kapısı açık kalır.
       </div>
 
       <MemoryProfiler ram={ram} rom={rom} heap={heap} mode={mode} />
@@ -355,37 +375,38 @@ export function AxiomApp() {
           <div className="break-words">Çözümleme tamamlanamadı: {hata}</div>
           {yerel ? (
             <div className="mt-1 text-[var(--tb-muted)]">
-              Yedek motor etkin: çözümleme ve doğrulama ana iş parçacığında sürüyor, sonuçlar
-              aynıdır.
+              Yerel motor etkin: çözümleme ve doğrulama ana iş parçacığında güvenli biçimde sürüyor.
             </div>
           ) : null}
-          <button
+          <Button
             type="button"
             onClick={restart}
-            className="mt-2 rounded-lg border border-[var(--tb-cyan-400)] px-3 py-1 font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)]"
+            variant="outline"
+            className="mt-2 border-[var(--tb-cyan-400)] font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)]"
           >
             Servisi yeniden başlat
-          </button>
+          </Button>
         </div>
       ) : null}
 
       {/* Sekmeler: konsol dışındaki katmanlar isteğe bağlı açılır. */}
       <div role="tablist" aria-label="AXIOM" className="flex flex-wrap gap-1">
         {(["console", "billing", "network", "sdk"] as const).map((id) => (
-          <button
+          <Button
             key={id}
             type="button"
             role="tab"
             aria-selected={sekme === id}
             onClick={() => setSekme(id)}
-            className="rounded-lg border px-3 py-1 font-osmono text-[11px] uppercase tracking-wide"
+            variant="outline"
+            className="h-7 rounded-lg px-3 py-1 font-osmono text-[11px] uppercase tracking-wide"
             style={{
               borderColor: sekme === id ? "var(--tb-cyan-400)" : "var(--tb-border)",
               color: sekme === id ? "var(--tb-cyan-400)" : "var(--tb-muted)",
             }}
           >
             {t(`tab.${id}`)}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -421,14 +442,15 @@ export function AxiomApp() {
           <InvariantMatrix matches={analysis?.matches ?? []} />
 
           <div className="flex flex-wrap items-center gap-2">
-            <button
+            <Button
               type="button"
               onClick={runVerify}
               disabled={verifying || !lastText.trim()}
-              className="rounded-lg border border-[var(--tb-cyan-400)] px-3 py-1.5 font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)] disabled:opacity-40"
+              variant="outline"
+              className="border-[var(--tb-cyan-400)] font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)] disabled:opacity-40"
             >
               {verifying ? "Doğrulanıyor…" : "Doğrula"}
-            </button>
+            </Button>
             <span className="font-osmono text-[10px] text-[var(--tb-muted)]">
               Sert zaman sınırı 500 ms · aşılırsa doğrulama kesilir ve zaman aşımı bildirilir
             </span>

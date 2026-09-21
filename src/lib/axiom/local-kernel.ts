@@ -14,6 +14,7 @@
 
 import { analyze, type KernelAnalysis } from "@/lib/axiom/analyze";
 import { AXIOM_RAM_LIMIT, AXIOM_RAM_THRESHOLD } from "@/lib/axiom/brand";
+import { resetEngineSession } from "@/lib/axiom/live/engine-session";
 import { AxiomRam, type RamStats } from "@/lib/axiom/ram";
 import { verify } from "@/lib/axiom/verify/engine";
 import type { VerifyResult } from "@/lib/axiom/verify/types";
@@ -22,6 +23,7 @@ let ram = new AxiomRam(AXIOM_RAM_LIMIT, AXIOM_RAM_THRESHOLD);
 
 /** Yedek motoru temiz başlangıç durumuna alır. */
 export function resetLocalKernel(): RamStats {
+  resetEngineSession();
   ram = new AxiomRam(AXIOM_RAM_LIMIT, AXIOM_RAM_THRESHOLD);
   return ram.stats();
 }

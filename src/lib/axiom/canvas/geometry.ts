@@ -22,7 +22,7 @@ export type SceneInput = {
   ratio: number;
   /** Saniyedeki kare sayısı. */
   fps: number;
-  /** Faz 1 durum satırı. */
+  /** Çekirdek durum satırı. */
   status: string;
   /** Çizim kipi etiketi. */
   mode: string;

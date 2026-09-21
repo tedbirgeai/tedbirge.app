@@ -25,7 +25,7 @@ export type MeterRecord = {
   /** Kayıt zamanı (epoch ms). */
   at: number;
   tier: BillingTier;
-  /** Gerçek motor kimliği (mock ise simülasyon). */
+  /** Gerçek motor kimliği; yerel kapı ayrı işaretlenir. */
   engine: EngineId;
   simulated: boolean;
   verdict: VerifyVerdict;

@@ -4,3 +4,7 @@
 export function createAxiomWorker(): Worker {
   return new Worker(new URL("./kernel.worker.ts", import.meta.url), { type: "module" });
 }
+
+export function workerAvailable(): boolean {
+  return typeof Worker !== "undefined";
+}

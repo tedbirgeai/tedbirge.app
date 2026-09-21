@@ -4,19 +4,19 @@
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
 /**
- * DOĞRULAMA MOTORU (Z3 / LEAN 4 / MOCK)
+ * DOĞRULAMA MOTORU (Z3 / LEAN 4 / YEREL KURAL KAPISI)
  * ------------------------------------------------------------------
  * Zincir: AXIOM-IR → SMT-LIB 2 + Lean 4 önermesi → motor → karar → mühür.
- * Motor seçimi yükleyiciye aittir; WASM ikilisi yoksa mock motor çalışır.
+ * Motor seçimi canlı oturuma aittir; WASM ikilisi yoksa mühür üretmeyen
+ * yerel kural kapısı çalışır.
  * Her çağrı 500 ms sert bütçe ve panik koruması altındadır.
  */
 
 import type { InvariantMatch } from "@/lib/axiom/invariants";
 import type { AxiomIr } from "@/lib/axiom/lang/axiom-ir";
+import { loadEngine, solveWithEngine } from "@/lib/axiom/live/engine-session";
 import { createDeadline, DeadlineExceeded, runGuarded } from "@/lib/axiom/verify/guard";
 import { toLean } from "@/lib/axiom/verify/lean";
-import { loadEngine } from "@/lib/axiom/verify/loader";
-import { mockSolve } from "@/lib/axiom/verify/mock";
 import { contentId, proofSeal } from "@/lib/axiom/verify/seal";
 import { toSmtLib } from "@/lib/axiom/verify/smt";
 import {
@@ -32,7 +32,7 @@ const SNIPPET = 2000;
 function sonuc(
   text: string,
   engine: EngineId,
-  simulated: boolean,
+  wasmVerified: boolean,
   verdict: VerifyVerdict,
   steps: VerifyResult["steps"],
   ms: number,
@@ -42,12 +42,13 @@ function sonuc(
   const cid = contentId(text, engine, verdict);
   return {
     engine,
-    simulated,
+    wasmVerified,
+    simulated: !wasmVerified,
     verdict,
     steps,
     ms,
     cid,
-    seal: proofSeal(cid, verdict),
+    seal: wasmVerified ? proofSeal(cid, verdict) : null,
     smt: smt.slice(0, SNIPPET),
     lean: lean.slice(0, SNIPPET),
   };
@@ -64,27 +65,27 @@ export async function verify(
   budgetMs: number = VERIFY_TIMEOUT_MS,
 ): Promise<VerifyResult> {
   const handle = await loadEngine().catch(() => ({
-    engine: "mock" as EngineId,
-    simulated: true,
+    engine: "local" as EngineId,
     module: null,
+    wasmLoaded: false,
   }));
 
   const smt = toSmtLib(ir, matches);
   const lean = toLean(ir, matches);
 
-  const outcome = await runGuarded((deadline: ReturnType<typeof createDeadline>) => {
-    const solved = mockSolve(ir, matches);
+  const outcome = await runGuarded(async (deadline: ReturnType<typeof createDeadline>) => {
+    const solved = await solveWithEngine(handle, ir, matches);
     if (deadline.expired()) throw new DeadlineExceeded();
     return solved;
   }, budgetMs);
 
   if (!outcome.ok) {
-    return sonuc(text, handle.engine, handle.simulated, outcome.verdict, [], outcome.ms, smt, lean);
+    return sonuc(text, handle.engine, handle.wasmLoaded, outcome.verdict, [], outcome.ms, smt, lean);
   }
   return sonuc(
     text,
     handle.engine,
-    handle.simulated,
+    handle.wasmLoaded,
     outcome.value.verdict,
     outcome.value.steps,
     outcome.ms,

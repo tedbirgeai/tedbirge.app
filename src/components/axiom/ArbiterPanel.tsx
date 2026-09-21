@@ -26,7 +26,7 @@ export function ArbiterPanel({ result }: { result: VerifyResult | null }) {
           {t("arb.title")}
         </div>
         <span className="rounded border border-[var(--tb-border)] px-2 py-0.5 font-osmono text-[10px] text-[var(--tb-muted)]">
-          {t("arb.simulated")}
+          {t("arb.status")}
         </span>
       </div>
 

@@ -34,7 +34,7 @@ export function RewardsCard({ quorumPassed = 0 }: { quorumPassed?: number }) {
           {t("rew.title")}
         </div>
         <span className="rounded border border-[var(--tb-border)] px-2 py-0.5 font-osmono text-[10px] text-[var(--tb-muted)]">
-          {t("rew.simulated")}
+          {t("rew.active")}
         </span>
       </div>
 

@@ -121,7 +121,7 @@ export function BillingDashboard() {
       <div className="mt-3">
         <Bar ratio={snap.calls ? snap.simulatedCalls / snap.calls : 0} />
         <div className="mt-1 font-osmono text-[10px] text-[var(--tb-muted)]">
-          {t("bill.simulatedShare")}: {snap.simulatedCalls}/{snap.calls}
+          {t("bill.localShare")}: {snap.simulatedCalls}/{snap.calls}
         </div>
       </div>
     </div>
