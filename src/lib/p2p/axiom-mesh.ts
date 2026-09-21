@@ -15,7 +15,8 @@ export type AxiomMesh = {
 };
 
 export function createAxiomMesh(channelName = "tedbirge-axiom-proof-mesh"): AxiomMesh {
-  const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(channelName) : null;
+  const channel =
+    typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(channelName) : null;
   let delivered = 0;
   let peers = channel ? 1 : 0;
 

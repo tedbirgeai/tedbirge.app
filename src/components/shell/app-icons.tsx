@@ -441,6 +441,22 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
           <circle cx="32" cy="32" r="4" fill="var(--tb-text)" />
         </Frame>
       );
+    case "limen":
+      return (
+        <Frame className={className}>
+          <path
+            d="M18 39c8-15 20-19 31-23M18 39c11-2 20 0 28 8M18 39l9-21 19 29"
+            fill="none"
+            stroke="var(--tb-accent)"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="18" cy="39" r="4" fill="var(--tb-accent-2)" />
+          <circle cx="49" cy="16" r="4" fill="var(--tb-text)" opacity=".86" />
+          <circle cx="46" cy="47" r="4" fill="var(--tb-text)" opacity=".86" />
+        </Frame>
+      );
     case "web.search":
     case "web.search.g":
       return (

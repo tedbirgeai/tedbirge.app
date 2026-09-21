@@ -146,14 +146,18 @@ export function Desktop({
     const right = Math.max(box.x1, box.x2);
     const top = Math.min(box.y1, box.y2);
     const bottom = Math.max(box.y1, box.y2);
-    const hit = Array.from(host.querySelectorAll<HTMLElement>("[data-desktop-key]")).flatMap((el) => {
-      const key = el.dataset.desktopKey;
-      if (!key) return [];
-      const ir = el.getBoundingClientRect();
-      const ix = ir.left - r.left;
-      const iy = ir.top - r.top;
-      return ix < right && ix + ir.width > left && iy < bottom && iy + ir.height > top ? [key] : [];
-    });
+    const hit = Array.from(host.querySelectorAll<HTMLElement>("[data-desktop-key]")).flatMap(
+      (el) => {
+        const key = el.dataset.desktopKey;
+        if (!key) return [];
+        const ir = el.getBoundingClientRect();
+        const ix = ir.left - r.left;
+        const iy = ir.top - r.top;
+        return ix < right && ix + ir.width > left && iy < bottom && iy + ir.height > top
+          ? [key]
+          : [];
+      },
+    );
     setSelection(hit);
   };
 
@@ -365,7 +369,6 @@ export function Desktop({
     notifyOk("Kopya oluşturuldu");
   }, [clipboard]);
 
-
   const items = useMemo(() => {
     const appItems: Item[] = installed.flatMap((id) => {
       const app = catalogApp(id);
@@ -392,8 +395,10 @@ export function Desktop({
       glyph: fileGlyph(entry),
     }));
     const cmp = (a: Item, b: Item) => {
-      if (layout.sort === "tur") return a.sortType.localeCompare(b.sortType, "tr") || a.label.localeCompare(b.label, "tr");
-      if (layout.sort === "tarih") return b.updated - a.updated || a.label.localeCompare(b.label, "tr");
+      if (layout.sort === "tur")
+        return a.sortType.localeCompare(b.sortType, "tr") || a.label.localeCompare(b.label, "tr");
+      if (layout.sort === "tarih")
+        return b.updated - a.updated || a.label.localeCompare(b.label, "tr");
       return a.label.localeCompare(b.label, "tr");
     };
     return [...appItems.sort(cmp), ...fileItems.sort(cmp)];

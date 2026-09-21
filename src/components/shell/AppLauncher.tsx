@@ -32,6 +32,12 @@ export const LOCAL_TILES: LauncherTile[] = [
     hint: "Tek tık 1:1 arama, toplantı odası, ekran paylaşımı ve el kaldırma",
     featured: true,
   },
+  {
+    id: "limen",
+    label: "LIMEN",
+    hint: "P2P Git/WebRTC delta sync, AXIOM düğümleri ve MCP",
+    featured: true,
+  },
   { id: "files", label: "Dosyalar", hint: "Şifreli VFS ve Quick Look" },
   { id: "computer", label: "Cihazım", hint: "Düğüm, donanım ve ISO durumu" },
   { id: "yonetim", label: "Yönetim Portalı", hint: "Ağ, lisans ve kayıtlar" },

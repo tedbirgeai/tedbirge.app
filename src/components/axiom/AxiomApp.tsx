@@ -383,9 +383,9 @@ export function AxiomApp() {
             Faz 1 — Çekirdek Doğrulama Motoru Aktif (Çevrimiçi)
           </div>
           <div>
-            {kernelBadge} · Çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve değişmez
-            eşleştirme etkin. Yerel Z3/Lean ikilisi hazır olduğunda mühürlü kanıt üretir; aksi durumda
-            mühürsüz kural denetimiyle güvenli karar kapısı açık kalır.
+            {kernelBadge} · Çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve
+            değişmez eşleştirme etkin. Yerel Z3/Lean ikilisi hazır olduğunda mühürlü kanıt üretir;
+            aksi durumda mühürsüz kural denetimiyle güvenli karar kapısı açık kalır.
           </div>
         </div>
         <Button

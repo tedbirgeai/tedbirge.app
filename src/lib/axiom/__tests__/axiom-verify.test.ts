@@ -96,9 +96,7 @@ describe("zaman aşımı ve panik koruması", () => {
 
 describe("CID ve mühür", () => {
   it("CID determinist, mühür yalnız kanıtta", () => {
-    expect(contentId("abc", "local", "200_PROVEN")).toBe(
-      contentId("abc", "local", "200_PROVEN"),
-    );
+    expect(contentId("abc", "local", "200_PROVEN")).toBe(contentId("abc", "local", "200_PROVEN"));
     expect(contentId("abc", "local", "200_PROVEN")).not.toBe(
       contentId("abd", "local", "200_PROVEN"),
     );

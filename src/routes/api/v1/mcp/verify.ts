@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/v1/mcp/verify")({
         }),
 
       GET: async ({ request }) =>
-        json(toolCatalogue(), 200, corsHeaders(request, { methods: "POST, GET, OPTIONS" })),
+        json(await toolCatalogue(), 200, corsHeaders(request, { methods: "POST, GET, OPTIONS" })),
 
       POST: async ({ request }) => {
         const cors = corsHeaders(request, { methods: "POST, GET, OPTIONS" });

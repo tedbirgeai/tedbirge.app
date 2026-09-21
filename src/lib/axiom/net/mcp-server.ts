@@ -23,6 +23,7 @@ import { matchInvariants } from "@/lib/axiom/invariants";
 import { askAscii, astMetrics } from "@/lib/axiom/lang/ask-ascii";
 import { toIr } from "@/lib/axiom/lang/axiom-ir";
 import { detectLanguage } from "@/lib/axiom/lang/detect";
+import { loadEngine } from "@/lib/axiom/live/engine-session";
 import { verify } from "@/lib/axiom/verify/engine";
 import { SEAL_PREFIX } from "@/lib/axiom/verify/seal";
 import { VERIFY_TIMEOUT_MS } from "@/lib/axiom/verify/types";
@@ -74,13 +75,16 @@ function err(id: string | number | null, code: number, message: string): JsonRpc
 }
 
 /** Dış istemcilere sunulan araç şeması. */
-export function mcpCapabilities() {
+export async function mcpCapabilities() {
+  const handle = await loadEngine().catch(() => null);
+  const proofsAreSealed = Boolean(handle?.wasmLoaded);
   return {
     server: "tedbirge-axiom",
     protocol: "jsonrpc-2.0",
     seal: SEAL_PREFIX,
     timeoutMs: VERIFY_TIMEOUT_MS,
-    proofsAreSealed: true,
+    proofsAreSealed,
+    engine: handle?.engine ?? "local",
     methods: [
       {
         name: "axiom.verify",
@@ -144,12 +148,13 @@ export async function handleMcpRequest(
   const { method, params } = parsed.data;
   const id = parsed.data.id ?? null;
 
-  if (method === "axiom.capabilities" || method === "tools/list") return ok(id, mcpCapabilities());
+  if (method === "axiom.capabilities" || method === "tools/list")
+    return ok(id, await mcpCapabilities());
 
   if (method === "tools/call") {
     const p = ToolCallParams.safeParse(params ?? {});
     if (!p.success) return err(id, JSONRPC_ERRORS.invalidParams, "Geçersiz araç çağrısı");
-    if (p.data.name === "axiom.capabilities") return ok(id, mcpCapabilities());
+    if (p.data.name === "axiom.capabilities") return ok(id, await mcpCapabilities());
     const text = p.data.arguments?.text ?? p.data.arguments?.source;
     return handleAxiomMethod(id, p.data.name, { text }, client);
   }
