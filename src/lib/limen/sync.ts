@@ -214,7 +214,8 @@ export function stageLimenChange(name: string, mode: LimenMirrorMode = "p2p"): L
   });
   queue = enqueue(queue, delta(state));
   invalidate();
-  return snapshot();
+  // Kuyruğa alınan paket beklemeden depoya mount edilir.
+  void mountLimenPackages();
 }
 
 export async function flushLimen(): Promise<LimenSyncSnapshot> {
@@ -231,9 +232,13 @@ export async function flushLimen(): Promise<LimenSyncSnapshot> {
   );
   queue = result.state;
   if (result.sent > 0) {
+    // Kayıt "synced" olmadan önce dosya ağacı depoya inmiş olmalı.
+    await mountLimenPackages();
     for (const record of toRecords(state)) {
       state = put(state, record.id, { ...record, status: "synced", updatedAt: Date.now() });
     }
+  } else {
+    await mountLimenPackages();
   }
   invalidate();
   return snapshot();
