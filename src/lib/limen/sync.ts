@@ -10,6 +10,7 @@ import {
   type CrdtState,
 } from "@/lib/axiom/sync/crdt";
 import { createQueue, enqueue, flush, type QueueState } from "@/lib/axiom/sync/queue";
+import { mountLimenRecord, type LimenMount } from "@/lib/limen/mount";
 
 export type LimenMirrorMode = "local" | "p2p" | "github";
 
@@ -30,6 +31,10 @@ export type LimenSyncSnapshot = {
   pending: number;
   sent: number;
   lastFlush: number | null;
+  /** Depoya (repo/) mount edilmiş paketler. */
+  mounts: LimenMount[];
+  /** Mount sırasında oluşan son hata (yoksa null). */
+  mountError: string | null;
 };
 
 type LimenWire = { type: "limen.delta" | "limen.hello"; delta?: CrdtDelta; node?: string };
@@ -44,6 +49,11 @@ let queue: QueueState = createQueue();
 let peers = 1;
 let channel: BroadcastChannel | null = null;
 let netWatch = false;
+let mounts: Record<string, LimenMount> = {};
+let mountError: string | null = null;
+let mounting = false;
+let pumping = false;
+
 
 function emit() {
   listeners.forEach((listener) => listener());
