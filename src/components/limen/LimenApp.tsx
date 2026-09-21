@@ -1,16 +1,26 @@
 import { useCallback, useEffect, useSyncExternalStore, useState, type ReactNode } from "react";
-import { GitBranch, GitMerge, Github, Network, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  FolderTree,
+  GitBranch,
+  GitMerge,
+  Github,
+  Network,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   flushLimen,
   getLimenSnapshot,
+  mountLimenPackages,
   resetLimenView,
   stageLimenChange,
   subscribeLimen,
   type LimenMirrorMode,
 } from "@/lib/limen/sync";
-import { notifyOk } from "@/lib/shell/notify";
+import { notifyError, notifyOk } from "@/lib/shell/notify";
+import { openWindow } from "@/shell/windows";
 
 const MODES: { id: LimenMirrorMode; label: string }[] = [
   { id: "p2p", label: "P2P Mesh" },
@@ -42,6 +52,24 @@ export function LimenApp() {
       .then((next) => notifyOk("LIMEN eşitlendi", `${next.sent} delta gönderildi`))
       .finally(() => setBusy(false));
   }, []);
+
+  const mount = useCallback(() => {
+    setBusy(true);
+    void mountLimenPackages()
+      .then((list) => {
+        const files = list.reduce((sum, m) => sum + m.files, 0);
+        notifyOk("Depoya bağlandı", `${list.length} paket · ${files} dosya · repo/`);
+      })
+      .catch((e: unknown) =>
+        notifyError("Depoya yazılamadı", e instanceof Error ? e.message : undefined),
+      )
+      .finally(() => setBusy(false));
+  }, []);
+
+  const openFiles = useCallback(() => {
+    openWindow("files", "Dosyalar — repo");
+  }, []);
+
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-[var(--tb-bg)] text-[var(--tb-fg)]">
