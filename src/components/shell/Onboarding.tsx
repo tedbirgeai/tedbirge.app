@@ -29,11 +29,6 @@ export function Onboarding() {
   const [step, setStep] = useState<number | null>(null);
 
   useEffect(() => {
-    try {
-      if (localStorage.getItem(TOUR_KEY) !== "1") setStep(0);
-    } catch {
-      /* depolama kapalı olabilir */
-    }
     const show = () => setStep(0);
     window.addEventListener("tedbirge:show-tour", show);
     return () => window.removeEventListener("tedbirge:show-tour", show);
