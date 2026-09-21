@@ -34,6 +34,7 @@ import { Route as ApiPublicGecitRouteImport } from './routes/api/public/gecit'
 import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicCronOfflineCheckRouteImport } from './routes/api/public/cron/offline-check'
+import { Route as ApiPublicV1McpVerifyRouteImport } from './routes/api/public/v1/mcp/verify'
 
 const YasalRoute = YasalRouteImport.update({
   id: '/yasal',
@@ -162,6 +163,11 @@ const ApiPublicCronOfflineCheckRoute =
     path: '/api/public/cron/offline-check',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1McpVerifyRoute = ApiPublicV1McpVerifyRouteImport.update({
+  id: '/api/public/v1/mcp/verify',
+  path: '/api/public/v1/mcp/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -216,6 +223,7 @@ export interface FileRoutesByTo {
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -273,6 +282,7 @@ export interface FileRouteTypes {
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
+    | '/api/public/v1/mcp/verify'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
+    | '/api/public/v1/mcp/verify'
   id:
     | '__root__'
     | '/'
@@ -327,6 +338,7 @@ export interface FileRouteTypes {
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
+    | '/api/public/v1/mcp/verify'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -355,6 +367,7 @@ export interface RootRouteChildren {
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
   ApiPublicCronOfflineCheckRoute: typeof ApiPublicCronOfflineCheckRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicV1McpVerifyRoute: typeof ApiPublicV1McpVerifyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -534,6 +547,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronOfflineCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/mcp/verify': {
+      id: '/api/public/v1/mcp/verify'
+      path: '/api/public/v1/mcp/verify'
+      fullPath: '/api/public/v1/mcp/verify'
+      preLoaderRoute: typeof ApiPublicV1McpVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -563,6 +583,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
   ApiPublicCronOfflineCheckRoute: ApiPublicCronOfflineCheckRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicV1McpVerifyRoute: ApiPublicV1McpVerifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

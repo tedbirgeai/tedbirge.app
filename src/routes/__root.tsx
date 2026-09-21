@@ -82,7 +82,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { httpEquiv: "Content-Security-Policy", content: "upgrade-insecure-requests" },
+      {
+        httpEquiv: "Content-Security-Policy",
+        // wasm-unsafe-eval: Z3/Lean 4 WASM ikilileri; worker-src: çekirdek daemon'ı.
+        content:
+          "upgrade-insecure-requests; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; worker-src 'self' blob:",
+      },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Tedbirge® WebOS — tedbirge.app" },
       {
