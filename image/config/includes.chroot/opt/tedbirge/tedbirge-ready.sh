@@ -25,11 +25,14 @@ done
 # masaustunu da bekle. Kurulum kipinde kiosk bilerek kapali oldugundan bu kosul
 # uygulanmaz.
 if ! grep -qE 'tedbirge\.(auto)?install=1' /proc/cmdline 2>/dev/null; then
+  # Olcut: surecin ayakta olmasi degil, sayfanin gercekten yuklendigini
+  # dogrulayan saglik sinyali (/run/tedbirge-kiosk-healthy).
   i=0
-  while [ "$i" -lt 60 ] && [ ! -e /run/tedbirge-kiosk-ready ]; do
+  while [ "$i" -lt 180 ] && [ ! -e /run/tedbirge-kiosk-healthy ]; do
     i=$((i + 1)); sleep 1
   done
-  [ -e /run/tedbirge-kiosk-ready ] || exit 1
+  [ -e /run/tedbirge-kiosk-healthy ] || exit 1
+  echo "masaustu saglikli — goruntu kipi: $(cat /run/tedbirge-goruntu-kipi 2>/dev/null || echo ?)"
 fi
 
 printf '%s\n' TEDBIRGE_BOOT_READY > /dev/console 2>/dev/null || true

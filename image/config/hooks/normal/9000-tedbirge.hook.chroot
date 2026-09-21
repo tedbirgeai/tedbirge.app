@@ -8,7 +8,8 @@ echo "-- Tedbirge yapilandirmasi uygulaniyor"
 chmod 0755 /opt/tedbirge/kiosk.sh /opt/tedbirge/ekran-duzeni.sh \
            /opt/tedbirge/tedbirge-ready.sh /opt/tedbirge/tedbirge-sysbridge \
            /usr/local/sbin/tedbirge-kur /opt/tedbirge/kurulum-sonrasi.sh \
-           /opt/tedbirge/oturum.sh /opt/tedbirge/gozcu.sh
+           /opt/tedbirge/oturum.sh /opt/tedbirge/gozcu.sh \
+           /opt/tedbirge/kurtarma-sayfasi.sh
 mkdir -p /var/log/tedbirge /var/lib/tedbirge/chromium /media
 
 # nginx: yalnizca Tedbirge sitesi etkin
@@ -95,9 +96,17 @@ done
 for arac in whiptail parted mkfs.ext4 mkfs.vfat unsquashfs gpm; do
   command -v "$arac" >/dev/null 2>&1 || { echo "! Kurulum araci eksik: $arac" >&2; exit 1; }
 done
-for f in /opt/tedbirge/gozcu.sh /etc/systemd/system/tedbirge-gozcu.service; do
+for f in /opt/tedbirge/gozcu.sh /etc/systemd/system/tedbirge-gozcu.service \
+         /opt/tedbirge/kurtarma-sayfasi.sh /opt/tedbirge/ekran-duzeni.sh; do
   [ -s "$f" ] || { echo "! Acilis gozcusu eksik: $f" >&2; exit 1; }
 done
+# Gercek masaustu saglik kapisi: sinyal sayfa dogrulanmadan uretilemez.
+grep -q 'tedbirge-kiosk-healthy' /opt/tedbirge/kiosk.sh \
+  || { echo "! Kiosk saglik sinyali uretmiyor" >&2; exit 1; }
+grep -q 'tedbirge-kiosk-healthy' /opt/tedbirge/tedbirge-ready.sh \
+  || { echo "! Acilis denetimi saglik sinyalini beklemiyor" >&2; exit 1; }
+command -v xrandr >/dev/null 2>&1 || { echo "! xrandr yok — ekran yerlesimi kurulamaz" >&2; exit 1; }
+command -v xsetroot >/dev/null 2>&1 || { echo "! xsetroot yok — siyah arka plan kurulamaz" >&2; exit 1; }
 [ -x /usr/lib/systemd/systemd ] || { echo "! systemd yok — init olusmaz" >&2; exit 1; }
 
 # --- Kurumsal acilis/kapanis ekrani: Tedbirge temasi varsayilan yapilir.
