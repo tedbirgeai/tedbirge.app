@@ -16,7 +16,11 @@ function Frame({ className, children }: IconProps & { children: ReactNode }) {
   return (
     <svg className={className} viewBox="0 0 64 64" aria-hidden>
       <rect x="8" y="8" width="48" height="48" rx="14" fill="var(--tb-accent)" opacity=".22" />
-      <path d="M14 14h22c8 0 14 6 14 14v22H28c-8 0-14-6-14-14z" fill="var(--tb-accent-2)" opacity=".24" />
+      <path
+        d="M14 14h22c8 0 14 6 14 14v22H28c-8 0-14-6-14-14z"
+        fill="var(--tb-accent-2)"
+        opacity=".24"
+      />
       <rect
         x="12"
         y="12"
