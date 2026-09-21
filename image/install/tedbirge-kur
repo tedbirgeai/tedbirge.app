@@ -971,7 +971,8 @@ fi
   echo "--- Tedbirge kurulum dogrulama $(date -u +%Y-%m-%dT%H:%M:%SZ) ---"
   echo "disk=$DEV kip=$MOD kok=$KOK_UUID takas=${SWAP_UUID:-yok}"
   echo "cekirdek=$MENU_CEKIRDEK initrd=$MENU_INITRD"
-  echo "gecen kapilar: ACL-301..313"
+  echo "gecen kapilar: ACL-301..318"
+  echo "goruntu-kipi-dogrulamasi=ilk-acilista"
 } >> "$LOG" 2>/dev/null || true
 mkdir -p "$KOK/var/log/tedbirge" 2>/dev/null || true
 cp "$LOG" "$KOK/var/log/tedbirge/kurulum.log" 2>/dev/null || true
@@ -996,6 +997,9 @@ echo "==============================================="
 echo "  KURULUM TAMAMLANDI"
 echo "==============================================="
 echo "USB bellegi cikarip bilgisayari yeniden baslatin."
+echo "Ilk acilis normalde 40-90 saniye surer (ilk seferde surucu taramasi"
+echo "nedeniyle 2 dakikaya cikabilir). 5 dakikayi asarsa kurtarma ekrani"
+echo "kendiliginden acilir ve tani bilgisi gosterir."
 if [ "$OTO" = "1" ] && [ "$GUI" = "1" ]; then
   # Acilis menusunden baslatilan sifir-dokunuslu kurulum: kullanici USB'yi
   # cikarma yonergesini gorur, sayac biter ve sistem diskten acilir.
