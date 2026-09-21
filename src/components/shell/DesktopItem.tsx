@@ -74,7 +74,7 @@ export function DesktopItem({
         {glyph}
         {badge ? <span className="absolute -right-1 -bottom-1">{badge}</span> : null}
       </span>
-      <span className="text-[11px] text-white text-center font-medium leading-tight line-clamp-2 w-full px-1 drop-shadow break-words overflow-hidden">
+      <span className="tbos-item-label text-[11px] text-center font-medium leading-tight line-clamp-2 w-full px-1 drop-shadow-sm break-words overflow-hidden">
         {label}
       </span>
     </button>
