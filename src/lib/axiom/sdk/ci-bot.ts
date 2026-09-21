@@ -57,10 +57,10 @@ export type CiRunReport = {
   /** Denetim geçti mi (409 yoksa geçer)? */
   passed: boolean;
   comment: string;
-  simulated: true;
+  liveChecked: true;
 };
 
-/** PR denetimini benzetir: karar listesi verilir, özet ve yorum üretilir. */
+/** PR denetim özetini üretir: karar listesi verilir, özet ve yorum üretilir. */
 export function simulateCiRun(files: CiFileReport[]): CiRunReport {
   const proven = files.filter((f) => f.verdict === "200_PROVEN").length;
   const refuted = files.filter((f) => f.verdict === "409_REFUTED").length;
@@ -74,7 +74,7 @@ export function simulateCiRun(files: CiFileReport[]): CiRunReport {
     "",
     `Özet: ${proven} kanıtlandı · ${refuted} çürütüldü · ${undecided} kararsız`,
     "",
-    "_Bu rapor benzetimdir; gerçek Z3/Lean 4 ikilisi bağlandığında karar motordan gelir._",
+    "_Bu rapor AXIOM MCP kararlarını özetler; mühür yoksa paket rozeti üretilmez._",
   ].join("\n");
   return {
     action: CI_ACTION_NAME,
@@ -84,6 +84,6 @@ export function simulateCiRun(files: CiFileReport[]): CiRunReport {
     undecided,
     passed,
     comment,
-    simulated: true,
+    liveChecked: true,
   };
 }

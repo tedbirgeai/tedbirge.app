@@ -42,7 +42,7 @@ export async function axiomVerify(text: string) {
   });
   const payload = await res.json();
   if (payload.error) throw new Error(payload.error.message);
-  return payload.result; // { verdict, cid, seal, ms, engine, simulated }
+  return payload.result; // { verdict, cid, seal, ms, engine, wasmVerified }
 }`;
     case "python":
       return `# AXIOM istemcisi — Python 3.9+

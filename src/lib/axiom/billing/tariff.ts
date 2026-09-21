@@ -30,9 +30,8 @@ export const BILLING_TIERS: BillingTier[] = ["z3", "lean4", "omni"];
 export const BILLING_CURRENCY = "USD";
 
 /**
- * Motor kimliğini ücret katmanına eşler. `mock` motoru (WASM ikilisi
- * yüklü değilken) en düşük katman üzerinden ölçülür; tutar yine de
- * yalnız sayaç amaçlıdır.
+ * Motor kimliğini ücret katmanına eşler. Yerel kural kapısı en düşük
+ * katman üzerinden ölçülür; tutar yine de yalnız sayaç amaçlıdır.
  */
 export function tierForEngine(engine: EngineId, omni = false): BillingTier {
   if (omni) return "omni";

@@ -12,7 +12,7 @@
  * Cerceve: her istek ve yanit tek satir JSON, '\n' ile ayrilir.
  * Istek : {"id":1,"method":"axiom.verify","text":"..."}
  * Yanit : {"id":1,"verdict":"200_PROVEN","engine":"z3",
- *          "simulated":false,"ms":12,"cid":"...","seal":"..."}
+ *          "wasmVerified":true,"ms":12,"cid":"...","seal":"..."}
  *
  * Girdi metni hicbir yere yazilmaz / gunluklenmez.
  */
@@ -44,7 +44,7 @@ typedef enum tb_verdict_t {
 } tb_verdict_t;
 
 typedef enum tb_engine_t {
-  TB_ENGINE_MOCK = 0, /* WASM ikilisi yok: benzetim */
+  TB_ENGINE_LOCAL = 0, /* Yerel kural kapisi */
   TB_ENGINE_Z3 = 1,
   TB_ENGINE_LEAN4 = 2
 } tb_engine_t;
@@ -63,7 +63,7 @@ typedef struct tb_truth_handle tb_truth_handle;
 typedef struct tb_proof_t {
   tb_verdict_t verdict;
   tb_engine_t engine;
-  int simulated;    /* 1 = benzetim motoru */
+  int wasmVerified; /* 1 = Z3/Lean ikilisiyle dogrulandi */
   uint32_t ms;      /* harcanan sure */
   char cid[65];     /* icerik kimligi (hex, NUL sonlu) */
   char seal[129];   /* TEDBIRGE-WEBOS-ZKP muhru; bos = muhur yok */

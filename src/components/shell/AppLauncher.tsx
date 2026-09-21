@@ -17,7 +17,7 @@ export const LOCAL_TILES: LauncherTile[] = [
   {
     id: "axiom",
     label: "AXIOM",
-    hint: "ASK ASCII, Z3/Lean simülasyon ve STATUS: 200_PROVEN mühürü",
+    hint: "ASK ASCII, Z3/Lean doğrulama ve mühürlü karar kapısı",
     featured: true,
   },
   {

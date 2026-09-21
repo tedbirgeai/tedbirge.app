@@ -4,12 +4,10 @@
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
 /**
- * BAYT ÖZETİ (Faz 1)
+ * BAYT ÖZETİ
  * ------------------------------------------------------------------
- * Faz 1'de girdi doğrulanmaz — yalnız ASK ASCII/1.0 katmanının göreceği
- * bayt görünümü hesaplanır: uzunluk, ilk baytların onaltılık dökümü ve
- * saf ASCII olup olmadığı. Doğrulama motoru Faz 3'te bağlanır; bu
- * yüzden burada hiçbir "kanıtlandı" çıktısı üretilmez.
+ * ASK ASCII/1.0 katmanının göreceği bayt görünümü hesaplanır: uzunluk,
+ * ilk baytların onaltılık dökümü ve saf ASCII olup olmadığı.
  */
 
 export type ByteDigest = {

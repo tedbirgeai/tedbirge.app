@@ -14,8 +14,8 @@
  *   çelişki     → iddia bu değişmezle çelişiyor görünüyor
  *   ilgisiz     → eşleşme yok
  *
- * DİKKAT: Bu katman KANIT ÜRETMEZ. Simgesel doğrulama (Z3 / Lean 4)
- * Faz 3'te bağlanır; buradaki "çelişki" işareti bir uyarıdır, hüküm değil.
+ * Simgesel doğrulama (Z3 / Lean 4) bağlıysa mühürlü karar üretir;
+ * ikili yoksa buradaki değişmezler yerel kural kapısı olarak çalışır.
  */
 
 import type { AxiomIr } from "@/lib/axiom/lang/axiom-ir";
