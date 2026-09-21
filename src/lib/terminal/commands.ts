@@ -780,6 +780,7 @@ const cmdHelp: Command = {
 
 export const COMMANDS: Command[] = [
   cmdLs,
+  cmdTree,
   cmdCd,
   cmdPwd,
   cmdCat,
