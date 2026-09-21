@@ -296,6 +296,7 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
                   type="button"
                   onClick={() => {
                     setFolder(f);
+                    setDir("");
                     setQ("");
                   }}
                   aria-pressed={folder === f && !q}
@@ -318,6 +319,28 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
         {/* Liste + detay */}
         <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto]">
           <ul className="min-h-0 overflow-y-auto">
+            {tree && dir ? (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setDir(dir.split("/").slice(0, -1).join("/"))}
+                  className="flex min-h-12 w-full items-center gap-3 border-b border-[var(--tb-border)] px-3 text-left text-[14px] text-[var(--tb-accent)]"
+                >
+                  .. /{dir}
+                </button>
+              </li>
+            ) : null}
+            {tree?.dirs.map((name) => (
+              <li key={`dir:${name}`}>
+                <button
+                  type="button"
+                  onClick={() => setDir(dir ? `${dir}/${name}` : name)}
+                  className="flex min-h-12 w-full items-center gap-3 border-b border-[var(--tb-border)] px-3 text-left text-[14px] text-[var(--tb-accent)]"
+                >
+                  {name}/
+                </button>
+              </li>
+            ))}
             {visible.map((f) => (
               <li
                 key={f.id}
