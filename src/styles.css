@@ -1016,6 +1016,12 @@ body {
     padding-left: var(--tbos-clock-w);
   }
 }
+/* Sağ üstteki yaşam kartları da simgelerle örtüşmez. */
+@media (min-width: 768px) {
+  .tbos-desktop-grid {
+    padding-right: 18rem;
+  }
+}
 /* Masaüstü simge etiketi: her iki temada tam okunur. */
 .tbos-item-label {
   color: var(--tb-text);
