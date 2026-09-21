@@ -69,13 +69,40 @@ export function AxiomApp() {
   const [verifying, setVerifying] = useState(false);
   const [lastText, setLastText] = useState("");
   const [fps, setFps] = useState(0);
+  /** Daemon kurulamazsa çözümleme ana iş parçacığında yürür. */
+  const [yerel, setYerel] = useState(false);
+  /** Yeniden başlatma düğmesi bu sayacı arttırır. */
+  const [deneme, setDeneme] = useState(0);
 
   // --- Çekirdek daemon'ı: bayt çözümlemesi ana iş parçacığını kilitlemez.
   useEffect(() => {
-    const worker = new Worker(new URL("@/lib/axiom/kernel.worker.ts", import.meta.url), {
-      type: "module",
-    });
+    let worker: Worker | null = null;
+    const dus = (sebep: string) => {
+      // Daemon kurulamadı: arayüz çökmez, aynı motor ana iş parçacığında çalışır.
+      worker?.terminate();
+      worker = null;
+      workerRef.current = null;
+      setYerel(true);
+      setRam(localStats());
+      setHata(sebep);
+      setVerifying(false);
+      setBusy(false);
+    };
+    try {
+      // Vite yalnız gerçek göreli yolu çözer; takma ad (@/) burada çalışmaz.
+      worker = new Worker(new URL("../../lib/axiom/kernel.worker.ts", import.meta.url), {
+        type: "module",
+      });
+    } catch (err) {
+      dus(
+        err instanceof Error
+          ? `Çekirdek daemon'ı başlatılamadı: ${err.message}`
+          : "Çekirdek daemon'ı başlatılamadı (tarayıcı kısıtı).",
+      );
+      return;
+    }
     workerRef.current = worker;
+    setYerel(false);
     worker.onmessage = (event: MessageEvent<KernelResponse>) => {
       const msg = event.data;
       setRam(msg.ram);
@@ -103,20 +130,22 @@ export function AxiomApp() {
         setBusy(false);
       }
     };
-    // Daemon yüklenemezse arayüz sessizce beklemez: hata görünür olur ve
-    // "Çözümleniyor…" durumu serbest bırakılır.
+    // Daemon yüklenemezse arayüz sessizce beklemez: yedek motora düşülür.
     worker.onerror = (err) => {
-      setHata(err.message || "Çekirdek daemon'ı yüklenemedi.");
-      setVerifying(false);
-      setBusy(false);
+      dus(
+        err.message
+          ? `Çekirdek daemon'ı yüklenemedi: ${err.message}`
+          : "Çekirdek daemon'ı yüklenemedi.",
+      );
     };
     const boot: KernelRequest = { id: (seqRef.current += 1), type: "boot" };
     worker.postMessage(boot);
     return () => {
-      worker.terminate();
+      worker?.terminate();
       workerRef.current = null;
     };
-  }, []);
+  }, [deneme]);
+
 
   // --- Sanal ROM: tohum bloklar yazılır, kalıcı depolama izni istenir.
   useEffect(() => {
