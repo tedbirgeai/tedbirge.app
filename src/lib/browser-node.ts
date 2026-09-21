@@ -110,6 +110,12 @@ function lanSignalUrls(): string[] {
   const urls = new Set<string>();
   const ws = wsScheme();
   const host = typeof location !== "undefined" ? location.hostname : "";
+  const port = typeof location !== "undefined" ? location.port : "";
+
+  // Canlı önizleme/dev sunucusunda yerel saha ajanı bulunmadığında tarayıcı
+  // sürekli bağlantı hatası üretmesin. Bare-metal/kiosk ortamı farklı porttan
+  // çalıştığı için gerçek yerel ajan araması korunur.
+  if (/^(localhost|127\.0\.0\.1)$/.test(host) && port === "8080") return [];
   // HTTPS sayfasından düz ws:// bağlantısı tarayıcı tarafından engellenir ve
   // adres çubuğunda "güvenli değil" uyarısı doğurur; bu durumda yalnızca
   // sayfanın kendi origin'i üzerinden güvenli sinyalleşme denenir.
@@ -132,6 +138,26 @@ function lanSignalUrls(): string[] {
     urls.add(`${ws}://${gw}:${LAN_SIGNAL_PORT}`);
   }
   return Array.from(urls);
+}
+
+async function lanSignalReachable(url: string): Promise<boolean> {
+  if (typeof fetch === "undefined" || typeof AbortController === "undefined") return true;
+  const httpUrl = url.replace(/^wss:/, "https:").replace(/^ws:/, "http:");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 450);
+  try {
+    await fetch(httpUrl, {
+      method: "GET",
+      mode: "no-cors",
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** Teslim hattındaki her sessiz hata Türkçe tek cümleyle günlüğe düşer. */
@@ -777,43 +803,46 @@ export class BrowserNode {
       if (this.lanSocket && this.lanSocket.readyState <= WebSocket.OPEN) return;
       // Tüm adaylar aynı anda denenir; ilk açılan kazanır, diğerleri kapanır.
       for (const url of lanSignalUrls()) {
-        let ws: WebSocket;
-        try {
-          ws = new WebSocket(url);
-        } catch {
-          continue;
-        }
-        ws.onopen = () => {
-          if (
-            this.lanSocket &&
-            this.lanSocket !== ws &&
-            this.lanSocket.readyState === WebSocket.OPEN
-          ) {
+        void lanSignalReachable(url).then((reachable) => {
+          if (!reachable || (this.lanSocket && this.lanSocket.readyState <= WebSocket.OPEN)) return;
+          let ws: WebSocket;
+          try {
+            ws = new WebSocket(url);
+          } catch {
+            return;
+          }
+          ws.onopen = () => {
+            if (
+              this.lanSocket &&
+              this.lanSocket !== ws &&
+              this.lanSocket.readyState === WebSocket.OPEN
+            ) {
+              try {
+                ws.close();
+              } catch {
+                /* yoksay */
+              }
+              return;
+            }
+            this.lanSocket = ws;
+            announce(ws);
+            this.emit({});
+          };
+          ws.onmessage = (e) => void this.onLanMessage(String(e.data));
+          ws.onclose = () => {
+            if (this.lanSocket === ws) {
+              this.lanSocket = null;
+              this.emit({});
+            }
+          };
+          ws.onerror = () => {
             try {
               ws.close();
             } catch {
               /* yoksay */
             }
-            return;
-          }
-          this.lanSocket = ws;
-          announce(ws);
-          this.emit({});
-        };
-        ws.onmessage = (e) => void this.onLanMessage(String(e.data));
-        ws.onclose = () => {
-          if (this.lanSocket === ws) {
-            this.lanSocket = null;
-            this.emit({});
-          }
-        };
-        ws.onerror = () => {
-          try {
-            ws.close();
-          } catch {
-            /* yoksay */
-          }
-        };
+          };
+        });
       }
     };
     tryConnect();

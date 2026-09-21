@@ -216,8 +216,16 @@ export function startSearching() {
 export function stopRing() {
   if (ringTimer) clearInterval(ringTimer);
   ringTimer = null;
+  const nav =
+    typeof navigator === "undefined"
+      ? null
+      : (navigator as Navigator & {
+          userActivation?: { hasBeenActive?: boolean };
+          vibrate?: (pattern: number | number[]) => boolean;
+        });
+  if (!nav?.userActivation?.isActive) return;
   try {
-    navigator.vibrate?.(0);
+    nav.vibrate?.(0);
   } catch {
     /* desteklenmiyor */
   }
@@ -234,7 +242,7 @@ export function vibrate(pattern: number | number[] = 12) {
           userActivation?: { hasBeenActive?: boolean };
           vibrate?: (pattern: number | number[]) => boolean;
         });
-  if (!nav?.userActivation?.hasBeenActive) return;
+  if (!nav?.userActivation?.isActive) return;
   try {
     nav.vibrate?.(pattern);
   } catch {
