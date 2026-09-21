@@ -74,12 +74,11 @@ export function createWssBridge(options: WssBridgeOptions = {}): WssBridge {
     while (queue.length) {
       const req = queue.shift();
       if (!req) break;
-      waiting.set(req.id, {
-        resolve: waiting.get(req.id)?.resolve ?? (() => undefined),
-        at: now(),
-      });
+      const slot = waiting.get(req.id);
+      if (slot) waiting.set(req.id, { resolve: slot.resolve, at: now() });
       socket.send(JSON.stringify(req));
     }
+
     emit({});
   };
 
@@ -131,14 +130,11 @@ export function createWssBridge(options: WssBridgeOptions = {}): WssBridge {
           emit({});
           return;
         }
-        waiting.delete(req.id);
-        queue.push(req);
-        waiting.set(req.id, { resolve, at: now() });
-        queue.pop();
         queue.push(req);
         emit({});
         connect();
       });
+
     },
     close() {
       closed = true;
