@@ -306,9 +306,22 @@ export function AxiomApp() {
           role="alert"
           className="rounded-lg border border-[var(--tb-rose-400)] bg-[var(--tb-bg-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-rose-400)]"
         >
-          Çözümleme tamamlanamadı: {hata}
+          <div className="break-words">Çözümleme tamamlanamadı: {hata}</div>
+          {yerel ? (
+            <div className="mt-1 text-[var(--tb-muted)]">
+              Yedek motor etkin: çözümleme ve doğrulama ana iş parçacığında sürüyor, sonuçlar aynıdır.
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={restart}
+            className="mt-2 rounded-lg border border-[var(--tb-cyan-400)] px-3 py-1 font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)]"
+          >
+            Servisi yeniden başlat
+          </button>
         </div>
       ) : null}
+
 
       <div className="grid gap-3 lg:grid-cols-2">
         <LanguageCard lang={analysis?.lang ?? null} />
