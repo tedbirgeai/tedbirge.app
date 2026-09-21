@@ -40,6 +40,8 @@ export function AxiomApp() {
   const rendererRef = useRef<Renderer | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const seqRef = useRef(0);
+  /** Çizim döngüsü durumu ref ile okunur: RAM değişimi WebGL bağlamını kurmaz. */
+  const ratioRef = useRef(0);
 
   const [mode, setMode] = useState("hazırlanıyor");
   const [ram, setRam] = useState<RamStats>(BOS_RAM);
@@ -116,7 +118,7 @@ export function AxiomApp() {
         setFps(shown);
       }
       renderer.draw({
-        ratio: ram.ratio,
+        ratio: ratioRef.current,
         fps: shown,
         status: "Faz 1 — doğrulama motoru bağlı değil (iskelet)",
       });
@@ -135,6 +137,11 @@ export function AxiomApp() {
       renderer.dispose();
       rendererRef.current = null;
     };
+  }, []);
+
+  // Doluluk oranı yalnız referansa yazılır (yeniden çizim zaten her karede).
+  useEffect(() => {
+    ratioRef.current = ram.ratio;
   }, [ram.ratio]);
 
   // --- Bellek örneklemesi: gerçek ölçüm yoksa sanal deftere düşer.
