@@ -184,8 +184,12 @@ if grep -q 'exec /bin/login\|startx' "$SONRASI"; then
 fi
 grep -q 'TEDBIRGE_DESKTOP_READY' image/config/includes.chroot/opt/tedbirge/kiosk.sh \
   || hata "Gerçek masaüstü hazır sinyali yok."
-grep -q 'tedbirge-kiosk-ready' image/config/includes.chroot/opt/tedbirge/tedbirge-ready.sh \
+grep -q 'tedbirge-kiosk-healthy' image/config/includes.chroot/opt/tedbirge/tedbirge-ready.sh \
   || hata "Açılış doğrulaması gerçek masaüstünü beklemiyor."
+grep -q 'tedbirge-kiosk-healthy' image/config/includes.chroot/opt/tedbirge/kiosk.sh \
+  || hata "Kiosk, sayfa yüklenmeden hazır sinyali veriyor."
+grep -q 'kurtarma-sayfasi.sh' image/config/includes.chroot/opt/tedbirge/gozcu.sh \
+  || hata "Gözcü kurtarma ekranına düşmüyor."
 for f in image/config/bootloaders/syslinux_common/live.cfg.in \
          image/config/bootloaders/grub-pc/grub.cfg; do
   grep -q '®' "$f" && hata "Açılış menüsünde desteklenmeyen ® karakteri var: $f"

@@ -100,4 +100,37 @@ grep -q 'plymouth-set-default-theme tedbirge' image/config/hooks/normal/9000-ted
   echo "HATA: Tedbirge açılış teması varsayılan yapılmıyor" >&2; exit 1; }
 
 
+# --- Gercek masaustu saglik kapisi (yari beyaz/bos ekran regresyonu)
+EKRAN=image/config/includes.chroot/opt/tedbirge/ekran-duzeni.sh
+GOZCU=image/config/includes.chroot/opt/tedbirge/gozcu.sh
+KURT=image/config/includes.chroot/opt/tedbirge/kurtarma-sayfasi.sh
+READY=image/config/includes.chroot/opt/tedbirge/tedbirge-ready.sh
+sh -n "$EKRAN"; sh -n "$GOZCU"; sh -n "$KURT"; sh -n "$READY"
+
+zorunlu 'tedbirge-kiosk-healthy' "$KIOSK" "Masaüstü sağlık sinyali üretilmiyor"
+zorunlu 'json/list' "$KIOSK" "Sayfanın gerçekten yüklendiği doğrulanmıyor"
+zorunlu 'kurtarma-sayfasi.sh' "$KIOSK" "Kurtarma ekranı yolu yok"
+zorunlu 'disable-gpu' "$KIOSK" "Yazılım çizimine düşüş yolu yok"
+if grep -qE '^touch /run/tedbirge-kiosk-ready' "$KIOSK"; then
+  echo "HATA: hazır sinyali sağlık doğrulamasından önce üretiliyor" >&2; exit 1
+fi
+zorunlu 'tedbirge-kiosk-healthy' "$READY" "Açılış denetimi sağlık sinyalini beklemiyor"
+zorunlu 'tedbirge-kiosk-healthy' "$GOZCU" "Gözcü sağlık sinyalini beklemiyor"
+zorunlu 'tedbirge-kurtarma' "$GOZCU" "Gözcü kurtarma ekranına düşmüyor"
+grep -q -- '--off' "$EKRAN" || { echo "HATA: hayalet ekran çıkışları kapatılmıyor" >&2; exit 1; }
+grep -q -- '--fb' "$EKRAN" || { echo "HATA: ekran alanı çözünürlüğe sabitlenmiyor" >&2; exit 1; }
+grep -q 'xsetroot -solid' "$EKRAN" || { echo "HATA: siyah arka plan uygulanmıyor" >&2; exit 1; }
+if grep -qE '^xrandr --query .*while read' "$EKRAN"; then
+  echo "HATA: tüm çıkışları yan yana açan eski yerleşim geri gelmiş" >&2; exit 1
+fi
+
+for kod in ACL-314 ACL-315 ACL-316 ACL-317 ACL-318; do
+  zorunlu "$kod" "$KUR" "Masaüstü açılış denetimi $kod eksik"
+done
+zorunlu 'graphical.target' "$KUR" "Kurulu diskte grafik hedefi doğrulanmıyor"
+zorunlu 'Ilk acilis normalde' "$KUR" "İlk açılış süresi kullanıcıya gösterilmiyor"
+zorunlu 'TEDBIRGE_DESKTOP_HEALTHY' "$KIOSK" "Otomatik test için masaüstü sağlık işareti yok"
+grep -q 'TEDBIRGE_DESKTOP_HEALTHY' scripts/test-install-qemu.sh || {
+  echo "HATA: kalıcı kurulum testi gerçek masaüstü sağlığını beklemiyor" >&2; exit 1; }
+
 echo "Kurulum güvenlik ve kullanıcı deneyimi sözleşmesi doğrulandı."
