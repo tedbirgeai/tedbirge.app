@@ -42,6 +42,7 @@ import {
   Palette,
   UserRound,
   ShieldCheck,
+  Sigma,
   TerminalSquare,
 } from "lucide-react";
 import type { ComponentType } from "react";
@@ -75,6 +76,7 @@ const MAP: Record<string, ComponentType<{ className?: string }>> = {
   notes: StickyNote,
   organizer: CalendarCheck,
   terminal: TerminalSquare,
+  axiom: Sigma,
   "web.search": Search,
   "web.search.g": Search,
   "web.video": Video,
