@@ -21,6 +21,7 @@ import {
   PlayCircle,
   Presentation,
   Radio,
+  Sigma,
   StickyNote,
   Table2,
   X,
@@ -31,6 +32,12 @@ import { WEB_APPS } from "@/shell/web-apps";
 export type LauncherTile = { id: string; label: string; hint: string; icon: ReactNode };
 
 export const LOCAL_TILES: LauncherTile[] = [
+  {
+    id: "axiom",
+    label: "AXIOM",
+    hint: "Deterministik doğrulama çekirdeği",
+    icon: <Sigma className="h-6 w-6" />,
+  },
   {
     id: "messenger",
     label: "Sohbet",
