@@ -23,14 +23,17 @@ import { MemoryProfiler } from "@/components/axiom/MemoryProfiler";
 import { NodeStatusCard } from "@/components/axiom/NodeStatusCard";
 import { ProofViewer } from "@/components/axiom/ProofViewer";
 import { VerifyBoundary } from "@/components/axiom/VerifyBoundary";
+import type { KernelAnalysis } from "@/lib/axiom/analyze";
 import { AXIOM_BRAND_BANNER, AXIOM_RAM_LIMIT } from "@/lib/axiom/brand";
 import { createRenderer, type Renderer } from "@/lib/axiom/canvas/renderer";
 import type { ByteDigest } from "@/lib/axiom/digest";
-import type { KernelAnalysis, KernelRequest, KernelResponse } from "@/lib/axiom/kernel.worker";
+import type { KernelRequest, KernelResponse } from "@/lib/axiom/kernel.worker";
+import { localAnalyze, localStats, localVerify } from "@/lib/axiom/local-kernel";
 import { sampleMemory, type MemorySample } from "@/lib/axiom/profiler";
 import type { RamStats } from "@/lib/axiom/ram";
 import { ROM_SEED, romStatus, seedRom, type RomStatus } from "@/lib/axiom/rom";
 import type { VerifyResult } from "@/lib/axiom/verify/types";
+
 
 const BOS_RAM: RamStats = {
   used: 0,
