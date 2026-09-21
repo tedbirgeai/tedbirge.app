@@ -18,7 +18,7 @@ import type { VerifyResult } from "@/lib/axiom/verify/types";
 const ENGINE_LABEL: Record<VerifyResult["engine"], string> = {
   z3: "Z3 SMT",
   lean4: "Lean 4",
-  mock: "Mock motor",
+  local: "Yerel kural kapısı",
 };
 
 function verdictTone(verdict: VerifyResult["verdict"]): string {
@@ -71,8 +71,8 @@ export function ProofViewer({ result }: { result: VerifyResult | null }) {
         ) : (
           <div className="mt-1 text-[var(--tb-muted)]">{t("proof.noSeal")}</div>
         )}
-        {result.simulated ? (
-          <div className="mt-1 text-[var(--tb-rose-400)]">{t("proof.simulated")}</div>
+        {!result.wasmVerified ? (
+          <div className="mt-1 text-[var(--tb-muted)]">{t("proof.localOnly")}</div>
         ) : null}
       </div>
 

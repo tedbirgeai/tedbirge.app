@@ -59,7 +59,7 @@ export function toToolResult(response: JsonRpcResponse): string {
   if (!r?.verdict) return JSON.stringify(response.result);
   return [
     `STATUS: ${r.verdict}`,
-    `ENGINE: ${r.engine ?? "mock"}`,
+    `ENGINE: ${r.engine ?? "local"}`,
     r.seal ? `SEAL: ${r.seal}` : "SEAL: yok",
   ].join("\n");
 }
