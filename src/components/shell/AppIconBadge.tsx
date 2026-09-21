@@ -28,9 +28,9 @@ export function appSecurityLabels(id: string): string[] {
   const app = catalogApp(id);
   if (web) return ["Harici web hedefi", "Geçit/kısıtlı pencere", "Çekirdek yetkisi yok"];
   return [
-    app?.builtin || manifest ? "Ed25519 imzalı" : "Yerel paket",
+    app?.builtin || manifest ? "Doğrulanmış uygulama" : "Yerel paket",
     id === "messenger" || id === "calls" ? "E2EE / P2P" : "Off-Grid uyumlu",
-    id === "axiom" ? "STATUS: 200_PROVEN" : "AES-GCM appdata",
+    id === "axiom" ? "STATUS: 200_PROVEN" : "Şifreli appdata",
   ];
 }
 
@@ -46,7 +46,11 @@ export function AppSecurityBadge({ id, compact = false }: { id: string; compact?
         compact ? "px-1 py-0 text-[9px]" : "px-1.5 py-0.5 text-[10px]"
       }`}
     >
-      {web ? <WifiOff className="h-2.5 w-2.5" aria-hidden /> : <ShieldCheck className="h-2.5 w-2.5" aria-hidden />}
+      {web ? (
+        <WifiOff className="h-2.5 w-2.5" aria-hidden />
+      ) : (
+        <ShieldCheck className="h-2.5 w-2.5" aria-hidden />
+      )}
       {label}
     </span>
   );

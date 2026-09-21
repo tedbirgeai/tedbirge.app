@@ -315,6 +315,66 @@ npm run kernel:build
     ),
   },
   {
+    id: "mcp",
+    title: "Universal MCP",
+    summary: "AXIOM doğrulama için JSON-RPC 2.0 MCP uç noktası ve sınırlar.",
+    body: (
+      <>
+        <p className="lead">
+          Evrensel MCP katmanı, harici LLM istemcilerinin AXIOM kanıt doğrulamasını tek, ölçümlü ve
+          veri sızdırmayan bir JSON-RPC 2.0 çağrısıyla başlatmasını sağlar.
+        </p>
+        <h2>Uç nokta</h2>
+        <pre>
+          <code>{`POST ${APP_URL}/api/public/v1/mcp/verify
+Content-Type: application/json
+X-Axiom-Client: <istemci-kimliği>`}</code>
+        </pre>
+        <h2>Metotlar</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Metot</th>
+              <th>Amaç</th>
+              <th>Koruma</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>tools/list</td>
+              <td>Kullanılabilir AXIOM doğrulama araçlarını ve şemalarını döndürür.</td>
+              <td>Girdi metni yok; no-store yanıt.</td>
+            </tr>
+            <tr>
+              <td>tools/call</td>
+              <td>Z3, Lean 4 veya Omni-Science doğrulama simülasyonunu çalıştırır.</td>
+              <td>64 KB gövde sınırı ve 500 ms sert doğrulama bütçesi.</td>
+            </tr>
+          </tbody>
+        </table>
+        <h2>Örnek JSON-RPC</h2>
+        <pre>
+          <code>{`{
+  "jsonrpc": "2.0",
+  "id": "proof-001",
+  "method": "tools/call",
+  "params": {
+    "name": "axiom.verify",
+    "arguments": {
+      "source": "AXIOM VERIFY x WHERE x >= 0",
+      "engine": "z3"
+    }
+  }
+}`}</code>
+        </pre>
+        <div className="note">
+          WASM Z3/Lean ikilisi bulunmadığında yanıt açıkça simülasyon motoru olarak işaretlenir; ham
+          istemci içeriği faturalandırma defterine veya günlük dosyalarına yazılmaz.
+        </div>
+      </>
+    ),
+  },
+  {
     id: "surum",
     title: "Sürüm notları",
     summary: "Uyumluluk sözleri ve değişiklik politikası.",

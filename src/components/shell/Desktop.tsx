@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Folder, FileText, FileType2, Lock, Presentation, StickyNote, Table2 } from "lucide-react";
 
-import { AppIcon } from "@/components/shell/app-icons";
+import { AppIconSurface } from "@/components/shell/AppIconBadge";
 import { DesktopItem } from "@/components/shell/DesktopItem";
 import { DesktopPager } from "@/components/shell/DesktopPager";
 import { DesktopIcon } from "@/components/shell/DesktopIcon";
@@ -151,7 +151,7 @@ export function Desktop({
         label: a.label,
         sortType: `0-${a.category}`,
         updated: 0,
-        glyph: <AppIcon id={a.id} className="h-6 w-6" />,
+        glyph: <AppIconSurface id={a.id} size="desk" />,
       }));
 
     const docs: Item[] = files.map((f) => ({

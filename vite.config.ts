@@ -125,14 +125,6 @@ export default defineConfig({
                 expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
               },
             },
-            {
-              urlPattern: ({ url }: { url: URL }) => url.origin === "https://fonts.gstatic.com",
-              handler: "CacheFirst",
-              options: {
-                cacheName: "tedbirge-fonts",
-                expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              },
-            },
           ],
         },
       }),

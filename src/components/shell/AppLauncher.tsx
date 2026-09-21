@@ -138,7 +138,9 @@ function Grid({
   featured?: boolean;
 }) {
   return (
-    <div className={`grid grid-cols-2 gap-3 ${featured ? "lg:grid-cols-3" : "sm:grid-cols-4 lg:grid-cols-6"}`}>
+    <div
+      className={`grid grid-cols-2 gap-3 ${featured ? "lg:grid-cols-3" : "sm:grid-cols-4 lg:grid-cols-6"}`}
+    >
       {tiles.map((t) => (
         <button
           key={t.id}
@@ -147,7 +149,11 @@ function Grid({
           className={`tbos-launcher-tile wa-press flex flex-col rounded-2xl p-3 text-left transition ${featured ? "min-h-32" : "min-h-24"}`}
         >
           <div className="flex items-start justify-between gap-2">
-            <AppIconSurface id={t.id} size="launcher" showBadge={featured || !t.id.startsWith("web.")} />
+            <AppIconSurface
+              id={t.id}
+              size="launcher"
+              showBadge={featured || !t.id.startsWith("web.")}
+            />
             {featured ? (
               <span className="rounded-full border border-[var(--tb-border)] px-2 py-0.5 font-osmono text-[10px] text-[var(--tb-accent)]">
                 V5 ANA
@@ -164,11 +170,16 @@ function Grid({
           </span>
           {featured ? (
             <span className="mt-auto flex flex-wrap gap-1 pt-3">
-              {appSecurityLabels(t.id).slice(0, 2).map((b) => (
-                <span key={b} className="rounded-md border border-[var(--tb-border)] px-1.5 py-0.5 font-osmono text-[10px] text-[var(--tb-muted)]">
-                  {b}
-                </span>
-              ))}
+              {appSecurityLabels(t.id)
+                .slice(0, 2)
+                .map((b) => (
+                  <span
+                    key={b}
+                    className="rounded-md border border-[var(--tb-border)] px-1.5 py-0.5 font-osmono text-[10px] text-[var(--tb-muted)]"
+                  >
+                    {b}
+                  </span>
+                ))}
             </span>
           ) : null}
         </button>

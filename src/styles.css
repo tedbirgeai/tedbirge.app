@@ -1023,6 +1023,75 @@ body {
   }
 }
 
+
+/* --- V5 yerel uygulama ikonları ve premium kabuk yüzeyleri --- */
+.tbos-app-icon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--tb-text);
+  background:
+    radial-gradient(circle at 28% 18%, color-mix(in srgb, var(--tb-text) 22%, transparent), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 92%, var(--tb-accent) 8%), color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 76%, var(--tb-bg) 24%));
+  border: 1px solid color-mix(in srgb, var(--tb-border) 86%, var(--tb-text) 14%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--tb-text) 18%, transparent),
+    0 14px 30px color-mix(in srgb, var(--tb-bg) 62%, transparent);
+  overflow: hidden;
+}
+.tbos-app-icon::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tb-text) 12%, transparent), transparent 44%);
+  pointer-events: none;
+}
+.tbos-app-icon--brand {
+  background: color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 78%, var(--tb-text) 8%);
+}
+.tbos-app-icon--system {
+  color: var(--tb-accent);
+}
+.tbos-app-icon__glyph {
+  position: relative;
+  z-index: 1;
+}
+.tbos-launcher,
+.tbos-taskbar {
+  background: color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 86%, transparent);
+  border: 1px solid var(--tb-border);
+  box-shadow: var(--tb-shadow);
+  color: var(--tb-text);
+  backdrop-filter: blur(22px) saturate(160%);
+}
+.tbos-launcher-tile {
+  background: color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tb-border) 88%, var(--tb-text) 12%);
+}
+.tbos-launcher-tile:hover {
+  border-color: color-mix(in srgb, var(--tb-accent) 46%, var(--tb-border));
+  background: color-mix(in srgb, var(--tb-accent) 11%, var(--tb-panel-solid, var(--tb-panel)));
+}
+.tbos-taskbar-button,
+.tbos-taskbar-window,
+.tbos-taskbar-window--min {
+  background: color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 72%, transparent);
+  border-color: var(--tb-border);
+  color: var(--tb-text);
+}
+.tbos-taskbar-button--on,
+.tbos-taskbar-window:hover {
+  background: color-mix(in srgb, var(--tb-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--tb-accent) 42%, var(--tb-border));
+  color: var(--tb-accent);
+}
+.tbos-taskbar-window--min {
+  color: var(--tb-muted);
+  opacity: 0.72;
+}
+
 /* --- Pencere fiziği: sürükleme koruması, yapışma önizlemesi, düğme tepkisi --- */
 body.tbos-dragging iframe,
 body.tbos-dragging video {
