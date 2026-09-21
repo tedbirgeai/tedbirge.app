@@ -359,7 +359,9 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
                 }`}
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] text-[var(--tb-text)]">{f.name}</span>
+                  <span className="block truncate text-[14px] text-[var(--tb-text)]">
+                    {baseName(f)}
+                  </span>
                   <span className="block font-osmono text-[11px] text-[var(--tb-muted)]">
                     {human(f.size)} · {f.folder}
                   </span>
