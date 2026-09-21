@@ -15,6 +15,7 @@ import { pushUndo } from "@/lib/shell/undo-stack";
 import { useShell } from "@/shell/shell-context";
 import { sendFileToPeer } from "@/lib/p2p/file-transfer";
 import { notifyError, notifyOk } from "@/lib/shell/notify";
+import { baseName, childrenOf } from "@/lib/vfs/tree";
 import {
   deleteFile,
   listFiles,
@@ -97,6 +98,8 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
   const [over, setOver] = useState(false);
   const [target, setTarget] = useState("");
   const [folder, setFolder] = useState<VfsFolder>("Belgeler");
+  /** "repo" kökünde bulunduğumuz alt dizin yolu. */
+  const [dir, setDir] = useState("");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -132,12 +135,22 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
     return map;
   }, [files]);
 
+  /** Mount edilmiş proje ağacında gezinme (yalnız "repo" kökü). */
+  const tree = useMemo(() => {
+    if (folder !== "repo" || q.trim()) return null;
+    return childrenOf(
+      files.filter((f) => f.folder === "repo"),
+      dir,
+    );
+  }, [files, folder, q, dir]);
+
   const visible = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");
+    if (tree && !needle) return tree.files;
     return files
       .filter((f) => (needle ? true : f.folder === folder))
       .filter((f) => (needle ? f.name.toLocaleLowerCase("tr").includes(needle) : true));
-  }, [files, folder, q]);
+  }, [files, folder, q, tree]);
 
   const current = visible.find((f) => f.id === selected) ?? null;
 
@@ -282,6 +295,7 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
                   type="button"
                   onClick={() => {
                     setFolder(f);
+                    setDir("");
                     setQ("");
                   }}
                   aria-pressed={folder === f && !q}
@@ -304,6 +318,28 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
         {/* Liste + detay */}
         <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto]">
           <ul className="min-h-0 overflow-y-auto">
+            {tree && dir ? (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setDir(dir.split("/").slice(0, -1).join("/"))}
+                  className="flex min-h-12 w-full items-center gap-3 border-b border-[var(--tb-border)] px-3 text-left text-[14px] text-[var(--tb-accent)]"
+                >
+                  .. /{dir}
+                </button>
+              </li>
+            ) : null}
+            {tree?.dirs.map((name) => (
+              <li key={`dir:${name}`}>
+                <button
+                  type="button"
+                  onClick={() => setDir(dir ? `${dir}/${name}` : name)}
+                  className="flex min-h-12 w-full items-center gap-3 border-b border-[var(--tb-border)] px-3 text-left text-[14px] text-[var(--tb-accent)]"
+                >
+                  {name}/
+                </button>
+              </li>
+            ))}
             {visible.map((f) => (
               <li
                 key={f.id}
@@ -322,7 +358,9 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
                 }`}
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] text-[var(--tb-text)]">{f.name}</span>
+                  <span className="block truncate text-[14px] text-[var(--tb-text)]">
+                    {baseName(f)}
+                  </span>
                   <span className="block font-osmono text-[11px] text-[var(--tb-muted)]">
                     {human(f.size)} · {f.folder}
                   </span>

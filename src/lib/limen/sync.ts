@@ -10,6 +10,7 @@ import {
   type CrdtState,
 } from "@/lib/axiom/sync/crdt";
 import { createQueue, enqueue, flush, type QueueState } from "@/lib/axiom/sync/queue";
+import { mountLimenRecord, type LimenMount } from "@/lib/limen/mount";
 
 export type LimenMirrorMode = "local" | "p2p" | "github";
 
@@ -30,6 +31,10 @@ export type LimenSyncSnapshot = {
   pending: number;
   sent: number;
   lastFlush: number | null;
+  /** Depoya (repo/) mount edilmiş paketler. */
+  mounts: LimenMount[];
+  /** Mount sırasında oluşan son hata (yoksa null). */
+  mountError: string | null;
 };
 
 type LimenWire = { type: "limen.delta" | "limen.hello"; delta?: CrdtDelta; node?: string };
@@ -44,6 +49,10 @@ let queue: QueueState = createQueue();
 let peers = 1;
 let channel: BroadcastChannel | null = null;
 let netWatch = false;
+let mounts: Record<string, LimenMount> = {};
+let mountError: string | null = null;
+let mounting = false;
+let pumping = false;
 
 function emit() {
   listeners.forEach((listener) => listener());
@@ -62,7 +71,11 @@ function ensureChannel() {
     if (data?.type === "limen.delta" && data.delta) {
       const result = apply(state, data.delta);
       state = result.state;
-      if (result.applied > 0) invalidate();
+      if (result.applied > 0) {
+        invalidate();
+        // Eşten gelen paket doğrudan depoya (repo/) iner.
+        void mountLimenPackages();
+      }
     }
   });
   channel.postMessage({ type: "limen.hello", node: nodeId } satisfies LimenWire);
@@ -93,14 +106,17 @@ function toRecords(current: CrdtState): LimenRecord[] {
 let cache: LimenSyncSnapshot | null = null;
 
 function build(): LimenSyncSnapshot {
+  const records = toRecords(state);
   return {
     node: nodeId,
     online: typeof navigator === "undefined" ? true : navigator.onLine,
     peers,
-    records: toRecords(state),
+    records,
     pending: queue.pending.length,
     sent: queue.sent,
     lastFlush: queue.lastFlush,
+    mounts: records.map((r) => mounts[r.id]).filter((m): m is LimenMount => Boolean(m)),
+    mountError,
   };
 }
 
@@ -114,10 +130,53 @@ function invalidate() {
   emit();
 }
 
+/**
+ * Kayıtları depodaki "repo" kök klasörüne mount eder. Yeniden girişe
+ * kapalıdır; depo kapalıysa hata durum alanına yazılır, uygulama çökmez.
+ */
+export async function mountLimenPackages(): Promise<LimenMount[]> {
+  if (mounting) return Object.values(mounts);
+  mounting = true;
+  try {
+    const next: Record<string, LimenMount> = {};
+    for (const record of toRecords(state)) {
+      next[record.id] = await mountLimenRecord(record);
+    }
+    mounts = next;
+    mountError = null;
+  } catch (err) {
+    mountError = err instanceof Error ? err.message : "Depoya yazılamadı.";
+  } finally {
+    mounting = false;
+    invalidate();
+  }
+  return Object.values(mounts);
+}
+
+/**
+ * Senkronizasyon döngüsü: bekleyen kuyruğu boşaltır ve paketleri depoya
+ * mount eder. Pencere açıldığında ve ağ geri geldiğinde çalışır; böylece
+ * "queued" kayıtlar takılıp kalmaz.
+ */
+export async function pumpLimen(): Promise<void> {
+  if (pumping) return;
+  pumping = true;
+  try {
+    const online = typeof navigator === "undefined" ? true : navigator.onLine;
+    if (online && queue.pending.length) await flushLimen();
+    else await mountLimenPackages();
+  } finally {
+    pumping = false;
+  }
+}
+
 function ensureNetworkWatch() {
   if (typeof window === "undefined" || netWatch) return;
   netWatch = true;
-  window.addEventListener("online", invalidate);
+  window.addEventListener("online", () => {
+    invalidate();
+    void pumpLimen();
+  });
   window.addEventListener("offline", invalidate);
 }
 
@@ -125,6 +184,7 @@ export function subscribeLimen(listener: Listener) {
   ensureChannel();
   ensureNetworkWatch();
   listeners.add(listener);
+  void pumpLimen();
   return () => {
     listeners.delete(listener);
   };
@@ -153,6 +213,8 @@ export function stageLimenChange(name: string, mode: LimenMirrorMode = "p2p"): L
   });
   queue = enqueue(queue, delta(state));
   invalidate();
+  // Kuyruğa alınan paket beklemeden depoya mount edilir.
+  void mountLimenPackages();
   return snapshot();
 }
 
@@ -170,9 +232,13 @@ export async function flushLimen(): Promise<LimenSyncSnapshot> {
   );
   queue = result.state;
   if (result.sent > 0) {
+    // Kayıt "synced" olmadan önce dosya ağacı depoya inmiş olmalı.
+    await mountLimenPackages();
     for (const record of toRecords(state)) {
       state = put(state, record.id, { ...record, status: "synced", updatedAt: Date.now() });
     }
+  } else {
+    await mountLimenPackages();
   }
   invalidate();
   return snapshot();

@@ -1,9 +1,11 @@
 /**
  * TERMİNAL YOL ÇÖZÜMLEYİCİ
  * ------------------------------------------------------------------
- * VFS sabit klasör şeması ("/Belgeler", "/Görseller", "/Medya",
- * "/İndirilenler") üzerine POSIX benzeri bir dizin görünümü kurar.
- * VFS deposunun API'si değişmez; burası yalnız ad çözümlemesi yapar.
+ * VFS kök klasör şeması ("/Belgeler", "/Görseller", "/Medya",
+ * "/İndirilenler", "/repo") üzerine POSIX benzeri bir dizin görünümü
+ * kurar. Kök klasörlerin altında çok seviyeli dizinler (LIMEN'den mount
+ * edilen proje/delta ağacı) gezilebilir. VFS deposunun API'si değişmez;
+ * burası yalnız ad çözümlemesi yapar.
  */
 
 import { VFS_FOLDERS, type VfsFolder } from "@/lib/vfs/store";
@@ -16,10 +18,15 @@ export function isFolderPath(path: string): path is `/${VfsFolder}` {
   return (VFS_FOLDERS as readonly string[]).includes(name);
 }
 
-/** Yol içinden klasör adını verir (kökte null). */
+/** Yol içinden kök klasör adını verir (kökte null). */
 export function folderOf(path: string): VfsFolder | null {
   const name = path.replace(/^\//, "").split("/")[0] ?? "";
   return (VFS_FOLDERS as readonly string[]).includes(name) ? (name as VfsFolder) : null;
+}
+
+/** Yolun klasör içindeki alt dizin parçası ("" ise klasör kökü). */
+export function subPathOf(path: string): string {
+  return path.replace(/^\//, "").split("/").slice(1).join("/");
 }
 
 /** `cd` hedefini normalize eder; geçersizse null. */
@@ -36,22 +43,26 @@ export function resolvePath(cwd: string, target: string): string | null {
     stack.push(p);
   }
   if (stack.length === 0) return ROOT;
-  if (stack.length > 1) return null;
-  const path = `/${stack[0]}`;
-  return isFolderPath(path) ? path : null;
+  if (!isFolderPath(`/${stack[0]}`)) return null;
+  return `/${stack.join("/")}`;
 }
 
-/** Bir dosya argümanını { klasör, ad } ikilisine böler. */
+/**
+ * Bir dosya argümanını { klasör, ad } ikilisine böler. `ad` klasör
+ * köküne göre tam yoldur (örn. "tedbirge/limen.json"), böylece depo
+ * kaydıyla birebir eşleşir.
+ */
 export function splitTarget(
   cwd: string,
   arg: string,
 ): { folder: VfsFolder | null; name: string } | null {
   if (!arg) return null;
-  if (!arg.includes("/")) return { folder: folderOf(cwd), name: arg };
   const idx = arg.lastIndexOf("/");
-  const dir = arg.slice(0, idx) || ROOT;
-  const name = arg.slice(idx + 1);
+  const base = idx < 0 ? arg : arg.slice(idx + 1);
+  if (!base) return null;
+  const dir = idx < 0 ? cwd : arg.slice(0, idx) || ROOT;
   const resolved = resolvePath(cwd, dir);
   if (resolved === null) return null;
-  return { folder: folderOf(resolved), name };
+  const sub = subPathOf(resolved);
+  return { folder: folderOf(resolved), name: sub ? `${sub}/${base}` : base };
 }

@@ -1,16 +1,26 @@
 import { useCallback, useEffect, useSyncExternalStore, useState, type ReactNode } from "react";
-import { GitBranch, GitMerge, Github, Network, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  FolderTree,
+  GitBranch,
+  GitMerge,
+  Github,
+  Network,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   flushLimen,
   getLimenSnapshot,
+  mountLimenPackages,
   resetLimenView,
   stageLimenChange,
   subscribeLimen,
   type LimenMirrorMode,
 } from "@/lib/limen/sync";
-import { notifyOk } from "@/lib/shell/notify";
+import { notifyError, notifyOk } from "@/lib/shell/notify";
+import { openWindow } from "@/shell/windows";
 
 const MODES: { id: LimenMirrorMode; label: string }[] = [
   { id: "p2p", label: "P2P Mesh" },
@@ -41,6 +51,23 @@ export function LimenApp() {
     void flushLimen()
       .then((next) => notifyOk("LIMEN eşitlendi", `${next.sent} delta gönderildi`))
       .finally(() => setBusy(false));
+  }, []);
+
+  const mount = useCallback(() => {
+    setBusy(true);
+    void mountLimenPackages()
+      .then((list) => {
+        const files = list.reduce((sum, m) => sum + m.files, 0);
+        notifyOk("Depoya bağlandı", `${list.length} paket · ${files} dosya · repo/`);
+      })
+      .catch((e: unknown) =>
+        notifyError("Depoya yazılamadı", e instanceof Error ? e.message : undefined),
+      )
+      .finally(() => setBusy(false));
+  }, []);
+
+  const openFiles = useCallback(() => {
+    openWindow("files", "Dosyalar — repo");
   }, []);
 
   return (
@@ -92,29 +119,49 @@ export function LimenApp() {
             <Button type="button" variant="secondary" onClick={flush} disabled={busy}>
               <GitMerge className="h-4 w-4" /> Eşitle
             </Button>
+            <Button type="button" variant="outline" onClick={mount} disabled={busy}>
+              <FolderTree className="h-4 w-4" /> Depoya bağla
+            </Button>
+            <Button type="button" variant="outline" onClick={openFiles}>
+              Dosyalar'da aç
+            </Button>
           </div>
 
+          {snap.mountError ? (
+            <p className="mt-3 font-osmono text-[11px] text-[var(--tb-danger)]">
+              Depoya yazılamadı: {snap.mountError}
+            </p>
+          ) : null}
+
           <div className="mt-5 grid gap-3">
-            {snap.records.map((record) => (
-              <article
-                key={record.id}
-                className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-4"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="truncate text-base font-semibold text-[var(--tb-text)]">
-                      {record.name}
-                    </h2>
-                    <p className="font-osmono text-[11px] text-[var(--tb-muted)]">
-                      {record.branch} · {record.mode}
-                    </p>
+            {snap.records.map((record) => {
+              const mounted = snap.mounts.find((m) => m.id === record.id);
+              return (
+                <article
+                  key={record.id}
+                  className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="truncate text-base font-semibold text-[var(--tb-text)]">
+                        {record.name}
+                      </h2>
+                      <p className="font-osmono text-[11px] text-[var(--tb-muted)]">
+                        {record.branch} · {record.mode}
+                      </p>
+                      <p className="mt-1 truncate font-osmono text-[11px] text-[var(--tb-accent)]">
+                        {mounted
+                          ? `${mounted.path}/ · ${mounted.files} dosya`
+                          : "depoya henüz bağlanmadı"}
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-[color-mix(in_srgb,var(--tb-accent)_42%,transparent)] bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] px-2 py-1 font-osmono text-[10px] text-[var(--tb-accent)]">
+                      {record.status}
+                    </span>
                   </div>
-                  <span className="rounded-full border border-[color-mix(in_srgb,var(--tb-accent)_42%,transparent)] bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] px-2 py-1 font-osmono text-[10px] text-[var(--tb-accent)]">
-                    {record.status}
-                  </span>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </div>
 

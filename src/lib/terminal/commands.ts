@@ -20,7 +20,9 @@ import {
   type VfsFolder,
 } from "@/lib/vfs/store";
 
-import { ROOT, folderOf, resolvePath, splitTarget } from "./paths";
+import { baseName, childrenOf, entriesUnder, treeAt } from "@/lib/vfs/tree";
+
+import { ROOT, folderOf, resolvePath, splitTarget, subPathOf } from "./paths";
 import type { TerminalHost } from "./host";
 
 export type Tone = "out" | "ok" | "err" | "warn" | "dim" | "accent";
@@ -67,19 +69,32 @@ const nf = (v: number | null, unit = "") => (v === null ? "ölçülemiyor" : `${
 
 const pad = (s: string, n: number) => (s.length >= n ? s : s + " ".repeat(n - s.length));
 
+/** Verilen yolun altındaki tüm kayıtlar (alt dizinler dahil). */
 async function entriesIn(cwd: string): Promise<VfsEntry[]> {
   const folder = folderOf(cwd);
   const all = await listFiles();
-  return folder ? all.filter((f) => f.folder === folder) : all;
+  if (!folder) return all;
+  const inFolder = all.filter((f) => f.folder === folder);
+  return entriesUnder(inFolder, subPathOf(cwd));
+}
+
+/** Verilen yolun doğrudan çocukları: alt dizinler + dosyalar. */
+async function childrenIn(cwd: string) {
+  const folder = folderOf(cwd);
+  const all = await listFiles();
+  const inFolder = folder ? all.filter((f) => f.folder === folder) : all;
+  return childrenOf(inFolder, subPathOf(cwd));
 }
 
 async function findEntry(cwd: string, arg: string): Promise<VfsEntry | null> {
   const t = splitTarget(cwd, arg);
   if (!t) return null;
   const all = await listFiles();
+  const leaf = t.name.split("/").pop() ?? t.name;
   return (
     all.find((f) => f.name === t.name && (t.folder === null || f.folder === t.folder)) ??
     all.find((f) => f.name === t.name) ??
+    all.find((f) => baseName(f) === leaf && (t.folder === null || f.folder === t.folder)) ??
     null
   );
 }
@@ -90,7 +105,7 @@ const cmdLs: Command = {
   name: "ls",
   group: "dosya",
   usage: "ls [-l] [-a] [yol]",
-  summary: "Dizin içeriğini listeler",
+  summary: "Dizin içeriğini listeler (mount edilmiş proje ağacı dahil)",
   async run({ cwd, args, flags }) {
     const target = args[0] ? resolvePath(cwd, args[0]) : cwd;
     if (target === null) return fail("Dizin bulunamadı.");
@@ -106,19 +121,64 @@ const cmdLs: Command = {
       }
       return ok(lines);
     }
-    const list = await entriesIn(target);
-    const shown = flags.has("a") ? list : list.filter((f) => !f.name.startsWith("."));
-    if (!shown.length) return ok([{ text: "(boş)", tone: "dim" }]);
+    const { dirs, files } = await childrenIn(target);
+    // Alt dizinler (LIMEN'den mount edilen proje/delta ağacı) önce gelir.
+    for (const d of dirs) {
+      lines.push({
+        text: flags.has("l") ? `${pad("dizin", 8)} ${pad("-", 9)} ${"".padEnd(20)} ${d}/` : `${d}/`,
+        tone: "accent",
+      });
+    }
+    const shown = flags.has("a") ? files : files.filter((f) => !baseName(f).startsWith("."));
     for (const f of shown) {
       lines.push({
         text: flags.has("l")
           ? `${pad("dosya", 8)} ${pad(String(f.size), 9)} ${new Date(f.at)
               .toLocaleString("tr-TR")
-              .padEnd(20)} ${f.name}`
-          : f.name,
+              .padEnd(20)} ${baseName(f)}`
+          : baseName(f),
       });
     }
+    if (!lines.length) return ok([{ text: "(boş)", tone: "dim" }]);
     return ok(lines);
+  },
+};
+
+const cmdTree: Command = {
+  name: "tree",
+  group: "dosya",
+  usage: "tree [yol]",
+  summary: "Dizin ağacını girintili gösterir",
+  async run({ cwd, args }) {
+    const target = args[0] ? resolvePath(cwd, args[0]) : cwd;
+    if (target === null) return fail("Dizin bulunamadı.");
+    if (target === ROOT) {
+      const all = await listFiles();
+      const lines: Line[] = [];
+      for (const folder of VFS_FOLDERS) {
+        lines.push({ text: `${folder}/`, tone: "accent" });
+        const inFolder = all.filter((f) => f.folder === folder);
+        for (const row of treeAt(inFolder)) {
+          lines.push({
+            text: `${"  ".repeat(row.depth + 1)}${row.label}`,
+            tone: row.dir ? "accent" : undefined,
+          });
+        }
+      }
+      return ok(lines);
+    }
+    const folder = folderOf(target);
+    const all = await listFiles();
+    const inFolder = folder ? all.filter((f) => f.folder === folder) : all;
+    const rows = treeAt(inFolder, subPathOf(target));
+    if (!rows.length) return ok([{ text: "(boş)", tone: "dim" }]);
+    return ok([
+      { text: `${target}`, tone: "accent" },
+      ...rows.map((row) => ({
+        text: `${"  ".repeat(row.depth + 1)}${row.label}`,
+        tone: row.dir ? ("accent" as Tone) : undefined,
+      })),
+    ]);
   },
 };
 
@@ -719,6 +779,7 @@ const cmdHelp: Command = {
 
 export const COMMANDS: Command[] = [
   cmdLs,
+  cmdTree,
   cmdCd,
   cmdPwd,
   cmdCat,
