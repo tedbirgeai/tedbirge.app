@@ -13,7 +13,7 @@ import { Radio } from "lucide-react";
 import { t } from "@/lib/axiom/i18n";
 import { FREE_NODE_LIMIT, useAxiomNode } from "@/lib/axiom/net/node";
 
-export function NodeStatusCard() {
+export function NodeStatusCard({ onOpenLicense }: { onOpenLicense?: () => void } = {}) {
   const node = useAxiomNode();
   const pro = node.status === "SUBSCRIPTION_REQUIRED";
 
@@ -63,9 +63,18 @@ export function NodeStatusCard() {
       </dl>
 
       <p className="mt-2 font-osmono text-[10px] text-[var(--tb-muted)]">
-        1–5 cihaz ücretsizdir. 6. cihazda düğüm lisansı gerekir; ücretlendirme bu fazda
-        etkinleştirilmemiştir.
+        1–5 cihaz ücretsizdir. 6. cihazda düğüm lisansı gerekir; ödeme sağlayıcısı bağlı değildir.
       </p>
+
+      {onOpenLicense ? (
+        <button
+          type="button"
+          onClick={onOpenLicense}
+          className="mt-2 rounded-lg border border-[var(--tb-border)] px-2 py-1 font-osmono text-[10px] uppercase tracking-wide text-[var(--tb-muted)]"
+        >
+          {t("lic.open")}
+        </button>
+      ) : null}
     </div>
   );
 }
