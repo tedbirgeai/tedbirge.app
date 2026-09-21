@@ -258,7 +258,7 @@ export function AxiomApp() {
           {verifying ? "Doğrulanıyor…" : "Doğrula"}
         </button>
         <span className="font-osmono text-[10px] text-[var(--tb-muted)]">
-          Sert zaman sınırı 500 ms · zaman aşımında STATUS: 504_EXECUTION_TIMEOUT
+          Sert zaman sınırı 500 ms · aşılırsa doğrulama kesilir ve zaman aşımı bildirilir
         </span>
       </div>
 
