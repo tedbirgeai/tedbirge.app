@@ -120,29 +120,49 @@ export function LimenApp() {
             <Button type="button" variant="secondary" onClick={flush} disabled={busy}>
               <GitMerge className="h-4 w-4" /> Eşitle
             </Button>
+            <Button type="button" variant="outline" onClick={mount} disabled={busy}>
+              <FolderTree className="h-4 w-4" /> Depoya bağla
+            </Button>
+            <Button type="button" variant="outline" onClick={openFiles}>
+              Dosyalar'da aç
+            </Button>
           </div>
 
+          {snap.mountError ? (
+            <p className="mt-3 font-osmono text-[11px] text-[var(--tb-danger)]">
+              Depoya yazılamadı: {snap.mountError}
+            </p>
+          ) : null}
+
           <div className="mt-5 grid gap-3">
-            {snap.records.map((record) => (
-              <article
-                key={record.id}
-                className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-4"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="truncate text-base font-semibold text-[var(--tb-text)]">
-                      {record.name}
-                    </h2>
-                    <p className="font-osmono text-[11px] text-[var(--tb-muted)]">
-                      {record.branch} · {record.mode}
-                    </p>
+            {snap.records.map((record) => {
+              const mounted = snap.mounts.find((m) => m.id === record.id);
+              return (
+                <article
+                  key={record.id}
+                  className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="truncate text-base font-semibold text-[var(--tb-text)]">
+                        {record.name}
+                      </h2>
+                      <p className="font-osmono text-[11px] text-[var(--tb-muted)]">
+                        {record.branch} · {record.mode}
+                      </p>
+                      <p className="mt-1 truncate font-osmono text-[11px] text-[var(--tb-accent)]">
+                        {mounted
+                          ? `${mounted.path}/ · ${mounted.files} dosya`
+                          : "depoya henüz bağlanmadı"}
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-[color-mix(in_srgb,var(--tb-accent)_42%,transparent)] bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] px-2 py-1 font-osmono text-[10px] text-[var(--tb-accent)]">
+                      {record.status}
+                    </span>
                   </div>
-                  <span className="rounded-full border border-[color-mix(in_srgb,var(--tb-accent)_42%,transparent)] bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] px-2 py-1 font-osmono text-[10px] text-[var(--tb-accent)]">
-                    {record.status}
-                  </span>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </div>
 
