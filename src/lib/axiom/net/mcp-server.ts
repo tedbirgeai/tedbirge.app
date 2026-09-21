@@ -18,6 +18,7 @@
 
 import { z } from "zod";
 
+import { meterRecord } from "@/lib/axiom/billing/meter";
 import { matchInvariants } from "@/lib/axiom/invariants";
 import { askAscii, astMetrics } from "@/lib/axiom/lang/ask-ascii";
 import { toIr } from "@/lib/axiom/lang/axiom-ir";
@@ -87,8 +88,14 @@ export function mcpCapabilities() {
   };
 }
 
-/** Tek JSON-RPC isteğini işler. Gövde daha önce ayrıştırılmış olmalıdır. */
-export async function handleMcpRequest(body: unknown): Promise<JsonRpcResponse> {
+/**
+ * Tek JSON-RPC isteğini işler. Gövde daha önce ayrıştırılmış olmalıdır.
+ * `client` verilirse ölçüm defterine yalnız özeti yazılır.
+ */
+export async function handleMcpRequest(
+  body: unknown,
+  client?: string | null,
+): Promise<JsonRpcResponse> {
   const parsed = RequestSchema.safeParse(body);
   if (!parsed.success) {
     return err(null, JSONRPC_ERRORS.invalidRequest, "Geçersiz JSON-RPC 2.0 isteği");
@@ -111,6 +118,14 @@ export async function handleMcpRequest(body: unknown): Promise<JsonRpcResponse> 
         return ok(id, { lang, metrics: astMetrics(ast), matches });
       }
       const result = await verify(text, ir, matches);
+      // Ölçüm defteri: yalnız katman, gecikme, karar ve müşteri özeti.
+      meterRecord({
+        engine: result.engine,
+        simulated: result.simulated,
+        verdict: result.verdict,
+        ms: result.ms,
+        client: client ?? null,
+      });
       return ok(id, { ...result, lang, matches });
     } catch {
       // Sıfır günlük: hata içeriği dışa verilmez.
