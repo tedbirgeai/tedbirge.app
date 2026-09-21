@@ -108,7 +108,10 @@ export function BillingDashboard() {
             <div key={h.hour} className="flex-1" title={`${h.calls} · ${formatUsd(h.amount)}`}>
               <div
                 className="w-full rounded-t bg-[var(--tb-cyan-400)]"
-                style={{ height: `${Math.max(2, (h.calls / peak) * 40)}px`, opacity: h.calls ? 1 : 0.25 }}
+                style={{
+                  height: `${Math.max(2, (h.calls / peak) * 40)}px`,
+                  opacity: h.calls ? 1 : 0.25,
+                }}
               />
             </div>
           ))}

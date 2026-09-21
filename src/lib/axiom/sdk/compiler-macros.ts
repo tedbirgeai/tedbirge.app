@@ -30,7 +30,8 @@ export const MACROS: MacroTemplate[] = [
     id: "rust",
     label: "Rust",
     marker: "#[axiom_verify]",
-    behaviour: "Fonksiyon sözleşmesi derleme öncesi MCP'ye gönderilir; 409 kararı derlemeyi durdurur.",
+    behaviour:
+      "Fonksiyon sözleşmesi derleme öncesi MCP'ye gönderilir; 409 kararı derlemeyi durdurur.",
     usage: `#[axiom_verify(invariant = "enerji_korunumu")]
 pub fn batarya_akisi(giris_wh: f64, cikis_wh: f64) -> f64 {
     assert!(cikis_wh <= giris_wh);

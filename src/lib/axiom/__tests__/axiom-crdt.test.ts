@@ -11,7 +11,15 @@ describe("CRDT birleşmesi", () => {
     const b = put(createState("b"), "cid-2", { verdict: "409_REFUTED" });
     const ab = merge(a, b);
     const ba = merge(b, a);
-    expect(live(ab).map((e) => e.key).sort()).toEqual(live(ba).map((e) => e.key).sort());
+    expect(
+      live(ab)
+        .map((e) => e.key)
+        .sort(),
+    ).toEqual(
+      live(ba)
+        .map((e) => e.key)
+        .sort(),
+    );
   });
 
   it("aynı delta iki kez uygulanınca durum değişmez", () => {

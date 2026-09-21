@@ -51,12 +51,12 @@ export function ArbiterPanel({ result }: { result: VerifyResult | null }) {
             {verdict.votes.map((v) => (
               <li key={v.id} className="flex flex-wrap items-center gap-2">
                 <span className="w-16 shrink-0 text-[var(--tb-text)]">{v.id}</span>
-                <span
-                  style={{ color: v.accepted ? "var(--tb-cyan-400)" : "var(--tb-rose-400)" }}
-                >
+                <span style={{ color: v.accepted ? "var(--tb-cyan-400)" : "var(--tb-rose-400)" }}>
                   {v.accepted ? t("arb.accept") : t("arb.reject")}
                 </span>
-                <span className="text-[var(--tb-muted)]">{v.ms} ms · {v.reason}</span>
+                <span className="text-[var(--tb-muted)]">
+                  {v.ms} ms · {v.reason}
+                </span>
               </li>
             ))}
           </ul>

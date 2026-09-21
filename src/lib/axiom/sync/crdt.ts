@@ -82,7 +82,10 @@ export function delta(state: CrdtState, since: Record<string, number> = {}): Crd
  * Delta uygulanır. Aynı delta birden çok kez uygulanabilir (idempotent);
  * eski delta yeni kaydı ezmez.
  */
-export function apply(state: CrdtState, incoming: CrdtDelta): { state: CrdtState; applied: number } {
+export function apply(
+  state: CrdtState,
+  incoming: CrdtDelta,
+): { state: CrdtState; applied: number } {
   let applied = 0;
   const entries = { ...state.entries };
   const vector = { ...state.vector };

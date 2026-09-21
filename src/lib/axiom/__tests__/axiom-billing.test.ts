@@ -83,7 +83,9 @@ describe("hakem düğümler", () => {
   });
 
   it("sahte mührü reddeder", () => {
-    const v = reviewProof(sonuc("Kapalı sistemde enerji korunur.", true, "TEDBİRGE-WEBOS-ZKP:0000"));
+    const v = reviewProof(
+      sonuc("Kapalı sistemde enerji korunur.", true, "TEDBİRGE-WEBOS-ZKP:0000"),
+    );
     expect(v.quorum).toBe(false);
     expect(v.spoofed).toBe(true);
   });

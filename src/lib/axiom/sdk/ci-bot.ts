@@ -76,5 +76,14 @@ export function simulateCiRun(files: CiFileReport[]): CiRunReport {
     "",
     "_Bu rapor benzetimdir; gerçek Z3/Lean 4 ikilisi bağlandığında karar motordan gelir._",
   ].join("\n");
-  return { action: CI_ACTION_NAME, files, proven, refuted, undecided, passed, comment, simulated: true };
+  return {
+    action: CI_ACTION_NAME,
+    files,
+    proven,
+    refuted,
+    undecided,
+    passed,
+    comment,
+    simulated: true,
+  };
 }

@@ -39,7 +39,8 @@ export function RewardsCard({ quorumPassed = 0 }: { quorumPassed?: number }) {
       </div>
 
       <div className="mt-2 font-osmono text-[18px] text-[var(--tb-cyan-400)]">
-        {rewards.credits} <span className="text-[11px] text-[var(--tb-muted)]">{t("rew.unit")}</span>
+        {rewards.credits}{" "}
+        <span className="text-[11px] text-[var(--tb-muted)]">{t("rew.unit")}</span>
       </div>
 
       <ul className="mt-2 space-y-1 font-osmono text-[11px]">
