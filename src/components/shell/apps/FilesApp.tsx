@@ -98,6 +98,8 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
   const [over, setOver] = useState(false);
   const [target, setTarget] = useState("");
   const [folder, setFolder] = useState<VfsFolder>("Belgeler");
+  /** "repo" kökünde bulunduğumuz alt dizin yolu. */
+  const [dir, setDir] = useState("");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
