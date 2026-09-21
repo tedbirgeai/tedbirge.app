@@ -27,8 +27,9 @@ export type LimenMount = {
 
 /** Çalışma alanı adını dosya sistemi güvenli bir dizin adına çevirir. */
 export function slugOf(name: string): string {
+  // Dizin adı için Türkçe'ye özgü küçültme kullanılmaz: "AXIOM" → "axiom".
   const base = name
-    .toLocaleLowerCase("tr")
+    .toLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "");
   return base || "workspace";
