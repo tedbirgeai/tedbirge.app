@@ -47,12 +47,9 @@ import {
   setView,
   toggleLock,
   useDesktopLayout,
-  type SortMode,
 } from "@/lib/shell/desktop-layout";
 import { catalogApp, useDesktopState } from "@/shell/installed";
 
-const TOP_PAD = 160;
-const SIDE_PAD = 16;
 const FOLDER_MIME = "application/x-tedbirge-folder";
 
 type Menu = { x: number; y: number; appId?: string; fileId?: string };
@@ -367,6 +364,40 @@ export function Desktop({
     await saveFiles([new File([file], `${base} kopya${ext}`, { type: file.type })]);
     notifyOk("Kopya oluşturuldu");
   }, [clipboard]);
+
+
+  const items = useMemo(() => {
+    const appItems: Item[] = installed.flatMap((id) => {
+      const app = catalogApp(id);
+      if (!app) return [];
+      return [
+        {
+          key: `app:${id}`,
+          type: "app" as const,
+          id,
+          label: app.label,
+          sortType: app.category,
+          updated: 0,
+          glyph: <AppIconSurface id={id} size="desk" showBadge />,
+        },
+      ];
+    });
+    const fileItems: Item[] = files.map((entry) => ({
+      key: `file:${entry.id}`,
+      type: "file" as const,
+      id: entry.id,
+      label: displayName(entry.name),
+      sortType: entry.mime,
+      updated: entry.at,
+      glyph: fileGlyph(entry),
+    }));
+    const cmp = (a: Item, b: Item) => {
+      if (layout.sort === "tur") return a.sortType.localeCompare(b.sortType, "tr") || a.label.localeCompare(b.label, "tr");
+      if (layout.sort === "tarih") return b.updated - a.updated || a.label.localeCompare(b.label, "tr");
+      return a.label.localeCompare(b.label, "tr");
+    };
+    return [...appItems.sort(cmp), ...fileItems.sort(cmp)];
+  }, [files, installed, layout.sort]);
 
   const activeFile = menu?.fileId ? files.find((f) => f.id === menu.fileId) : undefined;
   const menuItems: MenuItem[] = menu?.appId
