@@ -70,7 +70,6 @@ export function LimenApp() {
     openWindow("files", "Dosyalar — repo");
   }, []);
 
-
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-[var(--tb-bg)] text-[var(--tb-fg)]">
       <header className="border-b border-[var(--tb-border)] bg-[var(--tb-panel)] p-5">

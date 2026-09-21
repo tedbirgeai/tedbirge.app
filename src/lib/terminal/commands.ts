@@ -182,7 +182,6 @@ const cmdTree: Command = {
   },
 };
 
-
 const cmdCd: Command = {
   name: "cd",
   group: "dosya",

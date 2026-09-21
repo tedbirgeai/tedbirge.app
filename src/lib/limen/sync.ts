@@ -54,7 +54,6 @@ let mountError: string | null = null;
 let mounting = false;
 let pumping = false;
 
-
 function emit() {
   listeners.forEach((listener) => listener());
 }

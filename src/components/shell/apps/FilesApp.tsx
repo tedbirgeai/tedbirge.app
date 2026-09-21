@@ -154,7 +154,6 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
 
   const current = visible.find((f) => f.id === selected) ?? null;
 
-
   // Boşluk: seçili dosyanın Hızlı Bakış önizlemesini açar/kapatır.
   useEffect(() => {
     if (!selected) {
