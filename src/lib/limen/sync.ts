@@ -85,8 +85,13 @@ function toRecords(current: CrdtState): LimenRecord[] {
     .sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
-function snapshot(): LimenSyncSnapshot {
-  ensureChannel();
+/**
+ * Anlık görüntü önbelleği: `useSyncExternalStore` her okumada aynı nesneyi
+ * görmelidir. Aksi halde React sonsuz yeniden çizim döngüsüne girer (#185).
+ */
+let cache: LimenSyncSnapshot | null = null;
+
+function build(): LimenSyncSnapshot {
   return {
     node: nodeId,
     online: typeof navigator === "undefined" ? true : navigator.onLine,
@@ -98,14 +103,42 @@ function snapshot(): LimenSyncSnapshot {
   };
 }
 
+function snapshot(): LimenSyncSnapshot {
+  if (!cache) cache = build();
+  return cache;
+}
+
+function invalidate() {
+  cache = null;
+  emit();
+}
+
+function ensureNetworkWatch() {
+  if (typeof window === "undefined" || netWatch) return;
+  netWatch = true;
+  window.addEventListener("online", invalidate);
+  window.addEventListener("offline", invalidate);
+}
+
 export function subscribeLimen(listener: Listener) {
   ensureChannel();
+  ensureNetworkWatch();
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 export function getLimenSnapshot(): LimenSyncSnapshot {
+  ensureChannel();
   return snapshot();
+}
+
+/** Hata sonrası yeniden başlatmada yerel görünüm durumunu sıfırlar. */
+export function resetLimenView() {
+  cache = null;
+  peers = typeof BroadcastChannel === "undefined" ? 1 : peers;
+  emit();
 }
 
 export function stageLimenChange(name: string, mode: LimenMirrorMode = "p2p"): LimenSyncSnapshot {
