@@ -157,7 +157,7 @@ kurulum_senaryosu() {
     -debugcon file:"build-iso/kurulum-${mod}-firmware.log" -global isa-debugcon.iobase=0x402 \
     -serial file:"$log2" 2>"build-iso/kurulum-${mod}-asama2.stderr.log" &
   local p2=$!
-  izle "$log2" "TEDBIRGE_BOOT_READY" "Kernel panic|Attempted to kill init|No bootable device|Operating System not found|grub rescue" "$p2" "$STALL"; rc=$?
+  izle "$log2" "TEDBIRGE_DESKTOP_HEALTHY" "Kernel panic|Attempted to kill init|No bootable device|Operating System not found|grub rescue" "$p2" "$STALL"; rc=$?
   if [ "$rc" = 0 ]; then
     qemu_temiz_kapat "$p2" "$qmp2" 1 || rc=4
   else

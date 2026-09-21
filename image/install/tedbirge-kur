@@ -314,6 +314,7 @@ Ne olacak:
  * Acilis yukleyicisi kurulur ve bilgisayar tek basina acilir.
 
 Sure: yaklasik 5-15 dakika (diskin hizina gore).
+Kurulumdan sonra ilk acilis 40-90 saniye surer; en fazla 5 dakika.
 Acilis kipi: $MOD
 
 Kurulum boyunca her adimda ne oldugunu goreceksiniz. Iptal etmek
