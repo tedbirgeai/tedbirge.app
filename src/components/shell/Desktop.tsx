@@ -465,17 +465,6 @@ export function Desktop({
       ref={hostRef}
       className="tbos-wallpaper absolute inset-0 overflow-hidden"
       data-image={wallpaper.id === "aurora" ? "off" : "on"}
-      onPointerDown={startBand}
-      onPointerMove={moveBand}
-      onPointerUp={endBand}
-      onPointerCancel={endBand}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        const target = e.target as HTMLElement | null;
-        if (target?.closest("[data-desktop-item]")) return;
-        const r = e.currentTarget.getBoundingClientRect();
-        setMenu({ x: e.clientX - r.left, y: e.clientY - r.top });
-      }}
     >
       <DesktopGrid
         onPointerDown={startBand}
