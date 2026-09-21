@@ -346,6 +346,47 @@ export function AxiomApp() {
         </div>
       ) : null}
 
+      {/* Sekmeler: konsol dışındaki katmanlar isteğe bağlı açılır. */}
+      <div role="tablist" aria-label="AXIOM" className="flex flex-wrap gap-1">
+        {(["console", "billing", "network", "sdk"] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={sekme === id}
+            onClick={() => setSekme(id)}
+            className="rounded-lg border px-3 py-1 font-osmono text-[11px] uppercase tracking-wide"
+            style={{
+              borderColor: sekme === id ? "var(--tb-cyan-400)" : "var(--tb-border)",
+              color: sekme === id ? "var(--tb-cyan-400)" : "var(--tb-muted)",
+            }}
+          >
+            {t(`tab.${id}`)}
+          </button>
+        ))}
+      </div>
+
+      {sekme === "billing" ? (
+        <div className="grid gap-3">
+          <BillingDashboard />
+          <RewardsCard quorumPassed={quorum} />
+        </div>
+      ) : null}
+
+      {sekme === "network" ? (
+        <div className="grid gap-3">
+          <ArbiterPanel result={proof} />
+          <div className="grid gap-3 lg:grid-cols-2">
+            <SyncStatusCard result={proof} />
+            <ProvenanceBadge result={proof} />
+          </div>
+        </div>
+      ) : null}
+
+      {sekme === "sdk" ? <SdkPanel /> : null}
+
+      {sekme !== "console" ? null : (
+        <>
       <div className="grid gap-3 lg:grid-cols-2">
         <LanguageCard lang={analysis?.lang ?? null} />
         <NodeStatusCard />
@@ -420,6 +461,8 @@ export function AxiomApp() {
           </ul>
         </div>
       </div>
+        </>
+      )}
 
       <div className="pt-1 text-center font-osmono text-[10px] text-[var(--tb-muted)]">
         {AXIOM_BRAND_BANNER}
