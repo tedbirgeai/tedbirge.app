@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Folder, FileText, FileType2, Lock, Presentation, StickyNote, Table2 } from "lucide-react";
 
 import { AppIconSurface } from "@/components/shell/AppIconBadge";
+import { DesktopGrid } from "@/components/shell/DesktopGrid";
 import { DesktopItem } from "@/components/shell/DesktopItem";
 import { DesktopPager } from "@/components/shell/DesktopPager";
 import { DesktopIcon } from "@/components/shell/DesktopIcon";
@@ -40,17 +41,10 @@ import {
   type OfficeKind,
 } from "@/lib/office/documents";
 import {
-  DOCK_CLEARANCE,
   alignToGrid,
-  clampToGrid,
-  flowIntoGrid,
   isLocked,
-  metrics,
-  setPosition,
-  setPositions,
   setSort,
   setView,
-  snap,
   toggleLock,
   useDesktopLayout,
   type SortMode,
@@ -117,7 +111,6 @@ export function Desktop({
   const [properties, setProperties] = useState<string | null>(null);
   const [unsupported, setUnsupported] = useState<VfsEntry | null>(null);
   const [band, setBand] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
-  const [size, setSize] = useState({ w: 1280, h: 800 });
   const [clipboard, setClipboard] = useState<string | null>(null);
 
   const hostRef = useRef<HTMLDivElement>(null);
@@ -130,99 +123,15 @@ export function Desktop({
     return onVfsChange(load);
   }, []);
 
-  /* Yüzey ölçüsü ızgara sütun sayısını belirler. */
-  useEffect(() => {
-    const el = hostRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setSize({ w: el.clientWidth, h: el.clientHeight }));
-    ro.observe(el);
-    setSize({ w: el.clientWidth, h: el.clientHeight });
-    return () => ro.disconnect();
-  }, []);
-
-  const items = useMemo<Item[]>(() => {
-    const apps: Item[] = installed
-      .map((id) => catalogApp(id))
-      .filter((a): a is NonNullable<typeof a> => Boolean(a))
-      .map((a) => ({
-        key: `app:${a.id}`,
-        type: "app" as const,
-        id: a.id,
-        label: a.label,
-        sortType: `0-${a.category}`,
-        updated: 0,
-        glyph: <AppIconSurface id={a.id} size="desk" />,
-      }));
-
-    const docs: Item[] = files.map((f) => ({
-      key: `file:${f.id}`,
-      type: "file" as const,
-      id: f.id,
-      label: displayName(f.name).replace(/\.klasor$/i, ""),
-      sortType: `1-${f.mime}`,
-      updated: f.at,
-      glyph: fileGlyph(f),
-    }));
-
-    const all = [...apps, ...docs];
-    const by: Record<SortMode, (a: Item, b: Item) => number> = {
-      ad: (a, b) => a.label.localeCompare(b.label, "tr"),
-      tur: (a, b) => a.sortType.localeCompare(b.sortType) || a.label.localeCompare(b.label, "tr"),
-      tarih: (a, b) => b.updated - a.updated || a.label.localeCompare(b.label, "tr"),
-    };
-    return all.sort(by[layout.sort]);
-  }, [installed, files, layout.sort]);
-
-  const m = metrics(layout.view);
-  const cw = m.w + m.gap;
-  const ch = m.h + m.gap;
-  /* Alt güvenli alan: yüzen dock'un üzerine son sıra inmez. */
-  const rows = Math.max(1, Math.floor((size.h - TOP_PAD - DOCK_CLEARANCE) / ch));
-
-  /* Dolan yerleşim: sürüklenen simgelerin hücreleri korunur,
-     diğerleri ilk boş hücreye akar — üzerine binme olamaz. */
-  const positions = useMemo(
-    () =>
-      flowIntoGrid(
-        items.map((it) => it.key),
-        layout.positions,
-        rows,
-        TOP_PAD,
-        { w: m.w, h: m.h, gap: m.gap },
-        SIDE_PAD,
-      ),
-    [items, layout.positions, rows, m.w, m.h, m.gap],
-  );
-
-  const positionOf = useCallback(
-    (key: string) => positions[key] ?? { x: SIDE_PAD, y: TOP_PAD },
-    [positions],
-  );
-
-  /* Yüzey boyutu veya görünüm değişince sınırlar dışına çıkan kayıtlı
-     konumlar güvenli alana sıkıştırılır; tamamen dışarıdakiler akışa düşer. */
-  const layoutRef = useRef(layout);
-  layoutRef.current = layout;
-  useEffect(() => {
-    const l = layoutRef.current;
-    const next: Record<string, { x: number; y: number }> = {};
-    let dirty = false;
-    for (const [key, p] of Object.entries(l.positions)) {
-      const c = clampToGrid(p, l.view, TOP_PAD, size);
-      if (!c) {
-        dirty = true;
-        continue;
-      }
-      next[key] = c;
-      if (c.x !== p.x || c.y !== p.y) dirty = true;
-    }
-    if (dirty) setPositions(next);
-  }, [size, layout.view]);
-
+  /* Akış tabanlı CSS grid kullanılır; mutlak simge konumu ve sürükleme yoktur. */
   /* ------------------------------------------------------- seçim kutusu */
   const startBand = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.target !== e.currentTarget || e.button !== 0) return;
-    const r = e.currentTarget.getBoundingClientRect();
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement | null;
+    if (target?.closest("[data-desktop-item]")) return;
+    const host = hostRef.current;
+    if (!host) return;
+    const r = host.getBoundingClientRect();
     const p = { x: e.clientX - r.left, y: e.clientY - r.top };
     bandStart.current = p;
     setBand({ x1: p.x, y1: p.y, x2: p.x, y2: p.y });
@@ -231,20 +140,23 @@ export function Desktop({
 
   const moveBand = (e: React.PointerEvent<HTMLDivElement>) => {
     const s = bandStart.current;
-    if (!s) return;
-    const r = e.currentTarget.getBoundingClientRect();
+    const host = hostRef.current;
+    if (!s || !host) return;
+    const r = host.getBoundingClientRect();
     const box = { x1: s.x, y1: s.y, x2: e.clientX - r.left, y2: e.clientY - r.top };
     setBand(box);
     const left = Math.min(box.x1, box.x2);
     const right = Math.max(box.x1, box.x2);
     const top = Math.min(box.y1, box.y2);
     const bottom = Math.max(box.y1, box.y2);
-    const hit = items
-      .filter((it) => {
-        const p = positionOf(it.key);
-        return p.x < right && p.x + m.w > left && p.y < bottom && p.y + m.h > top;
-      })
-      .map((it) => it.key);
+    const hit = Array.from(host.querySelectorAll<HTMLElement>("[data-desktop-key]")).flatMap((el) => {
+      const key = el.dataset.desktopKey;
+      if (!key) return [];
+      const ir = el.getBoundingClientRect();
+      const ix = ir.left - r.left;
+      const iy = ir.top - r.top;
+      return ix < right && ix + ir.width > left && iy < bottom && iy + ir.height > top ? [key] : [];
+    });
     setSelection(hit);
   };
 
@@ -528,21 +440,33 @@ export function Desktop({
       onPointerCancel={endBand}
       onContextMenu={(e) => {
         e.preventDefault();
-        if (e.target !== e.currentTarget) return;
+        const target = e.target as HTMLElement | null;
+        if (target?.closest("[data-desktop-item]")) return;
         const r = e.currentTarget.getBoundingClientRect();
         setMenu({ x: e.clientX - r.left, y: e.clientY - r.top });
       }}
     >
-      {items.map((it) => {
-        const pos = positionOf(it.key);
-        return (
+      <DesktopGrid
+        onPointerDown={startBand}
+        onPointerMove={moveBand}
+        onPointerUp={endBand}
+        onPointerCancel={endBand}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          const target = e.target as HTMLElement | null;
+          if (target?.closest("[data-desktop-item]")) return;
+          const host = hostRef.current;
+          if (!host) return;
+          const r = host.getBoundingClientRect();
+          setMenu({ x: e.clientX - r.left, y: e.clientY - r.top });
+        }}
+      >
+        {items.map((it) => (
           <DesktopItem
             key={it.key}
+            itemKey={it.key}
             label={it.label}
             glyph={it.glyph}
-            view={layout.view}
-            x={pos.x}
-            y={pos.y}
             selected={selection.includes(it.key)}
             badge={
               it.type === "file" && isLocked(it.id) ? (
@@ -559,7 +483,6 @@ export function Desktop({
               )
             }
             onOpen={() => openItem(it)}
-            onMove={(p) => setPosition(it.key, p)}
             onMenu={(pt) =>
               setMenu({
                 x: pt.x,
@@ -568,11 +491,8 @@ export function Desktop({
               })
             }
           />
-        );
-      })}
-
-      {/* Sürükleme bitince simge en yakın ızgara hücresine oturur. */}
-      <GridSnapper items={items} view={layout.view} bottom={size.h} />
+        ))}
+      </DesktopGrid>
 
       {band ? (
         <div
@@ -611,30 +531,4 @@ export function Desktop({
       ) : null}
     </div>
   );
-}
-
-/** İşaretçi bırakıldığında serbest konumları ızgaraya oturtur. */
-function GridSnapper({
-  items,
-  view,
-  bottom,
-}: {
-  items: Item[];
-  view: "buyuk" | "orta";
-  bottom: number;
-}) {
-  const layout = useDesktopLayout();
-  useEffect(() => {
-    const onUp = () => {
-      for (const it of items) {
-        const p = layout.positions[it.key];
-        if (!p) continue;
-        const s = snap(p, view, TOP_PAD, bottom);
-        if (s.x !== p.x || s.y !== p.y) setPosition(it.key, s);
-      }
-    };
-    window.addEventListener("pointerup", onUp);
-    return () => window.removeEventListener("pointerup", onUp);
-  }, [items, layout.positions, view, bottom]);
-  return null;
 }
