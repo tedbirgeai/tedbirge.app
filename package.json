@@ -19,7 +19,12 @@
     "mobile:setup": "node scripts/mobile-setup.mjs",
     "mobile:sync": "npm run build && npx cap sync",
     "mobile:ios": "npx cap open ios",
-    "mobile:android": "npx cap open android"
+    "mobile:android": "npx cap open android",
+    "build:pwa": "bash scripts/build-pwa.sh",
+    "build:desktop": "bash scripts/build-desktop.sh",
+    "build:android": "bash scripts/build-android.sh",
+    "build:ios": "bash scripts/build-ios.sh",
+    "build:all": "bash scripts/build-all.sh"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.14",
