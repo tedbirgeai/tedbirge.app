@@ -81,6 +81,23 @@ export function AxiomApp() {
   const [yerel, setYerel] = useState(false);
   /** Yeniden başlatma düğmesi bu sayacı arttırır. */
   const [deneme, setDeneme] = useState(0);
+  /** Görünen sekme: konsol · faturalandırma · ağ · SDK. */
+  const [sekme, setSekme] = useState<"console" | "billing" | "network" | "sdk">("console");
+  /** Hakem çoğunluğundan geçen doğrulama sayısı (ödül kartı için). */
+  const [quorum, setQuorum] = useState(0);
+
+  // Her yeni karar ölçüm defterine ve hakem denetimine girer.
+  useEffect(() => {
+    if (!proof) return;
+    meterRecord({
+      engine: proof.engine,
+      simulated: proof.simulated,
+      verdict: proof.verdict,
+      ms: proof.ms,
+      client: "yerel-arayüz",
+    });
+    if (reviewProof(proof).quorum) setQuorum((n) => n + 1);
+  }, [proof]);
 
   // --- Çekirdek daemon'ı: bayt çözümlemesi ana iş parçacığını kilitlemez.
   useEffect(() => {
