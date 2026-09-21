@@ -87,8 +87,14 @@ export function mcpCapabilities() {
   };
 }
 
-/** Tek JSON-RPC isteğini işler. Gövde daha önce ayrıştırılmış olmalıdır. */
-export async function handleMcpRequest(body: unknown): Promise<JsonRpcResponse> {
+/**
+ * Tek JSON-RPC isteğini işler. Gövde daha önce ayrıştırılmış olmalıdır.
+ * `client` verilirse ölçüm defterine yalnız özeti yazılır.
+ */
+export async function handleMcpRequest(
+  body: unknown,
+  client?: string | null,
+): Promise<JsonRpcResponse> {
   const parsed = RequestSchema.safeParse(body);
   if (!parsed.success) {
     return err(null, JSONRPC_ERRORS.invalidRequest, "Geçersiz JSON-RPC 2.0 isteği");
