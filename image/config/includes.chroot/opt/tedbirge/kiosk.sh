@@ -44,7 +44,7 @@ ORTAK="--kiosk --start-fullscreen --noerrdialogs --disable-infobars
 # yollari kapatilir; guvenli EGL kipi denenir.
 DONANIM="--use-gl=egl --disable-gpu-sandbox --ignore-gpu-blocklist
   --enable-features=VaapiVideoDecoder --disable-gpu-driver-bug-workarounds"
-YAZILIM="--disable-gpu --disable-gpu-compositing --disable-software-rasterizer=0
+YAZILIM="--disable-gpu --disable-gpu-compositing
   --disable-accelerated-2d-canvas"
 
 # Masaustu gercekten cizildi mi? Tarayicinin hata ayiklama arayuzunden
