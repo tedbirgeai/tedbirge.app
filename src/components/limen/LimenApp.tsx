@@ -1,10 +1,11 @@
-import { useSyncExternalStore, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useSyncExternalStore, useState, type ReactNode } from "react";
 import { GitBranch, GitMerge, Github, Network, ShieldCheck, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   flushLimen,
   getLimenSnapshot,
+  resetLimenView,
   stageLimenChange,
   subscribeLimen,
   type LimenMirrorMode,
@@ -23,19 +24,24 @@ export function LimenApp() {
   const [mode, setMode] = useState<LimenMirrorMode>("p2p");
   const [busy, setBusy] = useState(false);
 
-  const stage = () => {
+  // Pencere (yeniden) açıldığında yerel görünüm durumu tazelenir.
+  useEffect(() => {
+    resetLimenView();
+  }, []);
+
+  const stage = useCallback(() => {
     const value = name.trim();
     if (!value) return;
     stageLimenChange(value, mode);
     notifyOk("LIMEN değişikliği kuyruğa alındı", value);
-  };
+  }, [name, mode]);
 
-  const flush = () => {
+  const flush = useCallback(() => {
     setBusy(true);
     void flushLimen()
       .then((next) => notifyOk("LIMEN eşitlendi", `${next.sent} delta gönderildi`))
       .finally(() => setBusy(false));
-  };
+  }, []);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-[var(--tb-bg)] text-[var(--tb-fg)]">
