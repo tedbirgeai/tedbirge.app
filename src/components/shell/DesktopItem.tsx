@@ -5,7 +5,7 @@
  * sağ tık işletim sistemi menüsünü çağırır. Mutlak konum kullanılmaz.
  */
 
-import { useRef, type ReactNode } from "react";
+import { useRef, type MouseEvent, type ReactNode } from "react";
 
 export type DesktopItemProps = {
   label: string;
@@ -30,7 +30,7 @@ export function DesktopItem({
 }: DesktopItemProps) {
   const lastTap = useRef(0);
 
-  const click = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const click = (e: MouseEvent<HTMLButtonElement>) => {
     onSelect(e.ctrlKey || e.metaKey || e.shiftKey);
     const now = Date.now();
     if (now - lastTap.current < 400) {
@@ -46,6 +46,8 @@ export function DesktopItem({
       type="button"
       data-desktop-item="1"
       data-desktop-key={itemKey}
+      data-selected={selected ? "true" : "false"}
+      aria-pressed={selected}
       onClick={click}
       onDoubleClick={(e) => {
         e.preventDefault();
@@ -66,9 +68,7 @@ export function DesktopItem({
         onMenu({ x: e.clientX - (r?.left ?? 0), y: e.clientY - (r?.top ?? 0) });
       }}
       title={label}
-      className={`flex flex-col items-center justify-start w-[96px] group cursor-pointer relative z-10 ${
-        selected ? "tbos-desk-icon--on" : ""
-      }`}
+      className="flex flex-col items-center justify-start w-[96px] group cursor-pointer relative z-10"
     >
       <span className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-2 shadow-lg group-hover:scale-105 transition-transform">
         {glyph}
