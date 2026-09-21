@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Pause, Play, Plus, Search, Trash2, X } from "lucide-react";
 
-import { AppIcon } from "@/components/shell/app-icons";
+import { AppIconSurface } from "@/components/shell/AppIconBadge";
 import { ContextMenu } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
 import { SubscriptionPanel } from "@/components/shell/SubscriptionPanel";
@@ -177,9 +177,7 @@ export function StoreApp({ onOpen }: { onOpen: (id: string) => void }) {
                 className={`tbos-bento flex flex-col gap-2 rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel-solid)] p-3 ${bentoSpan(index)}`}
               >
                 <div className="flex min-w-0 items-start gap-3">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--tb-accent)_12%,transparent)] text-[var(--tb-accent)]">
-                    <AppIcon id={a.id} className="h-5 w-5" />
-                  </span>
+                  <AppIconSurface id={a.id} size="store" showBadge />
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate text-[14px] font-semibold text-[var(--tb-text)]">
                       {a.label}

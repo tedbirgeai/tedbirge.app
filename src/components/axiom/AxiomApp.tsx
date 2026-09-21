@@ -41,11 +41,12 @@ import { useAxiomNode } from "@/lib/axiom/net/node";
 import { createRenderer, type Renderer } from "@/lib/axiom/canvas/renderer";
 import type { ByteDigest } from "@/lib/axiom/digest";
 import type { KernelRequest, KernelResponse } from "@/lib/axiom/kernel.worker";
-import { localAnalyze, localStats, localVerify } from "@/lib/axiom/local-kernel";
+import { localAnalyze, localStats, localVerify, resetLocalKernel } from "@/lib/axiom/local-kernel";
 import { sampleMemory, type MemorySample } from "@/lib/axiom/profiler";
 import type { RamStats } from "@/lib/axiom/ram";
 import { ROM_SEED, romStatus, seedRom, type RomStatus } from "@/lib/axiom/rom";
 import type { VerifyResult } from "@/lib/axiom/verify/types";
+import { createAxiomWorker } from "@/lib/axiom/worker-client";
 
 const BOS_RAM: RamStats = {
   used: 0,
@@ -62,6 +63,7 @@ export function AxiomApp() {
   const rendererRef = useRef<Renderer | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const seqRef = useRef(0);
+  const lifecycleRef = useRef(0);
   /** Çizim döngüsü durumu ref ile okunur: RAM değişimi WebGL bağlamını kurmaz. */
   const ratioRef = useRef(0);
 
@@ -113,8 +115,11 @@ export function AxiomApp() {
 
   // --- Çekirdek daemon'ı: bayt çözümlemesi ana iş parçacığını kilitlemez.
   useEffect(() => {
+    const ticket = lifecycleRef.current + 1;
+    lifecycleRef.current = ticket;
     let worker: Worker | null = null;
     const dus = (sebep: string) => {
+      if (lifecycleRef.current !== ticket) return;
       // Daemon kurulamadı: arayüz çökmez, aynı motor ana iş parçacığında çalışır.
       worker?.terminate();
       worker = null;
@@ -126,10 +131,7 @@ export function AxiomApp() {
       setBusy(false);
     };
     try {
-      // Vite yalnız gerçek göreli yolu çözer; takma ad (@/) burada çalışmaz.
-      worker = new Worker(new URL("../../lib/axiom/kernel.worker.ts", import.meta.url), {
-        type: "module",
-      });
+      worker = createAxiomWorker();
     } catch (err) {
       dus(
         err instanceof Error
@@ -141,6 +143,7 @@ export function AxiomApp() {
     workerRef.current = worker;
     setYerel(false);
     worker.onmessage = (event: MessageEvent<KernelResponse>) => {
+      if (lifecycleRef.current !== ticket) return;
       const msg = event.data;
       setRam(msg.ram);
       if (msg.type === "digest") {
@@ -179,7 +182,7 @@ export function AxiomApp() {
     worker.postMessage(boot);
     return () => {
       worker?.terminate();
-      workerRef.current = null;
+      if (lifecycleRef.current === ticket) workerRef.current = null;
     };
   }, [deneme]);
 
@@ -306,9 +309,17 @@ export function AxiomApp() {
 
   /** Servisi yeniden başlatır: daemon tekrar kurulmayı dener. */
   const restart = useCallback(() => {
+    lifecycleRef.current += 1;
+    workerRef.current?.terminate();
+    workerRef.current = null;
+    const freshRam = resetLocalKernel();
+    seqRef.current = 0;
     setHata(null);
+    setAnalysis(null);
+    setDigest(null);
     setProof(null);
-    setYerel(false);
+    setYerel(true);
+    setRam(freshRam);
     setBusy(false);
     setVerifying(false);
     setDeneme((n) => n + 1);

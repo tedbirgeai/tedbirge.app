@@ -13,7 +13,7 @@ let volume = 1;
 let hydrated = false;
 const listeners = new Set<() => void>();
 
-function hydrate() {
+function hydrate(notify = true) {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
   try {
@@ -24,12 +24,12 @@ function hydrate() {
   } catch {
     volume = 1;
   }
-  listeners.forEach((l) => l());
+  if (notify) listeners.forEach((l) => l());
 }
 
 /** Ses üretiminde kullanılan 0–1 aralığındaki kazanç katsayısı. */
 export function getVolume(): number {
-  if (!hydrated) hydrate();
+  if (!hydrated) hydrate(false);
   return volume;
 }
 
@@ -46,11 +46,14 @@ export function setVolume(next: number) {
 export function useVolume(): number {
   return useSyncExternalStore(
     (l) => {
-      hydrate();
+      hydrate(false);
       listeners.add(l);
       return () => listeners.delete(l);
     },
-    () => volume,
+    () => {
+      hydrate(false);
+      return volume;
+    },
     () => 1,
   );
 }

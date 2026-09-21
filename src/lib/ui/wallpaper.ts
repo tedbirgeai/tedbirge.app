@@ -121,7 +121,7 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
-function hydrate() {
+function hydrate(notify = true) {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
   try {
@@ -137,7 +137,7 @@ function hydrate() {
     state = { id: DEFAULT_WALLPAPER, brightness: 1, night: 0 };
   }
   apply();
-  emit();
+  if (notify) emit();
 }
 
 const SERVER_STATE: State = { id: DEFAULT_WALLPAPER, brightness: 1, night: 0 };
@@ -145,11 +145,14 @@ const SERVER_STATE: State = { id: DEFAULT_WALLPAPER, brightness: 1, night: 0 };
 export function useWallpaper(): State {
   return useSyncExternalStore(
     (l) => {
-      hydrate();
+      hydrate(false);
       listeners.add(l);
       return () => listeners.delete(l);
     },
-    () => state,
+    () => {
+      hydrate(false);
+      return state;
+    },
     () => SERVER_STATE,
   );
 }

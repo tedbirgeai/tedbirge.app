@@ -9,7 +9,7 @@
 
 import { useCallback, useRef } from "react";
 
-import { AppIcon } from "@/components/shell/app-icons";
+import { AppIconSurface } from "@/components/shell/AppIconBadge";
 
 export const ICON_W = 92;
 export const ICON_H = 96;
@@ -76,9 +76,7 @@ export function DesktopIcon({
       }`}
       style={{ width: ICON_W }}
     >
-      <span className="tbos-desk-glyph grid h-12 w-12 place-items-center rounded-2xl">
-        <AppIcon id={id} className="h-6 w-6" />
-      </span>
+      <AppIconSurface id={id} size="desk" showBadge />
       <span className="max-w-[84px] truncate text-center text-xs font-medium text-[var(--tb-text)] drop-shadow-md">
         {label}
       </span>

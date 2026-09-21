@@ -7,7 +7,7 @@
 
 import { X } from "lucide-react";
 
-import { AppIcon } from "@/components/shell/app-icons";
+import { AppIconSurface } from "@/components/shell/AppIconBadge";
 import type { MenuItem } from "@/components/shell/ContextMenu";
 import { getApp } from "@/apps/registry";
 import { catalogApp, installApp, isInstalled, uninstallApp, xdgOf } from "@/shell/installed";
@@ -108,9 +108,7 @@ export function AppPropertiesDialog({ id, onClose }: { id: string; onClose: () =
     >
       <div className="tbos-window w-full max-w-md rounded-2xl p-4 shadow-2xl">
         <div className="mb-3 flex items-center gap-3">
-          <span className="tbos-desk-glyph grid h-11 w-11 place-items-center rounded-2xl">
-            <AppIcon id={id} className="h-6 w-6" />
-          </span>
+          <AppIconSurface id={id} size="store" showBadge />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[15px] font-semibold text-[var(--tb-text)]">
               {app?.label ?? id}
