@@ -13,24 +13,15 @@
  * ikilisi yoksa mock motor yanıt verir ve sonuç "simulated" işaretlenir.
  */
 
+import { analyze, type KernelAnalysis } from "@/lib/axiom/analyze";
 import { AXIOM_RAM_LIMIT, AXIOM_RAM_THRESHOLD } from "@/lib/axiom/brand";
 import { byteDigest, type ByteDigest } from "@/lib/axiom/digest";
-import { matchInvariants, type InvariantMatch } from "@/lib/axiom/invariants";
-import { askAscii, astMetrics, type AstNode } from "@/lib/axiom/lang/ask-ascii";
-import { toIr, type AxiomIr } from "@/lib/axiom/lang/axiom-ir";
-import { detectLanguage, type LangGuess } from "@/lib/axiom/lang/detect";
 import { AxiomRam, type RamStats } from "@/lib/axiom/ram";
 import { verify } from "@/lib/axiom/verify/engine";
 import type { EngineId, VerifyResult } from "@/lib/axiom/verify/types";
 
-export type KernelAnalysis = {
-  digest: ByteDigest;
-  lang: LangGuess;
-  ast: AstNode;
-  metrics: { nodes: number; depth: number };
-  ir: AxiomIr;
-  matches: InvariantMatch[];
-};
+export type { KernelAnalysis };
+export { analyze };
 
 export type KernelRequest =
   | { id: number; type: "boot" }
@@ -55,15 +46,6 @@ export type KernelResponse =
 
 const ram = new AxiomRam(AXIOM_RAM_LIMIT, AXIOM_RAM_THRESHOLD);
 
-/** Tam çözümleme zinciri: bayt → belirteç → ağaç → IR → değişmez. */
-export function analyze(text: string): KernelAnalysis {
-  const digest = byteDigest(text);
-  const lang = detectLanguage(text);
-  const { tokens, ast } = askAscii(text);
-  const ir = toIr(tokens);
-  const matches = matchInvariants(ir, text);
-  return { digest, lang, ast, metrics: astMetrics(ast), ir, matches };
-}
 
 self.onmessage = async (event: MessageEvent<KernelRequest>) => {
   const msg = event.data;
