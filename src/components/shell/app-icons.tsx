@@ -15,14 +15,8 @@ type IconProps = { className?: string };
 function Frame({ className, children }: IconProps & { children: ReactNode }) {
   return (
     <svg className={className} viewBox="0 0 64 64" aria-hidden>
-      <defs>
-        <linearGradient id="tbosIconPane" x1="14" x2="50" y1="8" y2="56">
-          <stop offset="0" stopColor="var(--tb-text)" stopOpacity=".2" />
-          <stop offset=".56" stopColor="var(--tb-accent)" stopOpacity=".3" />
-          <stop offset="1" stopColor="var(--tb-accent-2)" stopOpacity=".42" />
-        </linearGradient>
-      </defs>
-      <rect x="8" y="8" width="48" height="48" rx="14" fill="url(#tbosIconPane)" />
+      <rect x="8" y="8" width="48" height="48" rx="14" fill="var(--tb-accent)" opacity=".22" />
+      <path d="M14 14h22c8 0 14 6 14 14v22H28c-8 0-14-6-14-14z" fill="var(--tb-accent-2)" opacity=".24" />
       <rect
         x="12"
         y="12"
