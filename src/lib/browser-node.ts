@@ -110,6 +110,12 @@ function lanSignalUrls(): string[] {
   const urls = new Set<string>();
   const ws = wsScheme();
   const host = typeof location !== "undefined" ? location.hostname : "";
+  const port = typeof location !== "undefined" ? location.port : "";
+
+  // Canlı önizleme/dev sunucusunda yerel saha ajanı bulunmadığında tarayıcı
+  // sürekli bağlantı hatası üretmesin. Bare-metal/kiosk ortamı farklı porttan
+  // çalıştığı için gerçek yerel ajan araması korunur.
+  if (/^(localhost|127\.0\.0\.1)$/.test(host) && port === "8080") return [];
   // HTTPS sayfasından düz ws:// bağlantısı tarayıcı tarafından engellenir ve
   // adres çubuğunda "güvenli değil" uyarısı doğurur; bu durumda yalnızca
   // sayfanın kendi origin'i üzerinden güvenli sinyalleşme denenir.

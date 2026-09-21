@@ -223,7 +223,7 @@ export function stopRing() {
           userActivation?: { hasBeenActive?: boolean };
           vibrate?: (pattern: number | number[]) => boolean;
         });
-  if (!nav?.userActivation?.hasBeenActive) return;
+  if (!nav?.userActivation?.isActive) return;
   try {
     nav.vibrate?.(0);
   } catch {
@@ -242,7 +242,7 @@ export function vibrate(pattern: number | number[] = 12) {
           userActivation?: { hasBeenActive?: boolean };
           vibrate?: (pattern: number | number[]) => boolean;
         });
-  if (!nav?.userActivation?.hasBeenActive) return;
+  if (!nav?.userActivation?.isActive) return;
   try {
     nav.vibrate?.(pattern);
   } catch {
