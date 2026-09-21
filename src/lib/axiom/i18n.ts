@@ -36,6 +36,13 @@ const DICT: Record<LocaleId, Record<string, string>> = {
     "node.free": "NODE_ACTIVE_FREE",
     "node.pro": "SUBSCRIPTION_REQUIRED",
     "science.title": "Bilim matrisi",
+    "proof.title": "Kanıt görüntüleyici",
+    "proof.empty": "Doğrulama için bir önerme gönderip “Doğrula” düğmesine basın.",
+    "proof.noSeal": "Mühür üretilmedi.",
+    "proof.noSteps": "Kanıt adımı üretilmedi.",
+    "proof.simulated": "Bu mühür simülasyondur: Z3/Lean 4 ikilisi yüklü değil.",
+    "proof.showSource": "Önermeyi göster",
+    "proof.hideSource": "Önermeyi gizle",
   },
   en: {
     "kernel.title": "AXIOM KERNEL",
@@ -59,6 +66,13 @@ const DICT: Record<LocaleId, Record<string, string>> = {
     "node.free": "NODE_ACTIVE_FREE",
     "node.pro": "SUBSCRIPTION_REQUIRED",
     "science.title": "Science matrix",
+    "proof.title": "Proof viewer",
+    "proof.empty": "Submit a proposition and press “Verify”.",
+    "proof.noSeal": "No seal produced.",
+    "proof.noSteps": "No proof steps produced.",
+    "proof.simulated": "This seal is simulated: no Z3/Lean 4 binary loaded.",
+    "proof.showSource": "Show proposition",
+    "proof.hideSource": "Hide proposition",
   },
 };
 

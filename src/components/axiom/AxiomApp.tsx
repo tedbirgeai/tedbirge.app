@@ -21,6 +21,8 @@ import { InvariantMatrix } from "@/components/axiom/InvariantMatrix";
 import { LanguageCard } from "@/components/axiom/LanguageCard";
 import { MemoryProfiler } from "@/components/axiom/MemoryProfiler";
 import { NodeStatusCard } from "@/components/axiom/NodeStatusCard";
+import { ProofViewer } from "@/components/axiom/ProofViewer";
+import { VerifyBoundary } from "@/components/axiom/VerifyBoundary";
 import { AXIOM_BRAND_BANNER, AXIOM_RAM_LIMIT } from "@/lib/axiom/brand";
 import { createRenderer, type Renderer } from "@/lib/axiom/canvas/renderer";
 import type { ByteDigest } from "@/lib/axiom/digest";
@@ -28,6 +30,7 @@ import type { KernelAnalysis, KernelRequest, KernelResponse } from "@/lib/axiom/
 import { sampleMemory, type MemorySample } from "@/lib/axiom/profiler";
 import type { RamStats } from "@/lib/axiom/ram";
 import { ROM_SEED, romStatus, seedRom, type RomStatus } from "@/lib/axiom/rom";
+import type { VerifyResult } from "@/lib/axiom/verify/types";
 
 const BOS_RAM: RamStats = {
   used: 0,
@@ -59,6 +62,9 @@ export function AxiomApp() {
   const [busy, setBusy] = useState(false);
   const [analysis, setAnalysis] = useState<KernelAnalysis | null>(null);
   const [hata, setHata] = useState<string | null>(null);
+  const [proof, setProof] = useState<VerifyResult | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [lastText, setLastText] = useState("");
   const [fps, setFps] = useState(0);
 
   // --- Çekirdek daemon'ı: bayt çözümlemesi ana iş parçacığını kilitlemez.
@@ -80,8 +86,17 @@ export function AxiomApp() {
         setHata(null);
         setBusy(false);
       }
+      if (msg.type === "verify") {
+        setAnalysis(msg.analysis);
+        setDigest(msg.analysis.digest);
+        setProof(msg.result);
+        setHata(null);
+        setVerifying(false);
+        setBusy(false);
+      }
       if (msg.type === "error") {
         setHata(msg.message);
+        setVerifying(false);
         setBusy(false);
       }
     };
@@ -89,6 +104,7 @@ export function AxiomApp() {
     // "Çözümleniyor…" durumu serbest bırakılır.
     worker.onerror = (err) => {
       setHata(err.message || "Çekirdek daemon'ı yüklenemedi.");
+      setVerifying(false);
       setBusy(false);
     };
     const boot: KernelRequest = { id: (seqRef.current += 1), type: "boot" };
@@ -177,19 +193,29 @@ export function AxiomApp() {
   const submit = useCallback((text: string) => {
     const worker = workerRef.current;
     if (!worker) return;
+    setLastText(text);
     setBusy(true);
     const msg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
     worker.postMessage(msg);
   }, []);
+
+  /** Doğrulama: aynı girdi simgesel motora gönderilir (500 ms sert bütçe). */
+  const runVerify = useCallback(() => {
+    const worker = workerRef.current;
+    if (!worker || !lastText.trim()) return;
+    setVerifying(true);
+    const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: lastText };
+    worker.postMessage(msg);
+  }, [lastText]);
 
   const romListesi = useMemo(() => ROM_SEED, []);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
       <div className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-muted)]">
-        Faz 2: çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve değişmez eşleştirme
-        etkin. Simgesel doğrulama motoru hâlâ bağlı değildir — burada KANIT ÜRETİLMEZ; çıktılar yapı
-        çözümlemesi ve değişmez uyarısıdır.
+        Faz 3: çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve değişmez eşleştirme
+        etkin. Simgesel doğrulama katmanı (Z3 / Lean 4) bağlıdır; WASM ikilisi yüklü değilken karar
+        mock motordan gelir ve mühür "simülasyon" olarak işaretlenir.
       </div>
 
       <MemoryProfiler ram={ram} rom={rom} heap={heap} mode={mode} />
@@ -221,6 +247,24 @@ export function AxiomApp() {
       <AstView ast={analysis?.ast ?? null} metrics={analysis?.metrics ?? null} />
 
       <InvariantMatrix matches={analysis?.matches ?? []} />
+
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={runVerify}
+          disabled={verifying || !lastText.trim()}
+          className="rounded-lg border border-[var(--tb-cyan-400)] px-3 py-1.5 font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)] disabled:opacity-40"
+        >
+          {verifying ? "Doğrulanıyor…" : "Doğrula"}
+        </button>
+        <span className="font-osmono text-[10px] text-[var(--tb-muted)]">
+          Sert zaman sınırı 500 ms · aşılırsa doğrulama kesilir ve zaman aşımı bildirilir
+        </span>
+      </div>
+
+      <VerifyBoundary>
+        <ProofViewer result={proof} />
+      </VerifyBoundary>
 
       <div className="grid gap-3 lg:grid-cols-2">
         <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3">

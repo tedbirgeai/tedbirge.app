@@ -8,9 +8,9 @@
  * ------------------------------------------------------------------
  * Ana iş parçacığı yalnız çizim yapar; bayt ayrıştırma, dil tanıma,
  * yapı ağacı üretimi, ara gösterim ve değişmez eşleştirme bu daemon'da
- * yürür. Faz 2'de simgesel doğrulama motoru (Z3 / Lean 4) hâlâ bağlı
- * DEĞİLDİR: daemon kanıt üretmez, yalnız yapı ve değişmez eşleşmesi
- * bildirir.
+ * yürür. Faz 3'te simgesel doğrulama katmanı (Z3 / Lean 4 / mock) bağlıdır:
+ * `verify` isteği 500 ms sert bütçe altında karar ve mühür döner. WASM
+ * ikilisi yoksa mock motor yanıt verir ve sonuç "simulated" işaretlenir.
  */
 
 import { AXIOM_RAM_LIMIT, AXIOM_RAM_THRESHOLD } from "@/lib/axiom/brand";
@@ -20,6 +20,8 @@ import { askAscii, astMetrics, type AstNode } from "@/lib/axiom/lang/ask-ascii";
 import { toIr, type AxiomIr } from "@/lib/axiom/lang/axiom-ir";
 import { detectLanguage, type LangGuess } from "@/lib/axiom/lang/detect";
 import { AxiomRam, type RamStats } from "@/lib/axiom/ram";
+import { verify } from "@/lib/axiom/verify/engine";
+import type { EngineId, VerifyResult } from "@/lib/axiom/verify/types";
 
 export type KernelAnalysis = {
   digest: ByteDigest;
@@ -34,12 +36,20 @@ export type KernelRequest =
   | { id: number; type: "boot" }
   | { id: number; type: "digest"; text: string }
   | { id: number; type: "analyze"; text: string }
+  | { id: number; type: "verify"; text: string }
   | { id: number; type: "stat" };
 
 export type KernelResponse =
-  | { id: number; type: "boot"; ram: RamStats; engine: "mock" }
+  | { id: number; type: "boot"; ram: RamStats; engine: EngineId }
   | { id: number; type: "digest"; digest: ByteDigest; ram: RamStats }
   | { id: number; type: "analyze"; analysis: KernelAnalysis; ram: RamStats }
+  | {
+      id: number;
+      type: "verify";
+      analysis: KernelAnalysis;
+      result: VerifyResult;
+      ram: RamStats;
+    }
   | { id: number; type: "stat"; ram: RamStats }
   | { id: number; type: "error"; message: string; ram: RamStats };
 
@@ -55,7 +65,7 @@ export function analyze(text: string): KernelAnalysis {
   return { digest, lang, ast, metrics: astMetrics(ast), ir, matches };
 }
 
-self.onmessage = (event: MessageEvent<KernelRequest>) => {
+self.onmessage = async (event: MessageEvent<KernelRequest>) => {
   const msg = event.data;
   try {
     if (msg.type === "boot") {
@@ -78,6 +88,21 @@ self.onmessage = (event: MessageEvent<KernelRequest>) => {
         analysis.digest.bytes * 64 + analysis.metrics.nodes * 256 + 4096,
       );
       const out: KernelResponse = { id: msg.id, type: "analyze", analysis, ram: ram.stats() };
+      self.postMessage(out);
+      return;
+    }
+    if (msg.type === "verify") {
+      const analysis = analyze(msg.text);
+      // Doğrulama 500 ms sert bütçe ve panik koruması altında yürür.
+      const result = await verify(msg.text, analysis.ir, analysis.matches);
+      ram.set(`kanit:${result.cid}`, result.steps.length * 512 + 4096);
+      const out: KernelResponse = {
+        id: msg.id,
+        type: "verify",
+        analysis,
+        result,
+        ram: ram.stats(),
+      };
       self.postMessage(out);
       return;
     }
