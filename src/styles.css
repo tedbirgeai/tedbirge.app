@@ -1002,6 +1002,32 @@ body {
   backdrop-filter: blur(18px) saturate(150%);
   box-shadow: var(--tb-shadow);
 }
+/* Saat kartının kapladığı alan: simge ızgarası bu alanı boş bırakır. */
+:root {
+  --tbos-clock-h: 158px;
+  --tbos-clock-w: 272px;
+}
+.tbos-desktop-grid {
+  padding-top: calc(var(--tbos-clock-h) + 0.5rem);
+}
+@media (min-width: 640px) {
+  .tbos-desktop-grid {
+    padding-top: 2rem;
+    padding-left: var(--tbos-clock-w);
+  }
+}
+/* Masaüstü simge etiketi: her iki temada tam okunur. */
+.tbos-item-label {
+  color: var(--tb-text);
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--tb-bg) 70%, transparent);
+}
+[data-theme="night"] .tbos-item-label,
+.tbos-wallpaper[data-image="on"] .tbos-item-label {
+  color: var(--tb-text);
+  text-shadow:
+    0 1px 3px rgb(0 0 0 / 65%),
+    0 0 1px rgb(0 0 0 / 55%);
+}
 .tbos-glass-card {
   background: var(--tb-panel-solid, var(--tb-panel));
   border: 1px solid var(--tb-border);
