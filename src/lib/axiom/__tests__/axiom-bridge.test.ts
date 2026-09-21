@@ -90,7 +90,8 @@ describe("gerçeklik köprüsü", () => {
     ws.reply({
       id: 1,
       verdict: "200_PROVEN",
-      engine: "mock",
+      engine: "local",
+      wasmVerified: false,
       simulated: true,
       ms: 3,
       cid: "a",

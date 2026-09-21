@@ -8,10 +8,11 @@ import { describe, expect, it } from "vitest";
 import { matchInvariants } from "@/lib/axiom/invariants";
 import { askAscii } from "@/lib/axiom/lang/ask-ascii";
 import { toIr } from "@/lib/axiom/lang/axiom-ir";
+import { evaluateLocalRules } from "@/lib/axiom/live/fallback-verifier";
+import { resetEngineSession } from "@/lib/axiom/live/engine-session";
 import { verify } from "@/lib/axiom/verify/engine";
 import { runGuarded } from "@/lib/axiom/verify/guard";
 import { toLean } from "@/lib/axiom/verify/lean";
-import { mockSolve } from "@/lib/axiom/verify/mock";
 import { contentId, proofSeal, SEAL_PREFIX } from "@/lib/axiom/verify/seal";
 import { toSmtLib } from "@/lib/axiom/verify/smt";
 import { SAFE_RESULT_KEYS, VERIFY_TIMEOUT_MS } from "@/lib/axiom/verify/types";
@@ -40,7 +41,7 @@ describe("SMT-LIB üretimi", () => {
   });
 });
 
-describe("Lean 4 iskeleti", () => {
+describe("Lean 4 önerme üretimi", () => {
   it("teorem ve namespace üretir", () => {
     const { ir, matches } = chain(UYUMLU);
     const lean = toLean(ir, matches);
@@ -49,18 +50,20 @@ describe("Lean 4 iskeleti", () => {
   });
 });
 
-describe("mock motor determinizmi", () => {
+describe("yerel kural kapısı determinizmi", () => {
   it("aynı girdide aynı kararı ve adımları verir", () => {
     const a = chain(UYUMLU);
     const b = chain(UYUMLU);
-    expect(mockSolve(a.ir, a.matches)).toEqual(mockSolve(b.ir, b.matches));
+    expect(evaluateLocalRules(a.ir, a.matches, false)).toEqual(
+      evaluateLocalRules(b.ir, b.matches, false),
+    );
   });
 
   it("çelişkide çürütme, eşleşme yokken hüküm yok", () => {
     const c = chain(CELISKILI);
-    expect(mockSolve(c.ir, c.matches).verdict).toBe("409_REFUTED");
+    expect(evaluateLocalRules(c.ir, c.matches, false).verdict).toBe("409_REFUTED");
     const n = chain("qqq zzz");
-    expect(mockSolve(n.ir, n.matches).verdict).toBe("422_UNDECIDED");
+    expect(evaluateLocalRules(n.ir, n.matches, false).verdict).toBe("422_UNDECIDED");
   });
 });
 
@@ -87,24 +90,32 @@ describe("zaman aşımı ve panik koruması", () => {
 
 describe("CID ve mühür", () => {
   it("CID determinist, mühür yalnız kanıtta", () => {
-    expect(contentId("abc", "mock", "200_PROVEN")).toBe(contentId("abc", "mock", "200_PROVEN"));
-    expect(contentId("abc", "mock", "200_PROVEN")).not.toBe(contentId("abd", "mock", "200_PROVEN"));
+    expect(contentId("abc", "local", "200_PROVEN")).toBe(
+      contentId("abc", "local", "200_PROVEN"),
+    );
+    expect(contentId("abc", "local", "200_PROVEN")).not.toBe(
+      contentId("abd", "local", "200_PROVEN"),
+    );
     expect(proofSeal("cid:axiom:0123456789abcdef", "200_PROVEN")).toContain(SEAL_PREFIX);
     expect(proofSeal("cid:axiom:0123456789abcdef", "409_REFUTED")).toBeNull();
   });
 });
 
 describe("uçtan uca doğrulama", () => {
-  it("uyumlu iddia mühürlenir", async () => {
+  it("WASM yokken uyumlu iddia mühürsüz ve kararsız kalır", async () => {
+    resetEngineSession();
     const { ir, matches } = chain(UYUMLU);
     const r = await verify(UYUMLU, ir, matches);
-    expect(r.verdict).toBe("200_PROVEN");
-    expect(r.seal).toContain(SEAL_PREFIX);
+    expect(r.engine).toBe("local");
+    expect(r.wasmVerified).toBe(false);
+    expect(r.verdict).toBe("422_UNDECIDED");
+    expect(r.seal).toBeNull();
     expect(r.steps.length).toBeGreaterThan(2);
     expect(r.ms).toBeLessThanOrEqual(VERIFY_TIMEOUT_MS);
   });
 
   it("çelişkili iddia çürütülür ve mühürlenmez", async () => {
+    resetEngineSession();
     const { ir, matches } = chain(CELISKILI);
     const r = await verify(CELISKILI, ir, matches);
     expect(r.verdict).toBe("409_REFUTED");
@@ -112,6 +123,7 @@ describe("uçtan uca doğrulama", () => {
   });
 
   it("zaman aşımında adım listesi boş kalır (sızıntı yok)", async () => {
+    resetEngineSession();
     const { ir, matches } = chain(UYUMLU);
     const r = await verify(UYUMLU, ir, matches, 0);
     expect(r.verdict).toBe("504_EXECUTION_TIMEOUT");

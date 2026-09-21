@@ -34,9 +34,10 @@ describe("JSON-RPC 2.0 sunucusu", () => {
     });
     expect("result" in res).toBe(true);
     if ("result" in res) {
-      const r = res.result as { verdict: string; seal: string | null };
-      expect(r.verdict).toBe("200_PROVEN");
-      expect(r.seal).toContain("TEDBİRGE-WEBOS-ZKP");
+      const r = res.result as { verdict: string; seal: string | null; wasmVerified: boolean };
+      expect(r.verdict).toBe("422_UNDECIDED");
+      expect(r.wasmVerified).toBe(false);
+      expect(r.seal).toBeNull();
     }
   });
 
@@ -92,9 +93,9 @@ describe("LLM adaptörleri", () => {
     const text = toToolResult({
       jsonrpc: "2.0",
       id: 1,
-      result: { verdict: "200_PROVEN", engine: "mock", seal: "TEDBİRGE-WEBOS-ZKP:abc" },
+      result: { verdict: "422_UNDECIDED", engine: "local", seal: null },
     });
-    expect(text).toContain("STATUS: 200_PROVEN");
+    expect(text).toContain("STATUS: 422_UNDECIDED");
     expect(
       toToolResult({ jsonrpc: "2.0", id: 1, error: { code: -32601, message: "yok" } }),
     ).toContain("-32601");
