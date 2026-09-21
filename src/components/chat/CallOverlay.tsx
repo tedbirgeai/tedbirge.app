@@ -12,6 +12,9 @@ import {
   MonitorUp,
   MonitorX,
   UserPlus,
+  Hand,
+  MessageSquare,
+  Send,
   X,
 } from "lucide-react";
 
@@ -22,8 +25,10 @@ import {
   getLocalStream,
   getPeerStream,
   getRemoteStream,
+  sendRoomChat,
   switchCamera,
   toggleCamera,
+  toggleHandRaised,
   toggleMute,
   toggleScreenShare,
   useCall,
@@ -106,6 +111,8 @@ export function CallOverlay() {
   const [speaker, setSpeaker] = useState(true);
   const [playBlocked, setPlayBlocked] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatDraft, setChatDraft] = useState("");
   const elapsed = useElapsed(call.phase === "active" ? call.startedAt : null);
   useAvatars();
   const peerAvatar = getAvatar(call.peerId);
@@ -119,6 +126,15 @@ export function CallOverlay() {
     [contacts, inCall],
   );
   const roomFull = call.participants.length + 1 >= CONFERENCE_LIMIT;
+  const raisedNames = call.participants.filter((p) => p.handRaised).map((p) => p.alias);
+
+  function submitRoomChat() {
+    const sent = sendRoomChat(chatDraft);
+    if (sent) {
+      setChatDraft("");
+      setChatOpen(true);
+    }
+  }
 
   useEffect(() => {
     if (localRef.current) localRef.current.srcObject = getLocalStream();
@@ -329,6 +345,74 @@ export function CallOverlay() {
             ))}
           </ul>
         )}
+        {raisedNames.length > 0 && (
+          <div className="mx-6 flex max-w-md flex-wrap justify-center gap-2 rounded-2xl bg-white/10 px-3 py-2 text-xs text-white/80 backdrop-blur">
+            <Hand className="h-4 w-4" aria-hidden />
+            {raisedNames.slice(0, 3).join(", ")}
+            {raisedNames.length > 3 ? ` +${raisedNames.length - 3}` : ""}
+          </div>
+        )}
+        {chatOpen && (call.phase === "active" || call.phase === "outgoing") && (
+          <div className="mx-4 w-[min(28rem,calc(100vw-2rem))] rounded-3xl border border-white/10 bg-black/35 p-3 text-left shadow-2xl backdrop-blur-xl">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-white/90">Oda sohbeti</p>
+              <button
+                type="button"
+                onClick={() => setChatOpen(false)}
+                className="wa-press grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white/70"
+                aria-label="Oda sohbetini kapat"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="max-h-36 space-y-1 overflow-y-auto pr-1">
+              {call.roomChat.length === 0 ? (
+                <p className="py-4 text-center text-xs text-white/45">Henüz oda mesajı yok.</p>
+              ) : (
+                call.roomChat.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`rounded-2xl px-3 py-2 text-xs ${m.self ? "ml-8 bg-white/15" : "mr-8 bg-white/10"}`}
+                  >
+                    <div className="flex items-center justify-between gap-2 text-[10px] uppercase tracking-wide text-white/45">
+                      <span className="truncate">{m.self ? "Siz" : m.alias}</span>
+                      <span>
+                        {new Date(m.at).toLocaleTimeString("tr-TR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                    <p className="mt-1 break-words text-white/90">{m.text}</p>
+                  </div>
+                ))
+              )}
+            </div>
+            <form
+              className="mt-2 flex items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitRoomChat();
+              }}
+            >
+              <input
+                value={chatDraft}
+                onChange={(e) => setChatDraft(e.target.value)}
+                maxLength={500}
+                placeholder="Mesaj yaz"
+                className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/45 focus:border-white/30"
+              />
+              <button
+                type="submit"
+                className="wa-press grid h-10 w-10 place-items-center rounded-full bg-white text-zinc-950 disabled:opacity-40"
+                disabled={!chatDraft.trim()}
+                aria-label="Oda mesajı gönder"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
+        )}
         {call.notice && <p className="px-8 text-center text-sm text-white/70">{call.notice}</p>}
         {call.error && <p className="px-8 text-center text-sm text-amber-300">{call.error}</p>}
 
@@ -439,19 +523,50 @@ export function CallOverlay() {
               {call.muted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             </button>
             {(call.phase === "active" || call.phase === "outgoing") && (
-              <button
-                type="button"
-                onClick={() => {
-                  pressFeedback();
-                  setAddOpen(true);
-                }}
-                className={ctlBase}
-                disabled={roomFull}
-                aria-label="Görüşmeye kişi ekle"
-                title={roomFull ? `En fazla ${CONFERENCE_LIMIT} kişi` : "Görüşmeye kişi ekle"}
-              >
-                <UserPlus className="h-5 w-5" />
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    toggleHandRaised();
+                  }}
+                  className={`${ctlBase} ${call.handRaised ? "bg-white/25 ring-2 ring-white/70" : ""}`}
+                  aria-label={call.handRaised ? "Eli indir" : "El kaldır"}
+                  title={call.handRaised ? "Eli indir" : "El kaldır"}
+                >
+                  <Hand className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    setChatOpen((v) => !v);
+                  }}
+                  className={`${ctlBase} ${chatOpen ? "bg-white/25 ring-2 ring-white/70" : ""}`}
+                  aria-label="Oda sohbeti"
+                  title="Oda sohbeti"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  {call.roomChat.length > 0 && (
+                    <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-white px-1 text-[10px] font-bold text-zinc-950">
+                      {Math.min(call.roomChat.length, 9)}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    setAddOpen(true);
+                  }}
+                  className={ctlBase}
+                  disabled={roomFull}
+                  aria-label="Görüşmeye kişi ekle"
+                  title={roomFull ? `En fazla ${CONFERENCE_LIMIT} kişi` : "Görüşmeye kişi ekle"}
+                >
+                  <UserPlus className="h-5 w-5" />
+                </button>
+              </>
             )}
             <button
               type="button"

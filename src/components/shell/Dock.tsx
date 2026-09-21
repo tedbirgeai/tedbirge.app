@@ -11,7 +11,7 @@
 import { useRef, useState } from "react";
 import { House } from "lucide-react";
 
-import { AppIcon } from "@/components/shell/app-icons";
+import { AppIconSurface } from "@/components/shell/AppIconBadge";
 import { ContextMenu, type MenuItem } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
 import { catalogApp } from "@/shell/installed";
@@ -182,7 +182,7 @@ export function Dock({
           dropSlot === slot && slot != null ? "tbos-dock-item--drop" : ""
         }`}
       >
-        <AppIcon id={id} className="h-5 w-5" />
+        <AppIconSurface id={id} size="dock" />
         <span className="sr-only">{label}</span>
         <span
           aria-hidden
@@ -257,7 +257,7 @@ export function Dock({
           aria-label="Tedbirge Mağaza"
           className="tbos-dock-item grid min-h-11 min-w-11 shrink-0 place-items-center rounded-xl px-2 py-1 text-[var(--tb-accent)]"
         >
-          <AppIcon id="store" className="h-5 w-5" />
+          <AppIconSurface id="store" size="dock" />
           <span className="mt-1 block h-1 w-1" aria-hidden />
         </button>
       </div>

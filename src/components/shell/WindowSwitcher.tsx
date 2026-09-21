@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { AppIconSurface } from "@/components/shell/AppIconBadge";
 import { announce } from "@/lib/shell/announce";
 import { notify, notifyOk } from "@/lib/shell/notify";
 import { keyboardSnapBox } from "@/lib/shell/shortcuts";
@@ -169,7 +170,10 @@ export function WindowSwitcher({ surface }: { surface: { current: HTMLElement | 
                 : "text-[var(--tb-muted)]"
             }`}
           >
-            <span className="block truncate">{w.title}</span>
+            <span className="flex items-center gap-2">
+              <AppIconSurface id={w.appId} size="window" />
+              <span className="block truncate">{w.title}</span>
+            </span>
           </li>
         ))}
       </ul>

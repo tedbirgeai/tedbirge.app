@@ -37,8 +37,19 @@ export type Participant = {
   peerId: string;
   alias: string;
   connected: boolean;
+  /** Katılımcı söz almak için el kaldırdı. */
+  handRaised?: boolean;
   /** Bağlantısı koptu, yeniden bağlanmaya çalışılıyor. */
   reconnecting?: boolean;
+};
+
+export type RoomChatMessage = {
+  id: string;
+  from: string;
+  alias: string;
+  text: string;
+  at: number;
+  self?: boolean;
 };
 
 export type CallState = {
@@ -69,6 +80,12 @@ export type CallState = {
   screenSharing: boolean;
   /** O an konuşan katılımcının kimliği (konuşan kişi vurgusu). */
   speakingPeerId: string | null;
+  /** Bu cihaz söz almak için el kaldırdı mı? */
+  handRaised: boolean;
+  /** Söz isteyen uzak katılımcılar. */
+  raisedHands: string[];
+  /** Oda içi kısa mesaj akışı; çağrı bitince temizlenir. */
+  roomChat: RoomChatMessage[];
 };
 
 const ICE: RTCConfiguration = {
@@ -136,6 +153,9 @@ let state: CallState = {
   remoteRinging: false,
   screenSharing: false,
   speakingPeerId: null,
+  handRaised: false,
+  raisedHands: [],
+  roomChat: [],
 };
 
 const listeners = new Set<() => void>();
@@ -180,6 +200,8 @@ let currentCallId: string | null = null;
 let currentRoomId: string | null = null;
 /** Konferans katılımcı defteri — görüşme sırasında eklenenler dahil. */
 const roster = new Map<string, ConferencePeer>();
+/** Toplantı içi el kaldırma defteri — yalnız görüşme boyunca yaşar. */
+const raisedHands = new Set<string>();
 /** Karşılanan davet kimlikleri — aynı çağrı iki kanaldan gelirse bir kez çalar. */
 const handledCallIds = new Set<string>();
 
@@ -263,8 +285,10 @@ function syncParticipants() {
       peerId,
       alias: leg.alias,
       connected: leg.pc.connectionState === "connected",
+      handRaised: raisedHands.has(peerId),
       reconnecting: (peerReconnects.get(peerId) ?? 0) > 0 && leg.pc.connectionState !== "connected",
     })),
+    raisedHands: Array.from(raisedHands),
   });
 }
 
@@ -676,7 +700,11 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
     remoteRinging: false,
     screenSharing: false,
     speakingPeerId: null,
+    handRaised: false,
+    raisedHands: [],
+    roomChat: [],
   });
+  raisedHands.clear();
   callMeta = { peerId, video, direction: "outgoing" };
   currentCallId = newRoomId();
   currentRoomId = currentCallId;
@@ -749,7 +777,11 @@ export async function startConference(
     reconnects: 0,
     quality: IDLE_QUALITY,
     remoteRinging: false,
+    handRaised: false,
+    raisedHands: [],
+    roomChat: [],
   });
+  raisedHands.clear();
 
   try {
     await Promise.all(
@@ -902,8 +934,67 @@ export function endCall(reason?: string) {
         error: null,
         participants: [],
         quality: IDLE_QUALITY,
+        handRaised: false,
+        raisedHands: [],
+        roomChat: [],
       });
   }, 3000);
+}
+
+function peersForControl(): string[] {
+  return Array.from(new Set([...legs.keys(), ...pendingOffers.keys()])).filter(Boolean);
+}
+
+function meetingMsgId(): string {
+  const cryptoApi = typeof crypto !== "undefined" ? crypto : null;
+  return (
+    cryptoApi?.randomUUID?.() ??
+    `msg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+  );
+}
+
+function trimRoomChat(messages: RoomChatMessage[]): RoomChatMessage[] {
+  return messages.slice(-80);
+}
+
+export function toggleHandRaised(): boolean {
+  if (state.phase !== "active" && state.phase !== "outgoing") return state.handRaised;
+  const next = !state.handRaised;
+  publish({ handRaised: next });
+  const payload = {
+    t: "hand",
+    raised: next,
+    alias: getAlias(),
+    roomId: currentRoomId ?? currentCallId ?? undefined,
+    at: Date.now(),
+  };
+  for (const peerId of peersForControl()) void sendMesh("call", peerId, payload);
+  return next;
+}
+
+export function sendRoomChat(text: string): boolean {
+  if (state.phase !== "active" && state.phase !== "outgoing") return false;
+  const clean = text.replace(/\s+/g, " ").trim().slice(0, 500);
+  if (!clean) return false;
+  const msg: RoomChatMessage = {
+    id: meetingMsgId(),
+    from: nodeSelf(),
+    alias: getAlias() || "Siz",
+    text: clean,
+    at: Date.now(),
+    self: true,
+  };
+  publish({ roomChat: trimRoomChat([...state.roomChat, msg]) });
+  const payload = {
+    t: "room-chat",
+    msgId: msg.id,
+    text: msg.text,
+    alias: msg.alias,
+    roomId: currentRoomId ?? currentCallId ?? undefined,
+    at: msg.at,
+  };
+  for (const peerId of peersForControl()) void sendMesh("call", peerId, payload);
+  return true;
 }
 
 /** Konferansta tek bir katılımcıyı düşürür. */
@@ -917,6 +1008,7 @@ export function dropParticipant(peerId: string) {
     /* zaten kapalı */
   }
   legs.delete(peerId);
+  raisedHands.delete(peerId);
   syncParticipants();
   if (!legs.size) endCall();
 }
@@ -927,6 +1019,8 @@ function cleanup() {
   stopScreenShare();
   currentRoomId = null;
   roster.clear();
+  raisedHands.clear();
+  publish({ handRaised: false, raisedHands: [], roomChat: [] });
   peerReconnects.clear();
 
   if (outgoingTimer) clearTimeout(outgoingTimer);
@@ -1132,6 +1226,9 @@ type CallSignal = {
   callId?: string;
   roomId?: string;
   conferencePeers?: ConferencePeer[];
+  raised?: boolean;
+  text?: string;
+  msgId?: string;
   at?: number;
 };
 
@@ -1148,6 +1245,28 @@ async function onCallSignal(from: string, raw: unknown) {
   // Eski sürümün tarihsiz çağrı paketleri bulut röleden gelirse çalıştırılmaz;
   // böylece uygulama açılışında eski arama/ICE/bitirme sinyali canlanamaz.
   if (p.t === "offer" ? age > OFFER_FRESH_MS : age > CONTROL_FRESH_MS) return;
+
+  if (p.t === "hand") {
+    if (p.raised) raisedHands.add(from);
+    else raisedHands.delete(from);
+    syncParticipants();
+    return;
+  }
+
+  if (p.t === "room-chat") {
+    const clean =
+      typeof p.text === "string" ? p.text.replace(/\s+/g, " ").trim().slice(0, 500) : "";
+    if (!clean) return;
+    const id = p.msgId ?? `${from}-${p.at ?? Date.now()}`;
+    if (state.roomChat.some((m) => m.id === id)) return;
+    publish({
+      roomChat: trimRoomChat([
+        ...state.roomChat,
+        { id, from, alias: p.alias ?? from, text: clean, at: p.at ?? Date.now() },
+      ]),
+    });
+    return;
+  }
 
   // Uygulama kapalıyken röleye düşen davet: 10 saniyeden eskiyse telefon
   // çalmaz, doğrudan "cevapsız arama" olarak geçmişe yazılır.
@@ -1367,6 +1486,9 @@ async function onCallSignal(from: string, raw: unknown) {
           error: null,
           participants: [],
           quality: IDLE_QUALITY,
+          handRaised: false,
+          raisedHands: [],
+          roomChat: [],
         }),
       2500,
     );

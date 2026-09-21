@@ -46,6 +46,16 @@ const RequestSchema = z.object({
 });
 
 const TextParams = z.object({ text: z.string().min(1).max(MCP_MAX_BODY) });
+const ToolCallParams = z.object({
+  name: z.enum(["axiom.verify", "axiom.analyze", "axiom.capabilities"]),
+  arguments: z
+    .object({
+      text: z.string().min(1).max(MCP_MAX_BODY).optional(),
+      source: z.string().min(1).max(MCP_MAX_BODY).optional(),
+      engine: z.string().optional(),
+    })
+    .optional(),
+});
 
 export type JsonRpcResponse =
   | { jsonrpc: "2.0"; id: string | number | null; result: unknown }
@@ -88,6 +98,37 @@ export function mcpCapabilities() {
   };
 }
 
+async function handleAxiomMethod(
+  id: string | number | null,
+  method: "axiom.analyze" | "axiom.verify",
+  params: unknown,
+  client?: string | null,
+): Promise<JsonRpcResponse> {
+  const p = TextParams.safeParse(params ?? {});
+  if (!p.success) return err(id, JSONRPC_ERRORS.invalidParams, "`text` alanı zorunludur");
+  const text = p.data.text;
+  try {
+    const lang = detectLanguage(text);
+    const { tokens, ast } = askAscii(text);
+    const ir = toIr(tokens);
+    const matches = matchInvariants(ir, text);
+    if (method === "axiom.analyze") return ok(id, { lang, metrics: astMetrics(ast), matches });
+    const result = await verify(text, ir, matches);
+    // Ölçüm defteri: yalnız katman, gecikme, karar ve müşteri özeti.
+    meterRecord({
+      engine: result.engine,
+      simulated: result.simulated,
+      verdict: result.verdict,
+      ms: result.ms,
+      client: client ?? null,
+    });
+    return ok(id, { ...result, lang, matches });
+  } catch {
+    // Sıfır günlük: hata içeriği dışa verilmez.
+    return err(id, JSONRPC_ERRORS.internal, "Doğrulama tamamlanamadı");
+  }
+}
+
 /**
  * Tek JSON-RPC isteğini işler. Gövde daha önce ayrıştırılmış olmalıdır.
  * `client` verilirse ölçüm defterine yalnız özeti yazılır.
@@ -103,34 +144,18 @@ export async function handleMcpRequest(
   const { method, params } = parsed.data;
   const id = parsed.data.id ?? null;
 
-  if (method === "axiom.capabilities") return ok(id, mcpCapabilities());
+  if (method === "axiom.capabilities" || method === "tools/list") return ok(id, mcpCapabilities());
+
+  if (method === "tools/call") {
+    const p = ToolCallParams.safeParse(params ?? {});
+    if (!p.success) return err(id, JSONRPC_ERRORS.invalidParams, "Geçersiz araç çağrısı");
+    if (p.data.name === "axiom.capabilities") return ok(id, mcpCapabilities());
+    const text = p.data.arguments?.text ?? p.data.arguments?.source;
+    return handleAxiomMethod(id, p.data.name, { text }, client);
+  }
 
   if (method === "axiom.analyze" || method === "axiom.verify") {
-    const p = TextParams.safeParse(params ?? {});
-    if (!p.success) return err(id, JSONRPC_ERRORS.invalidParams, "`text` alanı zorunludur");
-    const text = p.data.text;
-    try {
-      const lang = detectLanguage(text);
-      const { tokens, ast } = askAscii(text);
-      const ir = toIr(tokens);
-      const matches = matchInvariants(ir, text);
-      if (method === "axiom.analyze") {
-        return ok(id, { lang, metrics: astMetrics(ast), matches });
-      }
-      const result = await verify(text, ir, matches);
-      // Ölçüm defteri: yalnız katman, gecikme, karar ve müşteri özeti.
-      meterRecord({
-        engine: result.engine,
-        simulated: result.simulated,
-        verdict: result.verdict,
-        ms: result.ms,
-        client: client ?? null,
-      });
-      return ok(id, { ...result, lang, matches });
-    } catch {
-      // Sıfır günlük: hata içeriği dışa verilmez.
-      return err(id, JSONRPC_ERRORS.internal, "Doğrulama tamamlanamadı");
-    }
+    return handleAxiomMethod(id, method, params, client);
   }
 
   return err(id, JSONRPC_ERRORS.methodNotFound, `Bilinmeyen metot: ${method}`);

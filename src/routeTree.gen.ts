@@ -32,6 +32,7 @@ import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicHaberlerRouteImport } from './routes/api/public/haberler'
 import { Route as ApiPublicGecitRouteImport } from './routes/api/public/gecit'
 import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
+import { Route as ApiV1McpVerifyRouteImport } from './routes/api/v1/mcp/verify'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicCronOfflineCheckRouteImport } from './routes/api/public/cron/offline-check'
 import { Route as ApiPublicV1McpVerifyRouteImport } from './routes/api/public/v1/mcp/verify'
@@ -151,6 +152,11 @@ const ApiPublicEnrollRoute = ApiPublicEnrollRouteImport.update({
   path: '/api/public/enroll',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1McpVerifyRoute = ApiV1McpVerifyRouteImport.update({
+  id: '/api/v1/mcp/verify',
+  path: '/api/v1/mcp/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/v1/mcp/verify': typeof ApiV1McpVerifyRoute
   '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
 }
 export interface FileRoutesByTo {
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/v1/mcp/verify': typeof ApiV1McpVerifyRoute
   '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
 }
 export interface FileRoutesById {
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/v1/mcp/verify': typeof ApiV1McpVerifyRoute
   '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
 }
 export interface FileRouteTypes {
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
+    | '/api/v1/mcp/verify'
     | '/api/public/v1/mcp/verify'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
+    | '/api/v1/mcp/verify'
     | '/api/public/v1/mcp/verify'
   id:
     | '__root__'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
+    | '/api/v1/mcp/verify'
     | '/api/public/v1/mcp/verify'
   fileRoutesById: FileRoutesById
 }
@@ -367,6 +379,7 @@ export interface RootRouteChildren {
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
   ApiPublicCronOfflineCheckRoute: typeof ApiPublicCronOfflineCheckRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiV1McpVerifyRoute: typeof ApiV1McpVerifyRoute
   ApiPublicV1McpVerifyRoute: typeof ApiPublicV1McpVerifyRoute
 }
 
@@ -533,6 +546,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicEnrollRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/mcp/verify': {
+      id: '/api/v1/mcp/verify'
+      path: '/api/v1/mcp/verify'
+      fullPath: '/api/v1/mcp/verify'
+      preLoaderRoute: typeof ApiV1McpVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -583,6 +603,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
   ApiPublicCronOfflineCheckRoute: ApiPublicCronOfflineCheckRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiV1McpVerifyRoute: ApiV1McpVerifyRoute,
   ApiPublicV1McpVerifyRoute: ApiPublicV1McpVerifyRoute,
 }
 export const routeTree = rootRouteImport
