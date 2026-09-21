@@ -24,8 +24,11 @@ const crossOriginIsolation = {
     };
   }) {
     server.middlewares.use((req, res, next) => {
-      const path = (req.url ?? "/").split("?")[0];
-      if (isIsolatedPath(path)) {
+      const path = (req.url ?? "/").split("?")[0] ?? "/";
+      // Modül işçileri de yalıtım başlığı ister: yalnız HTML'e başlık koymak
+      // `new Worker(...)` çağrısının engellenmesine yol açıyor.
+      const isScript = /\.(m?[jt]sx?)$/.test(path) || path.startsWith("/src/");
+      if (isIsolatedPath(path) || isScript) {
         for (const [k, v] of Object.entries(COI_HEADERS)) res.setHeader(k, v);
       }
       next();
