@@ -8,6 +8,8 @@
 
 import { useEffect, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+
 const TOUR_KEY = "tbos.tour.done";
 
 const STEPS = [
@@ -62,20 +64,21 @@ export function Onboarding() {
         <p className="mt-2 text-sm leading-relaxed text-[var(--tb-muted)]">{current.body}</p>
 
         <div className="mt-5 flex items-center justify-between gap-3">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={finish}
             className="wa-press min-h-12 rounded-xl px-3 font-osmono text-[12px] text-[var(--tb-muted)]"
           >
             Geç
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => (step + 1 < STEPS.length ? setStep(step + 1) : finish())}
             className="wa-press min-h-12 rounded-xl bg-[var(--tb-accent)] px-5 text-[14px] font-semibold text-[var(--tb-bg)]"
           >
             {step + 1 < STEPS.length ? "Devam" : "Başla"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
