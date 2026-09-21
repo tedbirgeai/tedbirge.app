@@ -927,6 +927,27 @@ fi
 [ -e "$KOK/sbin/init" ] || [ -e "$KOK/usr/sbin/init" ] || [ -e "$KOK/lib/systemd/systemd" ] \
   || hata "ACL-313: Kurulu sistemde /sbin/init yok; sistem acilamaz."
 
+# 4c) Masaustu acilis zinciri kurulu diskte eksiksiz mi? Bu kapilar olmadan
+# sistem aciliyor ama ekran bos/yari beyaz kalabiliyordu.
+[ "$(chroot "$KOK" "${CHROOT_ENV[@]}" systemctl get-default 2>/dev/null)" = "graphical.target" ] \
+  || hata "ACL-314: Kurulu sistem grafik hedefine acilmiyor."
+for f in /opt/tedbirge/kiosk.sh /opt/tedbirge/ekran-duzeni.sh \
+         /opt/tedbirge/gozcu.sh /opt/tedbirge/kurtarma-sayfasi.sh \
+         /opt/tedbirge/tedbirge-ready.sh; do
+  [ -x "$KOK$f" ] || hata "ACL-315: Masaustu acilis dosyasi eksik: $f"
+done
+grep -q 'tedbirge-kiosk-healthy' "$KOK/opt/tedbirge/kiosk.sh" \
+  || hata "ACL-316: Masaustu saglik kapisi kurulu diskte yok."
+grep -q 'disable-gpu' "$KOK/opt/tedbirge/kiosk.sh" \
+  || hata "ACL-316: Yazilim cizim (guvenli goruntu) yolu kurulu diskte yok."
+[ -s "$KOK/etc/nginx/sites-enabled/tedbirge.conf" ] \
+  || hata "ACL-317: Yerel web sunucusu yapilandirmasi kurulu diskte etkin degil."
+[ -s "$KOK/var/www/tedbirge/index.html" ] \
+  || hata "ACL-317: Masaustu arayuz dosyalari kurulu diskte yok."
+for u in tedbirge-kiosk.service tedbirge-gozcu.service tedbirge-ready.service; do
+  [ -s "$KOK/etc/systemd/system/$u" ] || hata "ACL-318: Acilis hizmeti eksik: $u"
+done
+
 # 5) Acilis kodu diske gercekten yazildi mi?
 if [ "$MOD" = "UEFI" ]; then
   [ -s "$KOK/boot/efi/EFI/BOOT/grub.cfg" ] \
