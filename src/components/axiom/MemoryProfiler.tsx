@@ -52,9 +52,7 @@ export function MemoryProfiler({ ram, rom, heap, mode }: Props) {
       <Cell
         label="Sanal ROM"
         value={
-          rom
-            ? `${rom.blocks} blok · ${rom.persistent ? "kalıcı" : "geçici"}`
-            : "hazırlanıyor…"
+          rom ? `${rom.blocks} blok · ${rom.persistent ? "kalıcı" : "geçici"}` : "hazırlanıyor…"
         }
         warn={!!rom && !rom.persistent}
       />

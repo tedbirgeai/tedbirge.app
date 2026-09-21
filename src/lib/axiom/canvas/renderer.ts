@@ -43,7 +43,10 @@ export function parseColor(value: string): [number, number, number, number] {
   }
   const m = v.match(/rgba?\(([^)]+)\)/i);
   if (m) {
-    const parts = m[1].split(/[,/\s]+/).filter(Boolean).map(Number);
+    const parts = m[1]
+      .split(/[,/\s]+/)
+      .filter(Boolean)
+      .map(Number);
     const [r = 128, g = 128, b = 128, a = 1] = parts;
     return [r / 255, g / 255, b / 255, Number.isFinite(a) ? a : 1];
   }
