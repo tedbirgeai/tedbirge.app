@@ -23,10 +23,12 @@ import { MemoryProfiler } from "@/components/axiom/MemoryProfiler";
 import { NodeStatusCard } from "@/components/axiom/NodeStatusCard";
 import { ProofViewer } from "@/components/axiom/ProofViewer";
 import { VerifyBoundary } from "@/components/axiom/VerifyBoundary";
+import type { KernelAnalysis } from "@/lib/axiom/analyze";
 import { AXIOM_BRAND_BANNER, AXIOM_RAM_LIMIT } from "@/lib/axiom/brand";
 import { createRenderer, type Renderer } from "@/lib/axiom/canvas/renderer";
 import type { ByteDigest } from "@/lib/axiom/digest";
-import type { KernelAnalysis, KernelRequest, KernelResponse } from "@/lib/axiom/kernel.worker";
+import type { KernelRequest, KernelResponse } from "@/lib/axiom/kernel.worker";
+import { localAnalyze, localStats, localVerify } from "@/lib/axiom/local-kernel";
 import { sampleMemory, type MemorySample } from "@/lib/axiom/profiler";
 import type { RamStats } from "@/lib/axiom/ram";
 import { ROM_SEED, romStatus, seedRom, type RomStatus } from "@/lib/axiom/rom";
@@ -66,13 +68,40 @@ export function AxiomApp() {
   const [verifying, setVerifying] = useState(false);
   const [lastText, setLastText] = useState("");
   const [fps, setFps] = useState(0);
+  /** Daemon kurulamazsa çözümleme ana iş parçacığında yürür. */
+  const [yerel, setYerel] = useState(false);
+  /** Yeniden başlatma düğmesi bu sayacı arttırır. */
+  const [deneme, setDeneme] = useState(0);
 
   // --- Çekirdek daemon'ı: bayt çözümlemesi ana iş parçacığını kilitlemez.
   useEffect(() => {
-    const worker = new Worker(new URL("@/lib/axiom/kernel.worker.ts", import.meta.url), {
-      type: "module",
-    });
+    let worker: Worker | null = null;
+    const dus = (sebep: string) => {
+      // Daemon kurulamadı: arayüz çökmez, aynı motor ana iş parçacığında çalışır.
+      worker?.terminate();
+      worker = null;
+      workerRef.current = null;
+      setYerel(true);
+      setRam(localStats());
+      setHata(sebep);
+      setVerifying(false);
+      setBusy(false);
+    };
+    try {
+      // Vite yalnız gerçek göreli yolu çözer; takma ad (@/) burada çalışmaz.
+      worker = new Worker(new URL("../../lib/axiom/kernel.worker.ts", import.meta.url), {
+        type: "module",
+      });
+    } catch (err) {
+      dus(
+        err instanceof Error
+          ? `Çekirdek daemon'ı başlatılamadı: ${err.message}`
+          : "Çekirdek daemon'ı başlatılamadı (tarayıcı kısıtı).",
+      );
+      return;
+    }
     workerRef.current = worker;
+    setYerel(false);
     worker.onmessage = (event: MessageEvent<KernelResponse>) => {
       const msg = event.data;
       setRam(msg.ram);
@@ -100,20 +129,21 @@ export function AxiomApp() {
         setBusy(false);
       }
     };
-    // Daemon yüklenemezse arayüz sessizce beklemez: hata görünür olur ve
-    // "Çözümleniyor…" durumu serbest bırakılır.
+    // Daemon yüklenemezse arayüz sessizce beklemez: yedek motora düşülür.
     worker.onerror = (err) => {
-      setHata(err.message || "Çekirdek daemon'ı yüklenemedi.");
-      setVerifying(false);
-      setBusy(false);
+      dus(
+        err.message
+          ? `Çekirdek daemon'ı yüklenemedi: ${err.message}`
+          : "Çekirdek daemon'ı yüklenemedi.",
+      );
     };
     const boot: KernelRequest = { id: (seqRef.current += 1), type: "boot" };
     worker.postMessage(boot);
     return () => {
-      worker.terminate();
+      worker?.terminate();
       workerRef.current = null;
     };
-  }, []);
+  }, [deneme]);
 
   // --- Sanal ROM: tohum bloklar yazılır, kalıcı depolama izni istenir.
   useEffect(() => {
@@ -191,22 +221,60 @@ export function AxiomApp() {
   }, [ram.used, ram.limit]);
 
   const submit = useCallback((text: string) => {
-    const worker = workerRef.current;
-    if (!worker) return;
     setLastText(text);
     setBusy(true);
-    const msg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
-    worker.postMessage(msg);
+    const worker = workerRef.current;
+    if (worker) {
+      const msg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
+      worker.postMessage(msg);
+      return;
+    }
+    // Yedek yol: aynı zincir ana iş parçacığında yürür.
+    try {
+      const out = localAnalyze(text);
+      setAnalysis(out.analysis);
+      setDigest(out.analysis.digest);
+      setRam(out.ram);
+      setBusy(false);
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Bilinmeyen çözümleme hatası");
+      setBusy(false);
+    }
   }, []);
 
   /** Doğrulama: aynı girdi simgesel motora gönderilir (500 ms sert bütçe). */
   const runVerify = useCallback(() => {
-    const worker = workerRef.current;
-    if (!worker || !lastText.trim()) return;
+    if (!lastText.trim()) return;
     setVerifying(true);
-    const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: lastText };
-    worker.postMessage(msg);
+    const worker = workerRef.current;
+    if (worker) {
+      const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: lastText };
+      worker.postMessage(msg);
+      return;
+    }
+    void localVerify(lastText)
+      .then((out) => {
+        setAnalysis(out.analysis);
+        setDigest(out.analysis.digest);
+        setProof(out.result);
+        setRam(out.ram);
+        setVerifying(false);
+      })
+      .catch((err: unknown) => {
+        setHata(err instanceof Error ? err.message : "Bilinmeyen doğrulama hatası");
+        setVerifying(false);
+      });
   }, [lastText]);
+
+  /** Servisi yeniden başlatır: daemon tekrar kurulmayı dener. */
+  const restart = useCallback(() => {
+    setHata(null);
+    setProof(null);
+    setYerel(false);
+    setBusy(false);
+    setVerifying(false);
+    setDeneme((n) => n + 1);
+  }, []);
 
   const romListesi = useMemo(() => ROM_SEED, []);
 
@@ -235,7 +303,20 @@ export function AxiomApp() {
           role="alert"
           className="rounded-lg border border-[var(--tb-rose-400)] bg-[var(--tb-bg-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-rose-400)]"
         >
-          Çözümleme tamamlanamadı: {hata}
+          <div className="break-words">Çözümleme tamamlanamadı: {hata}</div>
+          {yerel ? (
+            <div className="mt-1 text-[var(--tb-muted)]">
+              Yedek motor etkin: çözümleme ve doğrulama ana iş parçacığında sürüyor, sonuçlar
+              aynıdır.
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={restart}
+            className="mt-2 rounded-lg border border-[var(--tb-cyan-400)] px-3 py-1 font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)]"
+          >
+            Servisi yeniden başlat
+          </button>
         </div>
       ) : null}
 
