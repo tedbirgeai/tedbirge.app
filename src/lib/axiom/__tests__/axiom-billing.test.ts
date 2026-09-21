@@ -107,6 +107,6 @@ describe("ağ kredisi", () => {
     const r = rewardsFrom(meterSnapshot(), 2);
     expect(r.credits).toBe(1 + 8);
     expect(r.quorumPassed).toBe(2);
-    expect(r.simulated).toBe(true);
+    expect(r.active).toBe(true);
   });
 });
