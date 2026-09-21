@@ -18,7 +18,13 @@ import { AxiomRam, type RamStats } from "@/lib/axiom/ram";
 import { verify } from "@/lib/axiom/verify/engine";
 import type { VerifyResult } from "@/lib/axiom/verify/types";
 
-const ram = new AxiomRam(AXIOM_RAM_LIMIT, AXIOM_RAM_THRESHOLD);
+let ram = new AxiomRam(AXIOM_RAM_LIMIT, AXIOM_RAM_THRESHOLD);
+
+/** Yedek motoru temiz başlangıç durumuna alır. */
+export function resetLocalKernel(): RamStats {
+  ram = new AxiomRam(AXIOM_RAM_LIMIT, AXIOM_RAM_THRESHOLD);
+  return ram.stats();
+}
 
 export function localStats(): RamStats {
   return ram.stats();

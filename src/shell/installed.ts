@@ -244,7 +244,7 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
-function hydrate() {
+function hydrate(notify = true) {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
   try {
@@ -260,11 +260,11 @@ function hydrate() {
   } catch {
     state = { installed: DEFAULT_INSTALLED, icons: {} };
   }
-  emit();
+  if (notify) emit();
 }
 
 function subscribe(l: () => void) {
-  hydrate();
+  hydrate(false);
   listeners.add(l);
   return () => listeners.delete(l);
 }
@@ -274,7 +274,10 @@ const SERVER_STATE: State = { installed: DEFAULT_INSTALLED, icons: {} };
 export function useDesktopState(): State {
   return useSyncExternalStore(
     subscribe,
-    () => state,
+    () => {
+      hydrate(false);
+      return state;
+    },
     () => SERVER_STATE,
   );
 }

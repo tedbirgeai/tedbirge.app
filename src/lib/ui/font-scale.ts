@@ -82,7 +82,10 @@ export function useFontScale(): FontScaleId {
       listeners.add(l);
       return () => listeners.delete(l);
     },
-    () => getFontScale(),
+    () => {
+      hydrate();
+      return current;
+    },
     () => DEFAULT_FONT_SCALE,
   );
 }

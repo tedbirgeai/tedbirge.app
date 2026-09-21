@@ -20,7 +20,7 @@ function apply() {
   else delete document.documentElement.dataset["focus"];
 }
 
-function hydrate() {
+function hydrate(notify = true) {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
   try {
@@ -29,7 +29,7 @@ function hydrate() {
     active = false;
   }
   apply();
-  listeners.forEach((l) => l());
+  if (notify) listeners.forEach((l) => l());
 }
 
 export function isFocusMode(): boolean {
@@ -51,11 +51,14 @@ export function setFocusMode(next: boolean) {
 export function useFocusMode(): boolean {
   return useSyncExternalStore(
     (l) => {
-      hydrate();
+      hydrate(false);
       listeners.add(l);
       return () => listeners.delete(l);
     },
-    () => active,
+    () => {
+      hydrate(false);
+      return active;
+    },
     () => false,
   );
 }

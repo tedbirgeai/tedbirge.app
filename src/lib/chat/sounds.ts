@@ -227,8 +227,16 @@ export function stopRing() {
 
 export function vibrate(pattern: number | number[] = 12) {
   if (muted) return;
+  const nav =
+    typeof navigator === "undefined"
+      ? null
+      : (navigator as Navigator & {
+          userActivation?: { hasBeenActive?: boolean };
+          vibrate?: (pattern: number | number[]) => boolean;
+        });
+  if (!nav?.userActivation?.hasBeenActive) return;
   try {
-    navigator.vibrate?.(pattern);
+    nav.vibrate?.(pattern);
   } catch {
     /* desteklenmiyor */
   }

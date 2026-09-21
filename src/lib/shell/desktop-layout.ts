@@ -25,6 +25,8 @@ export type DesktopLayout = {
 const KEY = "tbos.desktop.layout";
 
 const EMPTY: DesktopLayout = { positions: {}, sort: "tur", view: "orta", locked: [] };
+const SORTS: SortMode[] = ["ad", "tur", "tarih"];
+const VIEWS: ViewMode[] = ["buyuk", "orta"];
 
 let state: DesktopLayout = EMPTY;
 let hydrated = false;
@@ -43,28 +45,35 @@ function persist() {
   }
 }
 
-function hydrate() {
+function hydrate(notify = true) {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<DesktopLayout>;
+      const positions =
+        parsed.positions && typeof parsed.positions === "object"
+          ? parsed.positions
+          : EMPTY.positions;
+      const locked = Array.isArray(parsed.locked)
+        ? parsed.locked.filter((x): x is string => typeof x === "string")
+        : EMPTY.locked;
       state = {
-        positions: parsed.positions ?? {},
-        sort: parsed.sort ?? "tur",
-        view: parsed.view ?? "orta",
-        locked: parsed.locked ?? [],
+        positions,
+        sort: parsed.sort && SORTS.includes(parsed.sort) ? parsed.sort : "tur",
+        view: parsed.view && VIEWS.includes(parsed.view) ? parsed.view : "orta",
+        locked,
       };
     }
   } catch {
     state = EMPTY;
   }
-  emit();
+  if (notify) emit();
 }
 
 function subscribe(l: () => void) {
-  hydrate();
+  hydrate(false);
   listeners.add(l);
   return () => listeners.delete(l);
 }
@@ -72,7 +81,10 @@ function subscribe(l: () => void) {
 export function useDesktopLayout(): DesktopLayout {
   return useSyncExternalStore(
     subscribe,
-    () => state,
+    () => {
+      hydrate(false);
+      return state;
+    },
     () => EMPTY,
   );
 }

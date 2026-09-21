@@ -752,6 +752,23 @@ body {
   --tb-rose-400: #b3453a;
   --tb-rose-500: #9c3a31;
   --tb-rose-600: #9c3a31;
+
+  --tb-brand-ink-light: #ffffff;
+  --tb-brand-ink-dark: #050505;
+  --tb-brand-youtube: #ff0033;
+  --tb-brand-tiktok-cyan: #25f4ee;
+  --tb-brand-tiktok-rose: #fe2c55;
+  --tb-brand-linkedin: #0a66c2;
+  --tb-brand-github: #181717;
+  --tb-brand-spotify: #1db954;
+  --tb-brand-spotify-ink: #06120a;
+  --tb-brand-whatsapp: #25d366;
+  --tb-brand-google-blue: #4285f4;
+  --tb-brand-google-green: #34a853;
+  --tb-brand-google-yellow: #fbbc05;
+  --tb-brand-google-red: #ea4335;
+  --tb-brand-duckduckgo: #de5833;
+  --tb-brand-duckduckgo-gold: #f4c36a;
 }
 
 :root[data-theme="soft"] {

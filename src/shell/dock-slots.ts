@@ -45,7 +45,7 @@ function normalize(list: unknown): string[] {
   return out.length ? out : [...DEFAULT_SLOTS];
 }
 
-function hydrate() {
+function hydrate(notify = true) {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
   try {
@@ -54,17 +54,20 @@ function hydrate() {
   } catch {
     slots = [...DEFAULT_SLOTS];
   }
-  emit();
+  if (notify) emit();
 }
 
 export function useDockSlots(): string[] {
   return useSyncExternalStore(
     (l) => {
-      hydrate();
+      hydrate(false);
       listeners.add(l);
       return () => listeners.delete(l);
     },
-    () => slots,
+    () => {
+      hydrate(false);
+      return slots;
+    },
     () => DEFAULT_SLOTS,
   );
 }

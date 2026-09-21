@@ -12,11 +12,12 @@ import { getApp } from "@/apps/registry";
 import { catalogApp } from "@/shell/installed";
 import { webApp } from "@/shell/web-apps";
 
-type Size = "desk" | "launcher" | "dock" | "task" | "window";
+type Size = "desk" | "launcher" | "store" | "dock" | "task" | "window";
 
 const SIZE: Record<Size, { box: string; icon: string; radius: string }> = {
   desk: { box: "h-12 w-12", icon: "h-6 w-6", radius: "rounded-2xl" },
   launcher: { box: "h-12 w-12", icon: "h-6 w-6", radius: "rounded-2xl" },
+  store: { box: "h-11 w-11", icon: "h-5 w-5", radius: "rounded-xl" },
   dock: { box: "h-8 w-8", icon: "h-4 w-4", radius: "rounded-xl" },
   task: { box: "h-6 w-6", icon: "h-3.5 w-3.5", radius: "rounded-lg" },
   window: { box: "h-7 w-7", icon: "h-4 w-4", radius: "rounded-lg" },

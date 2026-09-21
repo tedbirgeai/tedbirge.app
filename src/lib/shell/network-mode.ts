@@ -46,7 +46,7 @@ function apply() {
   document.documentElement.dataset["network"] = mode;
 }
 
-function hydrate() {
+function hydrate(notify = true) {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
   try {
@@ -56,7 +56,7 @@ function hydrate() {
     /* depolama kapalı olabilir */
   }
   apply();
-  emit();
+  if (notify) emit();
 }
 
 export function getNetworkMode(): NetworkModeId {
@@ -93,11 +93,14 @@ export function setNetworkMode(next: NetworkModeId) {
 export function useNetworkMode(): NetworkModeId {
   return useSyncExternalStore(
     (l) => {
-      hydrate();
+      hydrate(false);
       listeners.add(l);
       return () => listeners.delete(l);
     },
-    () => mode,
+    () => {
+      hydrate(false);
+      return mode;
+    },
     () => "global" as NetworkModeId,
   );
 }
