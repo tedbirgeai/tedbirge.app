@@ -6,9 +6,9 @@
 /**
  * AXIOM KOMUT ÇUBUĞU
  * ------------------------------------------------------------------
- * Girdi çekirdek daemon'ına gönderilir ve bayt görünümü döner. Faz 1'de
- * doğrulama motoru bağlı değildir; bu yüzden hiçbir yerde "kanıtlandı"
- * denmez, çıktı açıkça "bayt çözümlemesi" olarak etiketlenir.
+ * Girdi çekirdek daemon'ına gönderilir; dil tanıma, yapı ağacı ve
+ * değişmez eşleşmesi döner. Simgesel doğrulama motoru bağlı değildir;
+ * bu yüzden hiçbir yerde "kanıtlandı" denmez.
  */
 
 import { useState } from "react";
@@ -23,8 +23,9 @@ type Props = {
 
 const ORNEKLER = [
   "Kapalı sistemde enerji korunur.",
-  "C = B * log2(1 + S/N)",
-  "for i in 0..n: total += i",
+  "Bu makine yoktan enerji üretir ve verimi %100 olur.",
+  "fn main() { let mut x = 1; }",
+  "Sınırsız bant genişliği sağlıyoruz.",
 ];
 
 export function CommandBar({ busy, onSubmit }: Props) {
@@ -54,7 +55,7 @@ export function CommandBar({ busy, onSubmit }: Props) {
       />
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" onClick={gonder} disabled={busy || !text.trim()}>
-          {busy ? "Çözümleniyor…" : "Bayt çözümlemesi"}
+          {busy ? "Çözümleniyor…" : "Çözümle"}
         </Button>
         {ORNEKLER.map((o) => (
           <button

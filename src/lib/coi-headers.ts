@@ -26,11 +26,21 @@ export const COI_HEADERS: Record<string, string> = {
   "Cross-Origin-Resource-Policy": "same-site",
 };
 
-/** Yanıta yalıtım başlıklarını ekler (yalnızca HTML gezinme yanıtları). */
+/**
+ * Betik yanıtları da yalıtım başlığı taşımalıdır: COEP uygulanan bir sayfa
+ * içinde `new Worker(...)` çağrısı, işçi betiği COEP başlığı taşımazsa
+ * tarayıcı tarafından ERR_BLOCKED_BY_RESPONSE ile reddedilir.
+ */
+export function isScriptResponse(contentType: string): boolean {
+  return contentType.includes("javascript") || contentType.includes("ecmascript");
+}
+
+/** Yanıta yalıtım başlıklarını ekler (HTML gezinmeleri ve betik/işçi yanıtları). */
 export function withCoiHeaders(response: Response, pathname: string): Response {
-  if (!isIsolatedPath(pathname)) return response;
   const type = response.headers.get("content-type") ?? "";
-  if (!type.includes("text/html")) return response;
+  const isHtml = type.includes("text/html");
+  if (isHtml && !isIsolatedPath(pathname)) return response;
+  if (!isHtml && !isScriptResponse(type)) return response;
   const headers = new Headers(response.headers);
   for (const [k, v] of Object.entries(COI_HEADERS)) headers.set(k, v);
   return new Response(response.body, {

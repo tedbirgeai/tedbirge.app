@@ -58,6 +58,36 @@ export const ROM_SEED: RomBlock[] = [
     label: "Gödel eksiklik",
     body: "Tutarlı ve yeterince güçlü her biçimsel sistemde kanıtlanamayan doğru önermeler vardır.",
   },
+  {
+    key: "ledger/formal",
+    label: "Biçimsel bilim kayıt defterleri",
+    body: "Lean 4 Mathlib, SMT-LIB2, Metamath, Coq Standard Library, OEIS.",
+  },
+  {
+    key: "ledger/physical",
+    label: "Fizik ve kimya kayıt defterleri",
+    body: "BIPM / CODATA, NIST SRD, IUPAC, CERN Open Data, IAU katalogları.",
+  },
+  {
+    key: "ledger/engineering",
+    label: "Mühendislik ve emniyet defterleri",
+    body: "DO-178C, ISO 26262, IEC 61508, ISO/IEC 27001, NIST SP 800-53, IEEE SA.",
+  },
+  {
+    key: "ledger/life",
+    label: "Yaşam bilimleri defterleri",
+    body: "PDB, NCBI GenBank, PubChem, UniProt, WHO ICD-11.",
+  },
+  {
+    key: "ledger/earth",
+    label: "Dünya ve çevre defterleri",
+    body: "USGS, NOAA, IPCC, WMO, Copernicus.",
+  },
+  {
+    key: "ledger/social",
+    label: "Toplum, hukuk ve iktisat defterleri",
+    body: "OECD, IMF, Eurostat, TÜİK, ISO 20022.",
+  },
 ];
 
 function open(): Promise<IDBDatabase> {
