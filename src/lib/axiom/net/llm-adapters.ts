@@ -66,5 +66,9 @@ export function toToolResult(response: JsonRpcResponse): string {
 
 /** Keşif uçları için araç listesi (capabilities ile aynı kaynaktan). */
 export async function toolCatalogue() {
-  return { mcp: MCP_PATH, capabilities: await mcpCapabilities(), tools: [openAiTool(), anthropicTool()] };
+  return {
+    mcp: MCP_PATH,
+    capabilities: await mcpCapabilities(),
+    tools: [openAiTool(), anthropicTool()],
+  };
 }

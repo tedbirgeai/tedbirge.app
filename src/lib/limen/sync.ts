@@ -1,6 +1,14 @@
 /* Copyright (c) 2026 Tedbirge Labs / Tedbirge WebOS. All rights reserved. */
 
-import { apply, createState, delta, live, put, type CrdtDelta, type CrdtState } from "@/lib/axiom/sync/crdt";
+import {
+  apply,
+  createState,
+  delta,
+  live,
+  put,
+  type CrdtDelta,
+  type CrdtState,
+} from "@/lib/axiom/sync/crdt";
 import { createQueue, enqueue, flush, type QueueState } from "@/lib/axiom/sync/queue";
 
 export type LimenMirrorMode = "local" | "p2p" | "github";
@@ -66,8 +74,12 @@ function toRecords(current: CrdtState): LimenRecord[] {
       id: entry.key,
       name: String(entry.fields.name ?? entry.key),
       branch: String(entry.fields.branch ?? "main"),
-      mode: (entry.fields.mode === "github" || entry.fields.mode === "p2p" ? entry.fields.mode : "local") as LimenMirrorMode,
-      status: (entry.fields.status === "synced" || entry.fields.status === "conflict-free" ? entry.fields.status : "queued") as LimenRecord["status"],
+      mode: (entry.fields.mode === "github" || entry.fields.mode === "p2p"
+        ? entry.fields.mode
+        : "local") as LimenMirrorMode,
+      status: (entry.fields.status === "synced" || entry.fields.status === "conflict-free"
+        ? entry.fields.status
+        : "queued") as LimenRecord["status"],
       updatedAt: Number(entry.fields.updatedAt ?? Date.now()),
     }))
     .sort((a, b) => b.updatedAt - a.updatedAt);

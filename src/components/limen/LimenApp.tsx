@@ -2,7 +2,13 @@ import { useSyncExternalStore, useState, type ReactNode } from "react";
 import { GitBranch, GitMerge, Github, Network, ShieldCheck, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { flushLimen, getLimenSnapshot, stageLimenChange, subscribeLimen, type LimenMirrorMode } from "@/lib/limen/sync";
+import {
+  flushLimen,
+  getLimenSnapshot,
+  stageLimenChange,
+  subscribeLimen,
+  type LimenMirrorMode,
+} from "@/lib/limen/sync";
 import { notifyOk } from "@/lib/shell/notify";
 
 const MODES: { id: LimenMirrorMode; label: string }[] = [
@@ -36,8 +42,12 @@ export function LimenApp() {
       <header className="border-b border-[var(--tb-border)] bg-[var(--tb-panel)] p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">LIMEN</p>
-            <h1 className="mt-1 text-2xl font-semibold text-[var(--tb-text)]">P2P Git ve sentez çalışma alanı</h1>
+            <p className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">
+              LIMEN
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold text-[var(--tb-text)]">
+              P2P Git ve sentez çalışma alanı
+            </h1>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center font-osmono text-[11px]">
             <Metric label="Düğüm" value={snap.node.slice(-6).toUpperCase()} />
@@ -60,7 +70,12 @@ export function LimenApp() {
             </label>
             <div className="flex flex-wrap gap-2">
               {MODES.map((m) => (
-                <Button key={m.id} type="button" variant={mode === m.id ? "default" : "outline"} onClick={() => setMode(m.id)}>
+                <Button
+                  key={m.id}
+                  type="button"
+                  variant={mode === m.id ? "default" : "outline"}
+                  onClick={() => setMode(m.id)}
+                >
                   {m.label}
                 </Button>
               ))}
@@ -75,11 +90,18 @@ export function LimenApp() {
 
           <div className="mt-5 grid gap-3">
             {snap.records.map((record) => (
-              <article key={record.id} className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-4">
+              <article
+                key={record.id}
+                className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-4"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h2 className="truncate text-base font-semibold text-[var(--tb-text)]">{record.name}</h2>
-                    <p className="font-osmono text-[11px] text-[var(--tb-muted)]">{record.branch} · {record.mode}</p>
+                    <h2 className="truncate text-base font-semibold text-[var(--tb-text)]">
+                      {record.name}
+                    </h2>
+                    <p className="font-osmono text-[11px] text-[var(--tb-muted)]">
+                      {record.branch} · {record.mode}
+                    </p>
                   </div>
                   <span className="rounded-full border border-[color-mix(in_srgb,var(--tb-accent)_42%,transparent)] bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] px-2 py-1 font-osmono text-[10px] text-[var(--tb-accent)]">
                     {record.status}
@@ -91,10 +113,26 @@ export function LimenApp() {
         </div>
 
         <aside className="space-y-3">
-          <StatusCard icon={<Network className="h-4 w-4" />} title="WebRTC Mesh" text={snap.online ? "P2P kanal hazır" : "Çevrimdışı kuyruk aktif"} />
-          <StatusCard icon={<ShieldCheck className="h-4 w-4" />} title="AXIOM Düğümleri" text="Doğrulama deltaları çekirdekle eşleniyor" />
-          <StatusCard icon={<Sparkles className="h-4 w-4" />} title="Güvenli Sentez" text="Önizleme yerel VFS üzerinde hazırlanıyor" />
-          <StatusCard icon={<Github className="h-4 w-4" />} title="Yetkili GitHub Ayna" text="Bağlantı izni olmadan dışa yazım yapılmaz" />
+          <StatusCard
+            icon={<Network className="h-4 w-4" />}
+            title="WebRTC Mesh"
+            text={snap.online ? "P2P kanal hazır" : "Çevrimdışı kuyruk aktif"}
+          />
+          <StatusCard
+            icon={<ShieldCheck className="h-4 w-4" />}
+            title="AXIOM Düğümleri"
+            text="Doğrulama deltaları çekirdekle eşleniyor"
+          />
+          <StatusCard
+            icon={<Sparkles className="h-4 w-4" />}
+            title="Güvenli Sentez"
+            text="Önizleme yerel VFS üzerinde hazırlanıyor"
+          />
+          <StatusCard
+            icon={<Github className="h-4 w-4" />}
+            title="Yetkili GitHub Ayna"
+            text="Bağlantı izni olmadan dışa yazım yapılmaz"
+          />
         </aside>
       </section>
     </div>
@@ -113,7 +151,10 @@ function Metric({ label, value }: { label: string; value: string }) {
 function StatusCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
     <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-4 shadow-[var(--tb-shadow)]">
-      <div className="flex items-center gap-2 text-[var(--tb-accent)]">{icon}<span className="font-semibold text-[var(--tb-text)]">{title}</span></div>
+      <div className="flex items-center gap-2 text-[var(--tb-accent)]">
+        {icon}
+        <span className="font-semibold text-[var(--tb-text)]">{title}</span>
+      </div>
       <p className="mt-2 text-sm text-[var(--tb-muted)]">{text}</p>
     </div>
   );

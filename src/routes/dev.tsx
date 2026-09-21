@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Code2, Cpu, KeyRound, Network, PackageCheck, ShieldCheck, TerminalSquare } from "lucide-react";
+import {
+  Code2,
+  Cpu,
+  KeyRound,
+  Network,
+  PackageCheck,
+  ShieldCheck,
+  TerminalSquare,
+} from "lucide-react";
 
 import { AppIconSurface } from "@/components/shell/AppIconBadge";
 import { Button } from "@/components/ui/button";
@@ -8,10 +16,22 @@ import { mcpCapabilities } from "@/lib/axiom/net/mcp-server";
 
 const sections = [
   { title: "SDK", icon: Code2, text: "TypeScript, Python, Rust, Java, Go, C# ve HDL şablonları." },
-  { title: "Compiler", icon: TerminalSquare, text: "@axiom_proof / #[axiom_verify] / [AxiomProof] işaretçileri." },
+  {
+    title: "Compiler",
+    icon: TerminalSquare,
+    text: "@axiom_proof / #[axiom_verify] / [AxiomProof] işaretçileri.",
+  },
   { title: "MCP", icon: Network, text: "/api/v1/mcp ve JSON-RPC 2.0 doğrulama çağrıları." },
-  { title: "Proof", icon: ShieldCheck, text: "Z3/Lean varsa mühürlü; yoksa mühürsüz karar kapısı." },
-  { title: "Packages", icon: PackageCheck, text: "npm, crates.io, PyPI, Maven, NuGet ve GoPkg rozetleri." },
+  {
+    title: "Proof",
+    icon: ShieldCheck,
+    text: "Z3/Lean varsa mühürlü; yoksa mühürsüz karar kapısı.",
+  },
+  {
+    title: "Packages",
+    icon: PackageCheck,
+    text: "npm, crates.io, PyPI, Maven, NuGet ve GoPkg rozetleri.",
+  },
   { title: "Runtime", icon: Cpu, text: "Worker, offline queue, CRDT ve P2P mesh durumu." },
   { title: "Keys", icon: KeyRound, text: "Yerel imza, izin ve paket köken doğrulama yüzeyleri." },
 ];
@@ -23,12 +43,14 @@ export const Route = createFileRoute("/dev")({
       { title: "Geliştirici Portalı — Tedbirge® WebOS" },
       {
         name: "description",
-        content: "Tedbirge® WebOS için AXIOM SDK, MCP doğrulama, paket rozeti ve geliştirici araçları.",
+        content:
+          "Tedbirge® WebOS için AXIOM SDK, MCP doğrulama, paket rozeti ve geliştirici araçları.",
       },
       { property: "og:title", content: "Geliştirici Portalı — Tedbirge® WebOS" },
       {
         property: "og:description",
-        content: "AXIOM SDK, MCP JSON-RPC doğrulama, paket köken rozeti ve geliştirici çalışma zamanı.",
+        content:
+          "AXIOM SDK, MCP JSON-RPC doğrulama, paket köken rozeti ve geliştirici çalışma zamanı.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -57,7 +79,9 @@ function DevPortal() {
           <div className="flex items-center gap-3">
             <AppIconSurface id="axiom" size="launcher" showBadge />
             <div>
-              <p className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">tedbirge.dev</p>
+              <p className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">
+                tedbirge.dev
+              </p>
               <h1 className="text-3xl font-semibold text-[var(--tb-text)]">Geliştirici Portalı</h1>
             </div>
           </div>
@@ -75,7 +99,10 @@ function DevPortal() {
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {sections.map(({ title, icon: Icon, text }) => (
-            <article key={title} className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-5 shadow-[var(--tb-shadow)]">
+            <article
+              key={title}
+              className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-5 shadow-[var(--tb-shadow)]"
+            >
               <div className="flex items-center gap-3 text-[var(--tb-accent)]">
                 <Icon className="h-5 w-5" />
                 <h2 className="text-lg font-semibold text-[var(--tb-text)]">{title}</h2>
@@ -92,7 +119,9 @@ function DevPortal() {
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-4 shadow-[var(--tb-shadow)]">
-      <p className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">{label}</p>
+      <p className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">
+        {label}
+      </p>
       <p className="mt-2 text-lg font-semibold text-[var(--tb-text)]">{value}</p>
     </div>
   );

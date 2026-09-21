@@ -574,7 +574,7 @@ function ChatAppInner() {
     () => allConversations.reduce((sum, c) => sum + (c.unread || 0), 0),
     [allConversations],
   );
-    const active = chat.conversations.find((c) => c.id === activeId) ?? null;
+  const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
   // `profileTick` yalnızca ad değiştiğinde yeniden okumayı tetikler.
   void profileTick;
@@ -865,7 +865,11 @@ function ChatAppInner() {
             className="px-4 pb-2 text-[34px] font-extrabold leading-none tracking-tight md:hidden"
             style={{ color: "var(--wa-text)", background: "var(--wa-panel)" }}
           >
-            {mobileTab === "calls" ? "Aramalar & Toplantılar" : mobileTab === "me" ? "Kişiler" : "Sohbetler"}
+            {mobileTab === "calls"
+              ? "Aramalar & Toplantılar"
+              : mobileTab === "me"
+                ? "Kişiler"
+                : "Sohbetler"}
           </h2>
 
           <div
@@ -1501,9 +1505,30 @@ function ChatAppInner() {
                 className="mt-auto flex flex-wrap gap-2 px-4 py-3 text-[11px]"
                 style={{ borderTop: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
               >
-                <button type="button" onClick={() => setProfileOpen(true)} className="wa-press rounded-full px-3 py-1.5" style={{ border: "1px solid var(--wa-border)" }}>Profil</button>
-                <button type="button" onClick={() => setSettingsOpen(true)} className="wa-press rounded-full px-3 py-1.5" style={{ border: "1px solid var(--wa-border)" }}>Ayarlar</button>
-                <button type="button" onClick={() => void shareInvite()} className="wa-press rounded-full px-3 py-1.5" style={{ border: "1px solid var(--wa-border)" }}>Davet</button>
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen(true)}
+                  className="wa-press rounded-full px-3 py-1.5"
+                  style={{ border: "1px solid var(--wa-border)" }}
+                >
+                  Profil
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(true)}
+                  className="wa-press rounded-full px-3 py-1.5"
+                  style={{ border: "1px solid var(--wa-border)" }}
+                >
+                  Ayarlar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void shareInvite()}
+                  className="wa-press rounded-full px-3 py-1.5"
+                  style={{ border: "1px solid var(--wa-border)" }}
+                >
+                  Davet
+                </button>
               </div>
             </div>
           )}
@@ -2176,13 +2201,7 @@ function ChatAppInner() {
       </div>
 
       {/* Mobil alt sekme çubuğu — yalnızca liste görünümünde. */}
-      {!activeId && (
-        <MobileTabBar
-          value={mobileTab}
-          onChange={setMobileTab}
-          unread={totalUnread}
-        />
-      )}
+      {!activeId && <MobileTabBar value={mobileTab} onChange={setMobileTab} unread={totalUnread} />}
 
       {/* Faz C kabuk ekranları: uygulamalar (.tbapp), röle, ağ durumu */}
       <AppsDialog open={surface.isOpen("apps")} onClose={() => surface.close("apps")} />

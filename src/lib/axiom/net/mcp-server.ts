@@ -148,7 +148,8 @@ export async function handleMcpRequest(
   const { method, params } = parsed.data;
   const id = parsed.data.id ?? null;
 
-  if (method === "axiom.capabilities" || method === "tools/list") return ok(id, await mcpCapabilities());
+  if (method === "axiom.capabilities" || method === "tools/list")
+    return ok(id, await mcpCapabilities());
 
   if (method === "tools/call") {
     const p = ToolCallParams.safeParse(params ?? {});

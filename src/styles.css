@@ -186,7 +186,6 @@
   }
 }
 
-
 @utility align-content-start {
   align-content: start;
 }
@@ -908,7 +907,6 @@ body {
   background-position: center;
 }
 
-
 .tbos-desk-icon {
   background: transparent;
   border: 1px solid transparent;
@@ -1045,7 +1043,6 @@ body {
   }
 }
 
-
 /* --- V5 yerel uygulama ikonları ve premium kabuk yüzeyleri --- */
 .tbos-app-icon {
   position: relative;
@@ -1054,8 +1051,16 @@ body {
   flex-shrink: 0;
   color: var(--tb-text);
   background:
-    radial-gradient(circle at 28% 18%, color-mix(in srgb, var(--tb-text) 22%, transparent), transparent 34%),
-    linear-gradient(145deg, color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 92%, var(--tb-accent) 8%), color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 76%, var(--tb-bg) 24%));
+    radial-gradient(
+      circle at 28% 18%,
+      color-mix(in srgb, var(--tb-text) 22%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 92%, var(--tb-accent) 8%),
+      color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 76%, var(--tb-bg) 24%)
+    );
   border: 1px solid color-mix(in srgb, var(--tb-border) 86%, var(--tb-text) 14%);
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--tb-text) 18%, transparent),
@@ -1067,7 +1072,11 @@ body {
   position: absolute;
   inset: 1px;
   border-radius: inherit;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--tb-text) 12%, transparent), transparent 44%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tb-text) 12%, transparent),
+    transparent 44%
+  );
   pointer-events: none;
 }
 .tbos-app-icon--brand {
@@ -1162,7 +1171,11 @@ body.tbos-dragging .tbos-window {
   z-index: 200;
   pointer-events: none;
   background:
-    linear-gradient(0deg, rgb(255 176 80 / calc(var(--tb-night, 0) * 1)) 0%, rgb(255 176 80 / calc(var(--tb-night, 0) * 1)) 100%),
+    linear-gradient(
+      0deg,
+      rgb(255 176 80 / calc(var(--tb-night, 0) * 1)) 0%,
+      rgb(255 176 80 / calc(var(--tb-night, 0) * 1)) 100%
+    ),
     rgb(0 0 0 / calc(var(--tb-dim, 0) * 0.9));
   mix-blend-mode: multiply;
   transition: background 160ms linear;
