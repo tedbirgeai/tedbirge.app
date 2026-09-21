@@ -12,8 +12,8 @@
  * yapılandırılmış klonlanabilir alanlar içerir (RegExp, Map, fonksiyon yok).
  */
 
-/** Bağlanabilen motorlar. `mock` = ikili bulunamadı, simülasyon yürüdü. */
-export type EngineId = "z3" | "lean4" | "mock";
+/** Bağlanabilen motorlar. `local` = yerel kural kapısı. */
+export type EngineId = "z3" | "lean4" | "local";
 
 export type ProofStep = {
   index: number;
@@ -36,7 +36,9 @@ export type VerifyVerdict =
 
 export type VerifyResult = {
   engine: EngineId;
-  /** Motor gerçek WASM ikilisi mi, simülasyon mu? */
+  /** Son karar canlı WASM ikilisiyle mühürlenebilir düzeyde doğrulandı mı? */
+  wasmVerified: boolean;
+  /** Geriye dönük ölçüm alanı: true ise karar yalnız yerel kural kapısından geldi. */
   simulated: boolean;
   verdict: VerifyVerdict;
   steps: ProofStep[];
@@ -48,7 +50,7 @@ export type VerifyResult = {
   seal: string | null;
   /** Üretilen SMT-LIB 2 önermesi (kısaltılmış). */
   smt: string;
-  /** Üretilen Lean 4 teorem iskeleti (kısaltılmış). */
+  /** Üretilen Lean 4 teorem gövdesi (kısaltılmış). */
   lean: string;
 };
 

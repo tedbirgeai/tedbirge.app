@@ -8,14 +8,14 @@
  * ------------------------------------------------------------------
  * Ana iş parçacığı yalnız çizim yapar; bayt ayrıştırma, dil tanıma,
  * yapı ağacı üretimi, ara gösterim ve değişmez eşleştirme bu daemon'da
- * yürür. Faz 3'te simgesel doğrulama katmanı (Z3 / Lean 4 / mock) bağlıdır:
- * `verify` isteği 500 ms sert bütçe altında karar ve mühür döner. WASM
- * ikilisi yoksa mock motor yanıt verir ve sonuç "simulated" işaretlenir.
+ * yürür. `verify` isteği 500 ms sert bütçe altında karar döner. Yerel
+ * Z3/Lean ikilisi varsa mühür üretilir, yoksa mühürsüz yerel kural kapısı çalışır.
  */
 
 import { analyze, type KernelAnalysis } from "@/lib/axiom/analyze";
 import { AXIOM_RAM_LIMIT, AXIOM_RAM_THRESHOLD } from "@/lib/axiom/brand";
 import { byteDigest, type ByteDigest } from "@/lib/axiom/digest";
+import { loadEngine } from "@/lib/axiom/live/engine-session";
 import { AxiomRam, type RamStats } from "@/lib/axiom/ram";
 import { verify } from "@/lib/axiom/verify/engine";
 import type { EngineId, VerifyResult } from "@/lib/axiom/verify/types";
@@ -50,7 +50,8 @@ self.onmessage = async (event: MessageEvent<KernelRequest>) => {
   const msg = event.data;
   try {
     if (msg.type === "boot") {
-      const out: KernelResponse = { id: msg.id, type: "boot", ram: ram.stats(), engine: "mock" };
+      const handle = await loadEngine();
+      const out: KernelResponse = { id: msg.id, type: "boot", ram: ram.stats(), engine: handle.engine };
       self.postMessage(out);
       return;
     }
