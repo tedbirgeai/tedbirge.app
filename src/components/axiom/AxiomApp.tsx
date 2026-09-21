@@ -46,6 +46,13 @@ import type { RamStats } from "@/lib/axiom/ram";
 import { ROM_SEED, romStatus, seedRom, type RomStatus } from "@/lib/axiom/rom";
 import type { VerifyResult } from "@/lib/axiom/verify/types";
 import { createAxiomWorker, workerAvailable } from "@/lib/axiom/worker-client";
+import { createAxiomMesh, type AxiomMesh } from "@/lib/p2p/axiom-mesh";
+import {
+  createAxiomOfflineQueue,
+  enqueueProof,
+  flushProofQueue,
+  type AxiomOfflineQueue,
+} from "@/lib/p2p/axiom-offline-queue";
 
 const BOS_RAM: RamStats = {
   used: 0,
@@ -63,6 +70,8 @@ export function AxiomApp() {
   const textRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
   const workerRef = useRef<Worker | null>(null);
+  const meshRef = useRef<AxiomMesh | null>(null);
+  const proofQueueRef = useRef<AxiomOfflineQueue>(createAxiomOfflineQueue());
   const seqRef = useRef(0);
   const lifecycleRef = useRef(0);
   /** Çizim döngüsü durumu ref ile okunur: RAM değişimi WebGL bağlamını kurmaz. */
@@ -97,6 +106,15 @@ export function AxiomApp() {
   const [lisans, setLisans] = useState(false);
   const node = useAxiomNode();
 
+  useEffect(() => {
+    const mesh = createAxiomMesh();
+    meshRef.current = mesh;
+    return () => {
+      mesh.close();
+      meshRef.current = null;
+    };
+  }, []);
+
   // Ücretsiz cihaz sınırı aşıldığında yükseltme penceresi bir kez açılır.
   useEffect(() => {
     if (shouldPrompt(node.peers, loadLicense())) setLisans(true);
@@ -113,6 +131,16 @@ export function AxiomApp() {
       client: "yerel-arayüz",
     });
     if (reviewProof(proof).quorum) setQuorum((n) => n + 1);
+    proofQueueRef.current = enqueueProof(proofQueueRef.current, proof);
+    const mesh = meshRef.current;
+    if (mesh) {
+      const online = typeof navigator === "undefined" ? true : navigator.onLine;
+      void flushProofQueue(proofQueueRef.current, (record) => mesh.publish(record), online).then(
+        (queue) => {
+          proofQueueRef.current = queue;
+        },
+      );
+    }
   }, [proof]);
 
   // --- Çekirdek daemon'ı: bayt çözümlemesi ana iş parçacığını kilitlemez.
@@ -159,7 +187,7 @@ export function AxiomApp() {
       if (msg.type === "boot") {
         if (bootTimer !== null) window.clearTimeout(bootTimer);
         setHata(null);
-        setKernelBadge(AXIOM_ACTIVE_BADGE);
+        setKernelBadge(msg.wasmLoaded ? AXIOM_ACTIVE_BADGE : `${AXIOM_ACTIVE_BADGE} · yerel kapı`);
       }
       if (msg.type === "digest") {
         setDigest(msg.digest);

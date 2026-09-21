@@ -13,6 +13,7 @@
 
 import { useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { t } from "@/lib/axiom/i18n";
 import { adapterSource, SDK_TARGETS, type SdkTarget } from "@/lib/axiom/sdk/adapters";
 import { CI_ACTION_NAME, simulateCiRun, workflowYaml } from "@/lib/axiom/sdk/ci-bot";
@@ -39,18 +40,19 @@ export function SdkPanel() {
         </div>
         <div className="mt-2 flex flex-wrap gap-1">
           {SDK_TARGETS.map((s) => (
-            <button
+            <Button
               key={s.id}
               type="button"
               onClick={() => setTarget(s.id)}
-              className="rounded border px-2 py-1 font-osmono text-[10px]"
+              variant="outline"
+              className="h-7 rounded border px-2 py-1 font-osmono text-[10px]"
               style={{
                 borderColor: target === s.id ? "var(--tb-cyan-400)" : "var(--tb-border)",
                 color: target === s.id ? "var(--tb-cyan-400)" : "var(--tb-muted)",
               }}
             >
               {s.label}
-            </button>
+            </Button>
           ))}
         </div>
         <pre className="mt-2 max-h-72 overflow-auto rounded border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] p-2 font-osmono text-[10px] text-[var(--tb-text)]">

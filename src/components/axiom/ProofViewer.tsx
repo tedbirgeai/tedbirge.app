@@ -12,6 +12,7 @@
 
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { t } from "@/lib/axiom/i18n";
 import type { VerifyResult } from "@/lib/axiom/verify/types";
 
@@ -91,13 +92,14 @@ export function ProofViewer({ result }: { result: VerifyResult | null }) {
         <p className="mt-3 font-osmono text-[11px] text-[var(--tb-muted)]">{t("proof.noSteps")}</p>
       )}
 
-      <button
+      <Button
         type="button"
         onClick={() => setShowSource((v) => !v)}
-        className="mt-3 rounded border border-[var(--tb-border)] px-2 py-1 font-osmono text-[10px] uppercase tracking-wide text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+        variant="outline"
+        className="mt-3 h-7 border-[var(--tb-border)] px-2 py-1 font-osmono text-[10px] uppercase tracking-wide text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
       >
         {showSource ? t("proof.hideSource") : t("proof.showSource")}
-      </button>
+      </Button>
 
       {showSource ? (
         <div className="mt-2 grid gap-2 lg:grid-cols-2">

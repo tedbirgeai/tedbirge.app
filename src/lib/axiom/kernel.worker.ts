@@ -31,7 +31,7 @@ export type KernelRequest =
   | { id: number; type: "stat" };
 
 export type KernelResponse =
-  | { id: number; type: "boot"; ram: RamStats; engine: EngineId }
+  | { id: number; type: "boot"; ram: RamStats; engine: EngineId; wasmLoaded: boolean }
   | { id: number; type: "digest"; digest: ByteDigest; ram: RamStats }
   | { id: number; type: "analyze"; analysis: KernelAnalysis; ram: RamStats }
   | {
@@ -51,7 +51,13 @@ self.onmessage = async (event: MessageEvent<KernelRequest>) => {
   try {
     if (msg.type === "boot") {
       const handle = await loadEngine();
-      const out: KernelResponse = { id: msg.id, type: "boot", ram: ram.stats(), engine: handle.engine };
+      const out: KernelResponse = {
+        id: msg.id,
+        type: "boot",
+        ram: ram.stats(),
+        engine: handle.engine,
+        wasmLoaded: handle.wasmLoaded,
+      };
       self.postMessage(out);
       return;
     }

@@ -58,4 +58,12 @@ export type VerifyResult = {
 export const VERIFY_TIMEOUT_MS = 500;
 
 /** Panik/zaman aşımı yollarında dışa verilebilen alanlar (sıfır günlük kuralı). */
-export const SAFE_RESULT_KEYS = ["engine", "simulated", "verdict", "ms", "cid", "seal"] as const;
+export const SAFE_RESULT_KEYS = [
+  "engine",
+  "wasmVerified",
+  "simulated",
+  "verdict",
+  "ms",
+  "cid",
+  "seal",
+] as const;

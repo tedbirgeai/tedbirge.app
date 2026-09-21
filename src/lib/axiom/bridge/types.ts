@@ -38,6 +38,7 @@ export type TruthResponse = {
   id: number;
   verdict: VerifyVerdict;
   engine: EngineId;
+  wasmVerified: boolean;
   simulated: boolean;
   ms: number;
   cid: string;

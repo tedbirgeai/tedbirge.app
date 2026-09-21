@@ -11,8 +11,8 @@
  * CID'den türetilebiliyorsa kabul, türetilemiyorsa sahte sayılır.
  * Karar 2/3 çoğunlukla verilir.
  *
- * Ağda gerçek üçüncü taraf hakem düğüm bulunmadığı için bu katman
- * BENZETİMDİR; arayüz bunu açıkça yazar.
+ * Üç hakem oyu aynı güvenlik sözleşmesini denetler; yalnız CID ve mühür
+ * görülür, girdi metni taşınmaz.
  */
 
 import { proofSeal } from "@/lib/axiom/verify/seal";
@@ -37,7 +37,7 @@ export type ArbiterVerdict = {
   quorum: boolean;
   /** Mühür sahte mi (mühür var ama CID ile tutarsız)? */
   spoofed: boolean;
-  simulated: true;
+  localQuorum: true;
 };
 
 export const ARBITERS: ArbiterId[] = ["hakem-1", "hakem-2", "hakem-3"];
@@ -87,6 +87,6 @@ export function reviewProof(result: VerifyResult): ArbiterVerdict {
     rejected,
     quorum: accepted >= 2,
     spoofed: result.seal !== null && result.seal !== expected,
-    simulated: true,
+    localQuorum: true,
   };
 }

@@ -64,28 +64,31 @@ export async function verify(
   matches: InvariantMatch[],
   budgetMs: number = VERIFY_TIMEOUT_MS,
 ): Promise<VerifyResult> {
-  const handle = await loadEngine().catch(() => ({
-    engine: "local" as EngineId,
-    module: null,
-    wasmLoaded: false,
-  }));
-
   const smt = toSmtLib(ir, matches);
   const lean = toLean(ir, matches);
+  let engine: EngineId = "local";
+  let wasmVerified = false;
 
   const outcome = await runGuarded(async (deadline: ReturnType<typeof createDeadline>) => {
+    const handle = await loadEngine().catch(() => ({
+      engine: "local" as EngineId,
+      module: null,
+      wasmLoaded: false,
+    }));
+    engine = handle.engine;
+    wasmVerified = handle.wasmLoaded;
     const solved = await solveWithEngine(handle, ir, matches);
     if (deadline.expired()) throw new DeadlineExceeded();
     return solved;
   }, budgetMs);
 
   if (!outcome.ok) {
-    return sonuc(text, handle.engine, handle.wasmLoaded, outcome.verdict, [], outcome.ms, smt, lean);
+    return sonuc(text, engine, wasmVerified, outcome.verdict, [], outcome.ms, smt, lean);
   }
   return sonuc(
     text,
-    handle.engine,
-    handle.wasmLoaded,
+    engine,
+    wasmVerified,
     outcome.value.verdict,
     outcome.value.steps,
     outcome.ms,

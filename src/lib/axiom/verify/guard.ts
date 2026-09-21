@@ -53,6 +53,9 @@ export async function runGuarded<T>(
   budgetMs: number = VERIFY_TIMEOUT_MS,
 ): Promise<GuardOutcome<T>> {
   const deadline = createDeadline(budgetMs);
+  if (budgetMs <= 0) {
+    return { ok: false, verdict: "504_EXECUTION_TIMEOUT", ms: deadline.elapsed() };
+  }
   let timer: ReturnType<typeof setTimeout> | null = null;
   const timeout = new Promise<"timeout">((resolve) => {
     timer = setTimeout(() => resolve("timeout"), budgetMs);

@@ -52,7 +52,7 @@ export type MeterSnapshot = {
   tiers: TierSummary[];
   /** Son 24 saatlik seri (eski → yeni), her kova bir saat. */
   hourly: { hour: number; calls: number; amount: number }[];
-  /** Simülasyon motorundan gelen çağrı sayısı. */
+  /** Yerel kural kapısından gelen çağrı sayısı. */
   simulatedCalls: number;
 };
 

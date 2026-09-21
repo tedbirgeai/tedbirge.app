@@ -16,11 +16,12 @@ import type { VerifyResult } from "@/lib/axiom/verify/types";
 
 function sonuc(text: string, proven: boolean, seal?: string | null): VerifyResult {
   const verdict = proven ? "200_PROVEN" : "409_REFUTED";
-  const cid = contentId(text, "mock", verdict);
+  const cid = contentId(text, "z3", verdict);
   return {
     verdict,
-    engine: "mock",
-    simulated: true,
+    engine: "z3",
+    wasmVerified: true,
+    simulated: false,
     cid,
     seal: seal === undefined ? proofSeal(cid, verdict) : seal,
     ms: 12,
@@ -33,7 +34,7 @@ function sonuc(text: string, proven: boolean, seal?: string | null): VerifyResul
 describe("tarife", () => {
   it("motorları doğru katmana eşler", () => {
     expect(tierForEngine("z3")).toBe("z3");
-    expect(tierForEngine("mock")).toBe("z3");
+    expect(tierForEngine("local")).toBe("z3");
     expect(tierForEngine("lean4")).toBe("lean4");
     expect(tierForEngine("z3", true)).toBe("omni");
   });
@@ -51,7 +52,7 @@ describe("ölçüm defteri", () => {
   beforeEach(() => meterResetForTest());
 
   it("çağrıları ve tutarları biriktirir", () => {
-    meterRecord({ engine: "mock", simulated: true, verdict: "200_PROVEN", ms: 10 });
+    meterRecord({ engine: "local", simulated: true, verdict: "422_UNDECIDED", ms: 10 });
     meterRecord({ engine: "lean4", simulated: false, verdict: "409_REFUTED", ms: 30 });
     const snap = meterSnapshot();
     expect(snap.calls).toBe(2);
@@ -62,7 +63,7 @@ describe("ölçüm defteri", () => {
 
   it("müşteri anahtarını ham tutmaz", () => {
     const rec = meterRecord({
-      engine: "mock",
+      engine: "local",
       simulated: true,
       verdict: "200_PROVEN",
       ms: 5,
@@ -101,11 +102,11 @@ describe("ağ kredisi", () => {
   beforeEach(() => meterResetForTest());
 
   it("katman ağırlığına göre kredi verir", () => {
-    meterRecord({ engine: "mock", simulated: true, verdict: "200_PROVEN", ms: 4 });
+    meterRecord({ engine: "local", simulated: true, verdict: "422_UNDECIDED", ms: 4 });
     meterRecord({ engine: "lean4", simulated: false, verdict: "200_PROVEN", ms: 9 });
     const r = rewardsFrom(meterSnapshot(), 2);
     expect(r.credits).toBe(1 + 8);
     expect(r.quorumPassed).toBe(2);
-    expect(r.simulated).toBe(true);
+    expect(r.active).toBe(true);
   });
 });

@@ -8,7 +8,7 @@
  * ------------------------------------------------------------------
  * Doğrulama işini üstlenen düğüm, katman başına ağ kredisi kazanır.
  * Kredi para değildir, devredilemez; yalnız ağ içi kota ve öncelik
- * belirler. Gerçek bir ödül ağı bulunmadığından hesap BENZETİMDİR.
+ * belirler.
  */
 
 import { BILLING_TIERS, type BillingTier } from "@/lib/axiom/billing/tariff";
@@ -25,7 +25,7 @@ export type RewardsSummary = {
   perTier: { tier: BillingTier; calls: number; credits: number }[];
   /** Hakem denetiminden geçmiş (2/3 çoğunluk) doğrulama sayısı. */
   quorumPassed: number;
-  simulated: true;
+  active: true;
 };
 
 export function rewardsFrom(snapshot: MeterSnapshot, quorumPassed = 0): RewardsSummary {
@@ -38,6 +38,6 @@ export function rewardsFrom(snapshot: MeterSnapshot, quorumPassed = 0): RewardsS
     verified: snapshot.calls,
     perTier,
     quorumPassed,
-    simulated: true,
+    active: true,
   };
 }
