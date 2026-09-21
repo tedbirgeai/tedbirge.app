@@ -7,6 +7,7 @@
 
 import { LayoutGrid } from "lucide-react";
 
+import { AppIconSurface } from "@/components/shell/AppIconBadge";
 import { focusWindow, restoreWindow, type WindowRecord } from "@/shell/windows";
 
 export function Taskbar({
@@ -22,16 +23,14 @@ export function Taskbar({
     <div
       className="relative z-[95] flex shrink-0 items-center gap-2 overflow-x-auto px-3 py-2"
       onContextMenu={(e) => e.preventDefault()}
-      style={{ borderTop: "1px solid var(--border)", background: "var(--tb-panel-solid)" }}
+      className="tbos-taskbar relative z-[95] flex shrink-0 items-center gap-2 overflow-x-auto px-3 py-2"
     >
       <button
         type="button"
         onClick={onLauncher}
         aria-expanded={launcherOpen}
-        className={`wa-press flex shrink-0 items-center gap-2 rounded-lg border px-3 py-1.5 font-osmono text-[12px] transition-colors ${
-          launcherOpen
-            ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
-            : "border-emerald-500/30 text-emerald-400 hover:border-emerald-500/60"
+        className={`wa-press flex shrink-0 items-center gap-2 rounded-xl border px-3 py-1.5 font-osmono text-[12px] transition-colors ${
+          launcherOpen ? "tbos-taskbar-button--on" : "tbos-taskbar-button"
         }`}
       >
         <LayoutGrid className="h-4 w-4" />
@@ -45,13 +44,12 @@ export function Taskbar({
           key={w.id}
           type="button"
           onClick={() => (w.minimized ? restoreWindow(w.id) : focusWindow(w.id))}
-          className={`wa-press shrink-0 rounded-lg border px-3 py-1.5 font-osmono text-[12px] transition-colors ${
-            w.minimized
-              ? "border-slate-500/25 text-slate-500"
-              : "border-emerald-500/30 text-emerald-400"
+          className={`wa-press flex shrink-0 items-center gap-2 rounded-xl border px-2.5 py-1.5 font-osmono text-[12px] transition-colors ${
+            w.minimized ? "tbos-taskbar-window--min" : "tbos-taskbar-window"
           }`}
         >
-          {w.title}
+          <AppIconSurface id={w.appId} size="task" />
+          <span className="max-w-36 truncate">{w.title}</span>
         </button>
       ))}
     </div>
