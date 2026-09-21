@@ -223,22 +223,61 @@ export function AxiomApp() {
   }, [ram.used, ram.limit]);
 
   const submit = useCallback((text: string) => {
-    const worker = workerRef.current;
-    if (!worker) return;
     setLastText(text);
     setBusy(true);
-    const msg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
-    worker.postMessage(msg);
+    const worker = workerRef.current;
+    if (worker) {
+      const msg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
+      worker.postMessage(msg);
+      return;
+    }
+    // Yedek yol: aynı zincir ana iş parçacığında yürür.
+    try {
+      const out = localAnalyze(text);
+      setAnalysis(out.analysis);
+      setDigest(out.analysis.digest);
+      setRam(out.ram);
+      setBusy(false);
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Bilinmeyen çözümleme hatası");
+      setBusy(false);
+    }
   }, []);
 
   /** Doğrulama: aynı girdi simgesel motora gönderilir (500 ms sert bütçe). */
   const runVerify = useCallback(() => {
-    const worker = workerRef.current;
-    if (!worker || !lastText.trim()) return;
+    if (!lastText.trim()) return;
     setVerifying(true);
-    const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: lastText };
-    worker.postMessage(msg);
+    const worker = workerRef.current;
+    if (worker) {
+      const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: lastText };
+      worker.postMessage(msg);
+      return;
+    }
+    void localVerify(lastText)
+      .then((out) => {
+        setAnalysis(out.analysis);
+        setDigest(out.analysis.digest);
+        setProof(out.result);
+        setRam(out.ram);
+        setVerifying(false);
+      })
+      .catch((err: unknown) => {
+        setHata(err instanceof Error ? err.message : "Bilinmeyen doğrulama hatası");
+        setVerifying(false);
+      });
   }, [lastText]);
+
+  /** Servisi yeniden başlatır: daemon tekrar kurulmayı dener. */
+  const restart = useCallback(() => {
+    setHata(null);
+    setProof(null);
+    setYerel(false);
+    setBusy(false);
+    setVerifying(false);
+    setDeneme((n) => n + 1);
+  }, []);
+
 
   const romListesi = useMemo(() => ROM_SEED, []);
 
