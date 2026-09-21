@@ -106,14 +106,16 @@ describe("AXIOM ispat kuyruğu ve yerel mesh", () => {
     Object.defineProperty(globalThis, "BroadcastChannel", { value: undefined, configurable: true });
     const mesh = createAxiomMesh("test-axiom-mesh");
     expect(mesh.state().active).toBe(false);
-    expect(await mesh.publish({
-      id: "1",
-      at: 1,
-      cid: "cid:axiom:test",
-      verdict: "422_UNDECIDED",
-      engine: "local",
-      seal: null,
-    })).toBe(false);
+    expect(
+      await mesh.publish({
+        id: "1",
+        at: 1,
+        cid: "cid:axiom:test",
+        verdict: "422_UNDECIDED",
+        engine: "local",
+        seal: null,
+      }),
+    ).toBe(false);
     mesh.close();
     Object.defineProperty(globalThis, "BroadcastChannel", { value: original, configurable: true });
   });
