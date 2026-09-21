@@ -216,6 +216,7 @@ export function stageLimenChange(name: string, mode: LimenMirrorMode = "p2p"): L
   invalidate();
   // Kuyruğa alınan paket beklemeden depoya mount edilir.
   void mountLimenPackages();
+  return snapshot();
 }
 
 export async function flushLimen(): Promise<LimenSyncSnapshot> {
