@@ -20,8 +20,11 @@ const STORE = "files";
  */
 export const VFS_SCHEMA_VERSION = DB_VERSION;
 
-/** Kullanıcıya görünen sabit klasörler. */
-export const VFS_FOLDERS = ["Belgeler", "Görseller", "Medya", "İndirilenler"] as const;
+/**
+ * Kullanıcıya görünen sabit klasörler. "repo" kökü LIMEN'den mount
+ * edilen proje/delta ağacını taşır; oraya yalnız açıkça yazılır.
+ */
+export const VFS_FOLDERS = ["Belgeler", "Görseller", "Medya", "İndirilenler", "repo"] as const;
 export type VfsFolder = (typeof VFS_FOLDERS)[number];
 
 export const DEFAULT_FOLDER: VfsFolder = "Belgeler";

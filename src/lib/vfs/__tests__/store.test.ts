@@ -17,7 +17,7 @@ describe("vfs şeması", () => {
   });
 
   it("klasör kümesi değişmez", () => {
-    expect([...VFS_FOLDERS]).toEqual(["Belgeler", "Görseller", "Medya", "İndirilenler"]);
+    expect([...VFS_FOLDERS]).toEqual(["Belgeler", "Görseller", "Medya", "İndirilenler", "repo"]);
     expect(VFS_FOLDERS).toContain(DEFAULT_FOLDER);
   });
 
