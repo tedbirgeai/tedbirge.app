@@ -14,6 +14,7 @@
 
 import type { InvariantMatch } from "@/lib/axiom/invariants";
 import type { AxiomIr } from "@/lib/axiom/lang/axiom-ir";
+import { isSmtLib } from "@/lib/axiom/lang/detect";
 import { loadEngine, solveWithEngine } from "@/lib/axiom/live/engine-session";
 import { createDeadline, DeadlineExceeded, runGuarded } from "@/lib/axiom/verify/guard";
 import { toLean } from "@/lib/axiom/verify/lean";
@@ -64,7 +65,12 @@ export async function verify(
   matches: InvariantMatch[],
   budgetMs: number = VERIFY_TIMEOUT_MS,
 ): Promise<VerifyResult> {
-  const smt = toSmtLib(ir, matches);
+  // SMT-LIB girdisi olduğu gibi çözücüye gider; yeniden çeviri yapılmaz.
+  const smt = isSmtLib(text)
+    ? /\(\s*check-sat\b/i.test(text)
+      ? text.trim()
+      : `${text.trim()}\n(check-sat)\n(get-model)`
+    : toSmtLib(ir, matches);
   const lean = toLean(ir, matches);
   let engine: EngineId = "local";
   let wasmVerified = false;

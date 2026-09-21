@@ -172,6 +172,27 @@ const HUMAN_RULES: Array<{ id: string; label: string; script: string; words: str
   { id: "ko", label: "Korece", script: "Hangul", words: ["입니다", "에너지", "그리고"] },
 ];
 
+/**
+ * SMT-LIB 2 imzası: bu girdi dil tanımaya değil doğrudan doğrulayıcıya gider.
+ */
+const SMT_PATTERNS: RegExp[] = [
+  /\(\s*declare-(const|fun|sort|datatypes)\b/i,
+  /\(\s*assert\b/i,
+  /\(\s*check-sat\b/i,
+  /\(\s*set-logic\b/i,
+  /\(\s*define-fun\b/i,
+  /\(\s*get-model\b/i,
+];
+
+/** Girdi SMT-LIB 2 programı mı? */
+export function isSmtLib(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("(") && !/\(\s*(set-logic|declare-|assert|check-sat)/i.test(trimmed))
+    return false;
+  const hits = SMT_PATTERNS.reduce((n, re) => (re.test(trimmed) ? n + 1 : n), 0);
+  return hits >= 2 || /\(\s*check-sat\b/i.test(trimmed);
+}
+
 /** Baskın yazı sistemini döner. */
 export function dominantScript(text: string): string {
   let best = "Bilinmiyor";
@@ -231,6 +252,18 @@ export function detectLanguage(text: string): LangGuess {
       confidence: 0,
       script,
       reason: "Girdi boş.",
+    };
+  }
+
+  // SMT-LIB her şeyden önce gelir: NLP/dil kurallarına düşmez.
+  if (isSmtLib(trimmed)) {
+    return {
+      kind: "code",
+      id: "smt",
+      label: "SMT-LIB 2",
+      confidence: 1,
+      script,
+      reason: "SMT-LIB imzası doğrudan doğrulayıcıya yönlendirildi (check-sat).",
     };
   }
 

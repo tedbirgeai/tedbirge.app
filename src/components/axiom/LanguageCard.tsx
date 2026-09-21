@@ -18,6 +18,24 @@ export function LanguageCard({ lang }: { lang: LangGuess | null }) {
         : t("lang.unknown");
   const pct = lang ? Math.round(lang.confidence * 100) : 0;
 
+  // SMT-LIB girdisi dil tanımaya girmez: kart pasife alınır.
+  if (lang?.id === "smt") {
+    return (
+      <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3 opacity-70">
+        <div className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">
+          {t("lang.title")}
+        </div>
+        <p className="mt-2 font-osmono text-[11px] text-[var(--tb-text)]">
+          SMT-LIB — doğrulayıcıya yönlendirildi
+        </p>
+        <p className="mt-1 font-osmono text-[11px] text-[var(--tb-muted)]">
+          Dil tanıma devre dışı; girdi <code>check-sat</code> sinyaliyle doğrulama çekirdeğine
+          iletildi.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3">
       <div className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">

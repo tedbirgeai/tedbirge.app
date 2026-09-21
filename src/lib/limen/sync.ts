@@ -43,6 +43,7 @@ let state: CrdtState = createState(nodeId);
 let queue: QueueState = createQueue();
 let peers = 1;
 let channel: BroadcastChannel | null = null;
+let netWatch = false;
 
 function emit() {
   listeners.forEach((listener) => listener());
@@ -55,13 +56,13 @@ function ensureChannel() {
     const data = event.data;
     if (data?.type === "limen.hello") {
       peers = Math.max(peers, 2);
-      emit();
+      invalidate();
       return;
     }
     if (data?.type === "limen.delta" && data.delta) {
       const result = apply(state, data.delta);
       state = result.state;
-      if (result.applied > 0) emit();
+      if (result.applied > 0) invalidate();
     }
   });
   channel.postMessage({ type: "limen.hello", node: nodeId } satisfies LimenWire);
@@ -85,8 +86,13 @@ function toRecords(current: CrdtState): LimenRecord[] {
     .sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
-function snapshot(): LimenSyncSnapshot {
-  ensureChannel();
+/**
+ * Anlık görüntü önbelleği: `useSyncExternalStore` her okumada aynı nesneyi
+ * görmelidir. Aksi halde React sonsuz yeniden çizim döngüsüne girer (#185).
+ */
+let cache: LimenSyncSnapshot | null = null;
+
+function build(): LimenSyncSnapshot {
   return {
     node: nodeId,
     online: typeof navigator === "undefined" ? true : navigator.onLine,
@@ -98,14 +104,42 @@ function snapshot(): LimenSyncSnapshot {
   };
 }
 
+function snapshot(): LimenSyncSnapshot {
+  if (!cache) cache = build();
+  return cache;
+}
+
+function invalidate() {
+  cache = null;
+  emit();
+}
+
+function ensureNetworkWatch() {
+  if (typeof window === "undefined" || netWatch) return;
+  netWatch = true;
+  window.addEventListener("online", invalidate);
+  window.addEventListener("offline", invalidate);
+}
+
 export function subscribeLimen(listener: Listener) {
   ensureChannel();
+  ensureNetworkWatch();
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 export function getLimenSnapshot(): LimenSyncSnapshot {
+  ensureChannel();
   return snapshot();
+}
+
+/** Hata sonrası yeniden başlatmada yerel görünüm durumunu sıfırlar. */
+export function resetLimenView() {
+  cache = null;
+  peers = typeof BroadcastChannel === "undefined" ? 1 : peers;
+  emit();
 }
 
 export function stageLimenChange(name: string, mode: LimenMirrorMode = "p2p"): LimenSyncSnapshot {
@@ -118,7 +152,7 @@ export function stageLimenChange(name: string, mode: LimenMirrorMode = "p2p"): L
     updatedAt: Date.now(),
   });
   queue = enqueue(queue, delta(state));
-  emit();
+  invalidate();
   return snapshot();
 }
 
@@ -140,7 +174,7 @@ export async function flushLimen(): Promise<LimenSyncSnapshot> {
       state = put(state, record.id, { ...record, status: "synced", updatedAt: Date.now() });
     }
   }
-  emit();
+  invalidate();
   return snapshot();
 }
 
