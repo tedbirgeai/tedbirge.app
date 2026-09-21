@@ -117,8 +117,7 @@ fi
 zorunlu 'tedbirge-kiosk-healthy' "$READY" "Açılış denetimi sağlık sinyalini beklemiyor"
 zorunlu 'tedbirge-kiosk-healthy' "$GOZCU" "Gözcü sağlık sinyalini beklemiyor"
 zorunlu 'tedbirge-kurtarma' "$GOZCU" "Gözcü kurtarma ekranına düşmüyor"
-zorunlu -- '--off' "$EKRAN" "Hayalet ekran çıkışları kapatılmıyor" 2>/dev/null \
-  || grep -q -- '--off' "$EKRAN" || { echo "HATA: hayalet ekran çıkışları kapatılmıyor" >&2; exit 1; }
+grep -q -- '--off' "$EKRAN" || { echo "HATA: hayalet ekran çıkışları kapatılmıyor" >&2; exit 1; }
 grep -q -- '--fb' "$EKRAN" || { echo "HATA: ekran alanı çözünürlüğe sabitlenmiyor" >&2; exit 1; }
 grep -q 'xsetroot -solid' "$EKRAN" || { echo "HATA: siyah arka plan uygulanmıyor" >&2; exit 1; }
 if grep -qE '^xrandr --query .*while read' "$EKRAN"; then
