@@ -50,7 +50,7 @@ export function CommandBar({ busy, onSubmit }: Props) {
         rows={3}
         spellCheck={false}
         placeholder="Önerme, formül ya da kod parçası yazın… (Ctrl/Cmd + Enter)"
-        className="resize-none border-[var(--tb-line)] bg-[var(--tb-panel)] font-osmono text-[12px]"
+        className="resize-none border-[var(--tb-border)] bg-[var(--tb-panel)] font-osmono text-[12px]"
       />
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" onClick={gonder} disabled={busy || !text.trim()}>
@@ -61,7 +61,7 @@ export function CommandBar({ busy, onSubmit }: Props) {
             key={o}
             type="button"
             onClick={() => setText(o)}
-            className="truncate rounded-md border border-[var(--tb-line)] px-2 py-1 font-osmono text-[10px] text-[var(--tb-muted)] hover:text-[var(--tb-fg)]"
+            className="truncate rounded-md border border-[var(--tb-border)] px-2 py-1 font-osmono text-[10px] text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
           >
             {o}
           </button>

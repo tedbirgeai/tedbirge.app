@@ -24,13 +24,13 @@ type Props = {
 
 function Cell({ label, value, warn = false }: { label: string; value: string; warn?: boolean }) {
   return (
-    <div className="min-w-0 rounded-lg border border-[var(--tb-line)] bg-[var(--tb-panel)] px-3 py-2">
+    <div className="min-w-0 rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel)] px-3 py-2">
       <div className="truncate font-osmono text-[10px] uppercase tracking-wide text-[var(--tb-muted)]">
         {label}
       </div>
       <div
         className={`truncate font-osmono text-[12px] ${
-          warn ? "text-[var(--tb-rose-400)]" : "text-[var(--tb-fg)]"
+          warn ? "text-[var(--tb-rose-400)]" : "text-[var(--tb-text)]"
         }`}
       >
         {value}
