@@ -11,7 +11,7 @@
  * derleyici eklentisi kurulmaz, hiçbir paket yayımlanmaz.
  */
 
-export type SdkTarget = "node" | "python" | "rust" | "java" | "go" | "csharp" | "hdl";
+export type SdkTarget = "node" | "python" | "rust" | "java" | "go" | "csharp" | "hdl" | "c";
 
 export const SDK_TARGETS: { id: SdkTarget; label: string; file: string }[] = [
   { id: "node", label: "Node.js / TypeScript", file: "axiom-client.ts" },
@@ -21,6 +21,7 @@ export const SDK_TARGETS: { id: SdkTarget; label: string; file: string }[] = [
   { id: "go", label: "Go", file: "axiom_client.go" },
   { id: "csharp", label: "C#", file: "AxiomClient.cs" },
   { id: "hdl", label: "HDL (Verilog/VHDL denetimi)", file: "axiom_hdl_check.sh" },
+  { id: "c", label: "C / C-ABI (yerel soket)", file: "axiom_truth_demo.c" },
 ];
 
 /** MCP yolu tek doğruluk kaynağından okunur. */
@@ -158,6 +159,31 @@ metin="$(sed 's/"/\\\\"/g' "$dosya" | tr '\\n' ' ')"
 curl -sS -X POST "${url}" \\
   -H 'Content-Type: application/json' \\
   -d "{\\"jsonrpc\\":\\"2.0\\",\\"id\\":1,\\"method\\":\\"axiom.verify\\",\\"params\\":{\\"text\\":\\"\${metin}\\"}}"`;
+    case "c":
+      return `/* AXIOM istemcisi - C / C-ABI koprusu (masaustu / bare-metal)
+ * Baglanti: /run/tedbirge/tedbirge_truth.sock (yoksa istemci wss yedegine gecer)
+ * Baslik  : sdk/tedbirge_truth.h */
+#include "tedbirge_truth.h"
+#include <stdio.h>
+
+int main(void) {
+  tb_status_t st = TB_OK;
+  tb_truth_handle *h = tb_truth_open(NULL, &st);
+  if (!h) {
+    fprintf(stderr, "kopru acilamadi (%d)\\n", st);
+    return 1;
+  }
+  tb_proof_t proof;
+  st = tb_truth_verify(h, "Kapali sistemde toplam enerji korunur.", &proof);
+  if (st == TB_OK) {
+    printf("verdict=%d engine=%d ms=%u cid=%s\\n",
+           proof.verdict, proof.engine, proof.ms, proof.cid);
+  } else {
+    fprintf(stderr, "%s\\n", tb_truth_last_error(h));
+  }
+  tb_truth_close(h);
+  return st == TB_OK ? 0 : 1;
+}`;
     default:
       return BODY;
   }

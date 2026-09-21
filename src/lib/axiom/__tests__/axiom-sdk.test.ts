@@ -9,7 +9,7 @@ import { makeBadge, REGISTRIES } from "@/lib/axiom/sdk/provenance";
 
 describe("SDK adaptörleri", () => {
   it("yedi hedef için MCP yolunu taşıyan şablon üretir", () => {
-    expect(SDK_TARGETS).toHaveLength(7);
+    expect(SDK_TARGETS).toHaveLength(8);
     for (const target of SDK_TARGETS) {
       const src = adapterSource(target.id, "https://tedbirge.app");
       expect(src).toContain(SDK_MCP_PATH);
