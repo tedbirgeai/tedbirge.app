@@ -110,7 +110,7 @@ function initGl(canvas: HTMLCanvasElement): GlProgram | null {
 export type Renderer = {
   mode: RenderMode;
   /** Yeni durumla tek kare çizer. */
-  draw: (input: Omit<SceneInput, "mode">) => void;
+  draw: (input: Omit<SceneInput, "mode" | "w" | "h">) => void;
   resize: () => void;
   dispose: () => void;
 };
@@ -168,7 +168,7 @@ export function createRenderer(
     }
   };
 
-  const draw = (input: Omit<SceneInput, "mode">) => {
+  const draw = (input: Omit<SceneInput, "mode" | "w" | "h">) => {
     const w = Math.max(1, host.clientWidth);
     const h = Math.max(1, host.clientHeight);
     const scene = buildScene({ ...input, w, h, mode: mode === "webgl2" ? "GPU" : "YAZILIM" });
