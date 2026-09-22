@@ -11,6 +11,7 @@
  * (local-kernel) sürer — arayüz hiçbir durumda çökmez.
  */
 
+import { withAbortBudget } from "@/lib/axiom/bridge/shield";
 import { createWssBridge, type WssBridge } from "@/lib/axiom/bridge/wss";
 import {
   initialBridgeState,
