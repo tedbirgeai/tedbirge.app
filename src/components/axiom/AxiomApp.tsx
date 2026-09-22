@@ -358,17 +358,9 @@ export function AxiomApp() {
     }
   }, []);
 
-  /** Doğrulama: aynı girdi simgesel motora gönderilir (500 ms sert bütçe). */
-  const runVerify = useCallback(() => {
-    if (!lastText.trim()) return;
-    setVerifying(true);
-    const worker = workerRef.current;
-    if (worker) {
-      const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: lastText };
-      worker.postMessage(msg);
-      return;
-    }
-    void localVerify(lastText)
+  /** Yedek motorda doğrulama (worker yok ya da infaz edildi). */
+  const verifyLocally = useCallback((text: string) => {
+    void localVerify(text)
       .then((out) => {
         setAnalysis(out.analysis);
         setDigest(out.analysis.digest);
@@ -380,11 +372,38 @@ export function AxiomApp() {
         setHata(err instanceof Error ? err.message : "Bilinmeyen doğrulama hatası");
         setVerifying(false);
       });
-  }, [lastText]);
+  }, []);
+
+  /** Doğrulama: aynı girdi simgesel motora gönderilir (500 ms sert bütçe). */
+  const runVerify = useCallback(() => {
+    if (!lastText.trim()) return;
+    setVerifying(true);
+    const worker = workerRef.current;
+    if (worker) {
+      const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: lastText };
+      worker.postMessage(msg);
+      // Ana iş parçacığı bekçisi: bütçe + tolerans içinde yanıt gelmezse
+      // daemon infaz edilir ve iş yedek motorda tamamlanır.
+      clearWatchdog();
+      watchdogRef.current = window.setTimeout(() => {
+        watchdogRef.current = null;
+        lifecycleRef.current += 1;
+        worker.terminate();
+        workerRef.current = null;
+        setYerel(true);
+        setKernelBadge(`${AXIOM_ACTIVE_BADGE} · yerel kapı`);
+        setHata("Çekirdek daemon sert bütçeyi aştı; infaz edildi ve yerel motora düşüldü.");
+        verifyLocally(lastText);
+      }, WORKER_WATCHDOG_MS);
+      return;
+    }
+    verifyLocally(lastText);
+  }, [lastText, clearWatchdog, verifyLocally]);
 
   /** Servisi yeniden başlatır: daemon tekrar kurulmayı dener. */
   const restart = useCallback(() => {
     lifecycleRef.current += 1;
+    clearWatchdog();
     workerRef.current?.terminate();
     workerRef.current = null;
     const freshRam = resetLocalKernel();
@@ -399,7 +418,8 @@ export function AxiomApp() {
     setBusy(false);
     setVerifying(false);
     setDeneme((n) => n + 1);
-  }, []);
+  }, [clearWatchdog]);
+
 
   const romListesi = useMemo(() => ROM_SEED, []);
 
