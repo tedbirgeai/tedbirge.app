@@ -18,6 +18,7 @@ import {
   type TruthRequest,
   type TruthResponse,
 } from "@/lib/axiom/bridge/types";
+import { VERIFY_TIMEOUT_MS } from "@/lib/axiom/verify/types";
 
 export type SocketBridge = {
   state(): BridgeState;
@@ -72,17 +73,38 @@ export async function openSocketBridge(): Promise<SocketBridge> {
     }
   });
 
+  // Tek soket üzerinde eşzamanlı istekler sıraya alınır: C tarafındaki
+  // io_lock mutex'inin JavaScript karşılığı. Çerçeveler karışmaz.
+  let chain: Promise<unknown> = Promise.resolve();
+
+  function sendOne(req: TruthRequest): Promise<TruthResponse> {
+    return new Promise<TruthResponse>((resolve, reject) => {
+      if (!state.connected) {
+        reject(new Error("Yerel gerçeklik soketi bağlı değil"));
+        return;
+      }
+      // Sert bütçe: yanıt gelmezse istek kuyruktan düşürülür.
+      const timer = setTimeout(() => {
+        waiting.delete(req.id);
+        reject(new Error("Köprü zaman aşımı"));
+      }, VERIFY_TIMEOUT_MS);
+      waiting.set(req.id, (msg) => {
+        clearTimeout(timer);
+        resolve(msg);
+      });
+      socket.write(`${JSON.stringify(req)}\n`);
+    });
+  }
+
   return {
     state: () => state,
     send(req) {
-      return new Promise<TruthResponse>((resolve, reject) => {
-        if (!state.connected) {
-          reject(new Error("Yerel gerçeklik soketi bağlı değil"));
-          return;
-        }
-        waiting.set(req.id, resolve);
-        socket.write(`${JSON.stringify(req)}\n`);
-      });
+      const next = chain.then(
+        () => sendOne(req),
+        () => sendOne(req),
+      );
+      chain = next.catch(() => undefined);
+      return next;
     },
     close() {
       socket.destroy();

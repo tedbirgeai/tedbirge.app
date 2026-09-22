@@ -22,6 +22,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,8 +32,12 @@ extern "C" {
 #define TB_TRUTH_SOCKET_PATH "/run/tedbirge/tedbirge_truth.sock"
 #define TB_TRUTH_WSS_URL "wss://tedbirge.dev/ws"
 
+/* Kopru cok is parcacikli cagrilara karsi kilit altindadir. */
+#define TB_TRUTH_THREAD_SAFE 1
+
 /* Sert zaman butcesi: her dogrulama en cok bu kadar surebilir. */
 #define TB_TRUTH_TIMEOUT_MS 500
+
 
 /* Karar kodlari AXIOM cekirdegiyle birebir aynidir. */
 typedef enum tb_verdict_t {
@@ -60,6 +65,19 @@ typedef enum tb_status_t {
 
 typedef struct tb_truth_handle tb_truth_handle;
 
+/* BELLEK DUZENI (memory layout)
+ * -----------------------------------------------------------------
+ * Alanlar 4-bayt hizali yerlestirilir; cid[65] + seal[129] = 194 bayt
+ * karakter dizisi tek basina 2 baytlik ortu (padding) gerektirdiginden
+ * bu dolgu ACIK olarak bildirilir. Boylece derleyiciye birakilan
+ * ortuk dolgu ve WebAssembly (wasm32) tarafiyla olusabilecek kayma
+ * tamamen ortadan kalkar.
+ *
+ *   verdict  4 | engine 4 | wasmVerified 4 | ms 4  =  16
+ *   cid     65 | seal  129                         = 194
+ *   _pad     2                                     =   2
+ *   TOPLAM  212 bayt (dogal 4-bayt siniri)
+ */
 typedef struct tb_proof_t {
   tb_verdict_t verdict;
   tb_engine_t engine;
@@ -67,16 +85,46 @@ typedef struct tb_proof_t {
   uint32_t ms;      /* harcanan sure */
   char cid[65];     /* icerik kimligi (hex, NUL sonlu) */
   char seal[129];   /* TEDBIRGE-WEBOS-ZKP muhru; bos = muhur yok */
+  uint8_t _pad[2];  /* ACIK dolgu — 212 bayt hizalamasini sabitler */
 } tb_proof_t;
+
+/* Yapi boyutu derleme aninda kilitlenir: kayma sessizce gecemez. */
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+_Static_assert(sizeof(tb_proof_t) == 212, "tb_proof_t 212 bayt olmalidir");
+_Static_assert(_Alignof(tb_proof_t) == 4, "tb_proof_t 4-bayt hizali olmalidir");
+#endif
+
 
 /* Kopruyu acar. socket_path NULL ise TB_TRUTH_SOCKET_PATH kullanilir. */
 tb_truth_handle *tb_truth_open(const char *socket_path, tb_status_t *out_status);
 
 /* Bir onermeyi dogrular. text UTF-8 ve NUL sonlu olmalidir. */
+/* ESZAMANLILIK KILIDI
+ * -----------------------------------------------------------------
+ * Tek soket uzerinde birden fazla is parcacigi dogrulama isteyebilir.
+ * Cerceve karisikligini onlemek icin tutamac icinde bir mutex tasinir;
+ * tb_truth_verify cagrisi istegi yazmadan once kilidi alir, yanit
+ * cozuldukten (veya TB_TRUTH_TIMEOUT_MS asildiktan) sonra birakir.
+ * Kilit tb_truth_open icinde kurulur, tb_truth_close icinde yikilir.
+ *
+ *   pthread_mutex_t io_lock;  (tutamacin ic alani)
+ *
+ * Kilidi dogrudan yonetmek isteyen gomulu istemciler icin asagidaki
+ * iki cagri aciga alinmistir; normal kullanimda gerekmez.
+ */
+tb_status_t tb_truth_lock(tb_truth_handle *handle);
+tb_status_t tb_truth_unlock(tb_truth_handle *handle);
+
+/* Kilidin kurulu ve etkin oldugunu bildirir (1 = etkin). */
+int tb_truth_lock_active(const tb_truth_handle *handle);
+
+/* Bir onermeyi dogrular. text UTF-8 ve NUL sonlu olmalidir.
+ * Cagri is parcacigi guvenlidir: icte io_lock kilidi altinda yurur. */
 tb_status_t tb_truth_verify(tb_truth_handle *handle, const char *text, tb_proof_t *out_proof);
 
 /* Son hatanin insan okunur aciklamasi (girdi metni icermez). */
 const char *tb_truth_last_error(tb_truth_handle *handle);
+
 
 /* ABI uyumu denetimi: cagiran TB_TRUTH_ABI_VERSION gecirir. */
 tb_status_t tb_truth_check_abi(uint32_t abi_version);

@@ -20,6 +20,7 @@
 
 import type { AxiomIr } from "@/lib/axiom/lang/axiom-ir";
 import type { ScienceId } from "@/lib/axiom/registry";
+import { dimensionMismatch } from "@/lib/axiom/units";
 
 export type Verdict = "ilgili" | "celiski" | "ilgisiz";
 
@@ -274,9 +275,30 @@ export type InvariantMatch = {
  * Ara gösterim + özgün metni değişmez kayıtlarıyla eşleştirir.
  * Sonuç önce çelişki şüphesi, sonra ilgi derecesine göre sıralanır.
  */
+/** Boyutsal analiz katmanının değişmez kimliği. */
+export const DIMENSION_INVARIANT: InvariantView = {
+  id: "si.dimension",
+  label: "SI boyutsal denklik",
+  statement: "Eşitlenen iki nicelik aynı SI temel birim üs vektörüne sahip olmalıdır.",
+  category: "physical",
+  ledger: "BIPM SI Brochure (9. baskı)",
+};
+
 export function matchInvariants(ir: AxiomIr, text: string): InvariantMatch[] {
   const lower = text.toLowerCase();
   const out: InvariantMatch[] = [];
+
+  // Boyutsal analiz her şeyden önce çalışır: Joule ↔ Watt gibi bir üs
+  // uyuşmazlığı, canlı çözücü olmasa dahi kesin reddetme gerekçesidir.
+  const mismatch = dimensionMismatch(ir, text);
+  if (mismatch) {
+    out.push({
+      invariant: DIMENSION_INVARIANT,
+      verdict: "celiski",
+      hits: [mismatch.leftUnit, mismatch.rightUnit],
+      note: mismatch.note,
+    });
+  }
 
   for (const inv of INVARIANTS) {
     const hits = inv.triggers.filter(

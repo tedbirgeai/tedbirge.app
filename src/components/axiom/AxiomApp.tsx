@@ -44,7 +44,7 @@ import { localAnalyze, localStats, localVerify, resetLocalKernel } from "@/lib/a
 import { sampleMemory, type MemorySample } from "@/lib/axiom/profiler";
 import type { RamStats } from "@/lib/axiom/ram";
 import { ROM_SEED, romStatus, seedRom, type RomStatus } from "@/lib/axiom/rom";
-import type { VerifyResult } from "@/lib/axiom/verify/types";
+import { VERIFY_TIMEOUT_MS, type VerifyResult } from "@/lib/axiom/verify/types";
 import { createAxiomWorker, workerAvailable } from "@/lib/axiom/worker-client";
 import { createAxiomMesh, type AxiomMesh } from "@/lib/p2p/axiom-mesh";
 import {
@@ -64,6 +64,14 @@ const BOS_RAM: RamStats = {
 
 const WORKER_BOOT_TIMEOUT_MS = 1200;
 
+/**
+ * Ana iş parçacığı bekçisi: worker içindeki sert bütçe (500 ms) bir
+ * WASM kilitlenmesi yüzünden hiç yanıt vermezse, bekçi süreyi küçük bir
+ * tolerans payıyla aşan daemon'ı `terminate()` ile infaz eder ve aynı
+ * doğrulama yedek motorda tamamlanır.
+ */
+const WORKER_WATCHDOG_MS = VERIFY_TIMEOUT_MS + 250;
+
 export function AxiomApp() {
   const hostRef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
@@ -74,6 +82,9 @@ export function AxiomApp() {
   const proofQueueRef = useRef<AxiomOfflineQueue>(createAxiomOfflineQueue());
   const seqRef = useRef(0);
   const lifecycleRef = useRef(0);
+  /** Etkin doğrulama bekçisi (ana iş parçacığı zaman aşımı denetçisi). */
+  const watchdogRef = useRef<number | null>(null);
+
   /** Çizim döngüsü durumu ref ile okunur: RAM değişimi WebGL bağlamını kurmaz. */
   const ratioRef = useRef(0);
 
@@ -105,6 +116,14 @@ export function AxiomApp() {
   /** Lisans penceresi: 6. cihaz görüldüğünde açılır. */
   const [lisans, setLisans] = useState(false);
   const node = useAxiomNode();
+
+  /** Bekçi sayacını söndürür (yanıt geldi ya da oturum kapandı). */
+  const clearWatchdog = useCallback(() => {
+    if (watchdogRef.current !== null) {
+      window.clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const mesh = createAxiomMesh();
@@ -153,7 +172,9 @@ export function AxiomApp() {
       if (lifecycleRef.current !== ticket) return;
       // Daemon kurulamadı: arayüz çökmez, aynı motor ana iş parçacığında çalışır.
       if (bootTimer !== null) window.clearTimeout(bootTimer);
+      clearWatchdog();
       worker?.terminate();
+
       worker = null;
       workerRef.current = null;
       setYerel(true);
@@ -183,7 +204,10 @@ export function AxiomApp() {
     worker.onmessage = (event: MessageEvent<KernelResponse>) => {
       if (lifecycleRef.current !== ticket) return;
       const msg = event.data;
+      // Yanıt geldi: bekçi söndürülür, infaz gerekmez.
+      clearWatchdog();
       setRam(msg.ram);
+
       if (msg.type === "boot") {
         if (bootTimer !== null) window.clearTimeout(bootTimer);
         setHata(null);
@@ -228,10 +252,11 @@ export function AxiomApp() {
     }, WORKER_BOOT_TIMEOUT_MS);
     return () => {
       if (bootTimer !== null) window.clearTimeout(bootTimer);
+      clearWatchdog();
       worker?.terminate();
       if (lifecycleRef.current === ticket) workerRef.current = null;
     };
-  }, [deneme]);
+  }, [deneme, clearWatchdog]);
 
   // --- Sanal ROM: tohum bloklar yazılır, kalıcı depolama izni istenir.
   useEffect(() => {
@@ -330,17 +355,9 @@ export function AxiomApp() {
     }
   }, []);
 
-  /** Doğrulama: aynı girdi simgesel motora gönderilir (500 ms sert bütçe). */
-  const runVerify = useCallback(() => {
-    if (!lastText.trim()) return;
-    setVerifying(true);
-    const worker = workerRef.current;
-    if (worker) {
-      const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: lastText };
-      worker.postMessage(msg);
-      return;
-    }
-    void localVerify(lastText)
+  /** Yedek motorda doğrulama (worker yok ya da infaz edildi). */
+  const verifyLocally = useCallback((text: string) => {
+    void localVerify(text)
       .then((out) => {
         setAnalysis(out.analysis);
         setDigest(out.analysis.digest);
@@ -352,11 +369,38 @@ export function AxiomApp() {
         setHata(err instanceof Error ? err.message : "Bilinmeyen doğrulama hatası");
         setVerifying(false);
       });
-  }, [lastText]);
+  }, []);
+
+  /** Doğrulama: aynı girdi simgesel motora gönderilir (500 ms sert bütçe). */
+  const runVerify = useCallback(() => {
+    if (!lastText.trim()) return;
+    setVerifying(true);
+    const worker = workerRef.current;
+    if (worker) {
+      const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: lastText };
+      worker.postMessage(msg);
+      // Ana iş parçacığı bekçisi: bütçe + tolerans içinde yanıt gelmezse
+      // daemon infaz edilir ve iş yedek motorda tamamlanır.
+      clearWatchdog();
+      watchdogRef.current = window.setTimeout(() => {
+        watchdogRef.current = null;
+        lifecycleRef.current += 1;
+        worker.terminate();
+        workerRef.current = null;
+        setYerel(true);
+        setKernelBadge(`${AXIOM_ACTIVE_BADGE} · yerel kapı`);
+        setHata("Çekirdek daemon sert bütçeyi aştı; infaz edildi ve yerel motora düşüldü.");
+        verifyLocally(lastText);
+      }, WORKER_WATCHDOG_MS);
+      return;
+    }
+    verifyLocally(lastText);
+  }, [lastText, clearWatchdog, verifyLocally]);
 
   /** Servisi yeniden başlatır: daemon tekrar kurulmayı dener. */
   const restart = useCallback(() => {
     lifecycleRef.current += 1;
+    clearWatchdog();
     workerRef.current?.terminate();
     workerRef.current = null;
     const freshRam = resetLocalKernel();
@@ -371,7 +415,7 @@ export function AxiomApp() {
     setBusy(false);
     setVerifying(false);
     setDeneme((n) => n + 1);
-  }, []);
+  }, [clearWatchdog]);
 
   const romListesi = useMemo(() => ROM_SEED, []);
 

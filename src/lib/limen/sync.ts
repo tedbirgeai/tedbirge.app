@@ -10,7 +10,7 @@ import {
   type CrdtState,
 } from "@/lib/axiom/sync/crdt";
 import { createQueue, enqueue, flush, type QueueState } from "@/lib/axiom/sync/queue";
-import { mountLimenRecord, type LimenMount } from "@/lib/limen/mount";
+import { mountLimenRecord, withMountLock, type LimenMount } from "@/lib/limen/mount";
 
 export type LimenMirrorMode = "local" | "p2p" | "github";
 
@@ -138,12 +138,15 @@ export async function mountLimenPackages(): Promise<LimenMount[]> {
   if (mounting) return Object.values(mounts);
   mounting = true;
   try {
-    const next: Record<string, LimenMount> = {};
-    for (const record of toRecords(state)) {
-      next[record.id] = await mountLimenRecord(record);
-    }
-    mounts = next;
-    mountError = null;
+    // Web Locks: aynı depoya yazan ikinci sekme sıraya girer.
+    await withMountLock(async () => {
+      const next: Record<string, LimenMount> = {};
+      for (const record of toRecords(state)) {
+        next[record.id] = await mountLimenRecord(record);
+      }
+      mounts = next;
+      mountError = null;
+    });
   } catch (err) {
     mountError = err instanceof Error ? err.message : "Depoya yazılamadı.";
   } finally {
