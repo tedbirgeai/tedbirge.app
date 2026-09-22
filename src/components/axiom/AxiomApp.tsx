@@ -72,7 +72,6 @@ const WORKER_BOOT_TIMEOUT_MS = 1200;
  */
 const WORKER_WATCHDOG_MS = VERIFY_TIMEOUT_MS + 250;
 
-
 export function AxiomApp() {
   const hostRef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
@@ -125,7 +124,6 @@ export function AxiomApp() {
       watchdogRef.current = null;
     }
   }, []);
-
 
   useEffect(() => {
     const mesh = createAxiomMesh();
@@ -259,7 +257,6 @@ export function AxiomApp() {
       if (lifecycleRef.current === ticket) workerRef.current = null;
     };
   }, [deneme, clearWatchdog]);
-
 
   // --- Sanal ROM: tohum bloklar yazılır, kalıcı depolama izni istenir.
   useEffect(() => {
@@ -419,7 +416,6 @@ export function AxiomApp() {
     setVerifying(false);
     setDeneme((n) => n + 1);
   }, [clearWatchdog]);
-
 
   const romListesi = useMemo(() => ROM_SEED, []);
 

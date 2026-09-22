@@ -24,7 +24,8 @@ type LockManager = {
 };
 
 function lockManager(): LockManager | null {
-  const nav = typeof navigator === "undefined" ? null : (navigator as unknown as Record<string, unknown>);
+  const nav =
+    typeof navigator === "undefined" ? null : (navigator as unknown as Record<string, unknown>);
   const locks = nav?.["locks"] as LockManager | undefined;
   return locks && typeof locks.request === "function" ? locks : null;
 }
@@ -44,7 +45,6 @@ export async function withMountLock<T>(task: () => Promise<T>): Promise<T> {
   });
   return out!;
 }
-
 
 export type LimenMount = {
   /** Kayıt kimliği (repo:...). */

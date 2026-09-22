@@ -20,7 +20,6 @@ import {
 } from "@/lib/axiom/bridge/types";
 import { VERIFY_TIMEOUT_MS } from "@/lib/axiom/verify/types";
 
-
 export type SocketBridge = {
   state(): BridgeState;
   send(req: TruthRequest): Promise<TruthResponse>;
@@ -113,4 +112,3 @@ export async function openSocketBridge(): Promise<SocketBridge> {
     },
   };
 }
-

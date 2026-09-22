@@ -23,15 +23,8 @@ import type { AxiomIr } from "@/lib/axiom/lang/axiom-ir";
 /** SI temel boyut üs vektörü: [M, L, T, I, Theta, N, J]. */
 export type Dimension = readonly [number, number, number, number, number, number, number];
 
-const D = (
-  m = 0,
-  l = 0,
-  t = 0,
-  i = 0,
-  th = 0,
-  n = 0,
-  j = 0,
-): Dimension => [m, l, t, i, th, n, j] as const;
+const D = (m = 0, l = 0, t = 0, i = 0, th = 0, n = 0, j = 0): Dimension =>
+  [m, l, t, i, th, n, j] as const;
 
 export const DIMENSIONLESS: Dimension = D();
 
@@ -153,7 +146,8 @@ const EQUALITY = /(=|==|eşit\w*|eşdeğer\w*|denk\b|equals?\b|equivalent\b|same
  */
 export function dimensionMismatch(ir: AxiomIr, text: string): DimensionMismatch | null {
   const claimsEquality =
-    EQUALITY.test(text) || ir.relations.some((r) => r.op === "=" || r.op === "==" || r.op === "===");
+    EQUALITY.test(text) ||
+    ir.relations.some((r) => r.op === "=" || r.op === "==" || r.op === "===");
   if (!claimsEquality) return null;
 
   const known = ir.quantities

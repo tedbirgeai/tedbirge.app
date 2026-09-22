@@ -156,7 +156,6 @@ export async function mountLimenPackages(): Promise<LimenMount[]> {
   return Object.values(mounts);
 }
 
-
 /**
  * Senkronizasyon döngüsü: bekleyen kuyruğu boşaltır ve paketleri depoya
  * mount eder. Pencere açıldığında ve ağ geri geldiğinde çalışır; böylece

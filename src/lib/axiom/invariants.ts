@@ -22,7 +22,6 @@ import type { AxiomIr } from "@/lib/axiom/lang/axiom-ir";
 import type { ScienceId } from "@/lib/axiom/registry";
 import { dimensionMismatch } from "@/lib/axiom/units";
 
-
 export type Verdict = "ilgili" | "celiski" | "ilgisiz";
 
 export type Invariant = {
@@ -331,4 +330,3 @@ export function matchInvariants(ir: AxiomIr, text: string): InvariantMatch[] {
     return b.hits.length - a.hits.length;
   });
 }
-
