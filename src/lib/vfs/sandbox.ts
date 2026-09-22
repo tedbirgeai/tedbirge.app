@@ -12,7 +12,13 @@
  */
 
 import type { Capability } from "@/kernel/capabilities";
-import { clearAppData, listAppData, readAppData, writeAppData } from "@/lib/apps/appdata";
+import {
+  clearAppData,
+  listAppData,
+  readAppData,
+  removeAppData,
+  writeAppData,
+} from "@/lib/apps/appdata";
 import { normalizeTreePath } from "@/lib/vfs/tree";
 import { consumeVfsToken, issueVfsToken, type VfsOp, type VfsToken } from "@/lib/vfs/tokens";
 
@@ -107,11 +113,9 @@ export function openAppVfs(appId: string, caps: readonly Capability[]): AppVfs {
       return issueVfsToken(appId, op, resolveAppPath(appId, path));
     },
     read: async (path, token) => readAppData(appId, await gate("read", path, token)),
-    write: async (path, value, token) => writeAppData(appId, await gate("write", path, token), value),
-    remove: async (path, token) => {
-      const key = await gate("delete", path, token);
-      window.localStorage.removeItem(`tedbirge.appdata:${appId}:${key}`);
-    },
+    write: async (path, value, token) =>
+      writeAppData(appId, await gate("write", path, token), value),
+    remove: async (path, token) => removeAppData(appId, await gate("delete", path, token)),
     list: () => listAppData(appId).map((k) => `${root}/${k}`),
     wipe: () => clearAppData(appId),
   };
