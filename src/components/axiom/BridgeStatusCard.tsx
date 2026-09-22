@@ -26,6 +26,8 @@ import { t } from "@/lib/axiom/i18n";
 
 export function BridgeStatusCard() {
   const [state, setState] = useState<BridgeState>(() => initialBridgeState("none"));
+  // Olay akışı: kesmeler oluştuğu anda düşer, sorgulama yapılmaz.
+  const events = useSyncExternalStore(subscribeBridgeEvents, getBridgeEvents, getBridgeEvents);
 
   useEffect(() => {
     let alive = true;
