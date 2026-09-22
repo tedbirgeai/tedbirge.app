@@ -95,6 +95,56 @@ _Static_assert(_Alignof(tb_proof_t) == 4, "tb_proof_t 4-bayt hizali olmalidir");
 #endif
 
 
+/* OLAY KANCALARI (event-driven interrupts)
+ * -----------------------------------------------------------------
+ * Sistem tarafi beklenmedik durumlari kendiliginden bildirir; istemci
+ * dongu icinde hicbir sey sorgulamaz. Sinyal isleyicisi yalniz olayi
+ * kuyruga koyar: icinde tahsis, yazma veya gunlukleme YAPILMAZ.
+ */
+typedef enum tb_event_kind_t {
+  TB_EVENT_CONNECTED = 0,
+  TB_EVENT_DISCONNECTED = 1,
+  TB_EVENT_MEMORY_FAULT = 2, /* SIGSEGV / SIGBUS */
+  TB_EVENT_OUT_OF_MEMORY = 3,
+  TB_EVENT_HARDWARE = 4,
+  TB_EVENT_TIMEOUT = 5,
+  TB_EVENT_CLOSED = 6
+} tb_event_kind_t;
+
+typedef enum tb_event_severity_t {
+  TB_SEVERITY_INFO = 0,
+  TB_SEVERITY_WARN = 1,
+  TB_SEVERITY_ERROR = 2
+} tb_event_severity_t;
+
+/* BELLEK DUZENI
+ *   kind 4 | severity 4 | ms 4  =  12
+ *   code  33 | note 129         = 162
+ *   _pad   2                    =   2
+ *   TOPLAM 176 bayt (dogal 4-bayt siniri)
+ */
+typedef struct tb_event_t {
+  tb_event_kind_t kind;
+  tb_event_severity_t severity;
+  uint32_t ms;     /* olay ani (surec baslangicindan beri, ms) */
+  char code[33];   /* ham sistem kodu (NUL sonlu), arayuzde gosterilmez */
+  char note[129];  /* sade Turkce aciklama (NUL sonlu) */
+  uint8_t _pad[2]; /* ACIK dolgu — 176 bayt hizalamasini sabitler */
+} tb_event_t;
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+_Static_assert(sizeof(tb_event_t) == 176, "tb_event_t 176 bayt olmalidir");
+_Static_assert(_Alignof(tb_event_t) == 4, "tb_event_t 4-bayt hizali olmalidir");
+#endif
+
+/* Olay kancasi. Kanca sinyal baglaminda cagrilabilir: yalniz kopyalama
+ * ve kuyruga yazma yapmalidir. Girdi metni asla tasinmaz. */
+typedef void (*tb_event_cb)(const tb_event_t *event, void *user);
+
+/* Kancayi kaydeder. cb NULL ise kanca kaldirilir (sorgulama yoktur). */
+tb_status_t tb_truth_set_event_cb(tb_truth_handle *handle, tb_event_cb cb, void *user);
+
+
 /* Kopruyu acar. socket_path NULL ise TB_TRUTH_SOCKET_PATH kullanilir. */
 tb_truth_handle *tb_truth_open(const char *socket_path, tb_status_t *out_status);
 
