@@ -11,6 +11,7 @@ import {
 } from "@/lib/axiom/sync/crdt";
 import { createQueue, enqueue, flush, type QueueState } from "@/lib/axiom/sync/queue";
 import { mountLimenRecord, withMountLock, type LimenMount } from "@/lib/limen/mount";
+import { compactRepo } from "@/lib/vfs/compaction";
 
 export type LimenMirrorMode = "local" | "p2p" | "github";
 
@@ -152,6 +153,12 @@ export async function mountLimenPackages(): Promise<LimenMount[]> {
   } finally {
     mounting = false;
     invalidate();
+  }
+  // Birleştirme kilit dışında çalışır (kilit yeniden girişe kapalıdır).
+  try {
+    await compactRepo();
+  } catch {
+    /* birleştirme başarısız olsa da montaj geçerlidir */
   }
   return Object.values(mounts);
 }
