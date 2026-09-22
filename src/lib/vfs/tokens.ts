@@ -111,7 +111,8 @@ export async function consumeVfsToken(
   if (!equal(mac, await seal(body))) throw new VfsTokenError("Yetki anahtarının mührü geçersiz.");
   if (spent.has(mac)) throw new VfsTokenError("Bu yetki anahtarı daha önce kullanıldı.");
   if (token.exp <= Date.now()) throw new VfsTokenError("Yetki anahtarının süresi doldu.");
-  if (token.appId !== need.appId) throw new VfsTokenError("Yetki anahtarı başka bir uygulamaya ait.");
+  if (token.appId !== need.appId)
+    throw new VfsTokenError("Yetki anahtarı başka bir uygulamaya ait.");
   if (token.op !== need.op) throw new VfsTokenError("Yetki anahtarı bu işlem için verilmedi.");
   if (need.path !== token.prefix && !need.path.startsWith(`${token.prefix}/`))
     throw new VfsTokenError("Yetki anahtarı bu yolu kapsamıyor.");

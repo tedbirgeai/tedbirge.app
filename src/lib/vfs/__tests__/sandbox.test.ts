@@ -1,17 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  APPDATA_ROOT,
-  appRoot,
-  resolveAppPath,
-  VfsAccessError,
-} from "@/lib/vfs/sandbox";
-import {
-  consumeVfsToken,
-  issueVfsToken,
-  resetTokenSession,
-  VfsTokenError,
-} from "@/lib/vfs/tokens";
+import { APPDATA_ROOT, appRoot, resolveAppPath, VfsAccessError } from "@/lib/vfs/sandbox";
+import { consumeVfsToken, issueVfsToken, resetTokenSession, VfsTokenError } from "@/lib/vfs/tokens";
 
 describe("uygulama alanı izolasyonu", () => {
   it("uygulamaya kendi kökünü verir", () => {
