@@ -10,7 +10,7 @@ import {
   type CrdtState,
 } from "@/lib/axiom/sync/crdt";
 import { createQueue, enqueue, flush, type QueueState } from "@/lib/axiom/sync/queue";
-import { mountLimenRecord, type LimenMount } from "@/lib/limen/mount";
+import { mountLimenRecord, withMountLock, type LimenMount } from "@/lib/limen/mount";
 
 export type LimenMirrorMode = "local" | "p2p" | "github";
 
