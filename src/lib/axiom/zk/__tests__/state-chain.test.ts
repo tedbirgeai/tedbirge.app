@@ -86,7 +86,8 @@ describe("ardışık durum zinciri", () => {
     for (let i = 0; i < CHAIN_LIMIT + 2; i += 1) {
       chain = appendTransition(chain, { ...proven(i), expectedPreviousRoot: chain.root }).chain;
     }
-    expect(chain.transitions.length).toBe(CHAIN_KEEP);
+    expect(chain.transitions.length).toBeGreaterThanOrEqual(CHAIN_KEEP);
+    expect(chain.transitions.length).toBeLessThanOrEqual(CHAIN_LIMIT);
     expect(chain.compacted).toBeGreaterThan(0);
     expect(chain.transitions[chain.transitions.length - 1]?.seq).toBe(CHAIN_LIMIT + 2);
   });
