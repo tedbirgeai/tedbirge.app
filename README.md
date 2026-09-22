@@ -2,8 +2,9 @@
 
 **Altyapıdan bağımsız bağlantı.** Tedbirge® WebOS; Ethernet, Wi-Fi, hücresel, uydu, WiGig, FSO lazer, Wi-Fi HaLow, TVWS ve LoRa olmak üzere dokuz fiziksel taşıyıcıyı tek bir güvenli ağ geçidi altında birleştiren, kesinti anında otomatik devreye giren bağımsız bir mesh iletişim platformudur.
 
-Üretici / satıcı: **Mehmet DİNÇ (Tedbirge® WebOS)** — Türkiye
-Canlı sürüm: <https://tedbirge.app>
+Üretici / satıcı: **Mehmet DİNÇ (Tedbirge® WebOS)** — Türkiye  
+Canlı Platform: <https://tedbirge.app>  
+Geliştirici & Teknik Portal: <https://tedbirge.dev>  
 
 ---
 
@@ -22,7 +23,7 @@ Canlı sürüm: <https://tedbirge.app>
 - Sıfır-bilgi tünel tasarımı: ağ geçidi taşınan içeriği göremez
 - Telemetri yalnızca metrik taşır (RTT, throughput, paket kaybı); kullanıcı içeriği taşınmaz
 
-## Regülasyon ve uyum
+## Regülasyon ve Uyum
 
 Tüm bant/limit verileri tek doğruluk kaynağında (`src/lib/regulation.ts`) tutulur ve `/mevzuat` sayfasında yayımlanır.
 
@@ -43,22 +44,7 @@ Tüm bant/limit verileri tek doğruluk kaynağında (`src/lib/regulation.ts`) tu
 ## Geliştirme
 
 ```sh
-git clone <bu-deponun-url-si>
+git clone [https://github.com/tedbirgeai/tedbirge.app.git](https://github.com/tedbirgeai/tedbirge.app.git)
 cd tedbirge-gateway
 npm install
 npm run dev
-```
-
-## Kurucu
-
-**Mehmet DİNÇ** — Kurucu, Tedbirge® WebOS
-
-Mehmet DİNÇ; kritik altyapı kesintilerinde iletişimin sürdürülebilirliği üzerine çalışan, afet ve kamu güvenliği senaryolarına odaklanmış bir teknoloji girişimcisidir. Tedbirge® WebOS'i, tek bir operatöre, tek bir frekansa veya tek bir omurgaya bağımlı kalmadan çalışan bağımsız bir iletişim katmanı ihtiyacından yola çıkarak kurmuştur.
-
-Çalışmalarının merkezinde üç ilke yer alır: **bağımsızlık** (hiçbir tekil altyapıya bağımlı olmamak), **yasallık** (her bölgede lisanssız bant kurallarına ve veri koruma mevzuatına tam uyum) ve **sadelik** (sahadaki ekibin eğitim gerektirmeden kurup çalıştırabileceği bir sistem). Pilot uygulama alanı Türkiye/Sakarya olup, platform yasal sınırlar dahilinde küresel kullanım için tasarlanmıştır.
-
-İletişim: <https://tedbirge.app/iletisim>
-
----
-
-© Mehmet DİNÇ (Tedbirge® WebOS). Tüm hakları saklıdır.
