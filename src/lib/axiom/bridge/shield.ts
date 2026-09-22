@@ -57,7 +57,8 @@ export function withAbortBudget<T>(
   const softMs = options.softMs ?? SOFT_BUDGET_MS;
   const hardMs = options.hardMs ?? HARD_LIMIT_MS;
   const schedule = options.schedule ?? ((fn: () => void, ms: number) => setTimeout(fn, ms));
-  const cancel = options.cancel ?? ((h: unknown) => clearTimeout(h as ReturnType<typeof setTimeout>));
+  const cancel =
+    options.cancel ?? ((h: unknown) => clearTimeout(h as ReturnType<typeof setTimeout>));
 
   const controller = new AbortController();
   let settled = false;
@@ -78,13 +79,16 @@ export function withAbortBudget<T>(
       reject(new BridgeAbortError("soft"));
     }, softMs);
 
-    hard = schedule(() => {
-      if (settled) return;
-      settled = true;
-      recordBridgeEvent("disconnected", "HARD_LIMIT");
-      options.onHard?.();
-      reject(new BridgeAbortError("hard"));
-    }, Math.max(hardMs, softMs));
+    hard = schedule(
+      () => {
+        if (settled) return;
+        settled = true;
+        recordBridgeEvent("disconnected", "HARD_LIMIT");
+        options.onHard?.();
+        reject(new BridgeAbortError("hard"));
+      },
+      Math.max(hardMs, softMs),
+    );
 
     task(controller.signal).then(
       (value) => {

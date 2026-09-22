@@ -83,7 +83,11 @@ export function noteFor(kind: BridgeEventKind): string {
   return NOTES[kind];
 }
 
-export function makeBridgeEvent(kind: BridgeEventKind, code = kind, at = Date.now()): BridgeEvent {
+export function makeBridgeEvent(
+  kind: BridgeEventKind,
+  code: string = kind,
+  at = Date.now(),
+): BridgeEvent {
   return { kind, severity: SEVERITY[kind], code, note: NOTES[kind], at };
 }
 
