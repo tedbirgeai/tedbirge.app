@@ -10,12 +10,14 @@
  * Sunucu yoksa kart bunu açıkça yazar; doğrulama yerel motorda sürer.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Cable } from "lucide-react";
 
 import {
+  getBridgeEvents,
   initialBridgeState,
   openTruthBridge,
+  subscribeBridgeEvents,
   TRUTH_SOCKET_PATH,
   TRUTH_WSS_URL,
   type BridgeState,
@@ -24,6 +26,8 @@ import { t } from "@/lib/axiom/i18n";
 
 export function BridgeStatusCard() {
   const [state, setState] = useState<BridgeState>(() => initialBridgeState("none"));
+  // Olay akışı: kesmeler oluştuğu anda düşer, sorgulama yapılmaz.
+  const events = useSyncExternalStore(subscribeBridgeEvents, getBridgeEvents, getBridgeEvents);
 
   useEffect(() => {
     let alive = true;
@@ -87,6 +91,28 @@ export function BridgeStatusCard() {
           <dd>{state.pending}</dd>
         </div>
       </dl>
+
+      {events.length ? (
+        <ul className="mt-2 space-y-1 border-t border-[var(--tb-border)] pt-2">
+          {events.slice(0, 4).map((event) => (
+            <li
+              key={`${event.at}-${event.code}`}
+              className={`flex items-start justify-between gap-2 font-osmono text-[10px] ${
+                event.severity === "error"
+                  ? "text-[var(--tb-danger)]"
+                  : event.severity === "warn"
+                    ? "text-[var(--tb-text)]"
+                    : "text-[var(--tb-muted)]"
+              }`}
+            >
+              <span>{event.note}</span>
+              <span className="shrink-0 text-[var(--tb-muted)]">
+                {new Date(event.at).toLocaleTimeString("tr-TR")}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       <p className="mt-2 font-osmono text-[10px] text-[var(--tb-muted)]">
         {state.note} · {t("bridge.note")}

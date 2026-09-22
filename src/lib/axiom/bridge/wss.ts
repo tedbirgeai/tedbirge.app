@@ -11,6 +11,7 @@
  * durum "sunucu bekleniyor" olarak kalır ve istekler kuyrukta bekler.
  */
 
+import { handleEventFrame, recordBridgeEvent } from "@/lib/axiom/bridge/events";
 import {
   backoffMs,
   BRIDGE_MAX_ATTEMPTS,
@@ -93,6 +94,7 @@ export function createWssBridge(options: WssBridgeOptions = {}): WssBridge {
     socket = ws;
     ws.onopen = () => {
       emit({ connected: true, note: "Köprü bağlı" });
+      recordBridgeEvent("connected");
       pump();
     };
     ws.onmessage = (ev) => {
@@ -103,7 +105,11 @@ export function createWssBridge(options: WssBridgeOptions = {}): WssBridge {
         return;
       }
       const slot = waiting.get(msg.id);
-      if (!slot) return;
+      if (!slot) {
+        // İstek numarası olmayan bildirim: olay akışına düşer.
+        handleEventFrame(msg);
+        return;
+      }
       waiting.delete(msg.id);
       emit({ latencyMs: Math.max(0, Math.round(now() - slot.at)) });
       slot.resolve(msg);
@@ -112,6 +118,7 @@ export function createWssBridge(options: WssBridgeOptions = {}): WssBridge {
       socket = null;
       const attempts = state.attempts + 1;
       emit({ connected: false, attempts, note: "Sunucu bekleniyor" });
+      recordBridgeEvent(attempts < BRIDGE_MAX_ATTEMPTS ? "retry" : "disconnected");
       if (!closed && attempts < BRIDGE_MAX_ATTEMPTS) schedule(connect, backoffMs(attempts));
     };
     ws.onerror = drop;

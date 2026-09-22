@@ -11,6 +11,7 @@
  * yanıt tek satır JSON (satır sonu ile ayrılır).
  */
 
+import { handleEventFrame, recordBridgeEvent } from "@/lib/axiom/bridge/events";
 import {
   initialBridgeState,
   TRUTH_SOCKET_PATH,
@@ -45,12 +46,15 @@ export async function openSocketBridge(): Promise<SocketBridge> {
   socket.setEncoding("utf8");
   socket.on("connect", () => {
     state = { ...state, connected: true, note: "Köprü bağlı (yerel soket)" };
+    recordBridgeEvent("connected");
   });
   socket.on("error", () => {
     state = { ...state, connected: false, attempts: state.attempts + 1, note: "Sunucu bekleniyor" };
+    recordBridgeEvent("retry");
   });
   socket.on("close", () => {
     state = { ...state, connected: false, note: "Sunucu bekleniyor" };
+    recordBridgeEvent("disconnected");
   });
   socket.on("data", (chunk: string) => {
     buffer += chunk;
@@ -66,6 +70,10 @@ export async function openSocketBridge(): Promise<SocketBridge> {
         if (resolve) {
           waiting.delete(msg.id);
           resolve(msg);
+        } else {
+          // İstek numarası olmayan satır: sistem tarafının kendiliğinden
+          // gönderdiği kesme bildirimi. Olay akışına düşer.
+          handleEventFrame(msg);
         }
       } catch {
         /* bozuk çerçeve yok sayılır; günlük tutulmaz */
