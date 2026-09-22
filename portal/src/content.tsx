@@ -66,13 +66,22 @@ export const SECTIONS: DocSection[] = [
   {
     id: "sdk",
     title: "SDK kullanımı",
-    summary: "Düğüm başlatma, eş bağlama, mesaj ve dosya gönderimi.",
+    summary: "Paket kurulumu, düğüm başlatma, eş bağlama, mesaj ve dosya gönderimi.",
     body: (
       <>
         <p className="lead">
           Düğüm çalışma zamanı tarayıcıda otomatik açılır. Aşağıdaki akış, gömülü kabuk içinden veya
           kendi arayüzünüzden aynı şekilde kullanılır.
         </p>
+        <h2>0. Paket kurulumu</h2>
+        <pre>
+          <code>{`# NPM / PNPM ile SDK yükleme
+npm install @tedbirge/kernel-wasm @tedbirge/sdk
+
+# Rust projeleri için Cargo.toml
+[dependencies]
+tedbirge-kernel = { version = "0.6", features = ["wasm-bindgen"] }`}</code>
+        </pre>
         <h2>1. Düğümü başlat</h2>
         <pre>
           <code>{`import { bootNodeRuntime, startNode } from "@/lib/node-runtime";
@@ -148,6 +157,18 @@ await node.sendFile("TBG-4K7Q", file, { priority: "normal" });`}</code>
             </tr>
           </tbody>
         </table>
+        <h2>Zarf JSON Şeması</h2>
+        <pre>
+          <code>{`{
+  "id": "env_9f8a2b1c",
+  "from": "TBG-4K7Q",
+  "to": "TBG-8M2P",
+  "ttl": 5,
+  "ts": 1727038800,
+  "sig": "ed25519_sig_7c...",
+  "payload": "base64_encoded_ciphertext..."
+}`}</code>
+        </pre>
         <h2>Store-and-forward</h2>
         <p>
           Hedefe doğrudan yol yoksa zarf yerel kuyruğa yazılır. Kuyruk, taşıyıcı skoruna göre
@@ -195,7 +216,7 @@ assertNoEgress(target); // yalnız ağ içi hedefler geçer`}</code>
   {
     id: "wasm",
     title: "Rust-Wasm çekirdek",
-    summary: "Çekirdek ABI'si, yükleme akışı ve TypeScript geri düşüşü.",
+    summary: "Çekirdek ABI'si, C-ABI arabirimi, yükleme akışı ve TypeScript geri düşüşü.",
     body: (
       <>
         <p className="lead">
@@ -207,6 +228,27 @@ assertNoEgress(target); // yalnız ağ içi hedefler geçer`}</code>
           <code>{`// Rust tarafının dışa açtığı asgari yüzey
 abi_version() -> u32     // beklenen sürüm: 1
 route_hops(target: u32) -> u32`}</code>
+        </pre>
+        <h2>C-ABI Başlık Arabirimi (`tedbirge_truth.h`)</h2>
+        <pre>
+          <code>{`#ifndef TEDBIRGE_TRUTH_H
+#define TEDBIRGE_TRUTH_H
+
+#include <stdint.h>
+
+typedef struct {
+    uint8_t state_hash[32];
+    uint64_t sequence_id;
+} TedbirgeStateProof;
+
+int32_t verify_state_transition(
+    const uint8_t* prev_hash,
+    const uint8_t* next_hash,
+    const uint8_t* proof,
+    uint32_t proof_len
+);
+
+#endif`}</code>
         </pre>
         <h2>Yükleme ve geri düşüş</h2>
         <ol>
@@ -375,6 +417,28 @@ X-Axiom-Client: <istemci-kimliği>`}</code>
     ),
   },
   {
+    id: "webrtc",
+    title: "WebRTC Mesh & Tüneller",
+    summary: "P2P katman mimarisi, sinyalleşme ve peer discovery standartları (Faz 4).",
+    body: (
+      <>
+        <p className="lead">
+          WebRTC Mesh tünelleri, tarayıcılar ve düğümler arasında doğrudan, şifreli P2P veri
+          hatları (RTCDataChannel) kurar.
+        </p>
+        <h2>Tünel Kurulum Adımları</h2>
+        <ol>
+          <li><strong>Sinyalleşme (Signaling):</strong> WebRTC SDP teklif/yanıt değişimi.</li>
+          <li><strong>ICE Adayları:</strong> STUN/TURN sunucuları üzerinden NAT geçişi.</li>
+          <li><strong>Mesh Tüneli Aktif:</strong> Şifreli doğrudan veri kanalı.</li>
+        </ol>
+        <div className="note">
+          Faz 4 geliştirme aşamasındadır. Tünel yönetimi ve otomatik eş keşfi modülleri yakında aktif olacaktır.
+        </div>
+      </>
+    ),
+  },
+  {
     id: "surum",
     title: "Sürüm notları",
     summary: "Uyumluluk sözleri ve değişiklik politikası.",
@@ -402,6 +466,10 @@ X-Axiom-Client: <istemci-kimliği>`}</code>
             <tr>
               <td>Çekirdek ABI</td>
               <td>1</td>
+            </tr>
+            <tr>
+              <td>WebRTC Mesh Engine</td>
+              <td>0.1b (Faz 4)</td>
             </tr>
           </tbody>
         </table>
