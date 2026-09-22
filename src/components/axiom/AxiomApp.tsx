@@ -44,7 +44,7 @@ import { localAnalyze, localStats, localVerify, resetLocalKernel } from "@/lib/a
 import { sampleMemory, type MemorySample } from "@/lib/axiom/profiler";
 import type { RamStats } from "@/lib/axiom/ram";
 import { ROM_SEED, romStatus, seedRom, type RomStatus } from "@/lib/axiom/rom";
-import type { VerifyResult } from "@/lib/axiom/verify/types";
+import { VERIFY_TIMEOUT_MS, type VerifyResult } from "@/lib/axiom/verify/types";
 import { createAxiomWorker, workerAvailable } from "@/lib/axiom/worker-client";
 import { createAxiomMesh, type AxiomMesh } from "@/lib/p2p/axiom-mesh";
 import {
@@ -64,6 +64,15 @@ const BOS_RAM: RamStats = {
 
 const WORKER_BOOT_TIMEOUT_MS = 1200;
 
+/**
+ * Ana iş parçacığı bekçisi: worker içindeki sert bütçe (500 ms) bir
+ * WASM kilitlenmesi yüzünden hiç yanıt vermezse, bekçi süreyi küçük bir
+ * tolerans payıyla aşan daemon'ı `terminate()` ile infaz eder ve aynı
+ * doğrulama yedek motorda tamamlanır.
+ */
+const WORKER_WATCHDOG_MS = VERIFY_TIMEOUT_MS + 250;
+
+
 export function AxiomApp() {
   const hostRef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
@@ -74,6 +83,9 @@ export function AxiomApp() {
   const proofQueueRef = useRef<AxiomOfflineQueue>(createAxiomOfflineQueue());
   const seqRef = useRef(0);
   const lifecycleRef = useRef(0);
+  /** Etkin doğrulama bekçisi (ana iş parçacığı zaman aşımı denetçisi). */
+  const watchdogRef = useRef<number | null>(null);
+
   /** Çizim döngüsü durumu ref ile okunur: RAM değişimi WebGL bağlamını kurmaz. */
   const ratioRef = useRef(0);
 
