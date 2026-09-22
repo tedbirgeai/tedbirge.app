@@ -44,7 +44,7 @@ jobs:
     # durumda ~100 dakika surer; 120 dakika sinira cok yakindi.
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -253,14 +253,14 @@ jobs:
           cat "$MANIFEST"
 
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: tedbirge-boot-test-log-${{ matrix.edition }}
           path: build-iso/*.log
           if-no-files-found: ignore
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: tedbirge-webos-iso-${{ matrix.edition }}
           path: |
@@ -270,7 +270,7 @@ jobs:
 
       - name: Yayınla (sürüm etiketi)
         if: github.event_name == 'release' || github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             build-iso/iso/*.iso
@@ -279,7 +279,7 @@ jobs:
 
       - name: Yayınla (latest ön-sürüm)
         if: github.event_name != 'release' && github.ref_type != 'tag'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: latest
           name: "Tedbirge® WebOS — güncel imaj"
