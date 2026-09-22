@@ -21,6 +21,7 @@ import { CommandBar } from "@/components/axiom/CommandBar";
 import { ProvenanceBadge } from "@/components/axiom/ProvenanceBadge";
 import { RewardsCard } from "@/components/axiom/RewardsCard";
 import { SdkPanel } from "@/components/axiom/SdkPanel";
+import { StateChainCard } from "@/components/axiom/StateChainCard";
 import { SyncStatusCard } from "@/components/axiom/SyncStatusCard";
 import { InvariantMatrix } from "@/components/axiom/InvariantMatrix";
 import { LanguageCard } from "@/components/axiom/LanguageCard";
@@ -508,6 +509,7 @@ export function AxiomApp() {
         <div className="grid gap-3">
           <BridgeStatusCard />
           <ArbiterPanel result={proof} />
+          <StateChainCard result={proof} />
           <div className="grid gap-3 lg:grid-cols-2">
             <SyncStatusCard result={proof} />
             <ProvenanceBadge result={proof} />

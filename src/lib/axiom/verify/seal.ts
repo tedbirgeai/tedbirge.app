@@ -14,7 +14,7 @@
 import type { EngineId, VerifyVerdict } from "@/lib/axiom/verify/types";
 
 /** 64-bit FNV-1a türevi; kriptografik değildir, içerik adresleme içindir. */
-function fnv1a64(input: string): string {
+export function fnv1a64(input: string): string {
   let h1 = 0x811c9dc5;
   let h2 = 0x01000193;
   for (let i = 0; i < input.length; i += 1) {
