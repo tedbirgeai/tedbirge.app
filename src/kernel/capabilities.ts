@@ -21,7 +21,13 @@ export type Capability =
   /** Kimlik özetini okuyabilir (özel anahtar asla verilmez). */
   | "identity.read"
   /** Düğüm durumunu okuyabilir. */
-  | "status.read";
+  | "status.read"
+  /** Kendi alanındaki dosyaları okuyabilir. */
+  | "files.read"
+  /** Kendi alanına dosya yazabilir. */
+  | "files.write"
+  /** Kendi alanındaki dosyaları silebilir. */
+  | "files.delete";
 
 export const ALL_CAPABILITIES: Capability[] = [
   "mesh.send",
@@ -29,6 +35,9 @@ export const ALL_CAPABILITIES: Capability[] = [
   "mesh.route",
   "identity.read",
   "status.read",
+  "files.read",
+  "files.write",
+  "files.delete",
 ];
 
 export class CapabilityError extends Error {

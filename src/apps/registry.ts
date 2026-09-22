@@ -41,7 +41,7 @@ const CAPS: Record<ShellAppId, Capability[]> = {
 /** Masaüstü yerleşik modüllerinin dar yetenek listeleri. */
 const DESKTOP_CAPS: Record<string, Capability[]> = {
   messenger: ["mesh.send", "mesh.receive", "mesh.route", "identity.read", "status.read"],
-  files: ["mesh.send", "mesh.receive", "status.read"],
+  files: ["mesh.send", "mesh.receive", "status.read", "files.read", "files.write", "files.delete"],
   transfer: ["mesh.send", "mesh.receive", "status.read"],
   media: ["status.read"],
   music: ["status.read"],

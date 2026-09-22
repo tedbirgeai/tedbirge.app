@@ -77,4 +77,16 @@ export const CAPABILITY_LABELS: Record<Capability, { title: string; detail: stri
     title: "Bağlantı durumu",
     detail: "Çevrimiçi/çevrimdışı durumunu ve kuyruk sayısını okur.",
   },
+  "files.read": {
+    title: "Kendi dosyalarını okuma",
+    detail: "Yalnız uygulamanın kendi alanındaki dosyaları okur; diğer alanlar kapalıdır.",
+  },
+  "files.write": {
+    title: "Kendi alanına kaydetme",
+    detail: "Uygulama kendi alanına dosya kaydedebilir; sistem alanına yazamaz.",
+  },
+  "files.delete": {
+    title: "Kendi dosyalarını silme",
+    detail: "Uygulama yalnız kendi kaydettiği dosyaları silebilir.",
+  },
 };

@@ -114,6 +114,11 @@ export function listAppData(appId: string): string[] {
   return out;
 }
 
+/** Uygulamanın kendi alanındaki tek bir kaydı siler. */
+export function removeAppData(appId: string, key: string): void {
+  window.localStorage.removeItem(storageKey(appId, key));
+}
+
 /** Paket kaldırılınca alanı tamamen siler. */
 export function clearAppData(appId: string): void {
   for (const key of listAppData(appId)) {
