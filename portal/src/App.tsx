@@ -63,6 +63,33 @@ export function App() {
             </button>
           ))}
           {visible.length === 0 && <p className="lead">Eşleşen bölüm yok.</p>}
+
+          <hr style={{ margin: "1.25rem 0 0.75rem 0", opacity: 0.15, border: "none", borderTop: "1px solid currentColor" }} />
+
+          <a
+            href="https://github.com/tedbirgeai/tedbirge.app/discussions"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "block", textDecoration: "none", color: "inherit", padding: "0.4rem 0", fontSize: "0.9rem", opacity: 0.85 }}
+          >
+            💬 Topluluk & Tartışmalar ↗
+          </a>
+          <a
+            href="https://github.com/tedbirgeai/tedbirge.app/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "block", textDecoration: "none", color: "inherit", padding: "0.4rem 0", fontSize: "0.9rem", opacity: 0.85 }}
+          >
+            🐞 Hata Bildirimi (Bug) ↗
+          </a>
+          <a
+            href="https://tedbirge.app/iletisim"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "block", textDecoration: "none", color: "inherit", padding: "0.4rem 0", fontSize: "0.9rem", opacity: 0.85 }}
+          >
+            ✉️ İletişim Formu ↗
+          </a>
         </div>
       </nav>
 
