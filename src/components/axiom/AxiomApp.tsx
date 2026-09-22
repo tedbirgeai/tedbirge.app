@@ -174,7 +174,9 @@ export function AxiomApp() {
       if (lifecycleRef.current !== ticket) return;
       // Daemon kurulamadı: arayüz çökmez, aynı motor ana iş parçacığında çalışır.
       if (bootTimer !== null) window.clearTimeout(bootTimer);
+      clearWatchdog();
       worker?.terminate();
+
       worker = null;
       workerRef.current = null;
       setYerel(true);
@@ -204,7 +206,10 @@ export function AxiomApp() {
     worker.onmessage = (event: MessageEvent<KernelResponse>) => {
       if (lifecycleRef.current !== ticket) return;
       const msg = event.data;
+      // Yanıt geldi: bekçi söndürülür, infaz gerekmez.
+      clearWatchdog();
       setRam(msg.ram);
+
       if (msg.type === "boot") {
         if (bootTimer !== null) window.clearTimeout(bootTimer);
         setHata(null);
@@ -249,10 +254,12 @@ export function AxiomApp() {
     }, WORKER_BOOT_TIMEOUT_MS);
     return () => {
       if (bootTimer !== null) window.clearTimeout(bootTimer);
+      clearWatchdog();
       worker?.terminate();
       if (lifecycleRef.current === ticket) workerRef.current = null;
     };
-  }, [deneme]);
+  }, [deneme, clearWatchdog]);
+
 
   // --- Sanal ROM: tohum bloklar yazılır, kalıcı depolama izni istenir.
   useEffect(() => {
