@@ -118,6 +118,15 @@ export function AxiomApp() {
   const [lisans, setLisans] = useState(false);
   const node = useAxiomNode();
 
+  /** Bekçi sayacını söndürür (yanıt geldi ya da oturum kapandı). */
+  const clearWatchdog = useCallback(() => {
+    if (watchdogRef.current !== null) {
+      window.clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    }
+  }, []);
+
+
   useEffect(() => {
     const mesh = createAxiomMesh();
     meshRef.current = mesh;
