@@ -16,6 +16,36 @@ import type { LimenRecord } from "@/lib/limen/sync";
 
 export const REPO_FOLDER = "repo" as const;
 
+/** Çoklu sekme montaj kilidi (Web Locks API). */
+export const LIMEN_MOUNT_LOCK = "limen_mount_lock" as const;
+
+type LockManager = {
+  request: (name: string, cb: () => Promise<unknown>) => Promise<unknown>;
+};
+
+function lockManager(): LockManager | null {
+  const nav = typeof navigator === "undefined" ? null : (navigator as unknown as Record<string, unknown>);
+  const locks = nav?.["locks"] as LockManager | undefined;
+  return locks && typeof locks.request === "function" ? locks : null;
+}
+
+/**
+ * Montaj yazımlarını tek bir kilit altında yürütür. Aynı depoyu açan
+ * ikinci sekme, ilk sekme bitirene kadar bekler; yarım ağaç oluşmaz.
+ * Web Locks bulunmayan ortamda iş doğrudan çalışır (tek geçişli kuyruk
+ * çağıran tarafta korunur).
+ */
+export async function withMountLock<T>(task: () => Promise<T>): Promise<T> {
+  const locks = lockManager();
+  if (!locks) return task();
+  let out: T;
+  await locks.request(LIMEN_MOUNT_LOCK, async () => {
+    out = await task();
+  });
+  return out!;
+}
+
+
 export type LimenMount = {
   /** Kayıt kimliği (repo:...). */
   id: string;

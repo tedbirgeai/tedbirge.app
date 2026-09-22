@@ -138,12 +138,15 @@ export async function mountLimenPackages(): Promise<LimenMount[]> {
   if (mounting) return Object.values(mounts);
   mounting = true;
   try {
-    const next: Record<string, LimenMount> = {};
-    for (const record of toRecords(state)) {
-      next[record.id] = await mountLimenRecord(record);
-    }
-    mounts = next;
-    mountError = null;
+    // Web Locks: aynı depoya yazan ikinci sekme sıraya girer.
+    await withMountLock(async () => {
+      const next: Record<string, LimenMount> = {};
+      for (const record of toRecords(state)) {
+        next[record.id] = await mountLimenRecord(record);
+      }
+      mounts = next;
+      mountError = null;
+    });
   } catch (err) {
     mountError = err instanceof Error ? err.message : "Depoya yazılamadı.";
   } finally {
@@ -152,6 +155,7 @@ export async function mountLimenPackages(): Promise<LimenMount[]> {
   }
   return Object.values(mounts);
 }
+
 
 /**
  * Senkronizasyon döngüsü: bekleyen kuyruğu boşaltır ve paketleri depoya
