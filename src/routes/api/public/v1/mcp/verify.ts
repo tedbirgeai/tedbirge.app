@@ -54,7 +54,7 @@ export const Route = createFileRoute("/api/public/v1/mcp/verify")({
             cors,
           );
         }
-        let body: unknown;
+        let body: any;
         try {
           body = JSON.parse(raw);
         } catch {
@@ -68,13 +68,37 @@ export const Route = createFileRoute("/api/public/v1/mcp/verify")({
             cors,
           );
         }
-        // Müşteri anahtarı yalnız özet olarak deftere girer; ham değer tutulmaz.
+
+        // Müşteri anahtarı (x-axiom-client veya Authorization: Bearer)
         const client =
           request.headers.get("x-axiom-client") ??
           request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
           null;
+
+        // Lovable / Standard MCP "initialize" el sıkışma metodu kontrolü
+        if (body && typeof body === "object" && body.method === "initialize") {
+          return json(
+            {
+              jsonrpc: "2.0",
+              id: body.id ?? 1,
+              result: {
+                protocolVersion: "2024-11-05",
+                capabilities: { tools: {} },
+                serverInfo: {
+                  name: "AXIOM Universal MCP",
+                  version: "5.3.0",
+                },
+              },
+            },
+            200,
+            cors,
+          );
+        }
+
         const response = await handleMcpRequest(body, client);
-        return json(response, "error" in response ? 400 : 200, cors);
+        
+        // JSON-RPC 2.0 protokol seviyesindeki yanıtlar istemcinin bağlantıyı koparmaması için HTTP 200 ile dönmelidir
+        return json(response, 200, cors);
       },
     },
   },
