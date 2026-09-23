@@ -3,16 +3,19 @@
  * Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
+import { PlanTier } from "./tariff";
+
 /**
- * ÖLÇÜM DEFTERİ KALICILIĞI
+ * ÖLÇÜM DEFTERİ KALICILIĞI & DURUM YÖNETİMİ
  * ------------------------------------------------------------------
- * Defter yalnız cihazda saklanır (tarayıcı yerel deposu). Sunucu
- * tarafında (SSR / Worker) depolama yoktur: okuma boş dizi, yazma
- * sessizce yok sayılır. Kayıtlarda girdi metni ya da müşteri kimliği
+ * Defter ve aktif abonelik kademesi yalnız cihazda saklanır (tarayıcı yerel deposu).
+ * Sunucu tarafında (SSR / Worker) depolama yoktur: okuma varsayılan değerleri döndürür,
+ * yazma sessizce yok sayılır. Kayıtlarda girdi metni ya da müşteri kimliği
  * bulunmaz; yalnız anahtar özeti taşınır.
  */
 
 export const METER_STORE_KEY = "axiom.meter.v1";
+export const PLAN_STORE_KEY = "axiom.plan.v1";
 
 /** 30 günlük pencere (ms). Daha eski kayıtlar okuma sırasında düşer. */
 export const METER_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
@@ -25,6 +28,10 @@ function storage(): Storage | null {
     return null;
   }
 }
+
+// ==========================================
+// 1. ÖLÇÜM DEFTERİ RAW İŞLEMLERİ (MEVCUT YAPI)
+// ==========================================
 
 export function readRaw<T>(): T[] {
   const s = storage();
@@ -52,6 +59,36 @@ export function clearRaw(): void {
   if (!s) return;
   try {
     s.removeItem(METER_STORE_KEY);
+  } catch {
+    /* yoksay */
+  }
+}
+
+// ==========================================
+// 2. AXIOM V12 ABONELİK & PLAN DURUMU (YENİ)
+// ==========================================
+
+/** Cihazda saklanan aktif abonelik kademesini okur. Varsayılan: COMMUNITY */
+export function getStoredPlanTier(): PlanTier {
+  const s = storage();
+  if (!s) return "COMMUNITY";
+  try {
+    const tier = s.getItem(PLAN_STORE_KEY) as PlanTier | null;
+    if (tier && ["COMMUNITY", "DEVELOPER", "PRO", "ENTERPRISE", "SOVEREIGN"].includes(tier)) {
+      return tier;
+    }
+    return "COMMUNITY";
+  } catch {
+    return "COMMUNITY";
+  }
+}
+
+/** Aktif abonelik kademesini günceller ve yerel depoya kaydeder. */
+export function setStoredPlanTier(tier: PlanTier): void {
+  const s = storage();
+  if (!s) return;
+  try {
+    s.setItem(PLAN_STORE_KEY, tier);
   } catch {
     /* yoksay */
   }
