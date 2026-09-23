@@ -80,7 +80,7 @@ export function clientDigest(key: string | null | undefined): string {
   let h = 2166136261;
   for (let i = 0; i < input.length; i += 1) {
     h ^= input.charCodeAt(i);
-    h = Math.Math.imul ? Math.imul(h, 16777619) : (h * 16777619) | 0;
+    h = Math.imul(h, 16777619);
   }
   return `c-${(h >>> 0).toString(16).padStart(8, "0")}`;
 }
