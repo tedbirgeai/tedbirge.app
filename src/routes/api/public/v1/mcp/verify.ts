@@ -4,7 +4,7 @@
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
 /**
- * AXIOM MCP UÇ NOKTASI — POST /api/public/v1/mcp/verify
+ * AXIOM MCP UÇ NOKTASI — POST /api/v1/mcp/verify
  * ------------------------------------------------------------------
  * JSON-RPC 2.0 yüzeyi. Gövde 64 KB ile sınırlıdır, tarayıcı istekleri
  * CORS izin listesine tabidir, her istek 500 ms doğrulama bütçesiyle
@@ -24,7 +24,7 @@ function json(body: unknown, status: number, extra: Record<string, string>) {
   });
 }
 
-export const Route = createFileRoute("/api/public/v1/mcp/verify")({
+export const Route = createFileRoute("/api/v1/mcp/verify")({
   server: {
     handlers: {
       OPTIONS: async ({ request }) =>
