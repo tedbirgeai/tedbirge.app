@@ -69,34 +69,40 @@ export const Route = createFileRoute("/api/public/v1/mcp/verify")({
           );
         }
 
-        // Müşteri anahtarı (x-axiom-client veya Authorization: Bearer)
+        // Lovable / Standard MCP "initialize" ve "notifications/initialized" el sıkışması
+        if (body && typeof body === "object") {
+          if (body.method === "initialize") {
+            return json(
+              {
+                jsonrpc: "2.0",
+                id: body.id ?? 1,
+                result: {
+                  protocolVersion: "2024-11-05",
+                  capabilities: { tools: {} },
+                  serverInfo: {
+                    name: "AXIOM Universal MCP",
+                    version: "5.3.0",
+                  },
+                },
+              },
+              200,
+              cors,
+            );
+          }
+
+          if (body.method === "notifications/initialized") {
+            return json({ jsonrpc: "2.0", result: {} }, 200, cors);
+          }
+        }
+
+        // Müşteri anahtarı (x-axiom-client veya Authorization: Bearer, yoksa anonim istemci)
         const client =
           request.headers.get("x-axiom-client") ??
           request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
-          null;
-
-        // Lovable / Standard MCP "initialize" el sıkışma metodu kontrolü
-        if (body && typeof body === "object" && body.method === "initialize") {
-          return json(
-            {
-              jsonrpc: "2.0",
-              id: body.id ?? 1,
-              result: {
-                protocolVersion: "2024-11-05",
-                capabilities: { tools: {} },
-                serverInfo: {
-                  name: "AXIOM Universal MCP",
-                  version: "5.3.0",
-                },
-              },
-            },
-            200,
-            cors,
-          );
-        }
+          "anonymous-client";
 
         const response = await handleMcpRequest(body, client);
-        
+
         // JSON-RPC 2.0 protokol seviyesindeki yanıtlar istemcinin bağlantıyı koparmaması için HTTP 200 ile dönmelidir
         return json(response, 200, cors);
       },
