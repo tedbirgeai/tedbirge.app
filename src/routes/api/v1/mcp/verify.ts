@@ -70,7 +70,7 @@ export const Route = createFileRoute("/api/v1/mcp/verify")({
           request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
           null;
         const response = await handleMcpRequest(body, client);
-        return json(response, "error" in response ? 400 : 200, cors);
+        return json(response, 200, cors);
       },
     },
   },
