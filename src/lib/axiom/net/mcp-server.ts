@@ -11,7 +11,7 @@
  *
  *   axiom.capabilities → araç şeması ve motor durumu
  *   axiom.analyze      → dil tanıma, yapı ağacı, değişmez eşleşmeleri
- *   axiom.verify       → doğrulama kararı + mühür
+ *   axiom.verify       → doğrulama karar + mühür
  *
  * Girdi metni yanıt gövdesine kopyalanmaz, hiçbir yere kaydedilmez.
  */
@@ -78,6 +78,32 @@ function err(id: string | number | null, code: number, message: string): JsonRpc
 export async function mcpCapabilities() {
   const handle = await loadEngine().catch(() => null);
   const proofsAreSealed = Boolean(handle?.wasmLoaded);
+  const toolsList = [
+    {
+      name: "axiom.verify",
+      description:
+        "Bir iddiayı ya da kod parçasını değişmez kayıtlarıyla doğrular; karar ve mühür döner.",
+      inputSchema: {
+        type: "object",
+        properties: { text: { type: "string" } },
+        required: ["text"],
+      },
+    },
+    {
+      name: "axiom.analyze",
+      description: "Dil tanıma, yapı ağacı ölçümleri ve değişmez eşleşmelerini döner.",
+      inputSchema: {
+        type: "object",
+        properties: { text: { type: "string" } },
+        required: ["text"],
+      },
+    },
+    {
+      name: "axiom.capabilities",
+      description: "Bu şemayı döner.",
+      inputSchema: { type: "object", properties: {} },
+    },
+  ];
   return {
     server: "tedbirge-axiom",
     protocol: "jsonrpc-2.0",
@@ -85,20 +111,8 @@ export async function mcpCapabilities() {
     timeoutMs: VERIFY_TIMEOUT_MS,
     proofsAreSealed,
     engine: handle?.engine ?? "local",
-    methods: [
-      {
-        name: "axiom.verify",
-        description:
-          "Bir iddiayı ya da kod parçasını değişmez kayıtlarıyla doğrular; karar ve mühür döner.",
-        params: { text: "string" },
-      },
-      {
-        name: "axiom.analyze",
-        description: "Dil tanıma, yapı ağacı ölçümleri ve değişmez eşleşmelerini döner.",
-        params: { text: "string" },
-      },
-      { name: "axiom.capabilities", description: "Bu şemayı döner.", params: {} },
-    ],
+    tools: toolsList,
+    methods: toolsList,
   };
 }
 
@@ -147,6 +161,28 @@ export async function handleMcpRequest(
   }
   const { method, params } = parsed.data;
   const id = parsed.data.id ?? null;
+
+  // Standart MCP Yaşam Döngüsü ve El Sıkışma Metotları
+  if (method === "initialize") {
+    return ok(id, {
+      protocolVersion: "2024-11-05",
+      capabilities: {
+        tools: { listChanged: true },
+      },
+      serverInfo: {
+        name: "tedbirge-axiom",
+        version: "1.0.0",
+      },
+    });
+  }
+
+  if (method === "notifications/initialized") {
+    return ok(id, {});
+  }
+
+  if (method === "ping") {
+    return ok(id, {});
+  }
 
   if (method === "axiom.capabilities" || method === "tools/list")
     return ok(id, await mcpCapabilities());
