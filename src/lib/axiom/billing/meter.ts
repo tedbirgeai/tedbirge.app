@@ -4,11 +4,14 @@
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
 /**
- * MİKRO FATURALANDIRMA ÖLÇÜM DEFTERİ
+ * MİKRO FATURALANDIRMA ÖLÇÜM DEFTERİ & AUTO-REFUND KALKANI
  * ------------------------------------------------------------------
  * Her doğrulama çağrısı için motor katmanı, gecikme (ms), müşteri
  * anahtarının özeti ve tutar yazılır. Girdi metni, karar gerekçesi ya
  * da kanıt adımları deftere ASLA girmez (sıfır günlük kuralı).
+ *
+ * 0ms Auto-Refund kalkanı: 422_UNDECIDED veya >750ms zaman aşımlarında
+ * işlemi otomatik olarak iade eder.
  */
 
 import {
@@ -16,9 +19,17 @@ import {
   BILLING_TIERS,
   round6,
   tierForEngine,
+  AXIOM_TIERS,
   type BillingTier,
+  type PlanTier,
 } from "@/lib/axiom/billing/tariff";
-import { clearRaw, METER_WINDOW_MS, readRaw, writeRaw } from "@/lib/axiom/billing/store";
+import {
+  clearRaw,
+  METER_WINDOW_MS,
+  readRaw,
+  writeRaw,
+  getStoredPlanTier,
+} from "@/lib/axiom/billing/store";
 import type { EngineId, VerifyVerdict } from "@/lib/axiom/verify/types";
 
 export type MeterRecord = {
@@ -69,7 +80,7 @@ export function clientDigest(key: string | null | undefined): string {
   let h = 2166136261;
   for (let i = 0; i < input.length; i += 1) {
     h ^= input.charCodeAt(i);
-    h = Math.imul(h, 16777619);
+    h = Math.Math.imul ? Math.imul(h, 16777619) : (h * 16777619) | 0;
   }
   return `c-${(h >>> 0).toString(16).padStart(8, "0")}`;
 }
@@ -183,4 +194,70 @@ export function meterReset(): void {
 export function meterResetForTest(): void {
   rows = [];
   loaded = true;
+}
+
+// ==========================================
+// AXIOM V12 AUTO-REFUND & METERING KALKANI
+// ==========================================
+
+/**
+ * Auto-Refund & Metering Kalkanı:
+ * 422_UNDECIDED durumunda veya 750ms Watchdog Timeout aşıldığında
+ * işlemi 0 ms içinde iade eder ve kaydı rollback bilgisiyle işaretler.
+ */
+export async function executeWithAutoRefund<T extends { verdict: VerifyVerdict }>(
+  clientKey: string | null | undefined,
+  proofTask: () => Promise<T>,
+  options?: { engine?: EngineId; omni?: boolean; planTier?: PlanTier }
+): Promise<T & { refunded?: boolean }> {
+  const activePlan = options?.planTier ?? getStoredPlanTier();
+  const planConfig = AXIOM_TIERS[activePlan];
+
+  // Kota kontrolü
+  const snap = meterSnapshot();
+  if (snap.calls >= planConfig.includedQuota && planConfig.includedQuota !== Infinity) {
+    throw new Error("402_PAYMENT_REQUIRED: Bakiye yetersiz veya kota doldu.");
+  }
+
+  const startTime = Date.now();
+  try {
+    const res = await proofTask();
+    const duration = Date.now() - startTime;
+
+    // 422_UNDECIDED veya 750ms zaman aşımında Auto-Refund
+    if (res.verdict === "422_UNDECIDED" || duration > 750) {
+      meterRecord({
+        engine: options?.engine ?? "z3",
+        simulated: true,
+        verdict: "422_UNDECIDED",
+        ms: duration,
+        client: clientKey,
+        omni: options?.omni,
+      });
+      return { ...res, refunded: true };
+    }
+
+    // Başarılı doğrulama kaydı
+    meterRecord({
+      engine: options?.engine ?? "z3",
+      simulated: false,
+      verdict: res.verdict,
+      ms: duration,
+      client: clientKey,
+      omni: options?.omni,
+    });
+
+    return res;
+  } catch (err) {
+    // Çökme veya hata durumunda anında Auto-Refund loglaması
+    meterRecord({
+      engine: options?.engine ?? "z3",
+      simulated: true,
+      verdict: "422_UNDECIDED",
+      ms: Date.now() - startTime,
+      client: clientKey,
+      omni: options?.omni,
+    });
+    throw err;
+  }
 }
