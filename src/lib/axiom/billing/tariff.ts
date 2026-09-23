@@ -3,19 +3,59 @@
  * Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
-/**
- * B2B TARİFE TABLOSU
- * ------------------------------------------------------------------
- * Harici LLM istemcilerinden gelen her doğrulama çağrısı, kullanılan
- * motorun katmanına göre ücretlendirilir. Bu tablo tek doğruluk
- * kaynağıdır; arayüz ve ölçüm defteri buradan okur.
- *
- * Tutarlar ölçüm amaçlıdır: hiçbir ödeme sağlayıcısına bağlı değildir.
- */
-
 import type { EngineId } from "@/lib/axiom/verify/types";
 
-/** Ücretlendirme katmanları. */
+/**
+ * AXIOM™ V12 GELİR & TARİFE TABLOSU
+ * ------------------------------------------------------------------
+ * Hem 5 kademeli B2B abonelik paketlerini hem de motor bazlı
+ * mikro-doğrulama çağrı ücretlerini yöneten ana şema.
+ */
+
+// 1. B2B Abonelik Kademeleri (Plan Tiers)
+export type PlanTier = 'COMMUNITY' | 'DEVELOPER' | 'PRO' | 'ENTERPRISE' | 'SOVEREIGN';
+
+export interface PlanConfig {
+  monthlyFee: number;
+  includedQuota: number;
+  extraCostPerProof: number;
+  features: string[];
+}
+
+export const AXIOM_TIERS: Record<PlanTier, PlanConfig> = {
+  COMMUNITY: {
+    monthlyFee: 0,
+    includedQuota: 100,
+    extraCostPerProof: 0,
+    features: ["Browser Extension (Right-Click)", "Basic AST & Type Check"]
+  },
+  DEVELOPER: {
+    monthlyFee: 10,
+    includedQuota: 10000,
+    extraCostPerProof: 0.001,
+    features: ["MCP Server Access", "Local WASM Kernel", "Z3 SMT Basic Logic"]
+  },
+  PRO: {
+    monthlyFee: 49,
+    includedQuota: 65000,
+    extraCostPerProof: 0.0008,
+    features: ["Lean 4 Simulator", "Custom API Key", "Universal Gateway", "5 Team Members"]
+  },
+  ENTERPRISE: {
+    monthlyFee: 499,
+    includedQuota: 1000000,
+    extraCostPerProof: 0.0004,
+    features: ["Dedicated Gateway Node", "99.99% SLA", "SSRF Shield", "ZK Merkle Chain"]
+  },
+  SOVEREIGN: {
+    monthlyFee: 0, // Özel Teklif / Custom Quote
+    includedQuota: Infinity,
+    extraCostPerProof: 0.0001,
+    features: ["Air-Gapped On-Premise", "Custom C-ABI Hardware Enclave", "24/7 SLA"]
+  }
+};
+
+// 2. Motor Bazlı Ölçüm Katmanları (Engine Billing Tiers)
 export type BillingTier = "z3" | "lean4" | "omni";
 
 export const TARIFF: Record<BillingTier, { label: string; unitUsd: number }> = {
@@ -30,8 +70,7 @@ export const BILLING_TIERS: BillingTier[] = ["z3", "lean4", "omni"];
 export const BILLING_CURRENCY = "USD";
 
 /**
- * Motor kimliğini ücret katmanına eşler. Yerel kural kapısı en düşük
- * katman üzerinden ölçülür; tutar yine de yalnız sayaç amaçlıdır.
+ * Motor kimliğini ücret katmanına eşler.
  */
 export function tierForEngine(engine: EngineId, omni = false): BillingTier {
   if (omni) return "omni";
