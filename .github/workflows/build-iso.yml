@@ -66,16 +66,16 @@ jobs:
 
       - name: İmaj paketini doğrula
         run: |
-          if [ ! -s build-iso/web/index.html ]; then
+          if test ! -s build-iso/web/index.html; then
             echo "::error::build-iso/web/index.html üretilmedi — ön-render adımı çalışmamış."
             ls -la build-iso build-iso/web 2>/dev/null || true
             exit 1
           fi
-          if [ ! -s build-iso/web/kernel/tedbirge_kernel.wasm ]; then
+          if test ! -s build-iso/web/kernel/tedbirge_kernel.wasm; then
             echo "::error::build-iso/web/kernel/tedbirge_kernel.wasm eksik — çekirdek paketlenmemiş."
             exit 1
           fi
-          if [ -e dist ]; then
+          if test -e dist; then
             echo "::error::Yayın çıktısı (dist) imaj derlemesinde oluşmamalı — izolasyon bozulmuş."
             exit 1
           fi
@@ -97,9 +97,10 @@ jobs:
           cargo build --release --target x86_64-unknown-linux-musl \
             --manifest-path crates/tedbirge-sysbridge/Cargo.toml
           BIN=crates/target/x86_64-unknown-linux-musl/release/tedbirge-sysbridge
-          [ -s "$BIN" ] || BIN=crates/tedbirge-sysbridge/target/x86_64-unknown-linux-musl/release/tedbirge-sysbridge
-          if [ ! -s "$BIN" ]; then
-            echo "::error::tedbirge-sysbridge ikilisi üretilemedi."; exit 1
+          test -s "$BIN" || BIN=crates/tedbirge-sysbridge/target/x86_64-unknown-linux-musl/release/tedbirge-sysbridge
+          if test ! -s "$BIN"; then
+            echo "::error::tedbirge-sysbridge ikilisi üretilemedi."
+            exit 1
           fi
           mkdir -p build-iso/payload/bin
           cp "$BIN" build-iso/payload/bin/tedbirge-sysbridge
@@ -118,7 +119,7 @@ jobs:
       - name: Sürüm etiketi
         id: ver
         run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+          if test "${GITHUB_REF_TYPE}" = "tag"; then
             V="${GITHUB_REF_NAME#v}"
           else
             V="$(node -p "require('./package.json').version")+$(date -u +%Y%m%d)-$(echo "$GITHUB_SHA" | cut -c1-7)"
@@ -148,53 +149,83 @@ jobs:
       - name: Açılış testi (QEMU · gerçek donanım senaryoları)
         run: |
           export DEBIAN_FRONTEND=noninteractive
+          sudo -E apt-get update
           sudo -E apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" qemu-system-x86 ovmf mtools zstd
           ISO="build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso"
-          OVMF_CODE=""; OVMF_VARS=""
-          for c in /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_CODE.fd \
-                   /usr/share/edk2/ovmf/OVMF_CODE.fd; do
-            [ -r "$c" ] && { OVMF_CODE="$c"; break; }
+          OVMF_CODE=""
+          OVMF_VARS=""
+          for c in /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_CODE.fd /usr/share/edk2/ovmf/OVMF_CODE.fd; do
+            if test -r "$c"; then OVMF_CODE="$c"; break; fi
           done
-          for c in /usr/share/OVMF/OVMF_VARS_4M.fd /usr/share/OVMF/OVMF_VARS.fd \
-                   /usr/share/edk2/ovmf/OVMF_VARS.fd; do
-            [ -r "$c" ] && { OVMF_VARS="$c"; break; }
+          for c in /usr/share/OVMF/OVMF_VARS_4M.fd /usr/share/OVMF/OVMF_VARS.fd /usr/share/edk2/ovmf/OVMF_VARS.fd; do
+            if test -r "$c"; then OVMF_VARS="$c"; break; fi
           done
-          [ -n "$OVMF_CODE" ] \vert{}\vert{} OVMF_CODE=$(find /usr/share -type f -name 'OVMF_CODE*.fd' -print -quit)
-          [ -n "$OVMF_VARS" ] \vert{}\vert{} OVMF_VARS=$(find /usr/share -type f -name 'OVMF_VARS*.fd' -print -quit)
-          if [ -z "$OVMF_CODE" ] \vert{}\vert{} [ -z "$OVMF_VARS" ]; then
-            echo "::error::UEFI firmware bulunamadı."; exit 1
+          if test -z "$OVMF_CODE"; then
+            OVMF_CODE=$(find /usr/share -type f -name 'OVMF_CODE*.fd' -print -quit)
+          fi
+          if test -z "$OVMF_VARS"; then
+            OVMF_VARS=$(find /usr/share -type f -name 'OVMF_VARS*.fd' -print -quit)
+          fi
+          if test -z "$OVMF_CODE" \vert{}\vert{} test -z "$OVMF_VARS"; then
+            echo "::error::UEFI firmware bulunamadı."
+            exit 1
           fi
           cp "$OVMF_VARS" build-iso/OVMF_VARS.fd
           FAIL=0
           BOOT_TIMEOUT="${BOOT_TIMEOUT:-600}"
 
           run_case() {
-            NAME="$1"; MEM="$2"; shift 2
-            LOG="build-iso/boot-$NAME.log"; ERR="build-iso/boot-$NAME.stderr.log"
-            : > "$LOG"; : > "$ERR"
+            NAME="$1"
+            MEM="$2"
+            shift 2
+            LOG="build-iso/boot-$NAME.log"
+            ERR="build-iso/boot-$NAME.stderr.log"
+            : > "$LOG"
+            : > "$ERR"
             echo "==== senaryo: $NAME (${MEM} MB) ===="
             qemu-system-x86_64 \
               -m "$MEM" -smp 2 -display none -no-reboot \
               -drive if=none,id=media,format=raw,readonly=on,file="$ISO" \
               "$@" -serial file:"$LOG" 2>"$ERR" &
             QPID=$!
-            RESULT="timeout"; i=0
-            while [ "$i" -lt "$BOOT_TIMEOUT" ]; do
-              if grep -q "TEDBIRGE_BOOT_READY" "$LOG" 2>/dev/null && grep -q "TEDBIRGE_DESKTOP_READY" "$LOG" 2>/dev/null; then RESULT="ok"; break; fi
+            RESULT="timeout"
+            i=0
+            while test "$i" -lt "$BOOT_TIMEOUT"; do
+              if grep -q "TEDBIRGE_BOOT_READY" "$LOG" 2>/dev/null && grep -q "TEDBIRGE_DESKTOP_READY" "$LOG" 2>/dev/null; then
+                RESULT="ok"
+                break
+              fi
               if grep -qiE "Kernel panic|Attempted to kill init|Unable to mount root|Cannot find live |No such file or directory.*filesystem.squashfs|Failed to start Tedbirge|No bootable device|Boot failed" "$LOG" 2>/dev/null; then
-                RESULT="panic"; break
+                RESULT="panic"
+                break
               fi
               kill -0 "$QPID" 2>/dev/null || { RESULT="exited"; break; }
-              sleep 2; i=$((i + 2))
+              sleep 2
+              i=$((i + 2))
             done
-            kill -9 "$QPID" 2>/dev/null \vert{}\vert{} true; wait "$QPID" 2>/dev/null || true
+            kill -9 "$QPID" 2>/dev/null || true
+            wait "$QPID" 2>/dev/null || true
             tail -n 60 "$LOG" 2>/dev/null || true
-            [ -s "$ERR" ] && { echo "---- QEMU stderr ($NAME) ----"; cat "$ERR"; }
+            if test -s "$ERR"; then
+              echo "---- QEMU stderr ($NAME) ----"
+              cat "$ERR"
+            fi
             case "$RESULT" in
-              ok) echo "$NAME testi geçti." ;;
-              panic) echo "::error::$NAME — canlı ortam açılamadı."; FAIL=1 ;;
-              exited) echo "::error::$NAME — QEMU açılış tamamlanmadan sonlandı."; FAIL=1 ;;
-              *) echo "::error::$NAME —${BOOT_TIMEOUT}s içinde masaüstü hazır sinyali görülmedi."; FAIL=1 ;;
+              ok)
+                echo "$NAME testi geçti."
+                ;;
+              panic)
+                echo "::error::$NAME — canlı ortam açılamadı."
+                FAIL=1
+                ;;
+              exited)
+                echo "::error::$NAME — QEMU açılış tamamlanmadan sonlandı."
+                FAIL=1
+                ;;
+              *)
+                echo "::error::$NAME —${BOOT_TIMEOUT}s içinde masaüstü hazır sinyali görülmedi."
+                FAIL=1
+                ;;
             esac
           }
 
@@ -207,8 +238,9 @@ jobs:
             -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media,bootindex=0
           run_case dusuk-bellek 2048 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media,bootindex=0
 
-          if [ "$FAIL" -ne 0 ]; then
-            echo "::error::Açılış testleri başarısız — imaj yayınlanmayacak."; exit 1
+          if test "$FAIL" -ne 0; then
+            echo "::error::Açılış testleri başarısız — imaj yayınlanmayacak."
+            exit 1
           fi
           echo "Tüm açılış senaryoları geçti."
 
@@ -275,7 +307,7 @@ jobs:
       - name: Sürüm etiketi
         id: ver
         run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+          if test "${GITHUB_REF_TYPE}" = "tag"; then
             V="${GITHUB_REF_NAME#v}"
           else
             V="$(date -u +%Y%m%d)-$(echo "$GITHUB_SHA" | cut -c1-7)"
