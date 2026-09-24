@@ -157,7 +157,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
       </div>
 
       {/* Orta Alan: Geometri ve Fizik Canvas Sentezleme Penceresi */}
-      <div ref={containerRef} className="relative w-full h-40 my-1 flex flex-col justify-center items-center overflow-hidden rounded-xl bg-[var(--tb-bg-soft,#090e18)] border border-[var(--tb-border,rgba(14,165,233,0.2))] shadow-lg">
+      <div ref={containerRef} className="relative w-full h-36 my-1 flex flex-col justify-center items-center overflow-hidden rounded-xl bg-[var(--tb-bg-soft,#090e18)] border border-[var(--tb-border,rgba(14,165,233,0.2))] shadow-lg">
         <canvas ref={canvasRef} className="w-full h-full object-cover opacity-95" />
         
         {/* Canlı Hakikat Matris Kartı */}
@@ -168,9 +168,11 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
         </div>
       </div>
 
-      {/* Hazır Önerge Butonları */}
-      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-        <span className="text-[10px] text-slate-400 font-semibold mr-1">Örnek Önermeler:</span>
+      {/* YÜKSEK KONTRASTLI VE YÜZDE YÜZ OKUNAN ÖRNEK ÖNERMELER */}
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <span className="text-[11px] text-[var(--tb-text,#ffffff)] font-bold mr-1 tracking-wide">
+          Örnek Önermeler:
+        </span>
         {ORNEK_ONERMELER.map((onerme, idx) => (
           <button
             key={idx}
@@ -179,16 +181,16 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
               setCommandInput(onerme);
               handleExecute(onerme);
             }}
-            className="text-[10px] bg-[var(--tb-panel-soft,#0a101d)] text-sky-300 hover:text-white border border-sky-500/20 hover:border-sky-400 px-2.5 py-1 rounded transition-all cursor-pointer truncate max-w-[260px]"
+            className="text-[11px] font-semibold bg-sky-950 text-sky-100 hover:bg-sky-400 hover:text-slate-950 border border-sky-400 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-sm truncate max-w-[300px]"
           >
             {onerme}
           </button>
         ))}
       </div>
 
-      {/* Alt Alan: Evrensel Komut Giriş Barı */}
-      <div className="space-y-2">
-        <div className="flex items-center bg-[var(--tb-panel-soft,#0a101d)] border border-sky-500/40 rounded-xl px-4 py-2.5 shadow-md gap-2">
+      {/* Alt Alan: Evrensel Komut Giriş Barı ve Yüksek Görünürlüklü ÇALIŞTIR Butonu */}
+      <div className="space-y-2 pt-1">
+        <div className="flex items-center bg-[var(--tb-panel-soft,#0a101d)] border border-sky-500/50 rounded-xl px-4 py-2.5 shadow-md gap-2">
           <span className="text-sky-400 font-bold tracking-widest text-xs shrink-0">AXIOM&gt;</span>
           <input 
             type="text" 
@@ -196,19 +198,19 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
             onChange={(e) => setCommandInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Aksiyomatik önerme, evrensel mantık, formal teorem veya kod parçası girin..." 
-            className="w-full bg-transparent text-[var(--tb-text,#ffffff)] focus:outline-none font-mono text-xs placeholder-slate-500"
+            className="w-full bg-transparent text-[var(--tb-text,#ffffff)] focus:outline-none font-mono text-xs placeholder-slate-400 font-medium"
           />
           <button 
             type="button"
             onClick={() => handleExecute()}
             disabled={busy || !commandInput.trim()}
-            className="bg-sky-500 text-slate-950 font-bold px-6 py-2 rounded-lg text-xs hover:bg-sky-400 transition shadow-sm cursor-pointer disabled:opacity-40 shrink-0 uppercase tracking-wider"
+            className="bg-sky-500 text-slate-950 font-bold px-6 py-2.5 rounded-lg text-xs hover:bg-sky-400 transition shadow-md cursor-pointer disabled:opacity-40 shrink-0 uppercase tracking-wider font-bold"
           >
             {busy ? 'İşleniyor…' : 'ÇALIŞTIR'}
           </button>
         </div>
 
-        <div className="flex flex-wrap justify-between items-center text-[10px] text-slate-500 pt-0.5 px-1 gap-2">
+        <div className="flex flex-wrap justify-between items-center text-[10px] text-slate-400 pt-0.5 px-1 gap-2 font-medium">
           <span>AXIOM Kernel v12 — Powered by Tedbirge WebOS © 2026 Tedbirge Labs</span>
           <span className="text-sky-400 font-semibold">C-ABI SOKETİ: tedbirge_truth.sock // ZKP-SHA256</span>
         </div>
