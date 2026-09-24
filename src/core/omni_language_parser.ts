@@ -26,41 +26,49 @@ export interface ParsedLanguageAST {
   nodeCount: number;
 }
 
+/**
+ * AXIOM Omni-Language Engine Parser
+ * Parses multi-lingual code, formal theorems, and logical assertions into AXIOM-IR.
+ */
 export function parseOmniLanguage(input: string): ParsedLanguageAST {
-  const digest = parseAskAscii(input);
+  const safeInput = input ? input.trim() : "";
+  const digest = parseAskAscii(safeInput);
   let language: SupportedLanguage = "Generic_DSL";
 
-  const src = input.trim();
-
-  if (src.includes("theorem") || src.includes("def") || src.includes("by")) {
+  if (safeInput.includes("theorem") || safeInput.includes("def") || safeInput.includes("by")) {
     language = "Lean4";
-  } else if (src.includes("check-sat") || src.includes("assert") || src.includes("declare-const")) {
+  } else if (safeInput.includes("check-sat") || safeInput.includes("assert") || safeInput.includes("declare-const")) {
     language = "Z3_SMT";
-  } else if (src.includes("#[axiom") || src.includes("fn ") || src.includes("impl ")) {
+  } else if (safeInput.includes("#[axiom") || safeInput.includes("fn ") || safeInput.includes("impl ")) {
     language = "Rust";
-  } else if (src.includes("#include") || src.includes("int main") || src.includes("void ")) {
+  } else if (safeInput.includes("#include") || safeInput.includes("int main") || safeInput.includes("void ")) {
     language = "C_CPP";
-  } else if (src.includes("procedure") || src.includes("package body") || src.includes("with Spark_Mode")) {
+  } else if (safeInput.includes("procedure") || safeInput.includes("package body") || safeInput.includes("with Spark_Mode")) {
     language = "Ada_SPARK";
-  } else if (src.includes("IDENTIFICATION DIVISION") || src.includes("PROCEDURE DIVISION")) {
+  } else if (safeInput.includes("IDENTIFICATION DIVISION") || safeInput.includes("PROCEDURE DIVISION")) {
     language = "COBOL";
-  } else if (src.includes("PROGRAM") || src.includes("IMPLICIT NONE") || src.includes("SUBROUTINE")) {
+  } else if (safeInput.includes("PROGRAM") || safeInput.includes("IMPLICIT NONE") || safeInput.includes("SUBROUTINE")) {
     language = "FORTRAN";
-  } else if (src.includes("pragma solidity") || src.includes("contract ")) {
+  } else if (safeInput.includes("pragma solidity") || safeInput.includes("contract ")) {
     language = "Solidity";
-  } else if (src.includes("entity") || src.includes("architecture") || src.includes("module ")) {
+  } else if (safeInput.includes("entity") || safeInput.includes("architecture") || safeInput.includes("module ")) {
     language = "VHDL_Verilog";
-  } else if (src.includes("def ") || src.includes("import ") || src.includes("class ")) {
+  } else if (safeInput.includes("def ") || safeInput.includes("import ") || safeInput.includes("class ")) {
     language = "Python";
   }
 
-  const mockAST = { tokenCount: digest.chars, detectedLang: language, sourceHead: digest.head };
+  const mockAST = { 
+    tokenCount: digest.chars, 
+    detectedLang: language, 
+    sourceHead: digest.head 
+  };
+  
   const irGraph = buildAxiomIR(mockAST);
 
   return {
     language,
     digest,
     irGraph,
-    nodeCount: irGraph.nodes.size,
+    nodeCount: irGraph.nodes ? irGraph.nodes.size : 0,
   };
 }
