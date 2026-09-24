@@ -3,26 +3,18 @@
  * Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
-/**
- * AXIOM KERNEL v12 — KONSOL PENCERESİ & COMPOSITE MASTER SHELL
- * ------------------------------------------------------------------
- * Sanal ROM, 50 MB sınırlı sanal RAM, Web Worker daemon'ı, WebGL2 çizim
- * yüzeyi, C-ABI soket köprüsü ve canlı doğrulama oturumu tek pencerede çalışır.
- */
-
 import React, { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 // Entegre Edilen Master Shell ve C-ABI Köprüsü
 import { AxiomMasterShell } from "@/components/axiom/AxiomMasterShell";
 import { AxiomCABISocketBridge } from "@/core/axiom_cabi_bridge";
 
-// Orijinal Bileşenler ve Araçlar
+// Bileşenler ve Araçlar
 import { ArbiterPanel } from "@/components/axiom/ArbiterPanel";
 import { AstView } from "@/components/axiom/AstView";
 import { BillingDashboard } from "@/components/axiom/BillingDashboard";
 import { BridgeStatusCard } from "@/components/axiom/BridgeStatusCard";
 import { LicenseModal } from "@/components/axiom/LicenseModal";
-import { CommandBar } from "@/components/axiom/CommandBar";
 import { ProvenanceBadge } from "@/components/axiom/ProvenanceBadge";
 import { RewardsCard } from "@/components/axiom/RewardsCard";
 import { SdkPanel } from "@/components/axiom/SdkPanel";
@@ -71,7 +63,7 @@ const BOS_RAM: RamStats = {
 const WORKER_BOOT_TIMEOUT_MS = 1200;
 const WORKER_WATCHDOG_MS = VERIFY_TIMEOUT_MS + 250;
 
-// Master Shell Çalışma Zamanı Hata Yakalayıcısı
+// Master Shell Error Boundary
 interface ShellBoundaryProps {
   children?: ReactNode;
 }
@@ -94,11 +86,11 @@ class MasterShellBoundary extends Component<ShellBoundaryProps, ShellBoundarySta
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="p-4 rounded-xl border border-[var(--tb-rose-400)] bg-[var(--tb-panel-soft)] text-[var(--tb-rose-400)] font-osmono text-xs space-y-2">
+        <div className="p-4 rounded-xl border border-[var(--tb-rose-400,#f43f5e)] bg-[var(--tb-panel-soft,#0a101d)] text-[var(--tb-rose-400,#f43f5e)] font-mono text-xs space-y-2">
           <div className="font-bold uppercase tracking-wider">
-            AXIOM Master Shell Yükleme Teşhisi
+            AXIOM Komuta Merkezi Teşhisi
           </div>
-          <div>{this.state.error?.message || "Komuta merkezi bileşeni ilklendirilirken çalışma zamanı hatası oluştu."}</div>
+          <div>{this.state.error?.message || "Komuta merkezi ilklendirilirken çalışma zamanı hatası oluştu."}</div>
         </div>
       );
     }
@@ -299,7 +291,7 @@ export function AxiomApp() {
     };
   }, []);
 
-  // WebGL GPU Canvas Görselleştirici (Kesintisiz Canlı Dalga)
+  // WebGL GPU Canvas Görselleştirici
   useEffect(() => {
     const host = hostRef.current;
     const gl = glRef.current;
@@ -356,18 +348,21 @@ export function AxiomApp() {
     return () => window.clearInterval(id);
   }, [ram.used, ram.limit]);
 
-  // Çekirdek İcra / Analiz Tetikleyicisi
+  // Ana Çekirdek İcra ve Analiz Fonksiyonu
   const submit = useCallback((text: string) => {
     if (!text || !text.trim()) return;
     setLastText(text);
     setBusy(true);
     setHata(null);
+
     const worker = workerRef.current;
     if (worker) {
       const msg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
       worker.postMessage(msg);
       return;
     }
+
+    // Worker devre dışıysa doğrudan yerel analiz
     try {
       const out = localAnalyze(text);
       setAnalysis(out.analysis);
@@ -440,18 +435,18 @@ export function AxiomApp() {
   const romListesi = useMemo(() => ROM_SEED, []);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-[var(--tb-bg-soft)] p-4 text-[var(--tb-text)] font-osmono">
-      {/* 1. MASTER SHELL HEADER */}
-      <div className="w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] shadow-sm">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-[var(--tb-bg-soft,#070b12)] p-4 text-[var(--tb-text,#e2e8f0)] font-mono">
+      {/* 1. BİRLEŞİK ANA MASTER SHELL (Tekil ve Etkin Giriş Hub'ı) */}
+      <div className="w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm">
         <MasterShellBoundary>
-          <AxiomMasterShell />
+          <AxiomMasterShell onSubmit={submit} busy={busy} />
         </MasterShellBoundary>
       </div>
 
       {/* 2. ÇEKİRDEK DURUM BİLGİSİ VE SERVİS YENİDEN BAŞLATMA */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] px-4 py-3 text-[11px] text-[var(--tb-muted)] shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel-soft,#0a101d)] px-4 py-3 text-[11px] text-[var(--tb-muted,#94a3b8)] shadow-sm">
         <div className="min-w-0 flex-1 space-y-1">
-          <div className="text-[var(--tb-cyan-400)] font-bold uppercase tracking-wide">
+          <div className="text-[var(--tb-cyan-400,#38bdf8)] font-bold uppercase tracking-wide">
             Faz 1 — Çekirdek Doğrulama Motoru Aktif (Çevrimiçi)
           </div>
           <div>
@@ -464,24 +459,19 @@ export function AxiomApp() {
           type="button"
           onClick={restart}
           variant="outline"
-          className="h-8 shrink-0 border-[var(--tb-cyan-400)] bg-transparent px-3 font-osmono text-[10px] font-bold uppercase tracking-wide text-[var(--tb-cyan-400)] hover:bg-[var(--tb-cyan-400)]/10"
+          className="h-8 shrink-0 border-sky-400/40 bg-transparent px-3 font-mono text-[10px] font-bold uppercase tracking-wide text-sky-400 hover:bg-sky-400/10 cursor-pointer"
         >
           Servisi Yeniden Başlat
         </Button>
       </div>
 
-      {/* 3. TEK ŞABLONLU ANINDA ÇALIŞAN DOĞRUDAN SORGU VE KOMUT BAR */}
-      <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3 shadow-sm">
-        <CommandBar busy={busy} onSubmit={submit} />
-      </div>
-
-      {/* 4. BELLEK VE SİSTEM PROFİLCİSİ */}
+      {/* 3. BELLEK VE SİSTEM PROFİLCİSİ */}
       <MemoryProfiler ram={ram} rom={rom} heap={heap} mode={mode} />
 
-      {/* 5. CANLI WebGL GPU CANVAS (Akağan Neon Dalga Yüzeyi) */}
+      {/* 4. CANLI WebGL GPU CANVAS (Akağan Neon Dalga Yüzeyi) */}
       <div
         ref={hostRef}
-        className="relative h-48 w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] shadow-sm sm:h-56"
+        className="relative h-44 w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm sm:h-52"
       >
         <canvas ref={glRef} className="absolute inset-0 block h-full w-full" />
         <canvas ref={textRef} className="absolute inset-0 pointer-events-none block h-full w-full" />
@@ -490,11 +480,11 @@ export function AxiomApp() {
       {hata ? (
         <div
           role="alert"
-          className="rounded-lg border border-[var(--tb-rose-400)] bg-[var(--tb-panel)] px-4 py-3 text-[11px] text-[var(--tb-rose-400)] shadow-sm space-y-2"
+          className="rounded-lg border border-[var(--tb-rose-400,#f43f5e)] bg-[var(--tb-panel,#070b12)] px-4 py-3 text-[11px] text-[var(--tb-rose-400,#f43f5e)] shadow-sm space-y-2"
         >
-          <div className="break-words font-semibold">Çözümleme teşhisi: {hata}</div>
+          <div className="break-words font-semibold">Çözümleme Teşhisi: {hata}</div>
           {yerel ? (
-            <div className="text-[var(--tb-muted)]">
+            <div className="text-[var(--tb-muted,#94a3b8)]">
               Yerel motor devrede: Çözümleme ve doğrulama ana iş parçacığında kesintisiz ve güvenli olarak sürdürülüyor.
             </div>
           ) : null}
@@ -502,14 +492,14 @@ export function AxiomApp() {
             type="button"
             onClick={restart}
             variant="outline"
-            className="border-[var(--tb-cyan-400)] bg-transparent text-[var(--tb-cyan-400)] text-[10px] font-bold uppercase tracking-wide hover:bg-[var(--tb-cyan-400)]/10"
+            className="border-sky-400 bg-transparent text-sky-400 text-[10px] font-bold uppercase tracking-wide hover:bg-sky-400/10 cursor-pointer"
           >
-            Servisi yeniden başlat
+            Servisi Yeniden Başlat
           </Button>
         </div>
       ) : null}
 
-      {/* 6. MODÜLER SEKMELER (Konsol, Faturalandırma, Ağ, SDK) */}
+      {/* 5. MODÜLER SEKMELER (Konsol, Faturalandırma, Ağ, SDK) */}
       <div role="tablist" aria-label="AXIOM" className="flex flex-wrap gap-1.5">
         {(["console", "billing", "network", "sdk"] as const).map((id) => (
           <Button
@@ -519,11 +509,11 @@ export function AxiomApp() {
             aria-selected={sekme === id}
             onClick={() => setSekme(id)}
             variant="outline"
-            className="h-8 rounded-lg px-4 py-1 font-osmono text-[11px] font-bold uppercase tracking-wider transition-colors"
+            className="h-8 rounded-lg px-4 py-1 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
             style={{
-              borderColor: sekme === id ? "var(--tb-cyan-400)" : "var(--tb-border)",
-              color: sekme === id ? "var(--tb-cyan-400)" : "var(--tb-muted)",
-              backgroundColor: sekme === id ? "var(--tb-panel)" : "transparent",
+              borderColor: sekme === id ? "var(--tb-cyan-400, #38bdf8)" : "var(--tb-border, rgba(14,165,233,0.3))",
+              color: sekme === id ? "var(--tb-cyan-400, #38bdf8)" : "var(--tb-muted, #94a3b8)",
+              backgroundColor: sekme === id ? "var(--tb-panel, #070b12)" : "transparent",
             }}
           >
             {t(`tab.${id}`)}
@@ -550,8 +540,6 @@ export function AxiomApp() {
         </div>
       ) : null}
 
-      {sekme === "sdk" ? <SdkPanel /> : null}
-
       {sekme !== "console" ? null : (
         <>
           <div className="grid gap-3 lg:grid-cols-2">
@@ -569,7 +557,7 @@ export function AxiomApp() {
               onClick={runVerify}
               disabled={verifying || !lastText.trim()}
               variant="outline"
-              className="border-[var(--tb-cyan-400)] bg-transparent font-osmono text-[11px] font-bold uppercase tracking-wide text-[var(--tb-cyan-400)] hover:bg-[var(--tb-cyan-400)]/10 disabled:opacity-40"
+              className="border-sky-400 bg-transparent font-mono text-[11px] font-bold uppercase tracking-wide text-sky-400 hover:bg-sky-400/10 disabled:opacity-40 cursor-pointer"
             >
               {verifying ? "Doğrulanıyor…" : "Doğrula"}
             </Button>
@@ -577,11 +565,11 @@ export function AxiomApp() {
               type="button"
               onClick={restart}
               variant="outline"
-              className="border-[var(--tb-border)] bg-transparent font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+              className="border-[var(--tb-border,rgba(14,165,233,0.3))] bg-transparent font-mono text-[11px] uppercase tracking-wide text-[var(--tb-muted,#94a3b8)] hover:text-[var(--tb-text,#ffffff)] cursor-pointer"
             >
               Servisi Yeniden Başlat
             </Button>
-            <span className="font-osmono text-[10px] text-[var(--tb-muted)]">
+            <span className="font-mono text-[10px] text-[var(--tb-muted,#94a3b8)]">
               Sert zaman sınırı 500 ms · aşılırsa doğrulama kesilir ve zaman aşımı bildirilir
             </span>
           </div>
@@ -591,47 +579,47 @@ export function AxiomApp() {
           </VerifyBoundary>
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3 shadow-sm">
-              <div className="font-osmono text-[11px] font-bold uppercase tracking-wide text-[var(--tb-muted)]">
-                Bayt çözümlemesi (ASK ASCII/1.0)
+            <div className="rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] p-3 shadow-sm">
+              <div className="font-mono text-[11px] font-bold uppercase tracking-wide text-[var(--tb-muted,#94a3b8)]">
+                Bayt Çözümlemesi (ASK ASCII/1.0)
               </div>
               {digest ? (
-                <dl className="mt-2 space-y-1 font-osmono text-[11px] text-[var(--tb-text)]">
+                <dl className="mt-2 space-y-1 font-mono text-[11px] text-[var(--tb-text,#ffffff)]">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-[var(--tb-muted)]">Bayt / karakter</dt>
+                    <dt className="text-[var(--tb-muted,#94a3b8)]">Bayt / Karakter</dt>
                     <dd>
                       {digest.bytes} / {digest.chars}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-[var(--tb-muted)]">Saf ASCII</dt>
-                    <dd>{digest.ascii ? "evet" : "hayır (UTF-8 çok baytlı)"}</dd>
+                    <dt className="text-[var(--tb-muted,#94a3b8)]">Saf ASCII</dt>
+                    <dd>{digest.ascii ? "Evet" : "Hayır (UTF-8 çok baytlı)"}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-[var(--tb-muted)]">Parmak izi</dt>
-                    <dd className="text-[var(--tb-cyan-400)] truncate max-w-[200px]">{digest.fingerprint}</dd>
+                    <dt className="text-[var(--tb-muted,#94a3b8)]">Parmak İzi</dt>
+                    <dd className="text-sky-400 truncate max-w-[200px]">{digest.fingerprint}</dd>
                   </div>
                   <div>
-                    <dt className="text-[var(--tb-muted)]">İlk 16 bayt</dt>
+                    <dt className="text-[var(--tb-muted,#94a3b8)]">İlk 16 Bayt</dt>
                     <dd className="break-all">{digest.head || "—"}</dd>
                   </div>
                 </dl>
               ) : (
-                <p className="mt-2 font-osmono text-[11px] text-[var(--tb-muted)]">
+                <p className="mt-2 font-mono text-[11px] text-[var(--tb-muted,#94a3b8)]">
                   Çözümleme için bir metin gönderin.
                 </p>
               )}
             </div>
 
-            <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3 shadow-sm">
-              <div className="font-osmono text-[11px] font-bold uppercase tracking-wide text-[var(--tb-muted)]">
-                Değişmez aksiyom tabanı (salt-okunur)
+            <div className="rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] p-3 shadow-sm">
+              <div className="font-mono text-[11px] font-bold uppercase tracking-wide text-[var(--tb-muted,#94a3b8)]">
+                Değişmez Aksiyom Tabanı (Salt-Okunur)
               </div>
               <ul className="mt-2 space-y-2">
                 {romListesi.map((b) => (
-                  <li key={b.key} className="font-osmono text-[11px]">
-                    <div className="text-[var(--tb-text)] font-semibold">{b.label}</div>
-                    <div className="text-[var(--tb-muted)] truncate">{b.body}</div>
+                  <li key={b.key} className="font-mono text-[11px]">
+                    <div className="text-[var(--tb-text,#ffffff)] font-semibold">{b.label}</div>
+                    <div className="text-[var(--tb-muted,#94a3b8)] truncate">{b.body}</div>
                   </li>
                 ))}
               </ul>
@@ -642,7 +630,7 @@ export function AxiomApp() {
 
       <LicenseModal open={lisans} peers={node.peers} onClose={() => setLisans(false)} />
 
-      <div className="pt-2 text-center font-osmono text-[10px] text-[var(--tb-muted)] tracking-wider">
+      <div className="pt-2 text-center font-mono text-[10px] text-[var(--tb-muted,#94a3b8)] tracking-wider">
         {AXIOM_BRAND_BANNER}
       </div>
     </div>
