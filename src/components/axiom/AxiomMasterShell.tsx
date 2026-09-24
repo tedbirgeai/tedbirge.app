@@ -168,7 +168,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
         </div>
       </div>
 
-      {/* YÜKSEK KONTRASTLI VE YÜZDE YÜZ OKUNAN ÖRNEK ÖNERMELER */}
+      {/* YÜKSEK KONTRASTLI VE NET ÖRNEK ÖNERMELER */}
       <div className="flex flex-wrap items-center gap-2 pt-1">
         <span className="text-[11px] text-[var(--tb-text,#ffffff)] font-bold mr-1 tracking-wide">
           Örnek Önermeler:
@@ -204,7 +204,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
             type="button"
             onClick={() => handleExecute()}
             disabled={busy || !commandInput.trim()}
-            className="bg-sky-500 text-slate-950 font-bold px-6 py-2.5 rounded-lg text-xs hover:bg-sky-400 transition shadow-md cursor-pointer disabled:opacity-40 shrink-0 uppercase tracking-wider font-bold"
+            className="bg-sky-500 text-slate-950 font-bold px-6 py-2.5 rounded-lg text-xs hover:bg-sky-400 transition shadow-md cursor-pointer disabled:opacity-40 shrink-0 uppercase tracking-wider"
           >
             {busy ? 'İşleniyor…' : 'ÇALIŞTIR'}
           </button>
