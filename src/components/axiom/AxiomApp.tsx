@@ -436,8 +436,8 @@ export function AxiomApp() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-      {/* 1. YENİ AXIOM V12 MASTER SHELL & C-ABI BLOOMBERG KOMUTA MERKEZİ */}
-      <div className="w-full min-h-[520px] rounded-xl border border-sky-500/30 overflow-hidden shadow-2xl flex flex-col shrink-0">
+      {/* 1. KONSOL / KOMUTA MERKEZİ (Dengeli Kompakt Boyut & Tema Uyumlu) */}
+      <div className="w-full h-[360px] rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] overflow-hidden shadow-xl flex flex-col shrink-0">
         <MasterShellBoundary>
           <AxiomMasterShell />
         </MasterShellBoundary>
