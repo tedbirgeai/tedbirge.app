@@ -10,7 +10,7 @@
  * yüzeyi, C-ABI soket köprüsü ve canlı doğrulama oturumu tek pencerede çalışır.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 // Entegre Edilen Master Shell ve C-ABI Köprüsü
 import { AxiomMasterShell } from "@/components/axiom/AxiomMasterShell";
@@ -70,6 +70,41 @@ const BOS_RAM: RamStats = {
 
 const WORKER_BOOT_TIMEOUT_MS = 1200;
 const WORKER_WATCHDOG_MS = VERIFY_TIMEOUT_MS + 250;
+
+// Master Shell Çalışma Zamanı Hata Yakalayıcısı
+interface ShellBoundaryProps {
+  children?: ReactNode;
+}
+
+interface ShellBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class MasterShellBoundary extends Component<ShellBoundaryProps, ShellBoundaryState> {
+  public state: ShellBoundaryState = {
+    hasError: false,
+    error: null,
+  };
+
+  public static getDerivedStateFromError(error: Error): ShellBoundaryState {
+    return { hasError: true, error };
+  }
+
+  public render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 rounded-xl border border-rose-500/40 bg-rose-950/30 text-rose-300 font-mono text-xs space-y-2">
+          <div className="font-bold uppercase tracking-wider text-rose-400">
+            AXIOM Master Shell Yükleme Teşhisi
+          </div>
+          <div>{this.state.error?.message || "Komuta merkezi bileşeni ilklendirilirken çalışma zamanı hatası oluştu."}</div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export function AxiomApp() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -402,8 +437,10 @@ export function AxiomApp() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
       {/* 1. YENİ AXIOM V12 MASTER SHELL & C-ABI BLOOMBERG KOMUTA MERKEZİ */}
-      <div className="rounded-xl border border-sky-500/30 overflow-hidden shadow-2xl">
-        <AxiomMasterShell />
+      <div className="w-full min-h-[520px] rounded-xl border border-sky-500/30 overflow-hidden shadow-2xl flex flex-col shrink-0">
+        <MasterShellBoundary>
+          <AxiomMasterShell />
+        </MasterShellBoundary>
       </div>
 
       {/* 2. ORİJİNAL ÇEKİRDEK BİLGİ DÜĞMESİ VE YENİDEN BAŞLATMA ALANI */}
