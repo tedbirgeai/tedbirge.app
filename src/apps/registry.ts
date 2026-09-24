@@ -40,6 +40,16 @@ const CAPS: Record<ShellAppId, Capability[]> = {
 
 /** Masaüstü yerleşik modüllerinin dar yetenek listeleri. */
 const DESKTOP_CAPS: Record<string, Capability[]> = {
+  axiom: [
+    "mesh.send",
+    "mesh.receive",
+    "mesh.route",
+    "identity.read",
+    "status.read",
+    "files.read",
+    "files.write",
+    "files.delete"
+  ],
   messenger: ["mesh.send", "mesh.receive", "mesh.route", "identity.read", "status.read"],
   files: ["mesh.send", "mesh.receive", "status.read", "files.read", "files.write", "files.delete"],
   transfer: ["mesh.send", "mesh.receive", "status.read"],
@@ -57,7 +67,7 @@ const DESKTOP_CAPS: Record<string, Capability[]> = {
 
 const registry = new Map<string, AppManifest>([
   ...SHELL_APPS.map(
-    (a) => [a.id, { ...a, kind: "builtin" as const, capabilities: CAPS[a.id] }] as const,
+    (a) => [a.id, { ...a, kind: "builtin" as const, capabilities: CAPS[a.id] ?? ["status.read"] }] as const,
   ),
   // Masaüstü yerleşik pencereleri (Dosyalar, Medya, Müzik, Mağaza…):
   // kayıtsız hiçbir pencere açılmaz, her biri yeteneğiyle sınırlıdır.
