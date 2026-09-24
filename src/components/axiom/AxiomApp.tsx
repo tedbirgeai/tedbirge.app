@@ -63,7 +63,7 @@ const BOS_RAM: RamStats = {
 const WORKER_BOOT_TIMEOUT_MS = 1200;
 const WORKER_WATCHDOG_MS = VERIFY_TIMEOUT_MS + 250;
 
-// Master Shell Error Boundary
+// Error Boundary
 interface ShellBoundaryProps {
   children?: ReactNode;
 }
@@ -362,7 +362,6 @@ export function AxiomApp() {
       return;
     }
 
-    // Worker devre dışıysa doğrudan yerel analiz
     try {
       const out = localAnalyze(text);
       setAnalysis(out.analysis);
@@ -436,14 +435,92 @@ export function AxiomApp() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-[var(--tb-bg-soft,#070b12)] p-4 text-[var(--tb-text,#e2e8f0)] font-mono">
-      {/* 1. BİRLEŞİK ANA MASTER SHELL (Tekil ve Etkin Giriş Hub'ı) */}
+      {/* 1. BİRLEŞİK ANA MASTER SHELL (ÇALIŞTIR Butonlu Komuta Hub'ı) */}
       <div className="w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm">
         <MasterShellBoundary>
           <AxiomMasterShell onSubmit={submit} busy={busy} />
         </MasterShellBoundary>
       </div>
 
-      {/* 2. ÇEKİRDEK DURUM BİLGİSİ VE SERVİS YENİDEN BAŞLATMA */}
+      {/* 2. ANINDA GÖRSELLEŞTİRİLEN ANALİZ VE İCRA SONUÇLARI (ÇALIŞTIR'A BASINCA TAM ALNINDA GÖRÜNÜR) */}
+      {analysis || busy ? (
+        <div className="rounded-xl border border-sky-500/40 bg-[var(--tb-panel,#070b12)] p-4 shadow-lg space-y-4">
+          <div className="flex items-center justify-between border-b border-sky-500/30 pb-2">
+            <span className="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              ANLIK ANALİZ VE İCRA TEŞHİSİ
+            </span>
+            <span className="text-[10px] text-slate-400">
+              {busy ? "Çözümleniyor..." : lastText ? `İşlenen Sorgu: "${lastText.slice(0, 40)}..."` : ""}
+            </span>
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            <LanguageCard lang={analysis?.lang ?? null} />
+            <NodeStatusCard onOpenLicense={() => setLisans(true)} />
+          </div>
+
+          <AstView ast={analysis?.ast ?? null} metrics={analysis?.metrics ?? null} />
+
+          <InvariantMatrix matches={analysis?.matches ?? []} />
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel-soft,#0a101d)] p-3 shadow-sm">
+              <div className="font-mono text-[11px] font-bold uppercase tracking-wide text-sky-400">
+                Bayt Çözümlemesi ve Parmak İzi (ASK ASCII/1.0)
+              </div>
+              {digest ? (
+                <dl className="mt-2 space-y-1 font-mono text-[11px] text-[var(--tb-text,#ffffff)]">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-slate-400">Bayt / Karakter</dt>
+                    <dd className="font-bold">{digest.bytes} / {digest.chars}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-slate-400">Saf ASCII</dt>
+                    <dd>{digest.ascii ? "Evet" : "Hayır (UTF-8 çok baytlı)"}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-slate-400">Parmak İzi (Hash)</dt>
+                    <dd className="text-sky-400 font-bold truncate max-w-[220px]">{digest.fingerprint}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-400">İlk 16 Bayt</dt>
+                    <dd className="break-all text-[10px] text-slate-300">{digest.head || "—"}</dd>
+                  </div>
+                </dl>
+              ) : (
+                <p className="mt-2 font-mono text-[11px] text-slate-400">Çözümleme verisi bekleniyor...</p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel-soft,#0a101d)] p-3 shadow-sm">
+              <div className="font-mono text-[11px] font-bold uppercase tracking-wide text-sky-400">
+                Formal Doğrulama ve Mühürlü Kanıt
+              </div>
+              <div className="mt-2 space-y-2">
+                <Button
+                  type="button"
+                  onClick={runVerify}
+                  disabled={verifying || !lastText.trim()}
+                  variant="outline"
+                  className="w-full border-sky-400 bg-sky-500/10 font-mono text-[11px] font-bold uppercase tracking-wide text-sky-400 hover:bg-sky-400 hover:text-slate-950 disabled:opacity-40 cursor-pointer h-9 transition-all"
+                >
+                  {verifying ? "Kanıt Doğrulanıyor…" : "Z3 / Lean 4 Mühürlü Kanıt Üret ve Doğrula"}
+                </Button>
+                <p className="text-[10px] text-slate-400">
+                  Sert zaman sınırı 500 ms · aşılırsa yerel mühürsüz denetim devrede kalır.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <VerifyBoundary>
+            <ProofViewer result={proof} />
+          </VerifyBoundary>
+        </div>
+      ) : null}
+
+      {/* 3. ÇEKİRDEK DURUM BİLGİSİ VE SERVİS YENİDEN BAŞLATMA */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel-soft,#0a101d)] px-4 py-3 text-[11px] text-[var(--tb-muted,#94a3b8)] shadow-sm">
         <div className="min-w-0 flex-1 space-y-1">
           <div className="text-[var(--tb-cyan-400,#38bdf8)] font-bold uppercase tracking-wide">
@@ -465,10 +542,10 @@ export function AxiomApp() {
         </Button>
       </div>
 
-      {/* 3. BELLEK VE SİSTEM PROFİLCİSİ */}
+      {/* 4. BELLEK VE SİSTEM PROFİLCİSİ */}
       <MemoryProfiler ram={ram} rom={rom} heap={heap} mode={mode} />
 
-      {/* 4. CANLI WebGL GPU CANVAS (Akağan Neon Dalga Yüzeyi) */}
+      {/* 5. CANLI WebGL GPU CANVAS (Akağan Neon Dalga Yüzeyi) */}
       <div
         ref={hostRef}
         className="relative h-44 w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm sm:h-52"
@@ -499,7 +576,7 @@ export function AxiomApp() {
         </div>
       ) : null}
 
-      {/* 5. MODÜLER SEKMELER (Konsol, Faturalandırma, Ağ, SDK) */}
+      {/* 6. MODÜLER SEKMELER (Konsol, Faturalandırma, Ağ, SDK) */}
       <div role="tablist" aria-label="AXIOM" className="flex flex-wrap gap-1.5">
         {(["console", "billing", "network", "sdk"] as const).map((id) => (
           <Button
@@ -540,93 +617,23 @@ export function AxiomApp() {
         </div>
       ) : null}
 
-      {sekme !== "console" ? null : (
-        <>
-          <div className="grid gap-3 lg:grid-cols-2">
-            <LanguageCard lang={analysis?.lang ?? null} />
-            <NodeStatusCard onOpenLicense={() => setLisans(true)} />
+      {sekme === "sdk" ? <SdkPanel /> : null}
+
+      {sekme === "console" && !analysis ? (
+        <div className="rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] p-4 shadow-sm">
+          <div className="font-mono text-[11px] font-bold uppercase tracking-wide text-slate-400">
+            Değişmez Aksiyom Tabanı (Salt-Okunur)
           </div>
-
-          <AstView ast={analysis?.ast ?? null} metrics={analysis?.metrics ?? null} />
-
-          <InvariantMatrix matches={analysis?.matches ?? []} />
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              onClick={runVerify}
-              disabled={verifying || !lastText.trim()}
-              variant="outline"
-              className="border-sky-400 bg-transparent font-mono text-[11px] font-bold uppercase tracking-wide text-sky-400 hover:bg-sky-400/10 disabled:opacity-40 cursor-pointer"
-            >
-              {verifying ? "Doğrulanıyor…" : "Doğrula"}
-            </Button>
-            <Button
-              type="button"
-              onClick={restart}
-              variant="outline"
-              className="border-[var(--tb-border,rgba(14,165,233,0.3))] bg-transparent font-mono text-[11px] uppercase tracking-wide text-[var(--tb-muted,#94a3b8)] hover:text-[var(--tb-text,#ffffff)] cursor-pointer"
-            >
-              Servisi Yeniden Başlat
-            </Button>
-            <span className="font-mono text-[10px] text-[var(--tb-muted,#94a3b8)]">
-              Sert zaman sınırı 500 ms · aşılırsa doğrulama kesilir ve zaman aşımı bildirilir
-            </span>
-          </div>
-
-          <VerifyBoundary>
-            <ProofViewer result={proof} />
-          </VerifyBoundary>
-
-          <div className="grid gap-3 lg:grid-cols-2">
-            <div className="rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] p-3 shadow-sm">
-              <div className="font-mono text-[11px] font-bold uppercase tracking-wide text-[var(--tb-muted,#94a3b8)]">
-                Bayt Çözümlemesi (ASK ASCII/1.0)
-              </div>
-              {digest ? (
-                <dl className="mt-2 space-y-1 font-mono text-[11px] text-[var(--tb-text,#ffffff)]">
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-[var(--tb-muted,#94a3b8)]">Bayt / Karakter</dt>
-                    <dd>
-                      {digest.bytes} / {digest.chars}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-[var(--tb-muted,#94a3b8)]">Saf ASCII</dt>
-                    <dd>{digest.ascii ? "Evet" : "Hayır (UTF-8 çok baytlı)"}</dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-[var(--tb-muted,#94a3b8)]">Parmak İzi</dt>
-                    <dd className="text-sky-400 truncate max-w-[200px]">{digest.fingerprint}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-[var(--tb-muted,#94a3b8)]">İlk 16 Bayt</dt>
-                    <dd className="break-all">{digest.head || "—"}</dd>
-                  </div>
-                </dl>
-              ) : (
-                <p className="mt-2 font-mono text-[11px] text-[var(--tb-muted,#94a3b8)]">
-                  Çözümleme için bir metin gönderin.
-                </p>
-              )}
-            </div>
-
-            <div className="rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] p-3 shadow-sm">
-              <div className="font-mono text-[11px] font-bold uppercase tracking-wide text-[var(--tb-muted,#94a3b8)]">
-                Değişmez Aksiyom Tabanı (Salt-Okunur)
-              </div>
-              <ul className="mt-2 space-y-2">
-                {romListesi.map((b) => (
-                  <li key={b.key} className="font-mono text-[11px]">
-                    <div className="text-[var(--tb-text,#ffffff)] font-semibold">{b.label}</div>
-                    <div className="text-[var(--tb-muted,#94a3b8)] truncate">{b.body}</div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </>
-      )}
+          <ul className="mt-2 space-y-2">
+            {romListesi.map((b) => (
+              <li key={b.key} className="font-mono text-[11px]">
+                <div className="text-[var(--tb-text,#ffffff)] font-semibold">{b.label}</div>
+                <div className="text-slate-400 truncate">{b.body}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <LicenseModal open={lisans} peers={node.peers} onClose={() => setLisans(false)} />
 
