@@ -81,9 +81,19 @@ function safeBounds() {
   };
 }
 
-function preferredSize() {
+/** Uygulama türüne göre ideal varsayılan pencere boyutları. */
+function preferredSize(appId?: string) {
   const bounds = safeBounds();
   if (bounds.width < 768) return { w: bounds.width, h: bounds.height };
+  
+  // AXIOM Komuta Merkezi için yüksek çözünürlüklü varsayılan boyut
+  if (appId === "axiom") {
+    return {
+      w: Math.min(1240, Math.max(840, Math.round(bounds.width * 0.88))),
+      h: Math.min(820, Math.max(560, Math.round(bounds.height * 0.82))),
+    };
+  }
+
   return {
     w: Math.min(980, Math.max(520, Math.round(bounds.width * 0.62))),
     h: Math.min(720, Math.max(380, Math.round(bounds.height * 0.72))),
@@ -132,9 +142,9 @@ function normalizeZ(topId?: string) {
 }
 
 /** Yeni pencere için kademeli (cascade) başlangıç konumu. */
-function nextGeometry(index: number) {
+function nextGeometry(index: number, appId?: string) {
   const bounds = safeBounds();
-  const { w, h } = preferredSize();
+  const { w, h } = preferredSize(appId);
   const center = clampBox({
     w,
     h,
@@ -202,7 +212,7 @@ export function openWindow(appId: string, title: string, fresh = false): string 
       z: zTop + Z_STEP,
       maximized: false,
       minimized: false,
-      ...nextGeometry(seq),
+      ...nextGeometry(seq, appId),
     },
   ];
   normalizeZ(id);
