@@ -94,8 +94,8 @@ class MasterShellBoundary extends Component<ShellBoundaryProps, ShellBoundarySta
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="p-4 rounded-xl border border-rose-500/40 bg-rose-950/30 text-rose-300 font-mono text-xs space-y-2">
-          <div className="font-bold uppercase tracking-wider text-rose-400">
+        <div className="p-4 rounded-xl border border-[var(--tb-rose-400)] bg-[var(--tb-panel)] text-[var(--tb-rose-400)] font-osmono text-xs space-y-2">
+          <div className="font-bold uppercase tracking-wider">
             AXIOM Master Shell Yükleme Teşhisi
           </div>
           <div>{this.state.error?.message || "Komuta merkezi bileşeni ilklendirilirken çalışma zamanı hatası oluştu."}</div>
@@ -435,31 +435,29 @@ export function AxiomApp() {
   const romListesi = useMemo(() => ROM_SEED, []);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-      {/* 1. KONSOL / KOMUTA MERKEZİ (Dengeli Kompakt Boyut & Tema Uyumlu) */}
-      <div className="w-full h-[360px] rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] overflow-hidden shadow-xl flex flex-col shrink-0">
+    <div className="flex h-full w-full flex-col overflow-y-auto bg-[var(--tb-panel-soft)] p-4 text-[var(--tb-text)] gap-4">
+      {/* 1. AXIOM MASTER SHELL (Tema Uyumlu, Kompakt ve Kesilmeyen Tasarım) */}
+      <div className="w-full shrink-0 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] shadow-md overflow-hidden">
         <MasterShellBoundary>
           <AxiomMasterShell />
         </MasterShellBoundary>
       </div>
 
-      {/* 2. ORİJİNAL ÇEKİRDEK BİLGİ DÜĞMESİ VE YENİDEN BAŞLATMA ALANI */}
-      <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-muted)]">
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="text-[var(--tb-cyan-400)]">
+      {/* 2. ÇEKİRDEK DURUM & YENİDEN BAŞLATMA */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-muted)] shadow-sm">
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <div className="font-semibold text-[var(--tb-cyan-400)]">
             Faz 1 — Çekirdek Doğrulama Motoru Aktif (Çevrimiçi)
           </div>
-          <div>
-            {kernelBadge} · Çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve
-            değilmez eşleştirme etkin. Yerel Z3/Lean ikilisi hazır olduğunda mühürlü kanıt üretir;
-            aksi durumda mühürsüz kural denetimiyle güvenli karar kapısı açık kalır.
+          <div className="truncate">
+            {kernelBadge} · Çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı ve değilmez eşleştirme etkin.
           </div>
         </div>
         <Button
           type="button"
           onClick={restart}
           variant="outline"
-          className="h-7 shrink-0 border-[var(--tb-cyan-400)] px-2 font-osmono text-[10px] uppercase tracking-wide text-[var(--tb-cyan-400)]"
+          className="h-7 shrink-0 border-[var(--tb-cyan-400)] bg-transparent px-2 font-osmono text-[10px] uppercase tracking-wide text-[var(--tb-cyan-400)] hover:bg-[var(--tb-cyan-400)]/10"
         >
           Servisi Yeniden Başlat
         </Button>
@@ -471,7 +469,7 @@ export function AxiomApp() {
       {/* 4. CANLI GPU / CANVAS ÇİZİM YÜZEYİ */}
       <div
         ref={hostRef}
-        className="relative h-56 shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] sm:h-64"
+        className="relative h-48 shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] shadow-sm sm:h-56"
       >
         <canvas ref={glRef} className="absolute inset-0 block" />
         <canvas ref={textRef} className="absolute inset-0 block" />
@@ -482,7 +480,7 @@ export function AxiomApp() {
       {hata ? (
         <div
           role="alert"
-          className="rounded-lg border border-[var(--tb-rose-400)] bg-[var(--tb-bg-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-rose-400)]"
+          className="rounded-lg border border-[var(--tb-rose-400)] bg-[var(--tb-panel)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-rose-400)] shadow-sm"
         >
           <div className="break-words">Çözümleme tamamlanamadı: {hata}</div>
           {yerel ? (
@@ -494,14 +492,14 @@ export function AxiomApp() {
             type="button"
             onClick={restart}
             variant="outline"
-            className="mt-2 border-[var(--tb-cyan-400)] font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)]"
+            className="mt-2 border-[var(--tb-cyan-400)] bg-transparent font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)]"
           >
             Servisi yeniden başlat
           </Button>
         </div>
       ) : null}
 
-      {/* 5. SEKMELER */}
+      {/* 5. MODÜLER SEKMELER */}
       <div role="tablist" aria-label="AXIOM" className="flex flex-wrap gap-1">
         {(["console", "billing", "network", "sdk"] as const).map((id) => (
           <Button
@@ -511,10 +509,11 @@ export function AxiomApp() {
             aria-selected={sekme === id}
             onClick={() => setSekme(id)}
             variant="outline"
-            className="h-7 rounded-lg px-3 py-1 font-osmono text-[11px] uppercase tracking-wide"
+            className="h-7 rounded-lg px-3 py-1 font-osmono text-[11px] uppercase tracking-wide transition-colors"
             style={{
               borderColor: sekme === id ? "var(--tb-cyan-400)" : "var(--tb-border)",
-              color: sekme === id ? "var(--tb-cyan-400)" : "var(--tb-muted)",
+              backgroundColor: sekme === id ? "var(--tb-cyan-400)" : "transparent",
+              color: sekme === id ? "#fff" : "var(--tb-muted)",
             }}
           >
             {t(`tab.${id}`)}
@@ -560,7 +559,7 @@ export function AxiomApp() {
               onClick={runVerify}
               disabled={verifying || !lastText.trim()}
               variant="outline"
-              className="border-[var(--tb-cyan-400)] font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)] disabled:opacity-40"
+              className="border-[var(--tb-cyan-400)] bg-transparent font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-cyan-400)] disabled:opacity-40"
             >
               {verifying ? "Doğrulanıyor…" : "Doğrula"}
             </Button>
@@ -568,12 +567,12 @@ export function AxiomApp() {
               type="button"
               onClick={restart}
               variant="outline"
-              className="border-[var(--tb-border)] font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+              className="border-[var(--tb-border)] bg-transparent font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
             >
               Servisi Yeniden Başlat
             </Button>
             <span className="font-osmono text-[10px] text-[var(--tb-muted)]">
-              Sert zaman sınırı 500 ms · aşılırsa doğrulama kesilir ve zaman aşımı bildirilir
+              Sert zaman sınırı 500 ms · aşılırsa doğrulama kesilir
             </span>
           </div>
 
@@ -582,7 +581,7 @@ export function AxiomApp() {
           </VerifyBoundary>
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3">
+            <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3 shadow-sm">
               <div className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">
                 Bayt çözümlemesi (ASK ASCII/1.0)
               </div>
@@ -590,39 +589,33 @@ export function AxiomApp() {
                 <dl className="mt-2 space-y-1 font-osmono text-[11px] text-[var(--tb-text)]">
                   <div className="flex justify-between gap-3">
                     <dt className="text-[var(--tb-muted)]">Bayt / karakter</dt>
-                    <dd>
-                      {digest.bytes} / {digest.chars}
-                    </dd>
+                    <dd>{digest.bytes} / {digest.chars}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-[var(--tb-muted)]">Saf ASCII</dt>
-                    <dd>{digest.ascii ? "evet" : "hayır (UTF-8 çok baytlı)"}</dd>
+                    <dd>{digest.ascii ? "evet" : "hayır"}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-[var(--tb-muted)]">Parmak izi</dt>
-                    <dd>{digest.fingerprint}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-[var(--tb-muted)]">İlk 16 bayt</dt>
-                    <dd className="break-all">{digest.head || "—"}</dd>
+                    <dd className="truncate max-w-[180px]">{digest.fingerprint}</dd>
                   </div>
                 </dl>
               ) : (
                 <p className="mt-2 font-osmono text-[11px] text-[var(--tb-muted)]">
-                  Çözümleme için bir metin gönderin.
+                  Çözümleme için metin girin.
                 </p>
               )}
             </div>
 
-            <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3">
+            <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3 shadow-sm">
               <div className="font-osmono text-[11px] uppercase tracking-wide text-[var(--tb-muted)]">
-                Değişmez aksiyom tabanı (salt-okunur)
+                Değişmez aksiyom tabanı
               </div>
               <ul className="mt-2 space-y-2">
                 {romListesi.map((b) => (
-                  <li key={b.key} className="font-osmono text-[11px]">
-                    <div className="text-[var(--tb-text)]">{b.label}</div>
-                    <div className="text-[var(--tb-muted)]">{b.body}</div>
+                  <li key={b.key} className="font-osmono text-[11px] truncate">
+                    <div className="font-semibold text-[var(--tb-text)]">{b.label}</div>
+                    <div className="text-[var(--tb-muted)] truncate">{b.body}</div>
                   </li>
                 ))}
               </ul>
@@ -633,7 +626,7 @@ export function AxiomApp() {
 
       <LicenseModal open={lisans} peers={node.peers} onClose={() => setLisans(false)} />
 
-      <div className="pt-1 text-center font-osmono text-[10px] text-[var(--tb-muted)]">
+      <div className="py-2 text-center font-osmono text-[10px] text-[var(--tb-muted)]">
         {AXIOM_BRAND_BANNER}
       </div>
     </div>
