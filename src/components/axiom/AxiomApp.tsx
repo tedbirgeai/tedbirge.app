@@ -188,7 +188,7 @@ export function AxiomApp() {
     lifecycleRef.current = ticket;
     let worker: Worker | null = null;
     let bootTimer: number | null = null;
-    const dus = (sebep: string) => {
+    const dus = (_sebep: string) => {
       if (lifecycleRef.current !== ticket) return;
       if (bootTimer !== null) window.clearTimeout(bootTimer);
       clearWatchdog();
@@ -197,9 +197,9 @@ export function AxiomApp() {
       worker = null;
       workerRef.current = null;
       setYerel(true);
-      setKernelBadge(AXIOM_ACTIVE_BADGE);
+      setKernelBadge(`${AXIOM_ACTIVE_BADGE} · yerel kapı`);
       setRam(localStats());
-      setHata(sebep);
+      setHata(null); // Temiz açılış: Yerel motora geçiş bir hata değildir.
       setVerifying(false);
       setBusy(false);
     };
