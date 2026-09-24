@@ -1,10 +1,35 @@
-// src/components/AxiomMasterShell.tsx
-import React, { useEffect, useRef } from 'react';
+/* Copyright (c) 2026 Tedbirge Labs / Tedbirge WebOS. All rights reserved.
+ * AXIOM™ is a proprietary product and core engine of Tedbirge WebOS.
+ * Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
+ * Official Hub: https://tedbirge.dev | https://tedbirge.app */
+
+import React, { useEffect, useRef, useState } from 'react';
+import { AxiomCABISocketBridge } from "@/core/axiom_cabi_bridge";
+import { LicenseModal } from "@/components/axiom/LicenseModal";
+import { FREE_DEVICE_LIMIT } from "@/lib/axiom/license/policy";
 
 export const AxiomMasterShell: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [peers, setPeers] = useState<number>(FREE_DEVICE_LIMIT);
+  const [isLicenseModalOpen, setIsLicenseModalOpen] = useState<boolean>(false);
+  const [bridgeConnected, setBridgeConnected] = useState<boolean>(false);
+  const [commandInput, setCommandInput] = useState<string>("Si un système déterministe atteint un état de deadlock irréversible...");
 
   useEffect(() => {
+    // 1. C-ABI Soket Köprüsünü ve Çekirdeği Canlıya Bağla
+    console.log("[AxiomMasterShell] Initializing C-ABI Socket Bridge & Kernel Stack...");
+    const success = AxiomCABISocketBridge.initializeBridge();
+    setBridgeConnected(success);
+
+    if (success) {
+      AxiomCABISocketBridge.dispatchCABIPacket(0x01, "SHELL_MOUNTED_AND_WIRED");
+    }
+
+    // 2. Cihaz Sınırı ve Otonom MoR Lisans Tetikleyicisi
+    if (peers >= FREE_DEVICE_LIMIT) {
+      setIsLicenseModalOpen(true);
+    }
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -51,7 +76,14 @@ export const AxiomMasterShell: React.FC = () => {
 
     render();
     return () => cancelAnimationFrame(animationId);
-  }, []);
+  }, [peers]);
+
+  const handleExecute = () => {
+    console.log("Executing command via C-ABI:", commandInput);
+    if (bridgeConnected) {
+      AxiomCABISocketBridge.dispatchCABIPacket(0x02, commandInput);
+    }
+  };
 
   return (
     <div className="w-full h-screen bg-[#070b12] text-slate-200 font-mono flex flex-col justify-between p-4 border border-sky-500/20 shadow-2xl select-none">
@@ -60,8 +92,8 @@ export const AxiomMasterShell: React.FC = () => {
       <div className="flex justify-between items-center border-b border-sky-500/30 pb-3 text-xs tracking-wider bg-[#0a101d] px-4 py-2.5 rounded-lg shadow-inner">
         <div className="flex items-center space-x-4">
           <span className="bg-sky-500/10 text-sky-400 px-3 py-1 rounded border border-sky-500/30 font-bold flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            AXIOM_DETERMINISTIC_KERNEL_ACTIVE
+            <span className={`w-2 h-2 rounded-full ${bridgeConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+            {bridgeConnected ? 'AXIOM_DETERMINISTIC_KERNEL_ACTIVE' : 'AXIOM_CABI_CONNECTING'}
           </span>
           <span className="text-slate-400">ROM TCB: <strong className="text-white">VERIFIED_IMMUTABLE</strong></span>
           <span className="text-slate-400">RAM LRU: <strong className="text-sky-400">36.2 / 50.0 MB</strong></span>
@@ -69,7 +101,12 @@ export const AxiomMasterShell: React.FC = () => {
         <div className="flex items-center space-x-6">
           <span className="text-sky-400 font-semibold">Z3 SMT: 11ms</span>
           <span className="text-sky-400 font-semibold">Lean 4: 78ms</span>
-          <span className="bg-emerald-950 text-emerald-300 px-2.5 py-0.5 rounded border border-emerald-600 font-bold">200_PROVEN</span>
+          <button 
+            onClick={() => setIsLicenseModalOpen(true)}
+            className="bg-emerald-950 text-emerald-300 px-2.5 py-0.5 rounded border border-emerald-600 font-bold hover:bg-emerald-900 transition cursor-pointer"
+          >
+            {peers} / {FREE_DEVICE_LIMIT} PROVEN
+          </button>
         </div>
       </div>
 
@@ -91,11 +128,15 @@ export const AxiomMasterShell: React.FC = () => {
           <span className="text-sky-400 font-bold mr-3 tracking-widest">AXIOM&gt;</span>
           <input 
             type="text" 
+            value={commandInput}
+            onChange={(e) => setCommandInput(e.target.value)}
             placeholder="Enter universal logic, cross-lingual invariant, or formal theorem query..." 
             className="w-full bg-transparent text-white focus:outline-none font-mono text-sm placeholder-slate-500"
-            defaultValue="Si un système déterministe atteint un état de deadlock irréversible..."
           />
-          <button className="bg-sky-500 text-slate-950 font-bold px-5 py-2 rounded-lg text-xs hover:bg-sky-400 transition shadow-sm">
+          <button 
+            onClick={handleExecute}
+            className="bg-sky-500 text-slate-950 font-bold px-5 py-2 rounded-lg text-xs hover:bg-sky-400 transition shadow-sm cursor-pointer"
+          >
             EXECUTE
           </button>
         </div>
@@ -106,6 +147,12 @@ export const AxiomMasterShell: React.FC = () => {
         </div>
       </div>
 
+      {/* Otonom MoR Lisans Modalı Entegrasyonu */}
+      <LicenseModal
+        open={isLicenseModalOpen}
+        peers={peers}
+        onClose={() => setIsLicenseModalOpen(false)}
+      />
     </div>
   );
 };
