@@ -514,9 +514,11 @@ export function AxiomApp() {
             </div>
           </div>
 
-          <VerifyBoundary>
-            <ProofViewer result={proof} />
-          </VerifyBoundary>
+          {proof ? (
+            <VerifyBoundary>
+              <ProofViewer result={proof} />
+            </VerifyBoundary>
+          ) : null}
         </div>
       ) : null}
 
