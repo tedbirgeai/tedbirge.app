@@ -135,7 +135,6 @@ export function AxiomApp() {
   const [proof, setProof] = useState<VerifyResult | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [lastText, setLastText] = useState("");
-  const [inputText, setInputText] = useState("");
   const [fps, setFps] = useState(0);
   const [yerel, setYerel] = useState(false);
   const [kernelBadge, setKernelBadge] = useState(AXIOM_ACTIVE_BADGE);
@@ -300,7 +299,7 @@ export function AxiomApp() {
     };
   }, []);
 
-  // WebGL GPU Canvas Görselleştirici (Kesintisiz Kayan Dalga)
+  // WebGL GPU Canvas Görselleştirici (Kesintisiz Canlı Dalga)
   useEffect(() => {
     const host = hostRef.current;
     const gl = glRef.current;
@@ -323,8 +322,7 @@ export function AxiomApp() {
         last = now;
         setFps(shown);
       }
-      // Düz çizgiye düşmeyi önlemek için minimum 0.45 canlı oran garantisi
-      const activeRatio = Math.max(0.45, ratioRef.current);
+      const activeRatio = Math.max(0.40, ratioRef.current);
       renderer.draw({
         ratio: activeRatio,
         fps: shown,
@@ -382,12 +380,6 @@ export function AxiomApp() {
     }
   }, []);
 
-  const handleExecute = useCallback(() => {
-    if (inputText.trim()) {
-      submit(inputText.trim());
-    }
-  }, [inputText, submit]);
-
   const verifyLocally = useCallback((text: string) => {
     void localVerify(text)
       .then((out) => {
@@ -404,12 +396,11 @@ export function AxiomApp() {
   }, []);
 
   const runVerify = useCallback(() => {
-    const textToVerify = lastText.trim() || inputText.trim();
-    if (!textToVerify) return;
+    if (!lastText.trim()) return;
     setVerifying(true);
     const worker = workerRef.current;
     if (worker) {
-      const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: textToVerify };
+      const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: lastText };
       worker.postMessage(msg);
       clearWatchdog();
       watchdogRef.current = window.setTimeout(() => {
@@ -420,12 +411,12 @@ export function AxiomApp() {
         setYerel(true);
         setKernelBadge(`${AXIOM_ACTIVE_BADGE} · yerel kapı`);
         setHata("Çekirdek daemon sert bütçeyi aştı; infaz edildi ve yerel motora düşüldü.");
-        verifyLocally(textToVerify);
+        verifyLocally(lastText);
       }, WORKER_WATCHDOG_MS);
       return;
     }
-    verifyLocally(textToVerify);
-  }, [lastText, inputText, clearWatchdog, verifyLocally]);
+    verifyLocally(lastText);
+  }, [lastText, clearWatchdog, verifyLocally]);
 
   const restart = useCallback(() => {
     lifecycleRef.current += 1;
@@ -450,57 +441,14 @@ export function AxiomApp() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-[var(--tb-bg-soft)] p-4 text-[var(--tb-text)] font-osmono">
-      {/* 1. COMPOSITE MASTER SHELL (Tek Tip Tedbirge WebOS Tema Entegrasyonu) */}
+      {/* 1. MASTER SHELL HEADER */}
       <div className="w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] shadow-sm">
         <MasterShellBoundary>
-          <AxiomMasterShell
-            onSubmit={submit}
-            busy={busy}
-            verifying={verifying}
-            lastText={lastText}
-            analysis={analysis}
-          />
+          <AxiomMasterShell />
         </MasterShellBoundary>
       </div>
 
-      {/* 2. ÇEKİRDEK İCRA VE KOMUT BAR (100% ÇALIŞAN DOĞRUDAN EXECUTE) */}
-      <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3 shadow-sm space-y-3">
-        <div className="flex items-center justify-between text-xs font-bold text-[var(--tb-cyan-400)] uppercase tracking-wider">
-          <span>AXIOM Deterministik İcra ve Doğrulama Konsolu</span>
-          <span className="text-[10px] text-[var(--tb-muted)]">C-ABI SOCKET: tedbirge_truth.sock // ZKP-SHA256</span>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-2">
-          <div className="relative flex-1 w-full">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--tb-cyan-400)] pointer-events-none">
-              AXIOM&gt;
-            </span>
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleExecute();
-                }
-              }}
-              placeholder="Önerme, evrensel mantık, çapraz dil değişmezi veya formal teorem sorgusu girin..."
-              className="w-full h-10 rounded-lg border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] pl-20 pr-4 text-xs text-[var(--tb-text)] placeholder-[var(--tb-muted)] focus:border-[var(--tb-cyan-400)] focus:outline-none transition-colors"
-            />
-          </div>
-          <Button
-            type="button"
-            onClick={handleExecute}
-            disabled={busy || !inputText.trim()}
-            className="w-full sm:w-auto h-10 px-6 border border-[var(--tb-cyan-400)] bg-[var(--tb-cyan-400)]/15 text-[var(--tb-cyan-400)] hover:bg-[var(--tb-cyan-400)]/30 font-osmono text-xs font-bold uppercase tracking-wider transition-all shrink-0 disabled:opacity-40"
-          >
-            {busy ? "İşleniyor…" : "EXECUTE"}
-          </Button>
-        </div>
-        <CommandBar busy={busy} onSubmit={submit} />
-      </div>
-
-      {/* 3. ÇEKİRDEK DURUM BİLGİSİ VE SERVİS YENİDEN BAŞLATMA */}
+      {/* 2. ÇEKİRDEK DURUM BİLGİSİ VE SERVİS YENİDEN BAŞLATMA */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] px-4 py-3 text-[11px] text-[var(--tb-muted)] shadow-sm">
         <div className="min-w-0 flex-1 space-y-1">
           <div className="text-[var(--tb-cyan-400)] font-bold uppercase tracking-wide">
@@ -522,13 +470,18 @@ export function AxiomApp() {
         </Button>
       </div>
 
+      {/* 3. TEK ŞABLONLU ANINDA ÇALIŞAN DOĞRUDAN SORGU VE KOMUT BAR */}
+      <div className="rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-3 shadow-sm">
+        <CommandBar busy={busy} onSubmit={submit} />
+      </div>
+
       {/* 4. BELLEK VE SİSTEM PROFİLCİSİ */}
       <MemoryProfiler ram={ram} rom={rom} heap={heap} mode={mode} />
 
-      {/* 5. CANLI WebGL GPU CANVAS (Kesintisiz Dalga Çizim Yüzeyi) */}
+      {/* 5. CANLI WebGL GPU CANVAS (Akağan Neon Dalga Yüzeyi) */}
       <div
         ref={hostRef}
-        className="relative h-56 w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] shadow-sm sm:h-64"
+        className="relative h-48 w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] shadow-sm sm:h-56"
       >
         <canvas ref={glRef} className="absolute inset-0 block h-full w-full" />
         <canvas ref={textRef} className="absolute inset-0 pointer-events-none block h-full w-full" />
@@ -556,7 +509,7 @@ export function AxiomApp() {
         </div>
       ) : null}
 
-      {/* 6. MODÜLER SEKMELER (Konsol, Fatura, Ağ, SDK) */}
+      {/* 6. MODÜLER SEKMELER (Konsol, Faturalandırma, Ağ, SDK) */}
       <div role="tablist" aria-label="AXIOM" className="flex flex-wrap gap-1.5">
         {(["console", "billing", "network", "sdk"] as const).map((id) => (
           <Button
@@ -614,7 +567,7 @@ export function AxiomApp() {
             <Button
               type="button"
               onClick={runVerify}
-              disabled={verifying || (!lastText.trim() && !inputText.trim())}
+              disabled={verifying || !lastText.trim()}
               variant="outline"
               className="border-[var(--tb-cyan-400)] bg-transparent font-osmono text-[11px] font-bold uppercase tracking-wide text-[var(--tb-cyan-400)] hover:bg-[var(--tb-cyan-400)]/10 disabled:opacity-40"
             >
