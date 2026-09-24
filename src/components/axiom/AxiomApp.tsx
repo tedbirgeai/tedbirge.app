@@ -4,14 +4,19 @@
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
 /**
- * AXIOM KERNEL v12 — KONSOL PENCERESİ
+ * AXIOM KERNEL v12 — KONSOL PENCERESİ & COMPOSITE MASTER SHELL
  * ------------------------------------------------------------------
  * Sanal ROM, 50 MB sınırlı sanal RAM, Web Worker daemon'ı, WebGL2 çizim
- * yüzeyi ve canlı doğrulama oturumu tek pencerede çalışır.
+ * yüzeyi, C-ABI soket köprüsü ve canlı doğrulama oturumu tek pencerede çalışır.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+// Yeni Entegre Edilen Master Shell ve C-ABI Köprüsü
+import { AxiomMasterShell } from "@/components/axiom/AxiomMasterShell";
+import { AxiomCABISocketBridge } from "@/core/axiom_cabi_bridge";
+
+// Orijinal Bileşenler
 import { ArbiterPanel } from "@/components/axiom/ArbiterPanel";
 import { AstView } from "@/components/axiom/AstView";
 import { BillingDashboard } from "@/components/axiom/BillingDashboard";
@@ -64,13 +69,6 @@ const BOS_RAM: RamStats = {
 };
 
 const WORKER_BOOT_TIMEOUT_MS = 1200;
-
-/**
- * Ana iş parçacığı bekçisi: worker içindeki sert bütçe (500 ms) bir
- * WASM kilitlenmesi yüzünden hiç yanıt vermezse, bekçi süreyi küçük bir
- * tolerans payıyla aşan daemon'ı `terminate()` ile infaz eder ve aynı
- * doğrulama yedek motorda tamamlanır.
- */
 const WORKER_WATCHDOG_MS = VERIFY_TIMEOUT_MS + 250;
 
 export function AxiomApp() {
@@ -83,10 +81,8 @@ export function AxiomApp() {
   const proofQueueRef = useRef<AxiomOfflineQueue>(createAxiomOfflineQueue());
   const seqRef = useRef(0);
   const lifecycleRef = useRef(0);
-  /** Etkin doğrulama bekçisi (ana iş parçacığı zaman aşımı denetçisi). */
   const watchdogRef = useRef<number | null>(null);
 
-  /** Çizim döngüsü durumu ref ile okunur: RAM değişimi WebGL bağlamını kurmaz. */
   const ratioRef = useRef(0);
 
   const [mode, setMode] = useState("hazırlanıyor");
@@ -105,20 +101,19 @@ export function AxiomApp() {
   const [verifying, setVerifying] = useState(false);
   const [lastText, setLastText] = useState("");
   const [fps, setFps] = useState(0);
-  /** Daemon kurulamazsa çözümleme ana iş parçacığında yürür. */
   const [yerel, setYerel] = useState(false);
   const [kernelBadge, setKernelBadge] = useState(AXIOM_ACTIVE_BADGE);
-  /** Yeniden başlatma düğmesi bu sayacı arttırır. */
   const [deneme, setDeneme] = useState(0);
-  /** Görünen sekme: konsol · faturalandırma · ağ · SDK. */
   const [sekme, setSekme] = useState<"console" | "billing" | "network" | "sdk">("console");
-  /** Hakem çoğunluğundan geçen doğrulama sayısı (ödül kartı için). */
   const [quorum, setQuorum] = useState(0);
-  /** Lisans penceresi: 6. cihaz görüldüğünde açılır. */
   const [lisans, setLisans] = useState(false);
   const node = useAxiomNode();
 
-  /** Bekçi sayacını söndürür (yanıt geldi ya da oturum kapandı). */
+  // C-ABI Soket Köprüsünü ilklendir
+  useEffect(() => {
+    AxiomCABISocketBridge.initializeBridge();
+  }, []);
+
   const clearWatchdog = useCallback(() => {
     if (watchdogRef.current !== null) {
       window.clearTimeout(watchdogRef.current);
@@ -135,12 +130,10 @@ export function AxiomApp() {
     };
   }, []);
 
-  // Ücretsiz cihaz sınırı aşıldığında yükseltme penceresi bir kez açılır.
   useEffect(() => {
     if (shouldPrompt(node.peers, loadLicense())) setLisans(true);
   }, [node.peers]);
 
-  // Her yeni karar ölçüm defterine ve hakem denetimine girer.
   useEffect(() => {
     if (!proof) return;
     meterRecord({
@@ -163,7 +156,6 @@ export function AxiomApp() {
     }
   }, [proof]);
 
-  // --- Çekirdek daemon'ı: bayt çözümlemesi ana iş parçacığını kilitlemez.
   useEffect(() => {
     const ticket = lifecycleRef.current + 1;
     lifecycleRef.current = ticket;
@@ -171,7 +163,6 @@ export function AxiomApp() {
     let bootTimer: number | null = null;
     const dus = (sebep: string) => {
       if (lifecycleRef.current !== ticket) return;
-      // Daemon kurulamadı: arayüz çökmez, aynı motor ana iş parçacığında çalışır.
       if (bootTimer !== null) window.clearTimeout(bootTimer);
       clearWatchdog();
       worker?.terminate();
@@ -205,7 +196,6 @@ export function AxiomApp() {
     worker.onmessage = (event: MessageEvent<KernelResponse>) => {
       if (lifecycleRef.current !== ticket) return;
       const msg = event.data;
-      // Yanıt geldi: bekçi söndürülür, infaz gerekmez.
       clearWatchdog();
       setRam(msg.ram);
 
@@ -238,7 +228,6 @@ export function AxiomApp() {
         setBusy(false);
       }
     };
-    // Daemon yüklenemezse arayüz sessizce beklemez: yedek motora düşülür.
     worker.onerror = (err) => {
       dus(
         err.message
@@ -259,14 +248,13 @@ export function AxiomApp() {
     };
   }, [deneme, clearWatchdog]);
 
-  // --- Sanal ROM: tohum bloklar yazılır, kalıcı depolama izni istenir.
   useEffect(() => {
     let alive = true;
     void (async () => {
       try {
         await seedRom();
       } catch {
-        /* IndexedDB kapalı olabilir: durum "kullanılamıyor" görünür */
+        /* IndexedDB kapalı olabilir */
       }
       const status = await romStatus();
       if (alive) setRom(status);
@@ -276,7 +264,6 @@ export function AxiomApp() {
     };
   }, []);
 
-  // --- Çizim: WebGL2 varsa GPU, yoksa yazılım; her iki kip de etiketlenir.
   useEffect(() => {
     const host = hostRef.current;
     const gl = glRef.current;
@@ -321,12 +308,10 @@ export function AxiomApp() {
     };
   }, []);
 
-  // Doluluk oranı yalnız referansa yazılır (yeniden çizim zaten her karede).
   useEffect(() => {
     ratioRef.current = ram.ratio;
   }, [ram.ratio]);
 
-  // --- Bellek örneklemesi: gerçek ölçüm yoksa sanal deftere düşer.
   useEffect(() => {
     const tick = () => setHeap(sampleMemory(ram.used, ram.limit));
     tick();
@@ -343,7 +328,6 @@ export function AxiomApp() {
       worker.postMessage(msg);
       return;
     }
-    // Yedek yol: aynı zincir ana iş parçacığında yürür.
     try {
       const out = localAnalyze(text);
       setAnalysis(out.analysis);
@@ -356,7 +340,6 @@ export function AxiomApp() {
     }
   }, []);
 
-  /** Yedek motorda doğrulama (worker yok ya da infaz edildi). */
   const verifyLocally = useCallback((text: string) => {
     void localVerify(text)
       .then((out) => {
@@ -372,7 +355,6 @@ export function AxiomApp() {
       });
   }, []);
 
-  /** Doğrulama: aynı girdi simgesel motora gönderilir (500 ms sert bütçe). */
   const runVerify = useCallback(() => {
     if (!lastText.trim()) return;
     setVerifying(true);
@@ -380,8 +362,6 @@ export function AxiomApp() {
     if (worker) {
       const msg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text: lastText };
       worker.postMessage(msg);
-      // Ana iş parçacığı bekçisi: bütçe + tolerans içinde yanıt gelmezse
-      // daemon infaz edilir ve iş yedek motorda tamamlanır.
       clearWatchdog();
       watchdogRef.current = window.setTimeout(() => {
         watchdogRef.current = null;
@@ -398,7 +378,6 @@ export function AxiomApp() {
     verifyLocally(lastText);
   }, [lastText, clearWatchdog, verifyLocally]);
 
-  /** Servisi yeniden başlatır: daemon tekrar kurulmayı dener. */
   const restart = useCallback(() => {
     lifecycleRef.current += 1;
     clearWatchdog();
@@ -421,7 +400,14 @@ export function AxiomApp() {
   const romListesi = useMemo(() => ROM_SEED, []);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+      
+      {/* 1. YENİ AXIOM V12 MASTER SHELL & C-ABI BLOOMBERG KOMUTA MERKEZİ */}
+      <div className="rounded-xl border border-sky-500/30 overflow-hidden shadow-2xl">
+        <AxiomMasterShell />
+      </div>
+
+      {/* 2. ORİJİNAL ÇEKİRDEK BİLGİ DÜĞMESİ VE YENİDEN BAŞLATMA ALANI */}
       <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] px-3 py-2 font-osmono text-[11px] text-[var(--tb-muted)]">
         <div className="min-w-0 flex-1 space-y-1">
           <div className="text-[var(--tb-cyan-400)]">
@@ -429,7 +415,7 @@ export function AxiomApp() {
           </div>
           <div>
             {kernelBadge} · Çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve
-            değişmez eşleştirme etkin. Yerel Z3/Lean ikilisi hazır olduğunda mühürlü kanıt üretir;
+            değilmez eşleştirme etkin. Yerel Z3/Lean ikilisi hazır olduğunda mühürlü kanıt üretir;
             aksi durumda mühürsüz kural denetimiyle güvenli karar kapısı açık kalır.
           </div>
         </div>
@@ -443,8 +429,10 @@ export function AxiomApp() {
         </Button>
       </div>
 
+      {/* 3. BELLEK VE SİSTEM PROFİLCİSİ */}
       <MemoryProfiler ram={ram} rom={rom} heap={heap} mode={mode} />
 
+      {/* 4. CANLI GPU / CANVAS ÇİZİM YÜZEYİ */}
       <div
         ref={hostRef}
         className="relative h-56 shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] sm:h-64"
@@ -477,7 +465,7 @@ export function AxiomApp() {
         </div>
       ) : null}
 
-      {/* Sekmeler: konsol dışındaki katmanlar isteğe bağlı açılır. */}
+      {/* 5. SEKMELER */}
       <div role="tablist" aria-label="AXIOM" className="flex flex-wrap gap-1">
         {(["console", "billing", "network", "sdk"] as const).map((id) => (
           <Button
@@ -615,3 +603,5 @@ export function AxiomApp() {
     </div>
   );
 }
+
+export default AxiomApp;
