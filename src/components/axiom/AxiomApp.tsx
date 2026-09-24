@@ -634,4 +634,4 @@ export function AxiomApp() {
   );
 }
 
-exports default AxiomApp;
+export default AxiomApp;
