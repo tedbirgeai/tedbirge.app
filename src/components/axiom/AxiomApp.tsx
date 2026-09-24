@@ -12,11 +12,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-// Yeni Entegre Edilen Master Shell ve C-ABI Köprüsü
+// Entegre Edilen Master Shell ve C-ABI Köprüsü
 import { AxiomMasterShell } from "@/components/axiom/AxiomMasterShell";
 import { AxiomCABISocketBridge } from "@/core/axiom_cabi_bridge";
 
-// Orijinal Bileşenler
+// Orijinal Bileşenler ve Araçlar
 import { ArbiterPanel } from "@/components/axiom/ArbiterPanel";
 import { AstView } from "@/components/axiom/AstView";
 import { BillingDashboard } from "@/components/axiom/BillingDashboard";
@@ -401,7 +401,6 @@ export function AxiomApp() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-      
       {/* 1. YENİ AXIOM V12 MASTER SHELL & C-ABI BLOOMBERG KOMUTA MERKEZİ */}
       <div className="rounded-xl border border-sky-500/30 overflow-hidden shadow-2xl">
         <AxiomMasterShell />
