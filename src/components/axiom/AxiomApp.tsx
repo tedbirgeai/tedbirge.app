@@ -142,7 +142,7 @@ export function AxiomApp() {
   const [quorum, setQuorum] = useState(0);
   const [lisans, setLisans] = useState(false);
   
-  // Gemini / AI Akışlı Geçmiş Sorgu Günlüğü (Session History)
+  // Gemini / ChatGPT Tarzı Geçmiş Sorgu Günlüğü (Session History)
   const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>([]);
   const node = useAxiomNode();
 
@@ -376,7 +376,7 @@ export function AxiomApp() {
     setBusy(true);
     setHata(null);
 
-    // BİLİNÇLİ OTOMATİK SAYAC TETİKLEYİCİSİ (Her Sorguda Tutar ve Çağrı Kesin Artar)
+    // Her Sorguda Tutar ve Çağrı Sayacı Kesin Artar
     meterRecord({
       engine: "z3",
       simulated: false,
@@ -399,7 +399,6 @@ export function AxiomApp() {
       setRam(out.ram);
       setBusy(false);
 
-      // Oturum Akış Günlüğüne Ekle (Gemini Sohbet Mantığı)
       setQueryHistory((prev) => [
         {
           id: Math.random().toString(36).substring(2, 9),
@@ -476,14 +475,14 @@ export function AxiomApp() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-[var(--tb-bg-soft,#070b12)] p-4 text-[var(--tb-text,#e2e8f0)] font-mono">
-      {/* 1. BİRLEŞİK ANA MASTER SHELL (ÇALIŞTIR Butonlu Komuta Hub'ı) */}
+      {/* 1. BIRLEŞIK ANA MASTER SHELL (ÇALIŞTIR & Belge Yükleme Hub'ı) */}
       <div className="w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm">
         <MasterShellBoundary>
           <AxiomMasterShell onSubmit={submit} busy={busy} />
         </MasterShellBoundary>
       </div>
 
-      {/* 2. ANINDA GÖRSELLEŞTİRİLEN VE GEMİNİ TARZI AKAN CANLI TEŞHİS PENCERESİ */}
+      {/* 2. EN ÖNE TAŞINAN CANLI ANALİZ VE HAKİKAT TEŞHİS PENCERESİ */}
       {analysis || busy ? (
         <div className="rounded-xl border border-sky-500/40 bg-[var(--tb-panel,#070b12)] p-4 shadow-lg space-y-4">
           <div className="flex items-center justify-between border-b border-sky-500/30 pb-2">
@@ -563,7 +562,7 @@ export function AxiomApp() {
         </div>
       ) : null}
 
-      {/* 3. GEMİNİ SOHBET MANTIĞINDA GEÇMİŞ OTURUM AKIŞ GÜNLÜĞÜ */}
+      {/* 3. EN ÖNE TAŞINAN GEMİNİ/CHATGPT TARZI SOHBET VE GEÇMİŞ OTURUM AKIŞI */}
       {queryHistory.length > 0 ? (
         <div className="rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel-soft,#0a101d)] p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-[var(--tb-border,rgba(14,165,233,0.2))] pb-2">
@@ -635,7 +634,7 @@ export function AxiomApp() {
       {/* 6. CANLI WebGL GPU CANVAS (Akağan Neon Dalga Yüzeyi) */}
       <div
         ref={hostRef}
-        className="relative h-44 w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm sm:h-52"
+        className="relative h-36 w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm sm:h-44"
       >
         <canvas ref={glRef} className="absolute inset-0 block h-full w-full" />
         <canvas ref={textRef} className="absolute inset-0 pointer-events-none block h-full w-full" />
