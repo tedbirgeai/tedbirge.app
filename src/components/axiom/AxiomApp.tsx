@@ -63,7 +63,7 @@ const BOS_RAM: RamStats = {
 const WORKER_BOOT_TIMEOUT_MS = 1200;
 const WORKER_WATCHDOG_MS = VERIFY_TIMEOUT_MS + 250;
 
-// Örnek Hızlı Aksiyom Şablonları
+// Hızlı Aksiyom Şablonları
 const PRESET_QUERIES = [
   { label: "Z3 Mantık Eşleşmesi", text: "(assert (and (or p q) (not p)))" },
   { label: "Lean 4 Teorem İspatı", text: "theorem add_comm (n m : ℕ) : n + m = m + n" },
@@ -179,8 +179,8 @@ export function AxiomApp() {
   // C-ABI Soket Köprüsünü ilklendir
   const initCabi = useCallback(() => {
     try {
-      AxiomCABISocketBridge.initializeBridge();
-      setCabiActive(true);
+      const active = AxiomCABISocketBridge.initializeBridge();
+      setCabiActive(active);
     } catch {
       setCabiActive(false);
     }
@@ -552,7 +552,13 @@ export function AxiomApp() {
       {/* 1. BİRLEŞİK ANA MASTER SHELL (ÇALIŞTIR & Belge Yükleme Hub'ı) */}
       <div className="w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm">
         <MasterShellBoundary>
-          <AxiomMasterShell onSubmit={submit} busy={busy} />
+          <AxiomMasterShell
+            onSubmit={submit}
+            busy={busy}
+            analysis={analysis}
+            proof={proof}
+            digest={digest}
+          />
         </MasterShellBoundary>
       </div>
 
