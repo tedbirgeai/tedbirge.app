@@ -29,7 +29,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
   const [commandInput, setCommandInput] = useState<string>("");
 
   useEffect(() => {
-    // 1. C-ABI Soket Köprüsünü ilklendir
+    // C-ABI Soket Köprüsünü ilklendir
     const success = AxiomCABISocketBridge.initializeBridge();
     setBridgeConnected(success);
 
