@@ -109,7 +109,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
     };
   }, []);
 
-  // İcra Tetikleyicisi
+  // İcra Tetikleyicisi ve Otomatik Input Temizleme
   const handleExecute = useCallback((textToRun?: string) => {
     const targetText = typeof textToRun === "string" ? textToRun : commandInput;
     if (!targetText.trim() || busy) return;
@@ -121,6 +121,9 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
     if (onSubmit) {
       onSubmit(targetText.trim());
     }
+
+    // Girdi kutusunu yeni soru için otomatik temizle!
+    setCommandInput("");
   }, [commandInput, busy, bridgeConnected, onSubmit]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -177,10 +180,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
           <button
             key={idx}
             type="button"
-            onClick={() => {
-              setCommandInput(onerme);
-              handleExecute(onerme);
-            }}
+            onClick={() => handleExecute(onerme)}
             className="text-[11px] font-semibold bg-sky-950 text-sky-100 hover:bg-sky-400 hover:text-slate-950 border border-sky-400 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-sm truncate max-w-[300px]"
           >
             {onerme}
@@ -188,7 +188,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
         ))}
       </div>
 
-      {/* Alt Alan: Evrensel Komut Giriş Barı ve Yüksek Görünürlüklü ÇALIŞTIR Butonu */}
+      {/* Alt Alan: Evrensel Komut Giriş Barı ve Otomatik Temizlenen ÇALIŞTIR Butonu */}
       <div className="space-y-2 pt-1">
         <div className="flex items-center bg-[var(--tb-panel-soft,#0a101d)] border border-sky-500/50 rounded-xl px-4 py-2.5 shadow-md gap-2">
           <span className="text-sky-400 font-bold tracking-widest text-xs shrink-0">AXIOM&gt;</span>
