@@ -151,13 +151,33 @@ export function AxiomApp() {
   const [lisans, setLisans] = useState(false);
   const [cabiActive, setCabiActive] = useState(false);
   const [copiedStatus, setCopiedStatus] = useState(false);
-  
-  // Gemini / ChatGPT Tarzı Geçmiş Sorgu Günlüğü (Session History)
-  const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>([]);
+  const [pendingQueueCount, setPendingQueueCount] = useState<number>(0);
+  const [searchFilter, setSearchFilter] = useState("");
+
+  // Gemini / ChatGPT Tarzı Geçmiş Sorgu Günlüğü (Session History + LocalStorage Kalıcılığı)
+  const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem("axiom_query_history");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const node = useAxiomNode();
 
-  // C-ABI Soket Köprüsünü ilklendir
+  // LocalStorage senkronizasyonu
   useEffect(() => {
+    try {
+      localStorage.setItem("axiom_query_history", JSON.stringify(queryHistory));
+    } catch {
+      /* LocalStorage kısıtlı olabilir */
+    }
+  }, [queryHistory]);
+
+  // C-ABI Soket Köprüsünü ilklendir
+  const initCabi = useCallback(() => {
     try {
       AxiomCABISocketBridge.initializeBridge();
       setCabiActive(true);
@@ -165,6 +185,10 @@ export function AxiomApp() {
       setCabiActive(false);
     }
   }, []);
+
+  useEffect(() => {
+    initCabi();
+  }, [initCabi]);
 
   const clearWatchdog = useCallback(() => {
     if (watchdogRef.current !== null) {
@@ -197,12 +221,15 @@ export function AxiomApp() {
     });
     if (reviewProof(proof).quorum) setQuorum((n) => n + 1);
     proofQueueRef.current = enqueueProof(proofQueueRef.current, proof);
+    setPendingQueueCount(proofQueueRef.current.items?.length || 0);
+
     const mesh = meshRef.current;
     if (mesh) {
       const online = typeof navigator === "undefined" ? true : navigator.onLine;
       void flushProofQueue(proofQueueRef.current, (record) => mesh.publish(record), online).then(
         (queue) => {
           proofQueueRef.current = queue;
+          setPendingQueueCount(queue.items?.length || 0);
         },
       );
     }
@@ -512,6 +539,12 @@ export function AxiomApp() {
     setQueryHistory((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
+  const filteredHistory = useMemo(() => {
+    if (!searchFilter.trim()) return queryHistory;
+    const q = searchFilter.toLowerCase();
+    return queryHistory.filter((item) => item.text.toLowerCase().includes(q) || item.analysis.lang?.name?.toLowerCase().includes(q));
+  }, [queryHistory, searchFilter]);
+
   const romListesi = useMemo(() => ROM_SEED, []);
 
   return (
@@ -631,12 +664,19 @@ export function AxiomApp() {
       {/* 3. SOHBET VE GEÇMİŞ SORGU AKIŞI */}
       {queryHistory.length > 0 ? (
         <div className="rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel-soft,#0a101d)] p-4 shadow-sm space-y-3">
-          <div className="flex items-center justify-between border-b border-[var(--tb-border,rgba(14,165,233,0.2))] pb-2">
+          <div className="flex items-center justify-between border-b border-[var(--tb-border,rgba(14,165,233,0.2))] pb-2 flex-wrap gap-2">
             <span className="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-sky-400" />
-              SOHBET VE GEÇMİŞ SORGU AKIŞI ({queryHistory.length})
+              SOHBET VE GEÇMİŞ SORGU AKIŞI ({filteredHistory.length}/{queryHistory.length})
             </span>
             <div className="flex items-center gap-3">
+              <input
+                type="text"
+                placeholder="Geçmişte ara..."
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                className="bg-slate-950/80 border border-sky-500/30 rounded px-2 py-0.5 text-[10px] text-sky-200 placeholder-slate-500 focus:outline-none focus:border-sky-400"
+              />
               <button
                 type="button"
                 onClick={exportHistoryJSON}
@@ -655,7 +695,7 @@ export function AxiomApp() {
           </div>
 
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-            {queryHistory.map((item) => (
+            {filteredHistory.map((item) => (
               <div
                 key={item.id}
                 onClick={() => {
@@ -703,17 +743,22 @@ export function AxiomApp() {
       {/* 4. ÇEKİRDEK DURUM BİLGİSİ VE SERVİS YENİDEN BAŞLATMA */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel-soft,#0a101d)] px-4 py-3 text-[11px] text-[var(--tb-muted,#94a3b8)] shadow-sm">
         <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="text-[var(--tb-cyan-400,#38bdf8)] font-bold uppercase tracking-wide">
               Faz 1 — Çekirdek Doğrulama Motoru Aktif (Çevrimiçi)
             </span>
-            <span className={`text-[9px] px-1.5 py-0.5 rounded border ${cabiActive ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-rose-950 text-rose-400 border-rose-800"}`}>
-              C-ABI Soket: {cabiActive ? "Bağlı" : "Devre Dışı"}
-            </span>
+            <button
+              type="button"
+              onClick={initCabi}
+              title="C-ABI Soket Bağlantısını Yeniden Dene"
+              className={`text-[9px] px-1.5 py-0.5 rounded border cursor-pointer hover:opacity-80 transition-opacity ${cabiActive ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-rose-950 text-rose-400 border-rose-800"}`}
+            >
+              C-ABI Soket: {cabiActive ? "Bağlı (Yenile)" : "Devre Dışı (Yeniden Bağlan)"}
+            </button>
           </div>
           <div>
             {kernelBadge} · Çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve
-            değilmez eşleştirme etkin. Yerel Z3/Lean ikilisi hazır olduğunda mühürlü kanıt üretir;
+            değişmez eşleştirme etkin. Yerel Z3/Lean ikilisi hazır olduğunda mühürlü kanıt üretir;
             aksi durumda mühürsüz kural denetimiyle güvenli karar kapısı açık kalır.
           </div>
         </div>
@@ -748,6 +793,12 @@ export function AxiomApp() {
           <span className="text-sky-300 font-semibold">{mode}</span>
           <span className="text-slate-600">|</span>
           <span className="text-slate-400">RAM Baskı: {(ram.ratio * 100).toFixed(0)}%</span>
+          {pendingQueueCount > 0 ? (
+            <>
+              <span className="text-slate-600">|</span>
+              <span className="text-amber-400 font-bold">Kuyruk: {pendingQueueCount}</span>
+            </>
+          ) : null}
         </div>
       </div>
 
