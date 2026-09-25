@@ -63,6 +63,14 @@ const BOS_RAM: RamStats = {
 const WORKER_BOOT_TIMEOUT_MS = 1200;
 const WORKER_WATCHDOG_MS = VERIFY_TIMEOUT_MS + 250;
 
+// Örnek Hızlı Aksiyom Şablonları
+const PRESET_QUERIES = [
+  { label: "Z3 Mantık Eşleşmesi", text: "(assert (and (or p q) (not p)))" },
+  { label: "Lean 4 Teorem İspatı", text: "theorem add_comm (n m : ℕ) : n + m = m + n" },
+  { label: "Değişmez Bakiye Denetimi", text: "invariant { state.balance >= 0 && state.nonce > 0 }" },
+  { label: "C-ABI Soket Testi", text: "SOCKET_CALL: ping_kernel --channel=0x7e --mode=cabi" },
+];
+
 interface QueryHistoryItem {
   id: string;
   text: string;
@@ -141,6 +149,8 @@ export function AxiomApp() {
   const [sekme, setSekme] = useState<"console" | "billing" | "network" | "sdk">("console");
   const [quorum, setQuorum] = useState(0);
   const [lisans, setLisans] = useState(false);
+  const [cabiActive, setCabiActive] = useState(false);
+  const [copiedStatus, setCopiedStatus] = useState(false);
   
   // Gemini / ChatGPT Tarzı Geçmiş Sorgu Günlüğü (Session History)
   const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>([]);
@@ -148,7 +158,12 @@ export function AxiomApp() {
 
   // C-ABI Soket Köprüsünü ilklendir
   useEffect(() => {
-    AxiomCABISocketBridge.initializeBridge();
+    try {
+      AxiomCABISocketBridge.initializeBridge();
+      setCabiActive(true);
+    } catch {
+      setCabiActive(false);
+    }
   }, []);
 
   const clearWatchdog = useCallback(() => {
@@ -471,6 +486,32 @@ export function AxiomApp() {
     setDeneme((n) => n + 1);
   }, [clearWatchdog]);
 
+  // Teşhis ve Analiz verisini JSON olarak kopyalama
+  const copyDiagnosticJSON = useCallback(() => {
+    if (!analysis) return;
+    const report = JSON.stringify({ analysis, digest, proof, timestamp: new Date().toISOString() }, null, 2);
+    navigator.clipboard.writeText(report);
+    setCopiedStatus(true);
+    setTimeout(() => setCopiedStatus(false), 2000);
+  }, [analysis, digest, proof]);
+
+  // Geçmiş Akışını JSON Olarak İndirme (Export)
+  const exportHistoryJSON = useCallback(() => {
+    if (queryHistory.length === 0) return;
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(queryHistory, null, 2));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `axiom_session_history_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }, [queryHistory]);
+
+  const removeHistoryItem = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setQueryHistory((prev) => prev.filter((item) => item.id !== id));
+  }, []);
+
   const romListesi = useMemo(() => ROM_SEED, []);
 
   return (
@@ -482,17 +523,42 @@ export function AxiomApp() {
         </MasterShellBoundary>
       </div>
 
+      {/* 1.1 HIZLI ŞABLON VE AKSİYOM ÖRNEKLERİ (Konsol Hazır/Boşken veya Her An) */}
+      <div className="flex flex-wrap items-center gap-2 px-1">
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hızlı Aksiyomlar:</span>
+        {PRESET_QUERIES.map((preset, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={() => submit(preset.text)}
+            className="rounded border border-sky-500/20 bg-sky-950/30 px-2 py-0.5 text-[10px] text-sky-300 hover:border-sky-400 hover:bg-sky-900/40 transition-all cursor-pointer truncate max-w-[200px]"
+            title={preset.text}
+          >
+            ⚡ {preset.label}
+          </button>
+        ))}
+      </div>
+
       {/* 2. CANLI ANALİZ VE HAKİKAT TEŞHİS PENCERESİ */}
       {analysis || busy ? (
         <div className="rounded-xl border border-sky-500/40 bg-[var(--tb-panel,#070b12)] p-4 shadow-lg space-y-4">
-          <div className="flex items-center justify-between border-b border-sky-500/30 pb-2">
+          <div className="flex items-center justify-between border-b border-sky-500/30 pb-2 flex-wrap gap-2">
             <span className="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               SON SORGU ANALİZİ VE İCRA TEŞHİSİ
             </span>
-            <span className="text-[10px] text-slate-400">
-              {busy ? "Çözümleniyor..." : lastText ? `İşlenen Sorgu: "${lastText.slice(0, 50)}..."` : ""}
-            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={copyDiagnosticJSON}
+                className="text-[10px] text-sky-300 hover:text-white bg-sky-900/40 hover:bg-sky-800/60 px-2 py-1 rounded border border-sky-500/30 transition-all cursor-pointer"
+              >
+                {copiedStatus ? "✓ Rapor Kopyalandı" : "📋 Teşhisi Kopyala (JSON)"}
+              </button>
+              <span className="text-[10px] text-slate-400 truncate max-w-[250px]">
+                {busy ? "Çözümleniyor..." : lastText ? `İşlenen Sorgu: "${lastText.slice(0, 40)}..."` : ""}
+              </span>
+            </div>
           </div>
 
           <div className="grid gap-3 lg:grid-cols-2">
@@ -570,13 +636,22 @@ export function AxiomApp() {
               <span className="h-2 w-2 rounded-full bg-sky-400" />
               SOHBET VE GEÇMİŞ SORGU AKIŞI ({queryHistory.length})
             </span>
-            <button
-              type="button"
-              onClick={() => setQueryHistory([])}
-              className="text-[10px] text-slate-400 hover:text-rose-400 underline cursor-pointer"
-            >
-              Akışı Temizle
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={exportHistoryJSON}
+                className="text-[10px] text-sky-400 hover:text-sky-300 underline cursor-pointer"
+              >
+                Dışa Aktar (.json)
+              </button>
+              <button
+                type="button"
+                onClick={() => setQueryHistory([])}
+                className="text-[10px] text-slate-400 hover:text-rose-400 underline cursor-pointer"
+              >
+                Akışı Temizle
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -588,7 +663,7 @@ export function AxiomApp() {
                   setDigest(item.analysis.digest);
                   setLastText(item.text);
                 }}
-                className="flex items-center justify-between bg-[var(--tb-panel,#070b12)] p-2.5 rounded-lg border border-sky-500/20 hover:border-sky-400 transition-all cursor-pointer text-xs"
+                className="group flex items-center justify-between bg-[var(--tb-panel,#070b12)] p-2.5 rounded-lg border border-sky-500/20 hover:border-sky-400 transition-all cursor-pointer text-xs"
               >
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
                   <span className="text-sky-400 font-bold shrink-0">AXIOM&gt;</span>
@@ -599,6 +674,25 @@ export function AxiomApp() {
                     {item.analysis.lang?.name || "Çözümlendi"}
                   </span>
                   <span className="text-slate-400 font-mono">{item.timestamp}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      submit(item.text);
+                    }}
+                    title="Yeniden Çalıştır"
+                    className="opacity-0 group-hover:opacity-100 text-sky-400 hover:text-sky-200 px-1 font-bold"
+                  >
+                    ↻
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => removeHistoryItem(item.id, e)}
+                    title="Kayıttan Sil"
+                    className="opacity-0 group-hover:opacity-100 text-rose-400 hover:text-rose-200 px-1 font-bold"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
             ))}
@@ -609,8 +703,13 @@ export function AxiomApp() {
       {/* 4. ÇEKİRDEK DURUM BİLGİSİ VE SERVİS YENİDEN BAŞLATMA */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel-soft,#0a101d)] px-4 py-3 text-[11px] text-[var(--tb-muted,#94a3b8)] shadow-sm">
         <div className="min-w-0 flex-1 space-y-1">
-          <div className="text-[var(--tb-cyan-400,#38bdf8)] font-bold uppercase tracking-wide">
-            Faz 1 — Çekirdek Doğrulama Motoru Aktif (Çevrimiçi)
+          <div className="flex items-center gap-3">
+            <span className="text-[var(--tb-cyan-400,#38bdf8)] font-bold uppercase tracking-wide">
+              Faz 1 — Çekirdek Doğrulama Motoru Aktif (Çevrimiçi)
+            </span>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded border ${cabiActive ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-rose-950 text-rose-400 border-rose-800"}`}>
+              C-ABI Soket: {cabiActive ? "Bağlı" : "Devre Dışı"}
+            </span>
           </div>
           <div>
             {kernelBadge} · Çoklu dil tanıma, ASK ASCII/1.0 yapı ağacı, ortak ara gösterim ve
@@ -631,13 +730,25 @@ export function AxiomApp() {
       {/* 5. BELLEK VE SİSTEM PROFİLCİSİ */}
       <MemoryProfiler ram={ram} rom={rom} heap={heap} mode={mode} />
 
-      {/* 6. CANLI WebGL GPU CANVAS */}
+      {/* 6. CANLI WebGL GPU CANVAS VE HUD KATMANI */}
       <div
         ref={hostRef}
         className="relative h-36 w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm sm:h-44"
       >
         <canvas ref={glRef} className="absolute inset-0 block h-full w-full" />
         <canvas ref={textRef} className="absolute inset-0 pointer-events-none block h-full w-full" />
+        
+        {/* GPU HUD Katmanı Overlay */}
+        <div className="absolute top-2 right-2 pointer-events-none flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded border border-sky-500/30 text-[10px] font-mono">
+          <span className="flex items-center gap-1.5 text-emerald-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+            {fps.toFixed(0)} FPS
+          </span>
+          <span className="text-slate-600">|</span>
+          <span className="text-sky-300 font-semibold">{mode}</span>
+          <span className="text-slate-600">|</span>
+          <span className="text-slate-400">RAM Baskı: {(ram.ratio * 100).toFixed(0)}%</span>
+        </div>
       </div>
 
       {hata ? (
