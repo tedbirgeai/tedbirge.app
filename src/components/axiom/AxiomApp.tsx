@@ -475,14 +475,14 @@ export function AxiomApp() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-[var(--tb-bg-soft,#070b12)] p-4 text-[var(--tb-text,#e2e8f0)] font-mono">
-      {/* 1. BIRLEŞIK ANA MASTER SHELL (ÇALIŞTIR & Belge Yükleme Hub'ı) */}
+      {/* 1. BİRLEŞİK ANA MASTER SHELL (ÇALIŞTIR & Belge Yükleme Hub'ı) */}
       <div className="w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm">
         <MasterShellBoundary>
           <AxiomMasterShell onSubmit={submit} busy={busy} />
         </MasterShellBoundary>
       </div>
 
-      {/* 2. EN ÖNE TAŞINAN CANLI ANALİZ VE HAKİKAT TEŞHİS PENCERESİ */}
+      {/* 2. CANLI ANALİZ VE HAKİKAT TEŞHİS PENCERESİ */}
       {analysis || busy ? (
         <div className="rounded-xl border border-sky-500/40 bg-[var(--tb-panel,#070b12)] p-4 shadow-lg space-y-4">
           <div className="flex items-center justify-between border-b border-sky-500/30 pb-2">
@@ -562,7 +562,7 @@ export function AxiomApp() {
         </div>
       ) : null}
 
-      {/* 3. EN ÖNE TAŞINAN GEMİNİ/CHATGPT TARZI SOHBET VE GEÇMİŞ OTURUM AKIŞI */}
+      {/* 3. SOHBET VE GEÇMİŞ SORGU AKIŞI */}
       {queryHistory.length > 0 ? (
         <div className="rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel-soft,#0a101d)] p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-[var(--tb-border,rgba(14,165,233,0.2))] pb-2">
@@ -631,7 +631,7 @@ export function AxiomApp() {
       {/* 5. BELLEK VE SİSTEM PROFİLCİSİ */}
       <MemoryProfiler ram={ram} rom={rom} heap={heap} mode={mode} />
 
-      {/* 6. CANLI WebGL GPU CANVAS (Akağan Neon Dalga Yüzeyi) */}
+      {/* 6. CANLI WebGL GPU CANVAS */}
       <div
         ref={hostRef}
         className="relative h-36 w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm sm:h-44"
