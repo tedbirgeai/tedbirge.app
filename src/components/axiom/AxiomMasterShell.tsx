@@ -7,6 +7,9 @@ import React, { useEffect, useRef, useState, useCallback, ChangeEvent, DragEvent
 import { AxiomCABISocketBridge } from "@/core/axiom_cabi_bridge";
 import { LicenseModal } from "@/components/axiom/LicenseModal";
 import { FREE_DEVICE_LIMIT } from "@/lib/axiom/license/policy";
+import type { KernelAnalysis } from "@/lib/axiom/analyze";
+import type { VerifyResult } from "@/lib/axiom/verify/types";
+import type { ByteDigest } from "@/lib/axiom/digest";
 
 // --- İKON BİLEŞENLERİ (Sıfır Bağımlılık SVG Ekosistemi) ---
 const ShieldIcon = () => (
@@ -68,9 +71,12 @@ const CopyIcon = () => (
 );
 
 // --- TİP VE SABİT TANIMLARI ---
-interface AxiomMasterShellProps {
+export interface AxiomMasterShellProps {
   onSubmit?: (text: string) => void;
   busy?: boolean;
+  analysis?: KernelAnalysis | null;
+  proof?: VerifyResult | null;
+  digest?: ByteDigest | null;
 }
 
 interface ChatMessage {
@@ -93,7 +99,13 @@ const ORNEK_ONERMELER = [
   "Sınırsız bant genişliği sağlıyoruz.",
 ];
 
-export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, busy = false }) => {
+export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
+  onSubmit,
+  busy = false,
+  analysis,
+  proof,
+  digest,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -139,6 +151,40 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
       isMounted = false;
     };
   }, []);
+
+  // AxiomApp'ten Gelen Analiz ve Kanıt Çıktılarını Canlı Akışa Yansıtma
+  useEffect(() => {
+    if (!analysis && !proof) return;
+
+    setChatHistory((prev) => {
+      if (prev.length === 0) return prev;
+      const first = { ...prev[0] };
+
+      if (analysis) {
+        const formattedAst = analysis.ast
+          ? JSON.stringify(analysis.ast, null, 2)
+          : `Root: ${analysis.lang?.name || "AxiomExecutionNode"}\n ├── Fingerprint: ${digest?.fingerprint || "N/A"}\n ├── Nodes: ${analysis.metrics?.nodes ?? 0}\n └── Depth: ${analysis.metrics?.depth ?? 0}`;
+        first.astTree = formattedAst;
+      }
+
+      if (proof) {
+        const isProven = proof.verdict === "proven";
+        first.status = isProven ? "VERIFIED" : "FALSIFIED";
+        first.verdictTitle = isProven
+          ? `MANTIKSAL DOĞRULAMA BAŞARILI (${proof.engine.toUpperCase()} MÜHÜRLÜ)`
+          : `MANTIKSAL ÇELİŞKİ / YANLIŞLAMA TESPİT EDİLDİ (${proof.engine.toUpperCase()})`;
+        first.verdictSummary = isProven
+          ? `Önerme ${proof.ms}ms içerisinde ${proof.engine.toUpperCase()} motoru ile başarıyla doğrulandı ve mühürlendi.`
+          : `Önerme ${proof.ms}ms içerisinde ${proof.engine.toUpperCase()} motoru tarafından çelişkili veya geçersiz olarak tespit edildi.`;
+        first.z3Output = proof.details || (isProven ? "-> sat" : "-> unsat");
+        if (proof.engine === "lean4" && proof.details) {
+          first.lean4Script = proof.details;
+        }
+      }
+
+      return [first, ...prev.slice(1)];
+    });
+  }, [analysis, proof, digest]);
 
   // Responsive Canvas Çizim ve Fizik Sentez Motoru
   useEffect(() => {
@@ -531,7 +577,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
                   type="button"
                   onClick={() => handleCopyText(chatHistory[0].astTree, "ast")}
                   title="AST Metnini Kopyala"
-                  className="opacity-60 hover:opacity-100 transition"
+                  className="opacity-60 hover:opacity-100 transition cursor-pointer"
                 >
                   <CopyIcon />
                 </button>
@@ -550,7 +596,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
                   type="button"
                   onClick={() => handleCopyText(chatHistory[0].lean4Script, "lean")}
                   title="Lean 4 Kodunu Kopyala"
-                  className="opacity-60 hover:opacity-100 transition"
+                  className="opacity-60 hover:opacity-100 transition cursor-pointer"
                 >
                   <CopyIcon />
                 </button>
@@ -569,7 +615,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
                   type="button"
                   onClick={() => handleCopyText(chatHistory[0].z3Output, "z3")}
                   title="Z3 Çıktısını Kopyala"
-                  className="opacity-60 hover:opacity-100 transition"
+                  className="opacity-60 hover:opacity-100 transition cursor-pointer"
                 >
                   <CopyIcon />
                 </button>
