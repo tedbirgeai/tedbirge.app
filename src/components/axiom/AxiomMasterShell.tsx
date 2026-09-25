@@ -23,13 +23,15 @@ const ORNEK_ONERMELER = [
 export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, busy = false }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [peers] = useState<number>(FREE_DEVICE_LIMIT);
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState<boolean>(false);
   const [bridgeConnected, setBridgeConnected] = useState<boolean>(false);
   const [commandInput, setCommandInput] = useState<string>("");
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
   useEffect(() => {
-    // C-ABI Soket Köprüsünü ilklendir
     const success = AxiomCABISocketBridge.initializeBridge();
     setBridgeConnected(success);
 
@@ -53,7 +55,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
     const resizeCanvas = () => {
       if (container && canvas) {
         canvas.width = container.clientWidth || 800;
-        canvas.height = container.clientHeight || 180;
+        canvas.height = container.clientHeight || 140;
       }
     };
 
@@ -87,12 +89,12 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
         ctx.stroke();
       }
 
-      // Harmonik Fizik Dalga Eğrisi (Orijinal AXIOM Turkuaz)
+      // Harmonik Fizik Dalga Eğrisi (AXIOM Turkuaz)
       ctx.strokeStyle = '#0ea5e9';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       for (let i = 0; i < w; i++) {
-        const y = h / 2 + Math.sin(i * 0.015 + t) * 28 * Math.cos(t * 0.4);
+        const y = h / 2 + Math.sin(i * 0.015 + t) * 22 * Math.cos(t * 0.4);
         if (i === 0) ctx.moveTo(i, y);
         else ctx.lineTo(i, y);
       }
@@ -109,7 +111,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
     };
   }, []);
 
-  // İcra Tetikleyicisi ve Otomatik Input Temizleme
+  // İcra Tetikleyicisi
   const handleExecute = useCallback((textToRun?: string) => {
     const targetText = typeof textToRun === "string" ? textToRun : commandInput;
     if (!targetText.trim() || busy) return;
@@ -122,8 +124,8 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
       onSubmit(targetText.trim());
     }
 
-    // Girdi kutusunu yeni soru için otomatik temizle!
     setCommandInput("");
+    setUploadedFileName(null);
   }, [commandInput, busy, bridgeConnected, onSubmit]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -131,6 +133,22 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
       e.preventDefault();
       handleExecute();
     }
+  };
+
+  // Belge ve Dosya Yükleme İşleyicisi
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadedFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        setCommandInput(content);
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -160,19 +178,18 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
       </div>
 
       {/* Orta Alan: Geometri ve Fizik Canvas Sentezleme Penceresi */}
-      <div ref={containerRef} className="relative w-full h-36 my-1 flex flex-col justify-center items-center overflow-hidden rounded-xl bg-[var(--tb-bg-soft,#090e18)] border border-[var(--tb-border,rgba(14,165,233,0.2))] shadow-lg">
+      <div ref={containerRef} className="relative w-full h-28 my-1 flex flex-col justify-center items-center overflow-hidden rounded-xl bg-[var(--tb-bg-soft,#090e18)] border border-[var(--tb-border,rgba(14,165,233,0.2))] shadow-lg">
         <canvas ref={canvasRef} className="w-full h-full object-cover opacity-95" />
         
         {/* Canlı Hakikat Matris Kartı */}
-        <div className="absolute top-3 left-3 bg-[var(--tb-panel,#070b12)]/90 p-3 rounded-lg border border-sky-500/30 backdrop-blur-md text-xs space-y-1 shadow-xl">
-          <div className="text-sky-400 font-bold tracking-wider uppercase text-[11px]">&gt;&gt; EVRENSEL BİLİM DEĞİŞMEZ MATRİSİ</div>
-          <div className="text-slate-400 text-[10px]">Motor: Formal Kanıt ve Hesaplamalı Geometri v12</div>
+        <div className="absolute top-2 left-3 bg-[var(--tb-panel,#070b12)]/90 p-2.5 rounded-lg border border-sky-500/30 backdrop-blur-md text-xs space-y-0.5 shadow-xl">
+          <div className="text-sky-400 font-bold tracking-wider uppercase text-[10px]">&gt;&gt; EVRENSEL BİLİM DEĞİŞMEZ MATRİSİ</div>
           <div className="text-emerald-400 font-medium text-[10px]">Durum: P2P Şifreli ve Senkronize (DÜĞÜM_AKTİF)</div>
         </div>
       </div>
 
       {/* YÜKSEK KONTRASTLI VE NET ÖRNEK ÖNERMELER */}
-      <div className="flex flex-wrap items-center gap-2 pt-1">
+      <div className="flex flex-wrap items-center gap-2 pt-0.5">
         <span className="text-[11px] text-[var(--tb-text,#ffffff)] font-bold mr-1 tracking-wide">
           Örnek Önermeler:
         </span>
@@ -181,30 +198,51 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({ onSubmit, bu
             key={idx}
             type="button"
             onClick={() => handleExecute(onerme)}
-            className="text-[11px] font-semibold bg-sky-950 text-sky-100 hover:bg-sky-400 hover:text-slate-950 border border-sky-400 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-sm truncate max-w-[300px]"
+            className="text-[11px] font-semibold bg-sky-950 text-sky-100 hover:bg-sky-400 hover:text-slate-950 border border-sky-400 px-3 py-1 rounded-lg transition-all cursor-pointer shadow-sm truncate max-w-[300px]"
           >
             {onerme}
           </button>
         ))}
       </div>
 
-      {/* Alt Alan: Evrensel Komut Giriş Barı ve Otomatik Temizlenen ÇALIŞTIR Butonu */}
-      <div className="space-y-2 pt-1">
-        <div className="flex items-center bg-[var(--tb-panel-soft,#0a101d)] border border-sky-500/50 rounded-xl px-4 py-2.5 shadow-md gap-2">
+      {/* Alt Alan: Evrensel Komut Giriş Barı + Belge Yükleme + ÇALIŞTIR */}
+      <div className="space-y-2 pt-0.5">
+        <div className="flex items-center bg-[var(--tb-panel-soft,#0a101d)] border border-sky-500/50 rounded-xl px-3 py-2 shadow-md gap-2">
           <span className="text-sky-400 font-bold tracking-widest text-xs shrink-0">AXIOM&gt;</span>
+          
           <input 
             type="text" 
             value={commandInput}
             onChange={(e) => setCommandInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Aksiyomatik önerme, evrensel mantık, formal teorem veya kod parçası girin..." 
+            placeholder="Aksiyomatik önerme, teorem, kod parçası veya belge içeriği girin..." 
             className="w-full bg-transparent text-[var(--tb-text,#ffffff)] focus:outline-none font-mono text-xs placeholder-slate-400 font-medium"
           />
+
+          {/* Gizli Dosya Giriş Elemanı */}
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            accept=".txt,.rs,.py,.js,.ts,.json,.md,.c,.cpp" 
+            className="hidden" 
+          />
+
+          {/* Belge Yükleme Butonu */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            title="Belge veya Kod Dosyası Yükle"
+            className="bg-slate-800 text-sky-300 hover:bg-sky-900 hover:text-white px-3 py-2 rounded-lg border border-sky-500/30 text-xs shrink-0 flex items-center gap-1 cursor-pointer transition font-semibold"
+          >
+            📄 {uploadedFileName ? uploadedFileName.slice(0, 12) + "..." : "Belge Ekle"}
+          </button>
+
           <button 
             type="button"
             onClick={() => handleExecute()}
             disabled={busy || !commandInput.trim()}
-            className="bg-sky-500 text-slate-950 font-bold px-6 py-2.5 rounded-lg text-xs hover:bg-sky-400 transition shadow-md cursor-pointer disabled:opacity-40 shrink-0 uppercase tracking-wider"
+            className="bg-sky-500 text-slate-950 font-bold px-6 py-2 rounded-lg text-xs hover:bg-sky-400 transition shadow-md cursor-pointer disabled:opacity-40 shrink-0 uppercase tracking-wider"
           >
             {busy ? 'İşleniyor…' : 'ÇALIŞTIR'}
           </button>
