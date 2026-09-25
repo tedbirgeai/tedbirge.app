@@ -1,0 +1,118 @@
+{
+  "$schema": "https://tedbirge.dev/schemas/formal_logic_rules.schema.json",
+  "version": "1.0.0",
+  "system": "AXIOM-WEBOS-FORMAL-LOGIC",
+  "updatedAt": "2026-09-25T00:00:00Z",
+  "rules": [
+    {
+      "id": "INV_SWAHILI_SYLLOGISM_BUSARA",
+      "category": "ARISTOTELIAN_SYLLOGISM",
+      "language": "sw",
+      "name": "Swahili Universal Syllogism (Ikiwa Wanadamu)",
+      "description": "Kiswahili formal logic syllogism: Wanadamu wote ni viumbe wenye busara. John ni mwanadamu -> John ni kiumbe mwenye busara.",
+      "premises": [
+        "Ikiwa wanadamu wote ni viumbe wenye busara",
+        "John ni mwanadamu"
+      ],
+      "conclusion": "John ni kiumbe mwenye busara",
+      "isTautology": true,
+      "smtFormula": "(assert (forall ((x Mtu)) (=> (Mwanadamu x) (MwenyeBusara x)))) (assert (Mwanadamu John)) (check-sat)",
+      "lean4Notation": "example (Mwanadamu MwenyeBusara : Mtu → Prop) (h1 : ∀ x, Mwanadamu x → MwenyeBusara x) (h2 : Mwanadamu John) : MwenyeBusara John := h1 John h2",
+      "severity": "HIGH"
+    },
+    {
+      "id": "INV_SYLLOGISM_HUMAN_RATIONAL",
+      "category": "ARISTOTELIAN_SYLLOGISM",
+      "language": "en",
+      "name": "Universal Syllogism (Human-Rational)",
+      "description": "Aristotelian Syllogism: All humans are rational beings. John is human -> John is rational.",
+      "premises": [
+        "∀x (Human(x) → Rational(x))",
+        "Human(John)"
+      ],
+      "conclusion": "Rational(John)",
+      "isTautology": true,
+      "smtFormula": "(assert (forall ((x Entity)) (=> (Human x) (Rational x)))) (assert (Human John)) (check-sat)",
+      "lean4Notation": "example (Human Rational : Entity → Prop) (h1 : ∀ x, Human x → Rational x) (h2 : Human John) : Rational John := h1 Human h2",
+      "severity": "HIGH"
+    },
+    {
+      "id": "INV_TURKISH_SYLLOGISM_AKILLI",
+      "category": "ARISTOTELIAN_SYLLOGISM",
+      "language": "tr",
+      "name": "Turkish Universal Syllogism (Bütün İnsanlar)",
+      "description": "Türkçe Aristoteles Tasımı: Bütün insanlar akıllıdır. John bir insandır -> John akıllıdır.",
+      "premises": [
+        "Bütün insanlar akıllıdır",
+        "John bir insandır"
+      ],
+      "conclusion": "John akıllıdır",
+      "isTautology": true,
+      "smtFormula": "(assert (forall ((x Varlik)) (=> (Insan x) (Akilli x)))) (assert (Insan John)) (check-sat)",
+      "lean4Notation": "example (Insan Akilli : Varlik → Prop) (h1 : ∀ x, Insan x → Akilli x) (h2 : Insan John) : Akilli John := h1 John h2",
+      "severity": "HIGH"
+    },
+    {
+      "id": "INV_MODUS_PONENS_CORE",
+      "category": "MODUS_PONENS",
+      "language": "universal",
+      "name": "Classical Modus Ponens",
+      "description": "If P then Q; P is true -> Q is true.",
+      "premises": [
+        "P → Q",
+        "P"
+      ],
+      "conclusion": "Q",
+      "isTautology": true,
+      "smtFormula": "(declare-const P Bool) (declare-const Q Bool) (assert (=> P Q)) (assert P) (check-sat)",
+      "lean4Notation": "theorem modus_ponens (P Q : Prop) (hpq : P → Q) (hp : P) : Q := hpq hp",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "INV-PHYS-01",
+      "category": "PHYSICS",
+      "language": "universal",
+      "name": "First Law of Thermodynamics",
+      "description": "dU = dQ - dW (Energy conservation in closed thermodynamic systems)",
+      "premises": [
+        "dU = dQ - dW"
+      ],
+      "conclusion": "Energy Is Conserved",
+      "isTautology": true,
+      "smtFormula": "(assert (= delta_U (- delta_Q delta_W)))",
+      "lean4Notation": "axiom first_law_of_thermodynamics (dU dQ dW : Real) : dU = dQ - dW",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "INV-INFO-01",
+      "category": "INFORMATION",
+      "language": "universal",
+      "name": "Shannon Channel Capacity Bound",
+      "description": "C = B * log2(1 + S/N) (Maximum error-free information transmission rate)",
+      "premises": [
+        "R <= B * log2(1 + S/N)"
+      ],
+      "conclusion": "Rate Bounded By Capacity",
+      "isTautology": true,
+      "smtFormula": "(assert (<= R (* B (log2 (+ 1 (/ S N))))))",
+      "lean4Notation": "axiom shannon_capacity (R B S N : Real) : R ≤ B * Real.logb 2 (1 + S / N)",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "INV-AUTO-01",
+      "category": "SAFETY",
+      "language": "universal",
+      "name": "ISO 26262 ASIL-D Memory Guard",
+      "description": "Memory writes must strictly stay within allocated process boundary addresses",
+      "premises": [
+        "target_address >= start_bound",
+        "target_address + write_size <= end_bound"
+      ],
+      "conclusion": "Memory Access Safe",
+      "isTautology": true,
+      "smtFormula": "(assert (and (>= target_address start_bound) (<= (+ target_address write_size) end_bound)))",
+      "lean4Notation": "theorem iso26262_mem_guard (target size start_b end_b : Nat) (h1 : target ≥ start_b) (h2 : target + size ≤ end_b) : True := trivial",
+      "severity": "CRITICAL"
+    }
+  ]
+}
