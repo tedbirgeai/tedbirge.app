@@ -33,6 +33,7 @@ describe("yetenek kapısı", () => {
     expect(builtins.map((a) => a.id).sort()).toEqual([
       "apps",
       "axiom",
+      "axiom.kernel.monitor",
       "calls",
       "chats",
       "computer",
