@@ -1,14 +1,3 @@
-// Tespit edilen satır (Satır 534):
-<div>Protocol: <span className="text-purple-400 font-semibold">Daelog P2P</span></div>
-```[cite: 20]
-
----
-
-Hiçbir yapıyı, prop'u veya işlevi bozmadan; **"Protocol:"** kelimesi kaldırılarak doğrudan **`Tedbirge P2P`** etiketiyle güncellenmiş, **0 hata prensibine uygun tam teşekküllü dosya kodu** aşağıdadır[cite: 20]. 
-
-GitHub üzerindeki **`src/components/axiom/AxiomMasterShell.tsx`** dosyasını düzenleyip (Edit) tamamını bu kodla değiştirebilirsiniz[cite: 20]:
-
-```tsx
 /* Copyright (c) 2026 Tedbirge Labs / Tedbirge WebOS. All rights reserved.
  * AXIOM™ is a proprietary product and core engine of Tedbirge WebOS.
  * Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
