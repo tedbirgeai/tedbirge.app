@@ -30,7 +30,7 @@ describe("JSON-RPC 2.0 sunucusu", () => {
       jsonrpc: "2.0",
       id: "a",
       method: "axiom.verify",
-      params: { text: "Kapalı sistemde enerji korunur." },
+      params: { text: "qqq zzz bilinmeyen iddia metni" },
     });
     expect("result" in res).toBe(true);
     if ("result" in res) {
