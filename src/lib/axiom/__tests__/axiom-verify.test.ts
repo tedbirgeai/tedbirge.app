@@ -25,7 +25,7 @@ function chain(text: string) {
 
 const UYUMLU = "Kapalı sistemde enerji korunur.";
 const CELISKILI = "Bu makine yoktan enerji üretir ve verimi %100 olur.";
-const NEUTRAL = "Sistem 500 joule enerji üretir.";
+const NEUTRAL = "qqq zzz bilinmeyen iddia metni";
 const originalFetch = globalThis.fetch;
 
 const mockFetch404 = async () =>
