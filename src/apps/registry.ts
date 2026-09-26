@@ -7,10 +7,12 @@
  * aynı kayda eklenir, kabuk kodu değişmez.
  */
 
+import type React from "react";
 import { SHELL_APPS, type ShellApp, type ShellAppId } from "@/shell/apps";
 import type { Capability } from "@/kernel/capabilities";
 import { WEB_APPS, type EmbedPolicy } from "@/shell/web-apps";
 import { LOCAL_APPS } from "@/shell/installed";
+import { KernelApp } from "./KernelApp";
 
 export type AppKind = "builtin" | "wasm" | "web";
 
@@ -28,6 +30,8 @@ export type AppManifest = Omit<ShellApp, "id"> & {
   embed?: EmbedPolicy;
   /** Kısa açıklama (ızgara kartında görünür). */
   hint?: string;
+  /** Uygulama çalıştırıcı bileşeni (React Component). */
+  component?: React.ComponentType<any>;
 };
 
 const CAPS: Record<ShellAppId, Capability[]> = {
@@ -48,7 +52,17 @@ const DESKTOP_CAPS: Record<string, Capability[]> = {
     "status.read",
     "files.read",
     "files.write",
-    "files.delete"
+    "files.delete",
+  ],
+  kernel: [
+    "mesh.send",
+    "mesh.receive",
+    "mesh.route",
+    "identity.read",
+    "status.read",
+    "files.read",
+    "files.write",
+    "files.delete",
   ],
   messenger: ["mesh.send", "mesh.receive", "mesh.route", "identity.read", "status.read"],
   files: ["mesh.send", "mesh.receive", "status.read", "files.read", "files.write", "files.delete"],
@@ -83,6 +97,7 @@ const registry = new Map<string, AppManifest>([
           capabilities: DESKTOP_CAPS[a.id] ?? (["status.read"] as Capability[]),
           mobileOrder: 98,
           railOrder: null,
+          component: a.id === "axiom" || a.id === "kernel" ? KernelApp : undefined,
         },
       ] as const,
   ),
@@ -105,6 +120,26 @@ const registry = new Map<string, AppManifest>([
         },
       ] as const,
   ),
+  // Çekirdek denetleyici ve telemetri uygulaması özel kaydı (AXIOM Kernel App):
+  [
+    "axiom.kernel.monitor",
+    {
+      id: "axiom.kernel.monitor",
+      label: "Kernel Control",
+      hint: "AXIOM™ Kernel & Mesh Telemetry",
+      kind: "builtin" as const,
+      capabilities: [
+        "mesh.send",
+        "mesh.receive",
+        "mesh.route",
+        "identity.read",
+        "status.read",
+      ] as Capability[],
+      mobileOrder: 97,
+      railOrder: null,
+      component: KernelApp,
+    },
+  ],
 ]);
 
 export function listApps(): AppManifest[] {
