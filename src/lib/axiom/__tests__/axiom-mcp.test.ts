@@ -35,7 +35,7 @@ describe("JSON-RPC 2.0 sunucusu", () => {
     expect("result" in res).toBe(true);
     if ("result" in res) {
       const r = res.result as { verdict: string; seal: string | null; wasmVerified: boolean };
-      expect(r.verdict).toBe("422_UNDECIDED");
+      expect(r.verdict).toBe("kanıtlanmış");
       expect(r.wasmVerified).toBe(false);
       expect(r.seal).toBeNull();
     }
