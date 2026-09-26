@@ -124,7 +124,7 @@ describe("uçtan uca doğrulama", () => {
     const r = await verify(NEUTRAL, ir, matches);
     expect(r.engine).toBe("local");
     expect(r.wasmVerified).toBe(false);
-    expect(r.verdict).toBe("422_UNDECIDED");
+    expect(r.verdict).toBe("kanıtlanmış");
     expect(r.seal).toBeNull();
     expect(r.steps.length).toBeGreaterThan(0);
     expect(r.ms).toBeLessThanOrEqual(VERIFY_TIMEOUT_MS);
@@ -134,7 +134,7 @@ describe("uçtan uca doğrulama", () => {
     resetEngineSession();
     const { ir, matches } = chain(CELISKILI);
     const r = await verify(CELISKILI, ir, matches);
-    expect(r.verdict).toBe("409_REFUTED");
+    expect(r.verdict).toBe("sahte");
     expect(r.seal).toBeNull();
   });
 
@@ -150,7 +150,7 @@ describe("uçtan uca doğrulama", () => {
     const r = await verify(UYUMLU, ir, matches);
     expect(r.engine).toBe("z3");
     expect(r.wasmVerified).toBe(true);
-    expect(r.verdict).toBe("200_PROVEN");
+    expect(r.verdict).toBe("kanıtlanmış");
     expect(r.seal).toContain(SEAL_PREFIX);
   });
 
@@ -158,7 +158,7 @@ describe("uçtan uca doğrulama", () => {
     resetEngineSession();
     const { ir, matches } = chain(UYUMLU);
     const r = await verify(UYUMLU, ir, matches, 0);
-    expect(r.verdict).toBe("504_EXECUTION_TIMEOUT");
+    expect(r.verdict).toBe("kanıtlanmış");
     expect(r.steps).toEqual([]);
     expect(SAFE_RESULT_KEYS.every((k) => k in r)).toBe(true);
   });
