@@ -163,12 +163,12 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
       if (analysis) {
         const formattedAst = analysis.ast
           ? JSON.stringify(analysis.ast, null, 2)
-          : `Root: ${analysis.lang?.name || "AxiomExecutionNode"}\n ├── Fingerprint: ${digest?.fingerprint || "N/A"}\n ├── Nodes: ${analysis.metrics?.nodes ?? 0}\n └── Depth: ${analysis.metrics?.depth ?? 0}`;
+          : `Root: ${analysis.lang?.label || "AxiomExecutionNode"}\n ├── Fingerprint: ${digest?.fingerprint || "N/A"}\n ├── Nodes: ${analysis.metrics?.nodes ?? 0}\n └── Depth: ${analysis.metrics?.depth ?? 0}`;
         first.astTree = formattedAst;
       }
 
       if (proof) {
-        const isProven = proof.verdict === "proven";
+        const isProven = proof.verdict === "200_PROVEN";
         first.status = isProven ? "VERIFIED" : "FALSIFIED";
         first.verdictTitle = isProven
           ? `MANTIKSAL DOĞRULAMA BAŞARILI (${proof.engine.toUpperCase()} MÜHÜRLÜ)`
@@ -176,9 +176,9 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
         first.verdictSummary = isProven
           ? `Önerme ${proof.ms}ms içerisinde ${proof.engine.toUpperCase()} motoru ile başarıyla doğrulandı ve mühürlendi.`
           : `Önerme ${proof.ms}ms içerisinde ${proof.engine.toUpperCase()} motoru tarafından çelişkili veya geçersiz olarak tespit edildi.`;
-        first.z3Output = proof.details || (isProven ? "-> sat" : "-> unsat");
-        if (proof.engine === "lean4" && proof.details) {
-          first.lean4Script = proof.details;
+        first.z3Output = proof.smt || (isProven ? "-> sat" : "-> unsat");
+        if (proof.engine === "lean4" && proof.lean) {
+          first.lean4Script = proof.lean;
         }
       }
 

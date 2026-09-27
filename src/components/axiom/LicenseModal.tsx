@@ -12,7 +12,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ShieldCheck, X, CreditCard, KeyCheck } from "lucide-react";
+import { ShieldCheck, X, CreditCard, KeyRound } from "lucide-react";
 
 import { t } from "@/lib/axiom/i18n";
 import {
@@ -82,7 +82,7 @@ export function LicenseModal({ open, peers, onClose, onSuccess }: LicenseModalPr
       try {
         setLoading(true);
         const mappedTier: LicenseTier =
-          tier === "pro"
+          tier === "operator"
             ? "DEVELOPER_PRO"
             : tier === "enterprise"
             ? "ENTERPRISE_NODE"
@@ -229,7 +229,7 @@ export function LicenseModal({ open, peers, onClose, onSuccess }: LicenseModalPr
               onClick={handleActivateKey}
               className="flex items-center gap-1 rounded-lg border border-[var(--tb-cyan-400)] bg-[var(--tb-cyan-400)]/20 px-3 py-1.5 font-osmono text-[10px] uppercase tracking-wide text-[var(--tb-cyan-400)] hover:bg-[var(--tb-cyan-400)]/30 disabled:opacity-50"
             >
-              <KeyCheck className="h-3.5 w-3.5" />
+              <KeyRound className="h-3.5 w-3.5" />
               {loading ? "..." : "Etkinleştir"}
             </button>
           </div>
