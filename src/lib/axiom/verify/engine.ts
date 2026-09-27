@@ -40,24 +40,9 @@ function evaluateDeterministicGate(
   baseVerdict: VerifyVerdict,
   wasmVerified: boolean
 ): VerifyVerdict {
-  // WASM motoru (Z3 / Lean 4) aktifse ve doğrudan kanıt ürettiyse o kararı koru.
-  if (wasmVerified && baseVerdict === "proven") {
-    return "proven";
-  }
-
-  const trimmed = text.trim();
-  const lower = trimmed.toLowerCase();
-
-  // 1. Yazılım / Kaynak Kod Tespiti (.tsx, .ts, .rs, .c, .cpp vb. dosya girdileri)
-  const isSourceCode =
-    trimmed.startsWith("/*") ||
-    trimmed.startsWith("//") ||
-    /^(import|export|function|const|let|var|class|pub fn|fn )\b/m.test(trimmed);
-
-  if (isSourceCode) {
-    // Sözdizimi geçerli yazılım/kod dosyaları doğrulanır.
-    return "proven";
-  }
+  // Yerel kapı hiçbir zaman kararı "kanıtlandı" düzeyine yükseltmez.
+  if (!wasmVerified && baseVerdict === "200_PROVEN") baseVerdict = "422_UNDECIDED";
+  const lower = text.trim().toLowerCase();
 
   // 2. Doğal Dil ve Aksiyomatik Önerme Taraması (Fiziksel / Mantıksal Çelişkiler)
   const contradictionKeywords = [
@@ -80,11 +65,10 @@ function evaluateDeterministicGate(
 
   const hasContradiction = contradictionKeywords.some((kw) => lower.includes(kw));
   if (hasContradiction) {
-    return "falsified";
+    return "409_REFUTED";
   }
 
-  // Çelişki barındırmayan tüm aksiyomlar, matematik teoremleri, fizik kanunları ve kodlar onaylanır.
-  return "proven";
+  return baseVerdict;
 }
 
 function sonuc(
@@ -153,8 +137,7 @@ export async function verify(
   }, budgetMs);
 
   if (!outcome.ok) {
-    const fallbackVerdict = evaluateDeterministicGate(text, outcome.verdict, wasmVerified);
-    return sonuc(text, engine, wasmVerified, fallbackVerdict, [], outcome.ms, smt, lean);
+    return sonuc(text, engine, wasmVerified, outcome.verdict, [], outcome.ms, smt, lean);
   }
 
   return sonuc(

@@ -82,7 +82,7 @@ export function LicenseModal({ open, peers, onClose, onSuccess }: LicenseModalPr
       try {
         setLoading(true);
         const mappedTier: LicenseTier =
-          tier === "pro"
+          tier === "operator"
             ? "DEVELOPER_PRO"
             : tier === "enterprise"
             ? "ENTERPRISE_NODE"

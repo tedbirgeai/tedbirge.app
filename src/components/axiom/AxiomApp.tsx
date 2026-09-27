@@ -221,7 +221,7 @@ export function AxiomApp() {
     });
     if (reviewProof(proof).quorum) setQuorum((n) => n + 1);
     proofQueueRef.current = enqueueProof(proofQueueRef.current, proof);
-    setPendingQueueCount(proofQueueRef.current.items?.length || 0);
+    setPendingQueueCount(proofQueueRef.current.pending.length);
 
     const mesh = meshRef.current;
     if (mesh) {
@@ -229,7 +229,7 @@ export function AxiomApp() {
       void flushProofQueue(proofQueueRef.current, (record) => mesh.publish(record), online).then(
         (queue) => {
           proofQueueRef.current = queue;
-          setPendingQueueCount(queue.items?.length || 0);
+          setPendingQueueCount(queue.pending.length);
         },
       );
     }
@@ -297,7 +297,7 @@ export function AxiomApp() {
         setQueryHistory((prev) => [
           {
             id: Math.random().toString(36).substring(2, 9),
-            text: msg.analysis.text || "",
+            text: "",
             analysis: msg.analysis,
             timestamp: new Date().toLocaleTimeString("tr-TR"),
           },
@@ -420,9 +420,9 @@ export function AxiomApp() {
 
     // Her Sorguda Tutar ve Çağrı Sayacı Kesin Artar
     meterRecord({
-      engine: "z3",
-      simulated: false,
-      verdict: "proven",
+      engine: "local",
+      simulated: true,
+      verdict: "422_UNDECIDED",
       ms: 11,
       client: "yerel-arayüz",
     });
@@ -542,7 +542,7 @@ export function AxiomApp() {
   const filteredHistory = useMemo(() => {
     if (!searchFilter.trim()) return queryHistory;
     const q = searchFilter.toLowerCase();
-    return queryHistory.filter((item) => item.text.toLowerCase().includes(q) || item.analysis.lang?.name?.toLowerCase().includes(q));
+    return queryHistory.filter((item) => item.text.toLowerCase().includes(q) || item.analysis.lang?.label?.toLowerCase().includes(q));
   }, [queryHistory, searchFilter]);
 
   const romListesi = useMemo(() => ROM_SEED, []);
@@ -717,7 +717,7 @@ export function AxiomApp() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0 text-[10px]">
                   <span className="text-emerald-400 font-semibold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
-                    {item.analysis.lang?.name || "Çözümlendi"}
+                    {item.analysis.lang?.label || "Çözümlendi"}
                   </span>
                   <span className="text-slate-400 font-mono">{item.timestamp}</span>
                   <button
