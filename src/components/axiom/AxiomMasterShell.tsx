@@ -169,16 +169,45 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
       }
 
       if (proof) {
-        const isProven = proof.verdict === "200_PROVEN";
-        first.status = isProven ? "VERIFIED" : "FALSIFIED";
-        first.verdictTitle = isProven
-          ? `MANTIKSAL DOĞRULAMA BAŞARILI (${proof.engine.toUpperCase()} MÜHÜRLÜ)`
-          : `MANTIKSAL ÇELİŞKİ / YANLIŞLAMA TESPİT EDİLDİ (${proof.engine.toUpperCase()})`;
-        first.verdictSummary = isProven
-          ? `Önerme ${proof.ms}ms içerisinde ${proof.engine.toUpperCase()} motoru ile başarıyla doğrulandı ve mühürlendi.`
-          : `Önerme ${proof.ms}ms içerisinde ${proof.engine.toUpperCase()} motoru tarafından çelişkili veya geçersiz olarak tespit edildi.`;
-        first.z3Output = proof.smt || (isProven ? "-> sat" : "-> unsat");
-        if (proof.engine === "lean4" && proof.lean) {
+        const engineLabel = proof.engine.toUpperCase();
+        const sealed = proof.verdict === "200_PROVEN" && proof.wasmVerified && proof.seal;
+        switch (proof.verdict) {
+          case "200_PROVEN":
+            if (sealed) {
+              first.status = "VERIFIED";
+              first.verdictTitle = `MANTIKSAL DOĞRULAMA BAŞARILI (${engineLabel} MÜHÜRLÜ)`;
+              first.verdictSummary = `Önerme ${proof.ms}ms içinde ${engineLabel} motoru ile doğrulandı ve TEDBİRGE-WEBOS-ZKP mührü üretildi.`;
+            } else {
+              // Canlı WASM olmadan mühür yok: dürüstçe kararsız göster.
+              first.status = "EVALUATING";
+              first.verdictTitle = `KARARSIZ / KANITLANAMADI (422_UNDECIDED — ${engineLabel})`;
+              first.verdictSummary = `Yerel kural kapısı çelişki bulmadı fakat canlı Z3/Lean WASM ikilisi bağlı olmadığı için mühürlü kanıt üretilemedi. Sonuç ${proof.ms}ms içinde döndü.`;
+            }
+            break;
+          case "409_REFUTED":
+            first.status = "FALSIFIED";
+            first.verdictTitle = `MANTIKSAL ÇELİŞKİ / YANLIŞLAMA (409_REFUTED — ${engineLabel})`;
+            first.verdictSummary = `Önerme ${proof.ms}ms içinde ${engineLabel} motoru tarafından çelişkili bulundu ve reddedildi.`;
+            break;
+          case "422_UNDECIDED":
+            first.status = "EVALUATING";
+            first.verdictTitle = `KARARSIZ / KANITLANAMADI (422_UNDECIDED — ${engineLabel})`;
+            first.verdictSummary = `Önerme ${proof.ms}ms içinde ne kanıtlanabildi ne de çürütülebildi. Karar üretilmedi, mühür yok.`;
+            break;
+          case "504_EXECUTION_TIMEOUT":
+            first.status = "EVALUATING";
+            first.verdictTitle = `ZAMAN AŞIMI (504_EXECUTION_TIMEOUT — ${engineLabel})`;
+            first.verdictSummary = `Doğrulama 500 ms sert bütçe içinde tamamlanamadı; sonuç mühürlenmedi.`;
+            break;
+          case "500_PANIC":
+          default:
+            first.status = "FALSIFIED";
+            first.verdictTitle = `MOTOR PANİĞİ (500_PANIC — ${engineLabel})`;
+            first.verdictSummary = `Doğrulama sırasında motor izole edildi; hiçbir ara veri dışa aktarılmadı.`;
+            break;
+        }
+        first.z3Output = proof.smt || "; SMT-LIB çıktısı yok.";
+        if (proof.lean) {
           first.lean4Script = proof.lean;
         }
       }
