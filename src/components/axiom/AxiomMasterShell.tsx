@@ -54,6 +54,13 @@ const XCircleIcon = () => (
   </svg>
 );
 
+const ClockIcon = () => (
+  <svg className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
+
 const GitBranchIcon = () => (
   <svg className="w-4 h-4 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <line x1="6" y1="3" x2="6" y2="15" />
@@ -127,13 +134,14 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
     {
       id: "init-1",
       timestamp: new Date().toLocaleTimeString(),
-      prompt: "Kapalı sistemde enerji korunur.",
-      status: "VERIFIED",
-      verdictTitle: "MANTIKSAL DOĞRULAMA BAŞARILI (MUTLAK HAKİKAT)",
-      verdictSummary: "Girdi önermesi Termodinamiğin 1. Kanunu ve Lean 4 fizik korunum teoremine tam denklik sağladı. Karşıt durum tespiti bulunamadı.",
-      astTree: "Root: EnergyConservationLaw\n ├── SystemState: Closed\n └── Equation: ΔU = Q - W\n     ├── InternalEnergy: Const\n     └── ConservationStatus: VERIFIED",
-      lean4Script: "theorem energy_conservation (sys : ClosedSystem) : ΔU sys = Q sys - W sys :=\nby simp [thermodynamics_first_law]",
-      z3Output: "(declare-const delta_U Real)\n(declare-const Q Real)\n(declare-const W Real)\n(assert (= delta_U (- Q W)))\n(check-sat)\n-> sat",
+      prompt: "AXIOM çekirdeği hazır. Doğrulanacak önermeyi girin.",
+      status: "EVALUATING",
+      verdictTitle: "BEKLEMEDE — GİRDİ DOĞRULAMA MOTORUNA VERİLMEDİ",
+      verdictSummary:
+        "Her önerme Z3 SMT / Lean 4 / yerel kural kapısı üzerinden değerlendirilir. Canlı WASM ikilisi yoksa mühür üretilmez, karar 422_UNDECIDED olarak dürüstçe döner.",
+      astTree: "Root: AxiomIdleNode\n └── Awaiting: user proposition",
+      lean4Script: "-- Lean 4 çıktısı doğrulama sonrası burada gösterilir.",
+      z3Output: "; SMT-LIB 2 çıktısı doğrulama sonrası burada gösterilir.",
     },
   ]);
 
@@ -168,16 +176,45 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
       }
 
       if (proof) {
-        const isProven = proof.verdict === "200_PROVEN";
-        first.status = isProven ? "VERIFIED" : "FALSIFIED";
-        first.verdictTitle = isProven
-          ? `MANTIKSAL DOĞRULAMA BAŞARILI (${proof.engine.toUpperCase()} MÜHÜRLÜ)`
-          : `MANTIKSAL ÇELİŞKİ / YANLIŞLAMA TESPİT EDİLDİ (${proof.engine.toUpperCase()})`;
-        first.verdictSummary = isProven
-          ? `Önerme ${proof.ms}ms içerisinde ${proof.engine.toUpperCase()} motoru ile başarıyla doğrulandı ve mühürlendi.`
-          : `Önerme ${proof.ms}ms içerisinde ${proof.engine.toUpperCase()} motoru tarafından çelişkili veya geçersiz olarak tespit edildi.`;
-        first.z3Output = proof.smt || (isProven ? "-> sat" : "-> unsat");
-        if (proof.engine === "lean4" && proof.lean) {
+        const engineLabel = proof.engine.toUpperCase();
+        const sealed = proof.verdict === "200_PROVEN" && proof.wasmVerified && proof.seal;
+        switch (proof.verdict) {
+          case "200_PROVEN":
+            if (sealed) {
+              first.status = "VERIFIED";
+              first.verdictTitle = `MANTIKSAL DOĞRULAMA BAŞARILI (${engineLabel} MÜHÜRLÜ)`;
+              first.verdictSummary = `Önerme ${proof.ms}ms içinde ${engineLabel} motoru ile doğrulandı ve TEDBİRGE-WEBOS-ZKP mührü üretildi.`;
+            } else {
+              // Canlı WASM olmadan mühür yok: dürüstçe kararsız göster.
+              first.status = "EVALUATING";
+              first.verdictTitle = `KARARSIZ / KANITLANAMADI (422_UNDECIDED — ${engineLabel})`;
+              first.verdictSummary = `Yerel kural kapısı çelişki bulmadı fakat canlı Z3/Lean WASM ikilisi bağlı olmadığı için mühürlü kanıt üretilemedi. Sonuç ${proof.ms}ms içinde döndü.`;
+            }
+            break;
+          case "409_REFUTED":
+            first.status = "FALSIFIED";
+            first.verdictTitle = `MANTIKSAL ÇELİŞKİ / YANLIŞLAMA (409_REFUTED — ${engineLabel})`;
+            first.verdictSummary = `Önerme ${proof.ms}ms içinde ${engineLabel} motoru tarafından çelişkili bulundu ve reddedildi.`;
+            break;
+          case "422_UNDECIDED":
+            first.status = "EVALUATING";
+            first.verdictTitle = `KARARSIZ / KANITLANAMADI (422_UNDECIDED — ${engineLabel})`;
+            first.verdictSummary = `Önerme ${proof.ms}ms içinde ne kanıtlanabildi ne de çürütülebildi. Karar üretilmedi, mühür yok.`;
+            break;
+          case "504_EXECUTION_TIMEOUT":
+            first.status = "EVALUATING";
+            first.verdictTitle = `ZAMAN AŞIMI (504_EXECUTION_TIMEOUT — ${engineLabel})`;
+            first.verdictSummary = `Doğrulama 500 ms sert bütçe içinde tamamlanamadı; sonuç mühürlenmedi.`;
+            break;
+          case "500_PANIC":
+          default:
+            first.status = "FALSIFIED";
+            first.verdictTitle = `MOTOR PANİĞİ (500_PANIC — ${engineLabel})`;
+            first.verdictSummary = `Doğrulama sırasında motor izole edildi; hiçbir ara veri dışa aktarılmadı.`;
+            break;
+        }
+        first.z3Output = proof.smt || "; SMT-LIB çıktısı yok.";
+        if (proof.lean) {
           first.lean4Script = proof.lean;
         }
       }
@@ -325,34 +362,21 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
         onSubmit(trimmedText);
       }
 
-      // Önerme Tespiti ve Hakikat Karar Mantığı
-      const lowerText = trimmedText.toLowerCase();
-      const isFalsified = lowerText.includes("yoktan") || lowerText.includes("%100") || lowerText.includes("sınırsız");
-
-      const status: "VERIFIED" | "FALSIFIED" = isFalsified ? "FALSIFIED" : "VERIFIED";
-      const verdictTitle = isFalsified
-        ? "MANTIKSAL ÇELİŞKİ / YANLIŞLAMA TESPİT EDİLDİ"
-        : "MANTIKSAL DOĞRULAMA BAŞARILI (MUTLAK HAKİKAT)";
-      const verdictSummary = isFalsified
-        ? `"${trimmedText.slice(0, 50)}${trimmedText.length > 50 ? "..." : ""}" önermesi Termodinamiğin 2. Kanunu veya Axiom Ajan Sınırlarına aykırı bulundu. Çelişki kanıtlandı.`
-        : `"${trimmedText.slice(0, 50)}${trimmedText.length > 50 ? "..." : ""}" ifadesi Z3 SMT ve Lean 4 kanıt denetleyicisinden başarıyla geçti.`;
-
-      // Anlık Hakikat Kartı Oluşturma
+      // Karar üretimi tamamen doğrulama motoruna (Z3 / Lean 4 / yerel kapı)
+      // devredilir. Arayüz burada asla ön karar vermez; girdi bir "beklemede"
+      // kartı olarak eklenir, motor cevabı geldiğinde useEffect kartı günceller.
       const newEntry: ChatMessage = {
         id: Date.now().toString(),
         timestamp: new Date().toLocaleTimeString(),
         prompt: trimmedText,
         fileName: uploadedFileName || undefined,
-        status,
-        verdictTitle,
-        verdictSummary,
-        astTree: `Root: AxiomExecutionNode\n ├── InputPayload: "${trimmedText.slice(0, 30)}..."\n ├── CABIPacketStatus: 0x02 DISPATCHED\n └── DeterministicHash: ${isFalsified ? "CONTRADICTION_FOUND" : "SHA256_PASSED"}`,
-        lean4Script: isFalsified
-          ? `theorem false_proposition (p : Prop) : False :=\nby contradiction`
-          : `example (p q : Prop) : p ∧ q → q ∧ p :=\nby intro h; exact ⟨h.right, h.left⟩`,
-        z3Output: isFalsified
-          ? `(declare-const energy_gain Real)\n(assert (> energy_gain 1.0))\n(check-sat)\n-> unsat`
-          : `(declare-const p Bool)\n(declare-const q Bool)\n(assert (= p q))\n(check-sat)\n-> sat`,
+        status: "EVALUATING",
+        verdictTitle: "DOĞRULAMA MOTORUNDA — SONUÇ BEKLENİYOR",
+        verdictSummary:
+          "Önerme AXIOM doğrulama hattına (Z3 SMT + Lean 4, yerel kural kapısı yedekli) gönderildi. 500 ms sert bütçe içinde karar ve mühür (varsa) döner.",
+        astTree: "Root: AxiomExecutionNode\n └── Status: dispatched to verify()",
+        lean4Script: "-- Lean 4 çıktısı motordan geldiğinde burada gösterilir.",
+        z3Output: "; SMT-LIB çıktısı motordan geldiğinde burada gösterilir.",
       };
 
       setChatHistory((prev) => [newEntry, ...prev]);
@@ -511,23 +535,21 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
         <div ref={chatScrollRef} className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
           {chatHistory.map((item) => {
             const isVerified = item.status === "VERIFIED";
+            const isFalsified = item.status === "FALSIFIED";
+            const tone = isVerified
+              ? { border: "border-emerald-500/30", bg: "bg-emerald-950/10", text: "text-emerald-400" }
+              : isFalsified
+                ? { border: "border-rose-500/30", bg: "bg-rose-950/10", text: "text-rose-400" }
+                : { border: "border-amber-500/30", bg: "bg-amber-950/10", text: "text-amber-400" };
             return (
               <div
                 key={item.id}
-                className={`border rounded-lg p-3 space-y-2 transition-all ${
-                  isVerified
-                    ? "border-emerald-500/30 bg-emerald-950/10"
-                    : "border-rose-500/30 bg-rose-950/10"
-                }`}
+                className={`border rounded-lg p-3 space-y-2 transition-all ${tone.border} ${tone.bg}`}
               >
                 <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-2">
-                    {isVerified ? <CheckCircleIcon /> : <XCircleIcon />}
-                    <span
-                      className={`text-xs font-bold ${
-                        isVerified ? "text-emerald-400" : "text-rose-400"
-                      }`}
-                    >
+                    {isVerified ? <CheckCircleIcon /> : isFalsified ? <XCircleIcon /> : <ClockIcon />}
+                    <span className={`text-xs font-bold ${tone.text}`}>
                       {item.verdictTitle}
                     </span>
                   </div>
