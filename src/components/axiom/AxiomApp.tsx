@@ -661,7 +661,25 @@ export function AxiomApp() {
 
           {proof ? (
             <VerifyBoundary>
-              <ProofViewer result={proof} />
+              <ProofViewer
+                result={{
+                  id: proof.cid,
+                  status:
+                    proof.verdict === "200_PROVEN"
+                      ? "200_PROVEN"
+                      : proof.verdict === "504_EXECUTION_TIMEOUT"
+                        ? "EXECUTION_TIMEOUT"
+                        : proof.verdict === "500_PANIC"
+                          ? "PANIC_RECOVERED"
+                          : "UNPROVABLE",
+                  proofHash: proof.seal ?? proof.cid,
+                  latencyMs: proof.ms,
+                  costCreditedUsd: 0,
+                  steps: proof.steps.map((s) => `${s.rule}: ${s.detail}`),
+                  counterExample: null,
+                  timestamp: new Date().toISOString(),
+                }}
+              />
             </VerifyBoundary>
           ) : null}
         </div>
