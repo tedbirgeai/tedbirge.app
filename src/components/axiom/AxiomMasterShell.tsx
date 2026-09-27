@@ -355,34 +355,21 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
         onSubmit(trimmedText);
       }
 
-      // Önerme Tespiti ve Hakikat Karar Mantığı
-      const lowerText = trimmedText.toLowerCase();
-      const isFalsified = lowerText.includes("yoktan") || lowerText.includes("%100") || lowerText.includes("sınırsız");
-
-      const status: "VERIFIED" | "FALSIFIED" = isFalsified ? "FALSIFIED" : "VERIFIED";
-      const verdictTitle = isFalsified
-        ? "MANTIKSAL ÇELİŞKİ / YANLIŞLAMA TESPİT EDİLDİ"
-        : "MANTIKSAL DOĞRULAMA BAŞARILI (MUTLAK HAKİKAT)";
-      const verdictSummary = isFalsified
-        ? `"${trimmedText.slice(0, 50)}${trimmedText.length > 50 ? "..." : ""}" önermesi Termodinamiğin 2. Kanunu veya Axiom Ajan Sınırlarına aykırı bulundu. Çelişki kanıtlandı.`
-        : `"${trimmedText.slice(0, 50)}${trimmedText.length > 50 ? "..." : ""}" ifadesi Z3 SMT ve Lean 4 kanıt denetleyicisinden başarıyla geçti.`;
-
-      // Anlık Hakikat Kartı Oluşturma
+      // Karar üretimi tamamen doğrulama motoruna (Z3 / Lean 4 / yerel kapı)
+      // devredilir. Arayüz burada asla ön karar vermez; girdi bir "beklemede"
+      // kartı olarak eklenir, motor cevabı geldiğinde useEffect kartı günceller.
       const newEntry: ChatMessage = {
         id: Date.now().toString(),
         timestamp: new Date().toLocaleTimeString(),
         prompt: trimmedText,
         fileName: uploadedFileName || undefined,
-        status,
-        verdictTitle,
-        verdictSummary,
-        astTree: `Root: AxiomExecutionNode\n ├── InputPayload: "${trimmedText.slice(0, 30)}..."\n ├── CABIPacketStatus: 0x02 DISPATCHED\n └── DeterministicHash: ${isFalsified ? "CONTRADICTION_FOUND" : "SHA256_PASSED"}`,
-        lean4Script: isFalsified
-          ? `theorem false_proposition (p : Prop) : False :=\nby contradiction`
-          : `example (p q : Prop) : p ∧ q → q ∧ p :=\nby intro h; exact ⟨h.right, h.left⟩`,
-        z3Output: isFalsified
-          ? `(declare-const energy_gain Real)\n(assert (> energy_gain 1.0))\n(check-sat)\n-> unsat`
-          : `(declare-const p Bool)\n(declare-const q Bool)\n(assert (= p q))\n(check-sat)\n-> sat`,
+        status: "EVALUATING",
+        verdictTitle: "DOĞRULAMA MOTORUNDA — SONUÇ BEKLENİYOR",
+        verdictSummary:
+          "Önerme AXIOM doğrulama hattına (Z3 SMT + Lean 4, yerel kural kapısı yedekli) gönderildi. 500 ms sert bütçe içinde karar ve mühür (varsa) döner.",
+        astTree: "Root: AxiomExecutionNode\n └── Status: dispatched to verify()",
+        lean4Script: "-- Lean 4 çıktısı motordan geldiğinde burada gösterilir.",
+        z3Output: "; SMT-LIB çıktısı motordan geldiğinde burada gösterilir.",
       };
 
       setChatHistory((prev) => [newEntry, ...prev]);
