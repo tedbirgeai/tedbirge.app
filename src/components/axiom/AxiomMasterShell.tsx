@@ -528,23 +528,21 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
         <div ref={chatScrollRef} className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
           {chatHistory.map((item) => {
             const isVerified = item.status === "VERIFIED";
+            const isFalsified = item.status === "FALSIFIED";
+            const tone = isVerified
+              ? { border: "border-emerald-500/30", bg: "bg-emerald-950/10", text: "text-emerald-400" }
+              : isFalsified
+                ? { border: "border-rose-500/30", bg: "bg-rose-950/10", text: "text-rose-400" }
+                : { border: "border-amber-500/30", bg: "bg-amber-950/10", text: "text-amber-400" };
             return (
               <div
                 key={item.id}
-                className={`border rounded-lg p-3 space-y-2 transition-all ${
-                  isVerified
-                    ? "border-emerald-500/30 bg-emerald-950/10"
-                    : "border-rose-500/30 bg-rose-950/10"
-                }`}
+                className={`border rounded-lg p-3 space-y-2 transition-all ${tone.border} ${tone.bg}`}
               >
                 <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-2">
-                    {isVerified ? <CheckCircleIcon /> : <XCircleIcon />}
-                    <span
-                      className={`text-xs font-bold ${
-                        isVerified ? "text-emerald-400" : "text-rose-400"
-                      }`}
-                    >
+                    {isVerified ? <CheckCircleIcon /> : isFalsified ? <XCircleIcon /> : <ClockIcon />}
+                    <span className={`text-xs font-bold ${tone.text}`}>
                       {item.verdictTitle}
                     </span>
                   </div>
