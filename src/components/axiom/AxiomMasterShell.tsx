@@ -127,13 +127,14 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
     {
       id: "init-1",
       timestamp: new Date().toLocaleTimeString(),
-      prompt: "Kapalı sistemde enerji korunur.",
-      status: "VERIFIED",
-      verdictTitle: "MANTIKSAL DOĞRULAMA BAŞARILI (MUTLAK HAKİKAT)",
-      verdictSummary: "Girdi önermesi Termodinamiğin 1. Kanunu ve Lean 4 fizik korunum teoremine tam denklik sağladı. Karşıt durum tespiti bulunamadı.",
-      astTree: "Root: EnergyConservationLaw\n ├── SystemState: Closed\n └── Equation: ΔU = Q - W\n     ├── InternalEnergy: Const\n     └── ConservationStatus: VERIFIED",
-      lean4Script: "theorem energy_conservation (sys : ClosedSystem) : ΔU sys = Q sys - W sys :=\nby simp [thermodynamics_first_law]",
-      z3Output: "(declare-const delta_U Real)\n(declare-const Q Real)\n(declare-const W Real)\n(assert (= delta_U (- Q W)))\n(check-sat)\n-> sat",
+      prompt: "AXIOM çekirdeği hazır. Doğrulanacak önermeyi girin.",
+      status: "EVALUATING",
+      verdictTitle: "BEKLEMEDE — GİRDİ DOĞRULAMA MOTORUNA VERİLMEDİ",
+      verdictSummary:
+        "Her önerme Z3 SMT / Lean 4 / yerel kural kapısı üzerinden değerlendirilir. Canlı WASM ikilisi yoksa mühür üretilmez, karar 422_UNDECIDED olarak dürüstçe döner.",
+      astTree: "Root: AxiomIdleNode\n └── Awaiting: user proposition",
+      lean4Script: "-- Lean 4 çıktısı doğrulama sonrası burada gösterilir.",
+      z3Output: "; SMT-LIB 2 çıktısı doğrulama sonrası burada gösterilir.",
     },
   ]);
 
