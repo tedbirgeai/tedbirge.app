@@ -177,7 +177,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
           ? `Önerme ${proof.ms}ms içerisinde ${proof.engine.toUpperCase()} motoru ile başarıyla doğrulandı ve mühürlendi.`
           : `Önerme ${proof.ms}ms içerisinde ${proof.engine.toUpperCase()} motoru tarafından çelişkili veya geçersiz olarak tespit edildi.`;
         first.z3Output = proof.smt || (isProven ? "-> sat" : "-> unsat");
-        if (proof.engine === "lean" && proof.lean) {
+        if (proof.engine === "lean4" && proof.lean) {
           first.lean4Script = proof.lean;
         }
       }
