@@ -13,12 +13,14 @@ import { Route as YasalRouteImport } from './routes/yasal'
 import { Route as SohbetRouteImport } from './routes/sohbet'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as KosullarRouteImport } from './routes/kosullar'
+import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
 import { Route as IadeRouteImport } from './routes/iade'
 import { Route as GizlilikRouteImport } from './routes/gizlilik'
 import { Route as DevRouteImport } from './routes/dev'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CevrimdisiRouteImport } from './routes/cevrimdisi'
+import { Route as AxiomRouteImport } from './routes/axiom'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTranslateRouteImport } from './routes/api/translate'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -58,6 +60,11 @@ const KosullarRoute = KosullarRouteImport.update({
   path: '/kosullar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IletisimRoute = IletisimRouteImport.update({
+  id: '/iletisim',
+  path: '/iletisim',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IhracatUyumRoute = IhracatUyumRouteImport.update({
   id: '/ihracat-uyum',
   path: '/ihracat-uyum',
@@ -86,6 +93,11 @@ const ChatRoute = ChatRouteImport.update({
 const CevrimdisiRoute = CevrimdisiRouteImport.update({
   id: '/cevrimdisi',
   path: '/cevrimdisi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AxiomRoute = AxiomRouteImport.update({
+  id: '/axiom',
+  path: '/axiom',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -183,12 +195,14 @@ const ApiPublicV1McpVerifyRoute = ApiPublicV1McpVerifyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/axiom': typeof AxiomRoute
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
   '/dev': typeof DevRoute
   '/gizlilik': typeof GizlilikRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
+  '/iletisim': typeof IletisimRoute
   '/kosullar': typeof KosullarRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sohbet': typeof SohbetRoute
@@ -213,12 +227,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/axiom': typeof AxiomRoute
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
   '/dev': typeof DevRoute
   '/gizlilik': typeof GizlilikRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
+  '/iletisim': typeof IletisimRoute
   '/kosullar': typeof KosullarRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sohbet': typeof SohbetRoute
@@ -244,12 +260,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/axiom': typeof AxiomRoute
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
   '/dev': typeof DevRoute
   '/gizlilik': typeof GizlilikRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
+  '/iletisim': typeof IletisimRoute
   '/kosullar': typeof KosullarRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sohbet': typeof SohbetRoute
@@ -276,12 +294,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/axiom'
     | '/cevrimdisi'
     | '/chat'
     | '/dev'
     | '/gizlilik'
     | '/iade'
     | '/ihracat-uyum'
+    | '/iletisim'
     | '/kosullar'
     | '/sitemap.xml'
     | '/sohbet'
@@ -306,12 +326,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/axiom'
     | '/cevrimdisi'
     | '/chat'
     | '/dev'
     | '/gizlilik'
     | '/iade'
     | '/ihracat-uyum'
+    | '/iletisim'
     | '/kosullar'
     | '/sitemap.xml'
     | '/sohbet'
@@ -336,12 +358,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/axiom'
     | '/cevrimdisi'
     | '/chat'
     | '/dev'
     | '/gizlilik'
     | '/iade'
     | '/ihracat-uyum'
+    | '/iletisim'
     | '/kosullar'
     | '/sitemap.xml'
     | '/sohbet'
@@ -367,12 +391,14 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AxiomRoute: typeof AxiomRoute
   CevrimdisiRoute: typeof CevrimdisiRoute
   ChatRoute: typeof ChatRoute
   DevRoute: typeof DevRoute
   GizlilikRoute: typeof GizlilikRoute
   IadeRoute: typeof IadeRoute
   IhracatUyumRoute: typeof IhracatUyumRoute
+  IletisimRoute: typeof IletisimRoute
   KosullarRoute: typeof KosullarRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SohbetRoute: typeof SohbetRoute
@@ -426,6 +452,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KosullarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/iletisim': {
+      id: '/iletisim'
+      path: '/iletisim'
+      fullPath: '/iletisim'
+      preLoaderRoute: typeof IletisimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ihracat-uyum': {
       id: '/ihracat-uyum'
       path: '/ihracat-uyum'
@@ -466,6 +499,13 @@ declare module '@tanstack/react-router' {
       path: '/cevrimdisi'
       fullPath: '/cevrimdisi'
       preLoaderRoute: typeof CevrimdisiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/axiom': {
+      id: '/axiom'
+      path: '/axiom'
+      fullPath: '/axiom'
+      preLoaderRoute: typeof AxiomRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -599,12 +639,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AxiomRoute: AxiomRoute,
   CevrimdisiRoute: CevrimdisiRoute,
   ChatRoute: ChatRoute,
   DevRoute: DevRoute,
   GizlilikRoute: GizlilikRoute,
   IadeRoute: IadeRoute,
   IhracatUyumRoute: IhracatUyumRoute,
+  IletisimRoute: IletisimRoute,
   KosullarRoute: KosullarRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SohbetRoute: SohbetRoute,

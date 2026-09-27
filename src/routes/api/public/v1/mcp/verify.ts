@@ -24,7 +24,7 @@ function json(body: unknown, status: number, extra: Record<string, string>) {
   });
 }
 
-export const Route = createFileRoute("/api/v1/mcp/verify")({
+export const Route = createFileRoute("/api/public/v1/mcp/verify")({
   server: {
     handlers: {
       OPTIONS: async ({ request }) =>
