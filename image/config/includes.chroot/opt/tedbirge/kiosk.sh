@@ -98,6 +98,7 @@ hazir_isaretle() { # kip
   for t in /dev/console /dev/ttyS0; do
     printf '%s\n' TEDBIRGE_DESKTOP_READY > "$t" 2>/dev/null || true
     printf '%s\n' TEDBIRGE_DESKTOP_HEALTHY > "$t" 2>/dev/null || true
+    printf 'TEDBIRGE_GORUNTU_KIPI=%s\n' "$1" > "$t" 2>/dev/null || true
   done
 }
 
