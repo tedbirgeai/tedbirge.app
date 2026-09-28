@@ -18,3 +18,5 @@
   fizik/birim ihlali olan paket ağ katmanında imha edilir.
 - Uygulamalar arası mesajlaşma yalnız `src/shell/desktop-ipc.ts` üzerinden yapılır;
   doğrudan global referans paylaşımı yasak.
+
+- Arka plan servisleri yalnız `src/shell/services/services.ts` kayıt defterine eklenir (bağımlılık, watchdog, yeniden başlatma tek yerde); `BackgroundServices.tsx` doğrudan servis başlatmaz.
