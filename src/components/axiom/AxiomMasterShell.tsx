@@ -4,7 +4,7 @@
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
 import React, { useEffect, useRef, useState, useCallback, ChangeEvent, DragEvent, KeyboardEvent } from "react";
-import { AxiomCABISocketBridge } from "@/core/axiom_cabi_bridge";
+import { verifyProofLayout } from "@/lib/axiom/bridge/cabi-layout";
 import { LicenseModal } from "@/components/axiom/LicenseModal";
 import { FREE_DEVICE_LIMIT } from "@/lib/axiom/license/policy";
 import type { KernelAnalysis } from "@/lib/axiom/analyze";
@@ -145,19 +145,9 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
     },
   ]);
 
-  // C-ABI Soket Bağlantısının Başlatılması
+  // C-ABI bayt düzeni öz-denetimi (sahte bağlantı durumu üretilmez)
   useEffect(() => {
-    let isMounted = true;
-    const success = AxiomCABISocketBridge.initializeBridge();
-    if (isMounted) {
-      setBridgeConnected(success);
-      if (success) {
-        AxiomCABISocketBridge.dispatchCABIPacket(0x01, "SHELL_MOUNTED_AND_WIRED");
-      }
-    }
-    return () => {
-      isMounted = false;
-    };
+    setBridgeConnected(verifyProofLayout());
   }, []);
 
   // AxiomApp'ten Gelen Analiz ve Kanıt Çıktılarını Canlı Akışa Yansıtma
@@ -352,10 +342,6 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
 
       const trimmedText = targetText.trim();
 
-      // C-ABI Soket Bildirimi
-      if (bridgeConnected) {
-        AxiomCABISocketBridge.dispatchCABIPacket(0x02, trimmedText);
-      }
 
       // Dış Prop Callback'i
       if (onSubmit) {
@@ -407,8 +393,8 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
               }`}
             />
             {bridgeConnected
-              ? "AXIOM_DETERMİNİSTİK_ÇEKİRDEK_AKTİF"
-              : "AXIOM_CABI_BAĞLANIYOR"}
+              ? "AXIOM_CABI_DÜZEN_212B"
+              : "AXIOM_CABI_DÜZEN_UYUMSUZ"}
           </span>
           <span className="text-slate-400 text-[11px]">
             ROM TCB: <strong className="text-white">DEĞİŞMEZ_MÜHÜRLÜ</strong>
