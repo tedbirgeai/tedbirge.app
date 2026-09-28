@@ -366,7 +366,7 @@ export function ProfileApp({ onOpen }: { onOpen?: (id: string) => void }) {
           </p>
           <button
             type="button"
-            onClick={() => onOpen?.("panel")}
+            onClick={() => onOpen?.("yonetim")}
             className="wa-press mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[var(--tb-border)] px-4 font-osmono text-[12px] text-[var(--tb-muted)]"
           >
             <ExternalLink className="h-4 w-4" aria-hidden />

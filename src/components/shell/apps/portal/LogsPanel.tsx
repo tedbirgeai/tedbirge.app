@@ -1,10 +1,10 @@
 /**
  * SİSTEM GÜNLÜK KAYITLARI
  * ------------------------------------------------------------------
- * Arama, seviye ve tarih aralığı filtresi; CSV/JSON dışa aktarım.
+ * Arama, seviye ve tarih aralığı filtresi; CSV/NDJSON dışa aktarım; ilk 500 satır çizilir, 5000 satır bellekte tutulur.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Download, FileJson, ScrollText, Trash2 } from "lucide-react";
 
@@ -20,11 +20,17 @@ import {
   primaryBtn,
 } from "@/components/shell/apps/portal/ui";
 import { usePortal } from "@/lib/portal/store";
+import { logsToCsv, logsToNdjson } from "@/lib/portal/export";
+import { useCarrierScheduler } from "@/lib/carrier-scheduler";
 import { LOG_LEVEL_LABEL, type LogLevel, type PortalLog } from "@/lib/portal/types";
 
 function fmt(at: number): string {
-  return new Date(at).toLocaleString("tr-TR");
+  const d = new Date(at);
+  return `${d.toLocaleString("tr-TR")}.${String(d.getMilliseconds()).padStart(3, "0")}`;
 }
+
+/** Bellekte tutulan en fazla satır. */
+const MAX_ROWS = 5000;
 
 function download(name: string, mime: string, body: string) {
   const url = URL.createObjectURL(new Blob([body], { type: mime }));
@@ -37,15 +43,6 @@ function download(name: string, mime: string, body: string) {
   URL.revokeObjectURL(url);
 }
 
-function toCsv(rows: PortalLog[]): string {
-  const head = "zaman;seviye;kaynak;mesaj";
-  const body = rows
-    .map((r) =>
-      [fmt(r.at), LOG_LEVEL_LABEL[r.level], r.source, r.message.replace(/;/g, ",")].join(";"),
-    )
-    .join("\n");
-  return `${head}\n${body}\n`;
-}
 
 export function LogsPanel() {
   const { ready, logs, clearLogs } = usePortal();
@@ -55,12 +52,29 @@ export function LogsPanel() {
   const [to, setTo] = useState("");
   const [confirmClear, setConfirmClear] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [frozen, setFrozen] = useState<PortalLog[] | null>(null);
+  // Taşıyıcı zamanlayıcı olayları (yalnız sayaç değişimi; içerik kaydedilmez).
+  const sched = useCarrierScheduler();
+  const [events, setEvents] = useState<PortalLog[]>([]);
+  const prev = useRef({ sent: sched.sent, blocked: sched.blocked });
+  useEffect(() => {
+    const p = prev.current;
+    const add: PortalLog[] = [];
+    if (sched.blocked > p.blocked)
+      add.push({ id: `sc-b-${Date.now()}`, at: Date.now(), level: "uyari", source: "tasiyici", message: `${sched.blocked - p.blocked} gönderim bölge kuralıyla bekletildi (${sched.region})` });
+    if (sched.sent > p.sent)
+      add.push({ id: `sc-s-${Date.now()}`, at: Date.now(), level: "bilgi", source: "tasiyici", message: `${sched.sent - p.sent} çerçeve gönderildi` });
+    prev.current = { sent: sched.sent, blocked: sched.blocked };
+    if (add.length) setEvents((e) => [...add, ...e].slice(0, MAX_ROWS));
+  }, [sched.sent, sched.blocked, sched.region]);
+  const source = paused && frozen ? frozen : [...events, ...logs].slice(0, MAX_ROWS);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");
     const fromMs = from ? new Date(`${from}T00:00:00`).getTime() : null;
     const toMs = to ? new Date(`${to}T23:59:59`).getTime() : null;
-    return logs
+    return source
       .filter((l) => {
         if (level !== "all" && l.level !== level) return false;
         if (fromMs !== null && l.at < fromMs) return false;
@@ -72,7 +86,7 @@ export function LogsPanel() {
         );
       })
       .sort((a, b) => b.at - a.at);
-  }, [logs, q, level, from, to]);
+  }, [source, q, level, from, to]);
 
   async function doClear() {
     setBusy(true);
@@ -103,7 +117,7 @@ export function LogsPanel() {
                 download(
                   `tedbirge-kayitlar-${new Date().toISOString().slice(0, 10)}.csv`,
                   "text/csv;charset=utf-8",
-                  toCsv(filtered),
+                  logsToCsv(filtered),
                 );
                 toast.success("CSV indirildi.");
               }}
@@ -117,15 +131,26 @@ export function LogsPanel() {
               disabled={filtered.length === 0}
               onClick={() => {
                 download(
-                  `tedbirge-kayitlar-${new Date().toISOString().slice(0, 10)}.json`,
-                  "application/json",
-                  JSON.stringify(filtered, null, 2),
+                  `tedbirge-kayitlar-${new Date().toISOString().slice(0, 10)}.ndjson`,
+                  "application/x-ndjson",
+                  logsToNdjson(filtered),
                 );
-                toast.success("JSON indirildi.");
+                toast.success("NDJSON indirildi.");
               }}
             >
               <FileJson className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-              JSON
+              NDJSON
+            </button>
+            <button
+              type="button"
+              className={ghostBtn}
+              aria-pressed={paused}
+              onClick={() => {
+                if (!paused) setFrozen(source);
+                setPaused(!paused);
+              }}
+            >
+              {paused ? "Sürdür" : "Duraklat"}
             </button>
             <button
               type="button"
@@ -213,7 +238,7 @@ export function LogsPanel() {
             />
           ) : (
             <ul className="divide-y divide-[var(--tb-border)]">
-              {filtered.map((l) => (
+              {filtered.slice(0, 500).map((l) => (
                 <li key={l.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 py-2">
                   <div className="min-w-0">
                     <p className="truncate text-[13px] text-[var(--tb-text)]">{l.message}</p>

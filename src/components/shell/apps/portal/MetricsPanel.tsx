@@ -35,6 +35,11 @@ import {
   primaryBtn,
 } from "@/components/shell/apps/portal/ui";
 import { usePortal } from "@/lib/portal/store";
+import { MeshMap } from "@/components/shell/apps/portal/MeshMap";
+import { NodeDetailModal } from "@/components/shell/apps/portal/NodeDetailModal";
+import { buildMapNodes, formatStatus, statusSummary, type MapNode } from "@/lib/portal/live";
+import { useNodeRuntime } from "@/lib/node-runtime";
+import { seedNodes } from "@/lib/portal/seed";
 import { NODE_STATUS_LABEL, type PortalNode } from "@/lib/portal/types";
 
 const schema = z.object({
@@ -67,6 +72,15 @@ export function MetricsPanel() {
   const [creating, setCreating] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<MapNode | null>(null);
+  const node = useNodeRuntime();
+  const seedIds = useMemo(() => new Set(seedNodes(0).map((n) => n.id)), []);
+  const seeded = nodes.some((n) => seedIds.has(n.id));
+  const mapNodes = useMemo(
+    () => buildMapNodes(nodes, node.peers, node.nodeId),
+    [nodes, node.peers, node.nodeId],
+  );
+  const summary = statusSummary(nodes, node.peers, node.rttMs, seeded);
 
   // Canlı akış: 10 saniyede bir ölçüm örneği alınır.
   useEffect(() => {
@@ -161,6 +175,16 @@ export function MetricsPanel() {
 
   return (
     <div className="space-y-4">
+      <GlassCard>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="font-osmono text-[12px] text-[var(--tb-text)]" aria-live="polite">
+            {formatStatus(summary)}
+          </p>
+          {summary.sample ? <Badge tone="warn">örnek veri</Badge> : null}
+        </div>
+        <MeshMap nodes={mapNodes} onSelect={setSelected} />
+        <NodeDetailModal node={selected} onClose={() => setSelected(null)} />
+      </GlassCard>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           label="Etkin düğüm"

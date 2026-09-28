@@ -23,6 +23,7 @@ import {
   primaryBtn,
 } from "@/components/shell/apps/portal/ui";
 import { usePortal } from "@/lib/portal/store";
+import { DeviceKeysCard } from "@/components/shell/apps/portal/DeviceKeysCard";
 import { PLAN_LABEL, ROLE_LABEL, USER_STATUS_LABEL, type PortalUser } from "@/lib/portal/types";
 
 const schema = z.object({
@@ -173,6 +174,7 @@ export function UsersPanel() {
 
   return (
     <div className="space-y-4">
+      <DeviceKeysCard />
       <GlassCard>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <h3 className="truncate text-[14px] font-semibold text-[var(--tb-text)]">

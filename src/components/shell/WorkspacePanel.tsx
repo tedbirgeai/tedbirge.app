@@ -14,7 +14,6 @@ import { TedbirgeWebView } from "@/components/shell/TedbirgeWebView";
 import { WallpaperSettingsApp } from "@/components/shell/apps/WallpaperSettingsApp";
 import { AyarlarApp } from "@/components/shell/apps/AyarlarApp";
 import { SistemBilgisiApp } from "@/components/shell/apps/SistemBilgisiApp";
-import { PanelApp } from "@/components/shell/apps/PanelApp";
 import { ProfileApp } from "@/components/shell/apps/ProfileApp";
 import { YonetimPortaliApp } from "@/components/shell/apps/YonetimPortaliApp";
 import { WriterApp } from "@/components/shell/apps/office/WriterApp";
@@ -415,7 +414,8 @@ function AppSurface({
   if (win.appId === "wallpaper") return <WallpaperSettingsApp />;
   if (win.appId === "settings") return <AyarlarApp />;
   if (win.appId === "sysinfo") return <SistemBilgisiApp />;
-  if (win.appId === "panel") return <PanelApp />;
+  // Eski "Panel" pencereleri Yönetim Portalı ile açılır.
+  if (win.appId === "panel") return <YonetimPortaliApp />;
   if (win.appId === "yonetim") return <YonetimPortaliApp />;
   if (win.appId === "profile") return <ProfileApp onOpen={onLaunch} />;
 
