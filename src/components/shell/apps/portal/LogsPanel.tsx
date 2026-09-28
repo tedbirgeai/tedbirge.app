@@ -1,7 +1,7 @@
 /**
  * SİSTEM GÜNLÜK KAYITLARI
  * ------------------------------------------------------------------
- * Arama, seviye ve tarih aralığı filtresi; CSV/JSON dışa aktarım.
+ * Arama, seviye ve tarih aralığı filtresi; CSV/NDJSON dışa aktarım; ilk 500 satır çizilir, 5000 satır bellekte tutulur.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -238,7 +238,7 @@ export function LogsPanel() {
             />
           ) : (
             <ul className="divide-y divide-[var(--tb-border)]">
-              {filtered.map((l) => (
+              {filtered.slice(0, 500).map((l) => (
                 <li key={l.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 py-2">
                   <div className="min-w-0">
                     <p className="truncate text-[13px] text-[var(--tb-text)]">{l.message}</p>
