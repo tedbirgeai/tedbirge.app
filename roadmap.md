@@ -41,3 +41,10 @@
 - [x] WebRTC eş bağlantılarında gossip kanalı (iki cihazla canlı test bekliyor)
 - [x] tedbirge-truthd ikilisi (CI'da derlenir; QEMU testi bekliyor)
 - [x] Yeniden başlat yetkisi (rol + IPC jetonu)
+
+## Faz 5 — AxiomStudio
+- [x] Studio uygulaması, CodeMirror düzenleyici, /repo dosya ağacı
+- [x] repo.write sistem yeteneği, şablonlar, örnek axiom-studio projesi
+- [x] Cihazda AssemblyScript derleme (işçi, 10 sn derleme sınırı)
+- [x] Paketleme + cihaz anahtarıyla imza + kurulum, host log
+- [x] AXIOM paneli (// @claim)

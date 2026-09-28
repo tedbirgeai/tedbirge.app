@@ -50,6 +50,7 @@ export const LOCAL_TILES: LauncherTile[] = [
   { id: "writer", label: "Writer", hint: "Yerel yazı belgeleri" },
   { id: "sheets", label: "Sheets", hint: "Yerel hesap tabloları" },
   { id: "slides", label: "Slides", hint: "Yerel sunular" },
+  { id: "studio", label: "AxiomStudio", hint: "Yerel uygulama geliştirme ortamı" },
   { id: "pdf", label: "PDF Studio", hint: "PDF görüntüleme ve yazdırma" },
   { id: "notes", label: "Notes", hint: "Hızlı notlar" },
   { id: "organizer", label: "Organizer", hint: "Görev ve randevu ajandası" },

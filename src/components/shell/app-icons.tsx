@@ -349,6 +349,12 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
           />
         </Frame>
       );
+    case "studio":
+      return (
+        <Frame className={className}>
+          <path d="M26 22l-9 10 9 10M38 22l9 10-9 10M35 18l-6 28" fill="none" stroke="var(--tb-accent)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        </Frame>
+      );
     case "pdf":
       return (
         <Frame className={className}>

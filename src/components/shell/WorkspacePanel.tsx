@@ -54,6 +54,7 @@ import { AXIOM_WINDOW_TITLE } from "@/lib/axiom/brand";
 import { closeWindow, openWindow, useWindows, type WindowRecord } from "@/shell/windows";
 
 /** Messenger ağır bir uygulamadır: yalnız penceresi açıldığında yüklenir. */
+const StudioApp = lazy(() => import("@/components/shell/apps/studio/StudioApp"));
 const MessengerApp = lazy(() => import("@/components/Messenger"));
 
 /** Arama uygulaması sohbet kabuğunu "Aramalar" sekmesinde açar. */
@@ -456,6 +457,7 @@ function AppSurface({
   if (win.appId === "writer") return <WriterApp />;
   if (win.appId === "sheets") return <SheetsApp />;
   if (win.appId === "slides") return <SlidesApp />;
+  if (win.appId === "studio") return <StudioApp />;
   if (win.appId === "pdf") return <PdfStudioApp />;
   if (win.appId === "notes") return <NotesApp />;
   if (win.appId === "organizer") return <OrganizerApp />;

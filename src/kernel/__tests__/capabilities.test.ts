@@ -54,6 +54,7 @@ describe("yetenek kapısı", () => {
       "sheets",
       "slides",
       "store",
+      "studio",
       "sysinfo",
       "terminal",
       "transfer",
