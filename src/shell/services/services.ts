@@ -49,6 +49,23 @@ const defs: ServiceDef[] = [
   },
 ];
 
+let leader = false;
+const leaderSubs = new Set<() => void>();
+export function markLeader() {
+  leader = true;
+  leaderSubs.forEach((fn) => fn());
+}
+export function useIsLeader(): boolean {
+  return useSyncExternalStore(
+    (fn) => {
+      leaderSubs.add(fn);
+      return () => void leaderSubs.delete(fn);
+    },
+    () => leader,
+    () => false,
+  );
+}
+
 let manager: ReturnType<typeof createServiceManager> | null = null;
 
 export function serviceManager() {
