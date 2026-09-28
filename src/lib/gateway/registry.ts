@@ -32,7 +32,10 @@ export type GatewayAdapter = {
   healthCheck?: () => Promise<true | string>;
   /** Adaptörü açar/başlatır; idempotent olmalı. */
   activate?: () => Promise<void> | void;
+  /** true ise inbound köprü imza zorunlu kılar; env sırrı yoksa istek reddedilir. */
+  strictHmac?: boolean;
 };
+
 
 type MetricsEntry = { ok: number; err: number; at: number };
 
