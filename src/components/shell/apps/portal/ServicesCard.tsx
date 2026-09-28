@@ -2,6 +2,8 @@ import { RotateCcw } from "lucide-react";
 
 import { Badge, GlassCard, ghostBtn } from "@/components/shell/apps/portal/ui";
 import { serviceManager, useIsLeader, useServices } from "@/shell/services/services";
+import { useAuth } from "@/hooks/useAuth";
+import { usePanelRole } from "@/hooks/usePanelRole";
 import type { ServiceStatus } from "@/shell/services/registry";
 
 const LABEL: Record<ServiceStatus, string> = {
@@ -25,6 +27,8 @@ const TONE: Record<ServiceStatus, "ok" | "warn" | "bad" | "muted"> = {
 export function ServicesCard() {
   const services = useServices();
   const leader = useIsLeader();
+  const { user } = useAuth();
+  const { canOperate } = usePanelRole(user?.id);
   return (
     <GlassCard>
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -38,6 +42,7 @@ export function ServicesCard() {
             <span className="flex items-center gap-2">
               {s.restarts > 0 ? <span className="text-[var(--tb-text-muted)]">{s.restarts}× deneme</span> : null}
               <Badge tone={TONE[s.status]}>{LABEL[s.status]}</Badge>
+              {canOperate ? (
               <button
                 type="button"
                 className={ghostBtn}
@@ -46,10 +51,14 @@ export function ServicesCard() {
               >
                 <RotateCcw className="h-3.5 w-3.5" />
               </button>
+              ) : null}
             </span>
           </li>
         ))}
       </ul>
+      {canOperate ? null : (
+        <p className="mt-2 text-[11px] text-[var(--tb-text-muted)]">Yetki: görüntüleyici — yeniden başlatma kapalı.</p>
+      )}
     </GlassCard>
   );
 }

@@ -22,6 +22,8 @@ import {
 import { usePortal } from "@/lib/portal/store";
 import { logsToCsv, logsToNdjson } from "@/lib/portal/export";
 import { useCarrierScheduler } from "@/lib/carrier-scheduler";
+import { useServiceEvents } from "@/shell/services/services";
+import { serviceEventsToLogs } from "@/shell/services/log-map";
 import { LOG_LEVEL_LABEL, type LogLevel, type PortalLog } from "@/lib/portal/types";
 
 function fmt(at: number): string {
@@ -68,7 +70,11 @@ export function LogsPanel() {
     prev.current = { sent: sched.sent, blocked: sched.blocked };
     if (add.length) setEvents((e) => [...add, ...e].slice(0, MAX_ROWS));
   }, [sched.sent, sched.blocked, sched.region]);
-  const source = paused && frozen ? frozen : [...events, ...logs].slice(0, MAX_ROWS);
+  const svcEvents = useServiceEvents();
+  const svcLogs = useMemo(() => serviceEventsToLogs(svcEvents), [svcEvents]);
+  const source = paused && frozen
+    ? frozen
+    : [...svcLogs, ...events, ...logs].sort((a, b) => b.at - a.at).slice(0, MAX_ROWS);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");

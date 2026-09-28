@@ -13,7 +13,7 @@ import { reportRuntimeError } from "@/lib/error-reporting";
 import { createLinkHub, onGossipLink, openLocalLink } from "@/lib/axiom/net/datachannel";
 import { createMeshDaemon, type MeshDaemon } from "@/lib/axiom/net/mesh-daemon";
 import { onIpc } from "@/shell/desktop-ipc";
-import { createServiceManager, type ServiceDef, type ServiceInfo } from "@/shell/services/registry";
+import { createServiceManager, type ServiceDef, type ServiceEvent, type ServiceInfo } from "@/shell/services/registry";
 
 let mesh: MeshDaemon | null = null;
 export const meshDaemon = () => mesh;
@@ -76,6 +76,11 @@ let manager: ReturnType<typeof createServiceManager> | null = null;
 export function serviceManager() {
   if (!manager) {
     manager = createServiceManager(defs, { heartbeatMs: 5000 });
+    // Uzaktan yeniden başlatma yalnız IPC ile: desktop-ipc jetonu doğrulamadan dinleyiciye iletmez.
+    onIpc("service-manager", (msg) => {
+      const p = msg.payload as { name?: unknown } | null;
+      if (msg.kind === "restart" && p && typeof p.name === "string") void manager?.restart(p.name);
+    });
     manager.subscribe(() => {
       const last = manager?.events().at(-1);
       if (last && (last.status === "failed" || last.status === "degraded")) {
@@ -93,5 +98,24 @@ export function useServices(): ServiceInfo[] {
     (fn) => serviceManager().subscribe(fn),
     () => serviceManager().list(),
     () => EMPTY,
+  );
+}
+
+let eventsCache: ServiceEvent[] = [];
+let eventsLen = -1;
+const NO_EVENTS: ServiceEvent[] = [];
+
+export function useServiceEvents(): ServiceEvent[] {
+  return useSyncExternalStore(
+    (fn) => serviceManager().subscribe(fn),
+    () => {
+      const all = serviceManager().events();
+      if (all.length !== eventsLen || all.at(-1) !== eventsCache.at(-1)) {
+        eventsCache = all;
+        eventsLen = all.length;
+      }
+      return eventsCache;
+    },
+    () => NO_EVENTS,
   );
 }
