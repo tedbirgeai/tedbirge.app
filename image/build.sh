@@ -98,6 +98,13 @@ else
   echo "-- güç köprüsü ikilisi yok; kabuk yedeği kullanılacak"
 fi
 
+# Doğrulama daemon'u varsa gömülür; yoksa tedbirge-truth.service atlanır.
+if [ -s "$WORK/build-iso/payload/bin/tedbirge-truthd" ]; then
+  install -Dm755 "$WORK/build-iso/payload/bin/tedbirge-truthd" \
+    config/includes.chroot/opt/tedbirge/tedbirge-truthd
+  echo "-- doğrulama daemon'u paketlendi"
+fi
+
 # Kalıcı disk kurulumu aracı
 install -Dm755 "$WORK/image/install/tedbirge-kur" \
   config/includes.chroot/usr/local/sbin/tedbirge-kur
