@@ -31,10 +31,9 @@ export const Route = createFileRoute("/api/public/proof-chip/$cid")({
         if (!CID_RE.test(cid)) {
           return new Response(svg("AXIOM", "geçersiz kimlik", "bad"), { status: 400, headers });
         }
-        const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
-          auth: { persistSession: false },
-        });
-        const { data } = await sb
+        // Kayıtlar artık herkese açık değil; rozet yalnız sunucuda, CID filtresiyle okunur.
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data } = await supabaseAdmin
           .from("proof_records")
           .select("verdict, simulated")
           .eq("cid", cid)
