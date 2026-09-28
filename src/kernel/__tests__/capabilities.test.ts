@@ -47,7 +47,6 @@ describe("yetenek kapısı", () => {
       "news",
       "notes",
       "organizer",
-      "panel",
       "pdf",
       "profile",
       "relay",

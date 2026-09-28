@@ -24,7 +24,7 @@ describe("otonom rozet", () => {
     expect(autonomyOf(snap).text).toBe("Yasal Sınırlar İçinde Otonom Çalışıyor");
     expect(autonomyOf({ ...snap, blocked: 2 }).tone).toBe("warn");
     expect(autonomyOf({ ...snap, ratio: 1, nextWindowAt: 5 }).tone).toBe("error");
-    expect(autonomyOf(snap).carriersTotal).toBe(10);
+    expect(autonomyOf(snap).carriersTotal).toBe(8); // carrier-bridge.ts gerçek listesi
   });
 });
 
