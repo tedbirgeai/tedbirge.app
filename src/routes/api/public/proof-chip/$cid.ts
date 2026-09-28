@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
 
 /**
  * Gömülebilir Proof Chip (SVG). Yalnız sunucuda kayıtlı kanıt kaydını gösterir;
