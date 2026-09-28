@@ -140,7 +140,15 @@ async function handleAxiomMethod(
       ms: result.ms,
       client: client ?? null,
     });
-    return ok(id, { ...result, lang, matches });
+    if (recordProof) {
+      await recordProof({
+        cid: result.cid,
+        verdict: String(result.verdict),
+        engine: String(result.engine),
+        simulated: Boolean(result.simulated),
+      }).catch(() => undefined);
+    }
+    return ok(id, { ...result, lang, matches, chip: `/api/public/proof-chip/${encodeURIComponent(result.cid)}` });
   } catch {
     // Sıfır günlük: hata içeriği dışa verilmez.
     return err(id, JSONRPC_ERRORS.internal, "Doğrulama tamamlanamadı");

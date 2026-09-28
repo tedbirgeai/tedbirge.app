@@ -3,27 +3,33 @@
  * Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
-export type LicenseTier = "COMMUNITY" | "DEVELOPER_PRO" | "ENTERPRISE_NODE" | "GOVERNMENT_SUITE";
+/**
+ * MoR ödeme adaptörü — Paddle Overlay checkout ve sunucu tarafı lisans doğrulaması.
+ * Sahte ödeme adresi veya önek tabanlı anahtar kabulü yoktur.
+ */
 
-export interface LicenseSession {
-  sessionId: string;
-  checkoutUrl: string;
-  tier: LicenseTier;
-  amount: number;
-  currency: string;
-  status: "PENDING" | "COMPLETED" | "FAILED";
-  createdAt: number;
-}
+import { initializePaddle, getPaddlePriceId } from "@/lib/paddle";
+import { PLANS } from "@/lib/paddle-catalog";
+import { supabase } from "@/integrations/supabase/client";
+import { verifyLicenseKeyFn } from "@/lib/license-verify.functions";
+
+export type LicenseTier = "COMMUNITY" | "DEVELOPER_PRO" | "ENTERPRISE_NODE" | "GOVERNMENT_SUITE";
 
 export interface VerificationResult {
   isLicensed: boolean;
   tier: LicenseTier;
   licenseKey?: string;
   expiresAt?: number;
-  nodeSignature?: string;
+  nodeLimit?: number;
 }
 
 const STORAGE_KEY = "axiom_mor_license_state";
+
+function tierFromPlan(plan: string): LicenseTier {
+  if (plan === PLANS.enterprise.productId) return "ENTERPRISE_NODE";
+  if (plan === PLANS.pro.productId) return "DEVELOPER_PRO";
+  return "COMMUNITY";
+}
 
 export class MoRPaymentAdapter {
   private static instance: MoRPaymentAdapter;
@@ -36,139 +42,97 @@ export class MoRPaymentAdapter {
   }
 
   public static getInstance(): MoRPaymentAdapter {
-    if (!MoRPaymentAdapter.instance) {
-      MoRPaymentAdapter.instance = new MoRPaymentAdapter();
-    }
+    if (!MoRPaymentAdapter.instance) MoRPaymentAdapter.instance = new MoRPaymentAdapter();
     return MoRPaymentAdapter.instance;
   }
 
-  /**
-   * Yerel hafızadan kaydedilmiş lisans durumunu yükler.
-   */
   private loadStoredLicense(): void {
     if (typeof window === "undefined") return;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const data = JSON.parse(raw) as VerificationResult;
-        if (data.isLicensed && data.expiresAt && data.expiresAt > Date.now()) {
-          this.currentTier = data.tier;
-          this.activeLicenseKey = data.licenseKey;
-          this.expiresAt = data.expiresAt;
-        } else {
-          this.clearLicense();
-        }
+      if (!raw) return;
+      const data = JSON.parse(raw) as VerificationResult;
+      if (data.isLicensed && (!data.expiresAt || data.expiresAt > Date.now())) {
+        this.currentTier = data.tier;
+        this.activeLicenseKey = data.licenseKey;
+        this.expiresAt = data.expiresAt;
+      } else {
+        this.clearLicense();
       }
     } catch {
-      // LocalStorage okuma hatası durumunda sessizce devam et
+      /* depolama okunamadı */
     }
   }
 
-  /**
-   * Merchant of Record (Paddle / LemonSqueezy / Stripe MoR) üzerinden ödeme oturumu başlatır.
-   */
-  public async createCheckoutSession(tier: LicenseTier): Promise<LicenseSession> {
-    const prices: Record<LicenseTier, number> = {
-      COMMUNITY: 0,
-      DEVELOPER_PRO: 49,
-      ENTERPRISE_NODE: 499,
-      GOVERNMENT_SUITE: 2499,
-    };
+  /** Paddle Overlay checkout açar. Oturum yoksa hata fırlatır. */
+  public async openCheckout(
+    tier: LicenseTier,
+    options: { nodes: number; interval?: "month" | "year" },
+  ): Promise<void> {
+    const plan = tier === "ENTERPRISE_NODE" || tier === "GOVERNMENT_SUITE" ? PLANS.enterprise : PLANS.pro;
+    const { data } = await supabase.auth.getUser();
+    const user = data.user;
+    if (!user) throw new Error("AUTH_REQUIRED");
 
-    const sessionId = `mor_chk_${Math.random().toString(36).substring(2, 11)}_${Date.now().toString(36)}`;
-    const checkoutUrl = `https://checkout.tedbirge.app/pay/${sessionId}?tier=${tier.toLowerCase()}`;
-
-    return {
-      sessionId,
-      checkoutUrl,
-      tier,
-      amount: prices[tier] ?? 0,
-      currency: "USD",
-      status: "PENDING",
-      createdAt: Date.now(),
-    };
+    const quantity = Math.min(plan.maxNodes, Math.max(plan.minNodes, Math.round(options.nodes)));
+    await initializePaddle();
+    const priceId = await getPaddlePriceId(plan.prices[options.interval ?? "month"]);
+    window.Paddle.Checkout.open({
+      items: [{ priceId, quantity }],
+      customer: user.email ? { email: user.email } : undefined,
+      customData: { userId: user.id, email: user.email ?? "" },
+      settings: {
+        displayMode: "overlay",
+        successUrl: `${window.location.origin}/?checkout=success`,
+        allowLogout: false,
+        variant: "one-page",
+      },
+    });
   }
 
-  /**
-   * Ürün Lisans Anahtarını ZKP ve MoR Webhook Kayıtları Üzerinden Doğrular.
-   */
+  /** Anahtarı sunucuda, oturum sahibinin etkin lisanslarıyla karşılaştırır. */
   public async verifyLicenseKey(licenseKey: string): Promise<VerificationResult> {
-    const cleanKey = licenseKey.trim().toUpperCase();
-
-    let detectedTier: LicenseTier | null = null;
-    let nodeSignature = "";
-
-    if (cleanKey.startsWith("AXIOM-PRO-")) {
-      detectedTier = "DEVELOPER_PRO";
-      nodeSignature = "0x_tedbirge_zkp_valid_pro_cert";
-    } else if (cleanKey.startsWith("AXIOM-ENT-")) {
-      detectedTier = "ENTERPRISE_NODE";
-      nodeSignature = "0x_tedbirge_zkp_valid_enterprise_cert";
-    } else if (cleanKey.startsWith("AXIOM-GOV-")) {
-      detectedTier = "GOVERNMENT_SUITE";
-      nodeSignature = "0x_tedbirge_zkp_valid_government_cert";
-    }
-
-    if (detectedTier) {
-      const result: VerificationResult = {
-        isLicensed: true,
-        tier: detectedTier,
-        licenseKey: cleanKey,
-        expiresAt: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 yıl geçerli
-        nodeSignature,
-      };
-
-      this.applyLicense(result);
-      return result;
-    }
-
-    return {
-      isLicensed: false,
-      tier: "COMMUNITY",
+    const res = await verifyLicenseKeyFn({ data: { licenseKey: licenseKey.trim() } });
+    if (!res.valid) return { isLicensed: false, tier: "COMMUNITY" };
+    const result: VerificationResult = {
+      isLicensed: true,
+      tier: tierFromPlan(res.plan),
+      licenseKey: licenseKey.trim(),
+      expiresAt: res.currentPeriodEnd ? Date.parse(res.currentPeriodEnd) : undefined,
+      nodeLimit: res.nodeLimit,
     };
+    this.applyLicense(result);
+    return result;
   }
 
-  /**
-   * Doğrulanmış lisansı belleğe ve yerel depolamaya kaydeder.
-   */
   private applyLicense(result: VerificationResult): void {
     this.currentTier = result.tier;
     this.activeLicenseKey = result.licenseKey;
     this.expiresAt = result.expiresAt;
-
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
-      } catch {
-        // Storage kotası hatasını yut
-      }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+    } catch {
+      /* kota */
     }
   }
 
-  /**
-   * Mevcut lisansı sıfırlar ve COMMUNITY moduna döndürür.
-   */
   public clearLicense(): void {
     this.currentTier = "COMMUNITY";
     this.activeLicenseKey = undefined;
     this.expiresAt = undefined;
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch {
-        // Storage silme hatası
-      }
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* yok */
     }
   }
 
   public getCurrentTier(): LicenseTier {
     return this.currentTier;
   }
-
   public getActiveLicenseKey(): string | undefined {
     return this.activeLicenseKey;
   }
-
   public getExpirationDate(): number | undefined {
     return this.expiresAt;
   }
