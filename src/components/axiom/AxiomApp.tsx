@@ -361,7 +361,7 @@ export function AxiomApp() {
     const gl = glRef.current;
     const text = textRef.current;
     if (!host || !gl || !text) return;
-    const renderer = createRenderer(host, gl, text);
+    const renderer = createRenderer(host, gl, text, () => setMode("2D (yazılım)"));
     rendererRef.current = renderer;
     setMode(renderer.mode === "webgl2" ? "WebGL2 (GPU)" : "2D (yazılım)");
 
