@@ -413,6 +413,21 @@ export function AxiomApp() {
   }, [ram.used, ram.limit]);
 
   // Ana Çekirdek İcra ve Analiz Fonksiyonu
+  const verifyLocally = useCallback((text: string) => {
+    void localVerify(text)
+      .then((out) => {
+        setAnalysis(out.analysis);
+        setDigest(out.analysis.digest);
+        setProof(out.result);
+        setRam(out.ram);
+        setVerifying(false);
+      })
+      .catch((err: unknown) => {
+        setHata(err instanceof Error ? err.message : "Bilinmeyen doğrulama hatası");
+        setVerifying(false);
+      });
+  }, []);
+
   const submit = useCallback((text: string) => {
     if (!text || !text.trim()) return;
     setLastText(text);
@@ -437,8 +452,8 @@ export function AxiomApp() {
     if (worker) {
       const analyzeMsg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
       worker.postMessage(analyzeMsg);
-      // Sorgu gönderildiğinde doğrulama motorunu da tetikle — aksi halde
-      // kart sonsuza dek "beklemede" kalır (finding 2).
+      // Doğrulama motorunu da tetikle — aksi halde kart sonsuza dek "beklemede"
+      // kalır (finding 2).
       const verifyMsg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text };
       worker.postMessage(verifyMsg);
       return;
@@ -460,7 +475,6 @@ export function AxiomApp() {
         },
         ...prev,
       ]);
-      // Yerel motor: doğrulamayı da çalıştır.
       verifyLocally(text);
     } catch (err) {
       setHata(err instanceof Error ? err.message : "Bilinmeyen çözümleme hatası");
@@ -468,21 +482,6 @@ export function AxiomApp() {
       setVerifying(false);
     }
   }, [verifyLocally]);
-
-  const verifyLocally = useCallback((text: string) => {
-    void localVerify(text)
-      .then((out) => {
-        setAnalysis(out.analysis);
-        setDigest(out.analysis.digest);
-        setProof(out.result);
-        setRam(out.ram);
-        setVerifying(false);
-      })
-      .catch((err: unknown) => {
-        setHata(err instanceof Error ? err.message : "Bilinmeyen doğrulama hatası");
-        setVerifying(false);
-      });
-  }, []);
 
   const runVerify = useCallback(() => {
     if (!lastText.trim()) return;
