@@ -9,20 +9,17 @@
 
 import { useEffect, type ReactNode } from "react";
 
-import { setupOfflineSupport } from "@/lib/pwa";
-import { bootNodeRuntime, startNode } from "@/lib/node-runtime";
-import { bootAccessEngine } from "@/lib/access-tiers";
-import { ensureOfflineGrant } from "@/lib/offline-license";
 import { runOneTimePurge } from "@/lib/hard-reset";
-import { syncViewportUnits } from "@/lib/ui/viewport";
 import { safeBoot, installGlobalRuntimeGuards } from "@/lib/runtime-guard";
+import { serviceManager, markLeader } from "@/shell/services/services";
+import { acquireLeadership } from "@/shell/services/registry";
 import { CallHost } from "@/components/chat/CallHost";
 
 export function BackgroundServicesProvider({ children }: { children?: ReactNode }) {
   useEffect(() => {
     // Hiçbir arka plan hatası ilk çizimi düşürmez; hepsi günlüğe yazılır.
     const removeGuards = installGlobalRuntimeGuards();
-    let stopViewport: (() => void) | undefined;
+    let releaseLead: (() => void) | undefined;
 
     // Eski mükerrer kayıtları temizleyen tek seferlik sıfırlama; sayfa yenilenir.
     let purged = false;
@@ -31,19 +28,16 @@ export function BackgroundServicesProvider({ children }: { children?: ReactNode 
     });
 
     if (!purged) {
-      safeBoot("offline-support", () => setupOfflineSupport());
-      safeBoot("node-runtime", () => bootNodeRuntime());
-      // Düğüm arka planda otomatik başlar; kullanıcı hiçbir butona basmaz.
-      safeBoot("node-start", () => startNode());
-      safeBoot("access-engine", () => bootAccessEngine());
-      safeBoot("offline-license", () => ensureOfflineGrant());
-      safeBoot("viewport", () => {
-        stopViewport = syncViewportUnits();
+      // Servisler bağımlılık sırasıyla başlar ve denetleyici tarafından izlenir.
+      safeBoot("services", () => serviceManager().startAll());
+      safeBoot("leader", () => {
+        releaseLead = acquireLeadership("tedbirge-services-leader", markLeader);
       });
     }
 
     return () => {
-      stopViewport?.();
+      releaseLead?.();
+      serviceManager().stopAll();
       removeGuards();
     };
   }, []);

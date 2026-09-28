@@ -31,3 +31,12 @@
 - [ ] Ağ Geçidi Faz 3: GraphQL, gRPC, SOAP, MQTT, AMQP adaptörlerini stub'dan üretim seviyesine çıkar
 - [ ] Ağ Geçidi Faz 3: WS/SSE canlı proxy köprüsü ve otomatik OpenAPI auto-probe
 
+
+## Faz 4 — Arka plan servisleri
+- [x] Servis kayıt defteri, watchdog, Web Locks liderliği
+- [x] Mesh-sync servisi (gossip → vector clock → CRDT kuyruğu, packet-gate)
+- [x] Portal servis listesi + yeniden başlat
+- [x] tedbirge-truth.service + imaj denetimi
+- [ ] Servis olaylarının Kayıtlar sekmesine akışı
+- [ ] WebRTC eş bağlantılarında gossip kanalı (şimdilik yalnız sekmeler arası)
+- [ ] tedbirge-truthd ikilisi (birim ikili yoksa atlanıyor)

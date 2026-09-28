@@ -35,6 +35,7 @@ import {
   primaryBtn,
 } from "@/components/shell/apps/portal/ui";
 import { usePortal } from "@/lib/portal/store";
+import { ServicesCard } from "@/components/shell/apps/portal/ServicesCard";
 import { MeshMap } from "@/components/shell/apps/portal/MeshMap";
 import { NodeDetailModal } from "@/components/shell/apps/portal/NodeDetailModal";
 import { buildMapNodes, formatStatus, statusSummary, type MapNode } from "@/lib/portal/live";
@@ -185,6 +186,7 @@ export function MetricsPanel() {
         <MeshMap nodes={mapNodes} onSelect={setSelected} />
         <NodeDetailModal node={selected} onClose={() => setSelected(null)} />
       </GlassCard>
+      <ServicesCard />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           label="Etkin düğüm"
