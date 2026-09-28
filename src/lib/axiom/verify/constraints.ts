@@ -29,6 +29,7 @@ export function normalizeLogic(text: string): string {
     .replace(/[∧⋀]/g, " & ")
     .replace(/[∨⋁]/g, " | ")
     .replace(/[¬~]/g, " __not__ ")
+    .replace(/!(?!=)/g, " __not__ ")
     .replace(/\b(and|ve)\b/gi, " & ")
     .replace(/\b(or|veya)\b/gi, " | ")
     .replace(/\b(not|değil)\b/gi, " __not__ ");
