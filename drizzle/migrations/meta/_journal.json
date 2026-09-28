@@ -29,6 +29,13 @@
       "when": 1790638581630,
       "tag": "0003_proof_records_and_txn_idempotency",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790638983124,
+      "tag": "0004_restrict_proof_records_public_read",
+      "breakpoints": true
     }
   ]
 }
