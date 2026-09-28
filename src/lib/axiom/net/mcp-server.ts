@@ -116,6 +116,13 @@ export async function mcpCapabilities() {
   };
 }
 
+type ProofRecord = { cid: string; verdict: string; engine: string; simulated: boolean };
+let recordProof: ((r: ProofRecord) => Promise<unknown>) | null = null;
+/** Sunucu rotası kanıt özetini (metin değil) kalıcılaştırmak için kanca bağlar. */
+export function setProofRecorder(fn: typeof recordProof) {
+  recordProof = fn;
+}
+
 async function handleAxiomMethod(
   id: string | number | null,
   method: "axiom.analyze" | "axiom.verify",

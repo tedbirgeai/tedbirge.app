@@ -135,6 +135,42 @@ async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
     .eq("provider_subscription_id", data.id);
 }
 
+/** Tamamlanan işlem: idempotent kayıt + lisans olayı (aynı txn ikinci kez işlenmez). */
+async function handleTransactionCompleted(data: any, env: PaddleEnv) {
+  const txnId: string | undefined = data?.id;
+  if (!txnId) return;
+  const userId: string | null = data.customData?.userId ?? null;
+  const { error } = await getSupabase().from("payment_transactions").insert({
+    paddle_transaction_id: txnId,
+    user_id: userId,
+    subscription_id: data.subscriptionId ?? null,
+    status: data.status ?? "completed",
+    currency: data.currencyCode ?? null,
+    total: data.details?.totals?.total ?? null,
+    tax: data.details?.totals?.tax ?? null,
+    environment: env,
+  });
+  if (error) {
+    if (error.code === "23505") return; // zaten işlendi
+    throw error;
+  }
+  if (!data.subscriptionId) return;
+  const { data: lic } = await getSupabase()
+    .from("licenses")
+    .select("id")
+    .eq("provider_subscription_id", data.subscriptionId)
+    .maybeSingle();
+  if (lic) {
+    await getSupabase().from("license_events").insert({
+      license_id: lic.id,
+      user_id: userId,
+      event: "payment_completed",
+      detail: `İşlem ${txnId} tamamlandı.`,
+      actor: "paddle",
+    });
+  }
+}
+
 async function handleWebhook(req: Request, env: PaddleEnv) {
   const event = await verifyWebhook(req, env);
 
@@ -147,6 +183,9 @@ async function handleWebhook(req: Request, env: PaddleEnv) {
       break;
     case EventName.SubscriptionCanceled:
       await handleSubscriptionCanceled(event.data, env);
+      break;
+    case EventName.TransactionCompleted:
+      await handleTransactionCompleted(event.data, env);
       break;
     default:
       console.warn("İşlenmeyen ödeme olayı:", event.eventType);
