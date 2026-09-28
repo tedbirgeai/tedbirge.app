@@ -27,9 +27,37 @@ SORGU=$(xrandr --query 2>/dev/null || true)
 BAGLI=$(printf '%s\n' "$SORGU" | awk '/ connected/{print $1}')
 echo "bildirilen bagli cikislar: $(echo "$BAGLI" | tr '\n' ' ')"
 
+# Secim onceligi: 1) EDID bildiren cikis (gercek monitor), 2) sanal/QEMU
+# cikisi, 3) ilk kipli cikis. EDID'siz ama kip bildiren cikis hayalettir.
+PROP=$(xrandr --prop 2>/dev/null || true)
+edid_var() {
+  printf '%s\n' "$PROP" | awk -v o="$1" '
+    $1==o && / connected/ {bul=1; next}
+    bul && /^[A-Za-z]/ {exit}
+    bul && /EDID:/ {e=1}
+    END {exit e?0:1}'
+}
+kip_of() {
+  printf '%s\n' "$SORGU" | awk -v o="$1" '
+    $1==o {bul=1; next}
+    bul && /^[A-Za-z]/ {exit}
+    bul && /^[[:space:]]+[0-9]+x[0-9]+/ {print $1; exit}'
+}
 ANA=""
 ANA_KIP=""
 for out in $BAGLI; do
+  k=$(kip_of "$out")
+  if [ -n "$k" ] && edid_var "$out"; then ANA="$out"; ANA_KIP="$k"; break; fi
+done
+if [ -z "$ANA" ]; then
+  for out in $BAGLI; do
+    case "$out" in Virtual*|VGA-*|qxl*|virtio*) : ;; *) continue ;; esac
+    k=$(kip_of "$out")
+    if [ -n "$k" ]; then ANA="$out"; ANA_KIP="$k"; break; fi
+  done
+fi
+for out in $BAGLI; do
+  [ -n "$ANA" ] && break
   KIP=$(printf '%s\n' "$SORGU" | awk -v o="$out" '
     $1==o {bul=1; next}
     bul && /^[A-Za-z]/ {exit}
@@ -47,20 +75,21 @@ fi
 
 echo "ana ekran: $ANA ($ANA_KIP)"
 
-# Once tum cikislari kapat, sonra yalnizca ana ekrani destekli kipte ac.
+# Once ana ekran acilir, SONRA digerleri kapatilir: ekransiz ara an olusmaz.
+KIP_OK=1
+if ! xrandr --output "$ANA" --mode "$ANA_KIP" --primary --pos 0x0 --rotate normal 2>/dev/null; then
+  echo "! Destekli kip uygulanamadi; --auto ile denenecek."
+  KIP_OK=0
+  xrandr --output "$ANA" --auto --primary 2>/dev/null || true
+fi
+
 for out in $(printf '%s\n' "$SORGU" | awk '/ (connected|disconnected)/{print $1}'); do
   [ "$out" = "$ANA" ] && continue
   xrandr --output "$out" --off 2>/dev/null || true
 done
 
-if ! xrandr --output "$ANA" --mode "$ANA_KIP" --primary --pos 0x0 --rotate normal 2>/dev/null; then
-  echo "! Destekli kip uygulanamadi; --auto ile denenecek."
-  xrandr --output "$ANA" --auto --primary 2>/dev/null || true
-fi
-
-# Ekran alanini tam ana ekran cozunurlugune sabitle: sanal masaustu buyumus
-# kalirsa pencere yalnizca bir kosede cizilir.
-xrandr --fb "$ANA_KIP" 2>/dev/null || true
+# Ekran alanini ana ekran cozunurlugune sabitle (yalniz kip uygulandiysa).
+[ "$KIP_OK" = 1 ] && xrandr --fb "$ANA_KIP" 2>/dev/null || true
 
 echo "$ANA $ANA_KIP" > /run/tedbirge-ekran 2>/dev/null || true
 xrandr --query 2>/dev/null | grep -E ' connected|\*' || true

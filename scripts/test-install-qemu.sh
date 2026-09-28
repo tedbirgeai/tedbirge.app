@@ -165,6 +165,9 @@ kurulum_senaryosu() {
   fi
 
   tail -n 60 "$log2" 2>/dev/null
+  # Hangi cizim kademesinin masaustunu ayaga kaldirdigi raporlanir
+  # (QEMU varsayilan std VGA'da GPU yoktur: llvmpipe/swiftshader beklenir).
+  echo "goruntu-kipi=$(grep -ao 'TEDBIRGE_GORUNTU_KIPI=[a-z]*' "$log2" 2>/dev/null | tail -n1 | cut -d= -f2)"
   if [ "$rc" != 0 ]; then
     # Sessiz acilis hatasi bir daha kor nokta kalmasin: firmware, emulator ve
     # diskin acilis bolumu (ESP) icerigi hata ciktisina basilir.

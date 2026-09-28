@@ -7,9 +7,11 @@
 #
 # Kademeler:
 #   1) donanim cizimi (varsa)
-#   2) yazilim cizimi (temiz profil ile)
+#   2) Mesa llvmpipe yazilim cizimi; llvmpipe yoksa 2b) SwiftShader
 #   3) kurtarma sayfasi (okunabilir tani ekrani)
-URL="http://127.0.0.1/"
+# Saglik sinyali: sayfa ilk kareleri cizdikten sonra basliga "TB_READY"
+# ekler (src/lib/kiosk-ready.ts). Yalniz liste kaydi saglik sayilmaz.
+URL="http://127.0.0.1/?kiosk=1"
 KURTARMA_URL="http://127.0.0.1/kurtarma.html"
 PROFIL=/var/lib/tedbirge/chromium
 DBG_PORT=9222
@@ -44,14 +46,31 @@ ORTAK="--kiosk --start-fullscreen --noerrdialogs --disable-infobars
 # yollari kapatilir; guvenli EGL kipi denenir.
 DONANIM="--use-gl=egl --disable-gpu-sandbox --ignore-gpu-blocklist
   --enable-features=VaapiVideoDecoder --disable-gpu-driver-bug-workarounds"
+# Kademe 2: EGL acik kalir, Mesa'ya yazilim (llvmpipe) cizimi zorlanir.
+# --disable-gpu burada KULLANILMAZ: o bayrak Chromium'u SwiftShader'a
+# yonlendirir ve LIBGL_ALWAYS_SOFTWARE etkisiz kalir.
+LLVMPIPE="--use-gl=egl --disable-gpu-sandbox --ignore-gpu-blocklist"
+# Kademe 2b/3: Chromium'un kendi yazilim cizicisi (SwiftShader).
 YAZILIM="--disable-gpu --disable-gpu-compositing
   --disable-accelerated-2d-canvas"
+
+llvmpipe_var() {
+  for d in /usr/lib/*/dri /usr/lib/dri /usr/lib64/dri; do
+    [ -e "$d/swrast_dri.so" ] || [ -e "$d/kms_swrast_dri.so" ] && return 0
+  done
+  return 1
+}
 
 # Masaustu gercekten cizildi mi? Tarayicinin hata ayiklama arayuzunden
 # yuklenen sayfa dogrulanir (surec kontrolu tek basina yeterli degildir).
 sayfa_sagligi() { # bekleme-saniye
   bekle="$1"; i=0
   while [ "$i" -lt "$bekle" ]; do
+    # Tarayici oldu ise beklemeden sonraki kademeye gec.
+    if ! kill -0 "$PID" 2>/dev/null; then
+      echo "! goruntuleyici sureci sonlandi"
+      return 1
+    fi
     LISTE=$(curl -fsS --max-time 3 "http://127.0.0.1:$DBG_PORT/json/list" 2>/dev/null || true)
     case "$LISTE" in
       *'"type": "page"'*|*'"type":"page"'*)
@@ -59,7 +78,7 @@ sayfa_sagligi() { # bekleme-saniye
           *"127.0.0.1"*|*"localhost"*)
             case "$LISTE" in
               *chrome-error*|*'"url": "about:blank"'*) : ;;
-              *) return 0 ;;
+              *TB_READY*) return 0 ;;
             esac ;;
         esac ;;
     esac
@@ -79,6 +98,7 @@ hazir_isaretle() { # kip
   for t in /dev/console /dev/ttyS0; do
     printf '%s\n' TEDBIRGE_DESKTOP_READY > "$t" 2>/dev/null || true
     printf '%s\n' TEDBIRGE_DESKTOP_HEALTHY > "$t" 2>/dev/null || true
+    printf 'TEDBIRGE_GORUNTU_KIPI=%s\n' "$1" > "$t" 2>/dev/null || true
   done
 }
 
@@ -94,6 +114,7 @@ baslat() { # kip, bayraklar, adres
 temiz_profil() {
   echo "Profil sifirlaniyor (bozuk oturum/GPU onbellegi temizlenir)."
   rm -rf "$PROFIL"; mkdir -p "$PROFIL"
+  rm -rf "$HOME/.cache/chromium" 2>/dev/null || true
 }
 
 # --- Kademe 1: donanim cizimi
@@ -110,11 +131,23 @@ else
   echo "Donanim cizimi kullanilamiyor (surucu yok ya da gozcu guvenli kipe aldi)."
 fi
 
-# --- Kademe 2: yazilim cizimi
+# --- Kademe 2: Mesa llvmpipe yazilim cizimi
+if [ -z "$KIP" ] && llvmpipe_var; then
+  LIBGL_ALWAYS_SOFTWARE=1; GALLIUM_DRIVER=llvmpipe
+  export LIBGL_ALWAYS_SOFTWARE GALLIUM_DRIVER
+  if baslat llvmpipe "$LLVMPIPE" "$URL" && sayfa_sagligi 60; then
+    KIP="llvmpipe"
+  else
+    echo "! llvmpipe ile masaustu dogrulanamadi — SwiftShader deneniyor."
+    kill -9 "$PID" 2>/dev/null || true
+    temiz_profil
+  fi
+fi
+
+# --- Kademe 2b: SwiftShader
 if [ -z "$KIP" ]; then
-  LIBGL_ALWAYS_SOFTWARE=1; export LIBGL_ALWAYS_SOFTWARE
-  if baslat yazilim "$YAZILIM" "$URL" && sayfa_sagligi 60; then
-    KIP="yazilim"
+  if baslat swiftshader "$YAZILIM" "$URL" && sayfa_sagligi 60; then
+    KIP="swiftshader"
   else
     echo "! Yazilim ciziminde de masaustu dogrulanamadi — kurtarma ekranina geciliyor."
     kill -9 "$PID" 2>/dev/null || true

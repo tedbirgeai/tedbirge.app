@@ -126,9 +126,27 @@ export function createRenderer(
   host: HTMLElement,
   glCanvas: HTMLCanvasElement,
   textCanvas: HTMLCanvasElement,
+  onFallback?: (mode: RenderMode) => void,
 ): Renderer {
-  const glp = initGl(glCanvas);
-  const mode: RenderMode = glp ? "webgl2" : "canvas2d";
+  let glp: GlProgram | null = null;
+  try {
+    glp = initGl(glCanvas);
+  } catch {
+    glp = null;
+  }
+  let mode: RenderMode = glp ? "webgl2" : "canvas2d";
+  if (!glp) glCanvas.style.visibility = "hidden";
+  // Çalışırken GPU bağlamı kaybolursa aynı sahne anında 2D'ye taşınır;
+  // bağlam geri gelse de oturum 2D'de kararlı kalır.
+  const onLost = (e: Event) => {
+    e.preventDefault();
+    if (!glp) return;
+    glp = null;
+    mode = "canvas2d";
+    glCanvas.style.visibility = "hidden";
+    onFallback?.(mode);
+  };
+  glCanvas.addEventListener("webglcontextlost", onLost);
   let palette = readPalette(host);
   let dpr = 1;
 
@@ -181,8 +199,13 @@ export function createRenderer(
       ctx.clearRect(0, 0, w, h);
     }
     if (glp) {
-      drawGl(scene, w, h);
-    } else if (ctx) {
+      try {
+        drawGl(scene, w, h);
+      } catch {
+        onLost(new Event("webglcontextlost"));
+      }
+    }
+    if (!glp && ctx) {
       for (const r of scene.rects) {
         ctx.globalAlpha = r.tone === "grid" ? 0.55 : 1;
         ctx.fillStyle = css(palette[r.tone]);
@@ -199,5 +222,12 @@ export function createRenderer(
   };
 
   resize();
-  return { mode, draw, resize, dispose: () => undefined };
+  return {
+    get mode() {
+      return mode;
+    },
+    draw,
+    resize,
+    dispose: () => glCanvas.removeEventListener("webglcontextlost", onLost),
+  };
 }
