@@ -17,6 +17,7 @@ import { IsoChooserHost, IsoFallbackHost } from "../components/shell/BareMetalIs
 import { BackgroundServicesProvider } from "../shell/BackgroundServices";
 import { THEME_BOOT_SCRIPT } from "../lib/ui/theme";
 import { Toaster } from "../components/ui/sonner";
+import { startKioskReadySignal } from "../lib/kiosk-ready";
 
 function NotFoundComponent() {
   return (
@@ -164,6 +165,8 @@ function RootComponent() {
   // Kabuk yüzeyleri (masaüstü ve sohbet) kurumsal şeridi göstermez.
   const embedded =
     pathname === "/" || pathname.startsWith("/chat") || pathname.startsWith("/sohbet");
+  // ISO kiosk sağlık denetimi için gerçek çizim sinyali.
+  useEffect(() => startKioskReadySignal(), []);
 
   return (
     <QueryClientProvider client={queryClient}>
