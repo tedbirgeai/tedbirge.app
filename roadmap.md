@@ -48,3 +48,13 @@
 - [x] Cihazda AssemblyScript derleme (işçi, 10 sn derleme sınırı)
 - [x] Paketleme + cihaz anahtarıyla imza + kurulum, host log
 - [x] AXIOM paneli (// @claim)
+
+## Faz 6 — Ürünleştirme ve faturalama
+- [x] Paddle Overlay checkout + sunucu tarafı lisans doğrulama
+- [x] `TransactionCompleted` idempotent ödeme kaydı ve lisans olay günlüğü
+- [x] UBL-TR 2.1 e-Fatura/e-Arşiv belge üretimi (`src/lib/ubl-tr.ts`)
+- [x] Müşteri fatura sayfası (`/faturalar`): XML + yazdırılabilir e-Arşiv indirme
+- [x] Geliştirici dokümanı: lisanslama, abonelik olayları, fatura akışı
+- [x] Fatura akışının oturumlu tarayıcı testi ve imzasız webhook reddi (401)
+- [ ] Gerçek sandbox test satın alması (Paddle anahtarları tanımlı değil)
+- [ ] GİB entegratörüne e-Fatura gönderimi (kapsam dışı; MoR sağlayıcıda)

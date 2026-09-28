@@ -287,8 +287,18 @@ export function SubscriptionPanel({ onOpen }: { onOpen?: (id: string) => void })
         );
       })}
 
-      <p className="pb-2 text-center font-osmono text-[11px] text-[var(--tb-muted)]">
+      <p className="text-center font-osmono text-[11px] text-[var(--tb-muted)]">
         Satıcı: Mehmet DİNÇ (Tedbirge® WebOS) · Ödemeler Paddle üzerinden alınır.
+      </p>
+      <p className="pb-2 text-center font-osmono text-[11px]">
+        <a
+          href="/faturalar"
+          target="_blank"
+          rel="noreferrer"
+          className="text-[var(--tb-accent)] underline"
+        >
+          Faturalar ve ödeme geçmişi
+        </a>
       </p>
     </div>
   );
