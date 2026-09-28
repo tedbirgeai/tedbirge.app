@@ -24,8 +24,10 @@ export type IpcMessage = {
 type Handler = (msg: IpcMessage) => void;
 
 const listeners = new Map<string, Set<Handler>>();
+// Sunucu çalışma zamanındaki BroadcastChannel olay dinleyicisi sunmuyor;
+// kanal yalnız tarayıcıda açılır.
 const channel =
-  typeof BroadcastChannel !== "undefined"
+  typeof window !== "undefined" && typeof BroadcastChannel !== "undefined"
     ? new BroadcastChannel("tedbirge-desktop-ipc")
     : null;
 
@@ -69,7 +71,7 @@ async function dispatch(msg: IpcMessage) {
   });
 }
 
-channel?.addEventListener("message", (event: MessageEvent<IpcMessage>) => {
+if (typeof channel?.addEventListener === "function") channel.addEventListener("message", (event: MessageEvent<IpcMessage>) => {
   const msg = event.data;
   if (!msg || typeof msg !== "object") return;
   void dispatch(msg);

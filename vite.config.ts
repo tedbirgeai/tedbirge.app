@@ -78,6 +78,9 @@ export default defineConfig({
     define: {
       __TEDBIRGE_BUILD_ID__: JSON.stringify(new Date().toISOString()),
     },
+    // İşçiler modül olarak paketlenir: derleyici üst düzey await kullanıyor
+    // ve tüm işçiler zaten `{ type: "module" }` ile başlatılıyor.
+    worker: { format: "es" },
     plugins: [
       crossOriginIsolation,
       VitePWA({
@@ -101,6 +104,9 @@ export default defineConfig({
           // yalnız bilinçli açılan bilgi sayfası olarak kalır.
           navigateFallback: "/",
           maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+          // AxiomStudio derleyicisi (~14 MB) ön belleğe alınmaz; ilk
+          // kullanımda indirilip çalışma zamanı önbelleğine yazılır.
+          globIgnores: ["**/asc-*.js"],
           navigateFallbackDenylist: [/^\/api\//, /^\/~oauth/],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
