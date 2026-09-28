@@ -124,6 +124,7 @@ export function AxiomApp() {
   const seqRef = useRef(0);
   const lifecycleRef = useRef(0);
   const watchdogRef = useRef<number | null>(null);
+  const pendingTextRef = useRef<string>("");
 
   const ratioRef = useRef(0);
 
