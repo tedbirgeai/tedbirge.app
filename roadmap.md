@@ -37,6 +37,7 @@
 - [x] Mesh-sync servisi (gossip → vector clock → CRDT kuyruğu, packet-gate)
 - [x] Portal servis listesi + yeniden başlat
 - [x] tedbirge-truth.service + imaj denetimi
-- [ ] Servis olaylarının Kayıtlar sekmesine akışı
-- [ ] WebRTC eş bağlantılarında gossip kanalı (şimdilik yalnız sekmeler arası)
-- [ ] tedbirge-truthd ikilisi (birim ikili yoksa atlanıyor)
+- [x] Servis olaylarının Kayıtlar sekmesine akışı
+- [x] WebRTC eş bağlantılarında gossip kanalı (iki cihazla canlı test bekliyor)
+- [x] tedbirge-truthd ikilisi (CI'da derlenir; QEMU testi bekliyor)
+- [x] Yeniden başlat yetkisi (rol + IPC jetonu)
