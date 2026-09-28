@@ -71,7 +71,7 @@ async function dispatch(msg: IpcMessage) {
   });
 }
 
-channel?.addEventListener("message", (event: MessageEvent<IpcMessage>) => {
+if (typeof channel?.addEventListener === "function") channel.addEventListener("message", (event: MessageEvent<IpcMessage>) => {
   const msg = event.data;
   if (!msg || typeof msg !== "object") return;
   void dispatch(msg);
