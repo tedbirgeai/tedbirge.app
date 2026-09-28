@@ -17,14 +17,14 @@ const LEGAL_PATHS = new Set(["/gizlilik", "/kosullar", "/iade", "/yasal", "/ihra
 
 /** Eski rota → sistem uygulaması eşlemesi. */
 const APP_FOR_PATH: Record<string, string> = {
-  "/panel": "panel",
-  "/yonetim": "panel",
-  "/saha-raporu": "panel",
-  "/saha": "panel",
-  "/pilot-panosu": "panel",
-  "/kapsama": "panel",
-  "/dashboard": "panel",
-  "/teklif": "panel",
+  "/panel": "yonetim",
+  "/yonetim": "yonetim",
+  "/saha-raporu": "yonetim",
+  "/saha": "yonetim",
+  "/pilot-panosu": "yonetim",
+  "/kapsama": "yonetim",
+  "/dashboard": "yonetim",
+  "/teklif": "yonetim",
   "/dokumanlar": "sysinfo",
   "/api-dokumantasyon": "sysinfo",
   "/kurumsal": "sysinfo",
