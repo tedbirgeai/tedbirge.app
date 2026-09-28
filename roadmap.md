@@ -21,3 +21,9 @@
 - [x] ISO iş akışında yarım kalan doğrulamanın iptalini kapat
 - [ ] Gerçek donanımda yeni ISO ile kurulum kabulü (fiziksel disk gerektirir)
 - [ ] Kurulum sonrası gerçek görüntülü masaüstü açılışını doğrula; GPU/ekran hatasında otomatik güvenli moda dön
+- [x] Faz 4 entegrasyonu: giden mesh paketleri değişmez kapısından geçiyor, red sayacı arayüze akıyor
+- [x] Faz 5 çekirdek: uygulamalar arası tipli IPC kanalı (`src/shell/desktop-ipc.ts`)
+- [x] Ağ Geçidi Faz 1: adaptör kayıt defteri, inbound REST köprüsü (`/api/public/gateway/{slug}`), HMAC, 64 KB + JSON + değişmez kapısı
+- [x] Ağ Geçidi Faz 2: SSRF'e karşı sertleştirilmiş outbound fetch, webhook HMAC doğrulaması
+- [ ] Ağ Geçidi Faz 3: gRPC / SOAP / MQTT / AMQP adaptörlerini stub'dan üretim seviyesine çıkar
+- [ ] Ağ Geçidi Faz 3: WS/SSE canlı proxy köprüsü ve otomatik OpenAPI auto-probe
