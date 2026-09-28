@@ -124,6 +124,7 @@ export function AxiomApp() {
   const seqRef = useRef(0);
   const lifecycleRef = useRef(0);
   const watchdogRef = useRef<number | null>(null);
+  const pendingTextRef = useRef<string>("");
 
   const ratioRef = useRef(0);
 
@@ -297,7 +298,7 @@ export function AxiomApp() {
         setQueryHistory((prev) => [
           {
             id: Math.random().toString(36).substring(2, 9),
-            text: "",
+            text: pendingTextRef.current || "",
             analysis: msg.analysis,
             timestamp: new Date().toLocaleTimeString("tr-TR"),
           },
@@ -412,11 +413,31 @@ export function AxiomApp() {
   }, [ram.used, ram.limit]);
 
   // Ana Çekirdek İcra ve Analiz Fonksiyonu
+  const verifyLocally = useCallback((text: string) => {
+    void localVerify(text)
+      .then((out) => {
+        setAnalysis(out.analysis);
+        setDigest(out.analysis.digest);
+        setProof(out.result);
+        setRam(out.ram);
+        setVerifying(false);
+      })
+      .catch((err: unknown) => {
+        setHata(err instanceof Error ? err.message : "Bilinmeyen doğrulama hatası");
+        setVerifying(false);
+      });
+  }, []);
+
   const submit = useCallback((text: string) => {
     if (!text || !text.trim()) return;
     setLastText(text);
+    pendingTextRef.current = text;
     setBusy(true);
     setHata(null);
+    // Yeni sorguya eski kanıtı taşıma: aksi halde AxiomMasterShell effect'i eski
+    // verdict'i yeni karta damgalar (finding 6).
+    setProof(null);
+    setVerifying(true);
 
     // Her Sorguda Tutar ve Çağrı Sayacı Kesin Artar
     meterRecord({
@@ -429,8 +450,12 @@ export function AxiomApp() {
 
     const worker = workerRef.current;
     if (worker) {
-      const msg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
-      worker.postMessage(msg);
+      const analyzeMsg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
+      worker.postMessage(analyzeMsg);
+      // Doğrulama motorunu da tetikle — aksi halde kart sonsuza dek "beklemede"
+      // kalır (finding 2).
+      const verifyMsg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text };
+      worker.postMessage(verifyMsg);
       return;
     }
 
@@ -450,26 +475,13 @@ export function AxiomApp() {
         },
         ...prev,
       ]);
+      verifyLocally(text);
     } catch (err) {
       setHata(err instanceof Error ? err.message : "Bilinmeyen çözümleme hatası");
       setBusy(false);
+      setVerifying(false);
     }
-  }, []);
-
-  const verifyLocally = useCallback((text: string) => {
-    void localVerify(text)
-      .then((out) => {
-        setAnalysis(out.analysis);
-        setDigest(out.analysis.digest);
-        setProof(out.result);
-        setRam(out.ram);
-        setVerifying(false);
-      })
-      .catch((err: unknown) => {
-        setHata(err instanceof Error ? err.message : "Bilinmeyen doğrulama hatası");
-        setVerifying(false);
-      });
-  }, []);
+  }, [verifyLocally]);
 
   const runVerify = useCallback(() => {
     if (!lastText.trim()) return;
