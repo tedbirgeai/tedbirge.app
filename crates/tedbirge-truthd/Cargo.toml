@@ -1,0 +1,15 @@
+[package]
+name = "tedbirge-truthd"
+version = "0.1.0"
+edition = "2021"
+description = "Tedbirge OS — AXIOM doğrulama soketi (NDJSON, 16 KB, 500 ms)"
+
+[[bin]]
+name = "tedbirge-truthd"
+path = "src/main.rs"
+
+[lib]
+name = "tedbirge_truthd"
+path = "src/lib.rs"
+
+[dependencies]

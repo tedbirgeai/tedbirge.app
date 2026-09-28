@@ -39,3 +39,7 @@ dependencies = [
 [[package]]
 name = "tedbirge-sysbridge"
 version = "0.1.0"
+
+[[package]]
+name = "tedbirge-truthd"
+version = "0.1.0"
