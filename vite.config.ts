@@ -104,6 +104,9 @@ export default defineConfig({
           // yalnız bilinçli açılan bilgi sayfası olarak kalır.
           navigateFallback: "/",
           maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+          // AxiomStudio derleyicisi (~14 MB) ön belleğe alınmaz; ilk
+          // kullanımda indirilip çalışma zamanı önbelleğine yazılır.
+          globIgnores: ["**/asc-*.js"],
           navigateFallbackDenylist: [/^\/api\//, /^\/~oauth/],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
