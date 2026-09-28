@@ -79,6 +79,7 @@ export type GatewayMetrics = {
   ok24h: number;
   err24h: number;
   errorRate: number;
+  strictHmac: boolean;
 };
 
 export function collectMetrics(): GatewayMetrics[] {
@@ -97,9 +98,11 @@ export function collectMetrics(): GatewayMetrics[] {
       ok24h: ok,
       err24h: err,
       errorRate: total === 0 ? 0 : err / total,
+      strictHmac: a.strictHmac === true,
     };
   });
 }
+
 
 /** Test yardımcısı: sadece test dosyalarında çağrılmalı. */
 export function __resetGatewayRegistry(): void {
