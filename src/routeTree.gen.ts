@@ -36,6 +36,7 @@ import { Route as ApiPublicHaberlerRouteImport } from './routes/api/public/haber
 import { Route as ApiPublicGecitRouteImport } from './routes/api/public/gecit'
 import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
 import { Route as ApiV1McpVerifyRouteImport } from './routes/api/v1/mcp/verify'
+import { Route as ApiPublicProofChipCidRouteImport } from './routes/api/public/proof-chip/$cid'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicGatewaySlugRouteImport } from './routes/api/public/gateway/$slug'
 import { Route as ApiPublicCronOfflineCheckRouteImport } from './routes/api/public/cron/offline-check'
@@ -176,6 +177,11 @@ const ApiV1McpVerifyRoute = ApiV1McpVerifyRouteImport.update({
   path: '/api/v1/mcp/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicProofChipCidRoute = ApiPublicProofChipCidRouteImport.update({
+  id: '/api/public/proof-chip/$cid',
+  path: '/api/public/proof-chip/$cid',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -229,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/gateway/$slug': typeof ApiPublicGatewaySlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/proof-chip/$cid': typeof ApiPublicProofChipCidRoute
   '/api/v1/mcp/verify': typeof ApiV1McpVerifyRoute
   '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
 }
@@ -262,6 +269,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/gateway/$slug': typeof ApiPublicGatewaySlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/proof-chip/$cid': typeof ApiPublicProofChipCidRoute
   '/api/v1/mcp/verify': typeof ApiV1McpVerifyRoute
   '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
 }
@@ -296,6 +304,7 @@ export interface FileRoutesById {
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/gateway/$slug': typeof ApiPublicGatewaySlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/proof-chip/$cid': typeof ApiPublicProofChipCidRoute
   '/api/v1/mcp/verify': typeof ApiV1McpVerifyRoute
   '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
 }
@@ -331,6 +340,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/offline-check'
     | '/api/public/gateway/$slug'
     | '/api/public/payments/webhook'
+    | '/api/public/proof-chip/$cid'
     | '/api/v1/mcp/verify'
     | '/api/public/v1/mcp/verify'
   fileRoutesByTo: FileRoutesByTo
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/offline-check'
     | '/api/public/gateway/$slug'
     | '/api/public/payments/webhook'
+    | '/api/public/proof-chip/$cid'
     | '/api/v1/mcp/verify'
     | '/api/public/v1/mcp/verify'
   id:
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/offline-check'
     | '/api/public/gateway/$slug'
     | '/api/public/payments/webhook'
+    | '/api/public/proof-chip/$cid'
     | '/api/v1/mcp/verify'
     | '/api/public/v1/mcp/verify'
   fileRoutesById: FileRoutesById
@@ -431,6 +443,7 @@ export interface RootRouteChildren {
   ApiPublicCronOfflineCheckRoute: typeof ApiPublicCronOfflineCheckRoute
   ApiPublicGatewaySlugRoute: typeof ApiPublicGatewaySlugRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicProofChipCidRoute: typeof ApiPublicProofChipCidRoute
   ApiV1McpVerifyRoute: typeof ApiV1McpVerifyRoute
   ApiPublicV1McpVerifyRoute: typeof ApiPublicV1McpVerifyRoute
 }
@@ -626,6 +639,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1McpVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/proof-chip/$cid': {
+      id: '/api/public/proof-chip/$cid'
+      path: '/api/public/proof-chip/$cid'
+      fullPath: '/api/public/proof-chip/$cid'
+      preLoaderRoute: typeof ApiPublicProofChipCidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -687,6 +707,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronOfflineCheckRoute: ApiPublicCronOfflineCheckRoute,
   ApiPublicGatewaySlugRoute: ApiPublicGatewaySlugRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicProofChipCidRoute: ApiPublicProofChipCidRoute,
   ApiV1McpVerifyRoute: ApiV1McpVerifyRoute,
   ApiPublicV1McpVerifyRoute: ApiPublicV1McpVerifyRoute,
 }

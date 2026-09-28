@@ -1027,6 +1027,42 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_transactions: {
+        Row: {
+          created_at: string
+          currency: string | null
+          environment: string
+          paddle_transaction_id: string
+          status: string
+          subscription_id: string | null
+          tax: string | null
+          total: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          environment: string
+          paddle_transaction_id: string
+          status: string
+          subscription_id?: string | null
+          tax?: string | null
+          total?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          environment?: string
+          paddle_transaction_id?: string
+          status?: string
+          subscription_id?: string | null
+          tax?: string | null
+          total?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       phone_accounts: {
         Row: {
           created_at: string
@@ -1165,6 +1201,30 @@ export type Database = {
           id?: string
           organization?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      proof_records: {
+        Row: {
+          cid: string
+          created_at: string
+          engine: string
+          simulated: boolean
+          verdict: string
+        }
+        Insert: {
+          cid: string
+          created_at?: string
+          engine: string
+          simulated?: boolean
+          verdict: string
+        }
+        Update: {
+          cid?: string
+          created_at?: string
+          engine?: string
+          simulated?: boolean
+          verdict?: string
         }
         Relationships: []
       }

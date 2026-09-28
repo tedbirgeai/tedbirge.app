@@ -89,13 +89,14 @@ export function LicenseModal({ open, peers, onClose, onSuccess }: LicenseModalPr
             : "COMMUNITY";
 
         if (mappedTier !== "COMMUNITY") {
-          const session = await adapter.createCheckoutSession(mappedTier);
-          if (session?.checkoutUrl) {
-            window.open(session.checkoutUrl, "_blank");
-          }
+          await adapter.openCheckout(mappedTier, { nodes: Math.max(peers, FREE_DEVICE_LIMIT + 1) });
         }
-      } catch {
-        setErrorMessage("Ödeme servisine bağlanırken bir hata oluştu.");
+      } catch (e) {
+        setErrorMessage(
+          e instanceof Error && e.message === "AUTH_REQUIRED"
+            ? "Satın almak için önce oturum açın."
+            : "Ödeme servisine bağlanırken bir hata oluştu.",
+        );
       } finally {
         setLoading(false);
       }

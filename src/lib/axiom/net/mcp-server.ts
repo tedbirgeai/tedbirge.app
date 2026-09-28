@@ -116,6 +116,13 @@ export async function mcpCapabilities() {
   };
 }
 
+type ProofRecord = { cid: string; verdict: string; engine: string; simulated: boolean };
+let recordProof: ((r: ProofRecord) => Promise<unknown>) | null = null;
+/** Sunucu rotası kanıt özetini (metin değil) kalıcılaştırmak için kanca bağlar. */
+export function setProofRecorder(fn: typeof recordProof) {
+  recordProof = fn;
+}
+
 async function handleAxiomMethod(
   id: string | number | null,
   method: "axiom.analyze" | "axiom.verify",
@@ -140,7 +147,15 @@ async function handleAxiomMethod(
       ms: result.ms,
       client: client ?? null,
     });
-    return ok(id, { ...result, lang, matches });
+    if (recordProof) {
+      await recordProof({
+        cid: result.cid,
+        verdict: String(result.verdict),
+        engine: String(result.engine),
+        simulated: Boolean(result.simulated),
+      }).catch(() => undefined);
+    }
+    return ok(id, { ...result, lang, matches, chip: `/api/public/proof-chip/${encodeURIComponent(result.cid)}` });
   } catch {
     // Sıfır günlük: hata içeriği dışa verilmez.
     return err(id, JSONRPC_ERRORS.internal, "Doğrulama tamamlanamadı");

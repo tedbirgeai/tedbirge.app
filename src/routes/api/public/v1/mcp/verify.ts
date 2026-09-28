@@ -14,7 +14,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { toolCatalogue } from "@/lib/axiom/net/llm-adapters";
-import { handleMcpRequest, JSONRPC_ERRORS, MCP_MAX_BODY } from "@/lib/axiom/net/mcp-server";
+import {
+  handleMcpRequest,
+  JSONRPC_ERRORS,
+  MCP_MAX_BODY,
+  setProofRecorder,
+} from "@/lib/axiom/net/mcp-server";
 import { corsHeaders } from "@/lib/cors";
 
 function json(body: unknown, status: number, extra: Record<string, string>) {
@@ -101,6 +106,10 @@ export const Route = createFileRoute("/api/public/v1/mcp/verify")({
           request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
           "anonymous-client";
 
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        setProofRecorder(async (r) => {
+          await supabaseAdmin.from("proof_records").upsert(r, { onConflict: "cid" });
+        });
         const response = await handleMcpRequest(body, client);
 
         // JSON-RPC 2.0 protokol seviyesindeki yanıtlar istemcinin bağlantıyı koparmaması için HTTP 200 ile dönmelidir
