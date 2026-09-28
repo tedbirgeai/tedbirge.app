@@ -31,6 +31,8 @@ export type MeshLink = {
   ready: () => boolean;
   send: (packet: GossipPacket) => boolean;
   onPacket: (fn: (packet: GossipPacket) => void) => () => void;
+  /** Kanal kapanınca çağrılır (varsa). */
+  onClose?: (fn: () => void) => () => void;
   close: () => void;
 };
 
@@ -74,11 +76,16 @@ function decode(raw: unknown): GossipPacket | null {
  * paketten daha maliyetlidir.
  */
 export function openGossipChannel(pc: RTCPeerConnection, id = GOSSIP_LABEL): MeshLink {
-  const channel = pc.createDataChannel(GOSSIP_LABEL, {
-    ordered: true,
-    maxRetransmits: 3,
-  });
+  return wrapGossipChannel(
+    pc.createDataChannel(GOSSIP_LABEL, { ordered: true, maxRetransmits: 3 }),
+    id,
+  );
+}
+
+/** Açan ve gelen taraf için ortak kanal sarmalayıcısı. */
+export function wrapGossipChannel(channel: RTCDataChannel, id = GOSSIP_LABEL): MeshLink {
   const subs = new Set<(packet: GossipPacket) => void>();
+  const closeSubs = new Set<() => void>();
 
   channel.addEventListener("message", (event: MessageEvent) => {
     const packet = decode(event.data);
@@ -91,6 +98,7 @@ export function openGossipChannel(pc: RTCPeerConnection, id = GOSSIP_LABEL): Mes
       }
     });
   });
+  channel.addEventListener("close", () => closeSubs.forEach((fn) => fn()));
 
   return {
     id,
@@ -110,6 +118,10 @@ export function openGossipChannel(pc: RTCPeerConnection, id = GOSSIP_LABEL): Mes
       subs.add(fn);
       return () => subs.delete(fn);
     },
+    onClose(fn) {
+      closeSubs.add(fn);
+      return () => closeSubs.delete(fn);
+    },
     close() {
       subs.clear();
       try {
@@ -117,6 +129,58 @@ export function openGossipChannel(pc: RTCPeerConnection, id = GOSSIP_LABEL): Mes
       } catch {
         /* kapanmış kanal */
       }
+    },
+  };
+}
+
+/* Eş bağlantılarından doğan gossip kanallarının duyuru yolu. */
+const linkSubs = new Set<(link: MeshLink) => void>();
+
+export function announceGossipLink(link: MeshLink): void {
+  linkSubs.forEach((fn) => fn(link));
+}
+
+export function onGossipLink(fn: (link: MeshLink) => void): () => void {
+  linkSubs.add(fn);
+  return () => void linkSubs.delete(fn);
+}
+
+/** Birden çok bağlantıyı tek bağlantı gibi gösterir. */
+export function createLinkHub(id = "hub"): MeshLink & { add: (link: MeshLink) => void; size: () => number } {
+  const links = new Map<MeshLink, () => void>();
+  const subs = new Set<(packet: GossipPacket) => void>();
+  const remove = (link: MeshLink) => {
+    links.get(link)?.();
+    links.delete(link);
+  };
+  return {
+    id,
+    add(link) {
+      if (links.has(link)) return;
+      const offPacket = link.onPacket((p) => subs.forEach((fn) => fn(p)));
+      const offClose = link.onClose?.(() => remove(link));
+      links.set(link, () => {
+        offPacket();
+        offClose?.();
+      });
+    },
+    size: () => links.size,
+    ready: () => [...links.keys()].some((l) => l.ready()),
+    send(packet) {
+      let any = false;
+      for (const l of links.keys()) if (l.ready() && l.send(packet)) any = true;
+      return any;
+    },
+    onPacket(fn) {
+      subs.add(fn);
+      return () => subs.delete(fn);
+    },
+    close() {
+      for (const l of [...links.keys()]) {
+        remove(l);
+        l.close();
+      }
+      subs.clear();
     },
   };
 }

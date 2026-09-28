@@ -10,7 +10,7 @@ import { bootAccessEngine } from "@/lib/access-tiers";
 import { ensureOfflineGrant } from "@/lib/offline-license";
 import { syncViewportUnits } from "@/lib/ui/viewport";
 import { reportRuntimeError } from "@/lib/error-reporting";
-import { openLocalLink } from "@/lib/axiom/net/datachannel";
+import { createLinkHub, onGossipLink, openLocalLink } from "@/lib/axiom/net/datachannel";
 import { createMeshDaemon, type MeshDaemon } from "@/lib/axiom/net/mesh-daemon";
 import { onIpc } from "@/shell/desktop-ipc";
 import { createServiceManager, type ServiceDef, type ServiceInfo } from "@/shell/services/registry";
@@ -30,7 +30,11 @@ const defs: ServiceDef[] = [
     deps: ["node-runtime"],
     start: () => {
       const id = `tab-${Math.random().toString(36).slice(2, 10)}`;
-      mesh = createMeshDaemon(id, openLocalLink());
+      // Yerel sekme bağlantısı + WebRTC eş kanalları tek merkezde.
+      const hub = createLinkHub();
+      hub.add(openLocalLink());
+      const offLinks = onGossipLink((link) => hub.add(link));
+      mesh = createMeshDaemon(id, hub);
       const offIpc = onIpc("mesh-sync", (msg) => {
         const p = msg.payload as { digest?: unknown; claim?: unknown } | null;
         if (p && typeof p.digest === "string") {
@@ -41,6 +45,7 @@ const defs: ServiceDef[] = [
       return () => {
         clearInterval(flush);
         offIpc();
+        offLinks();
         mesh?.stop();
         mesh = null;
       };
