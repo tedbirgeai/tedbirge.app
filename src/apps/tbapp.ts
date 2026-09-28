@@ -169,24 +169,72 @@ export type TbAppInstance = {
  * Wasm tarafına verilen tek yüzey `tedbirge` içe aktarma nesnesidir;
  * doğrudan DOM, ağ veya depolama erişimi yoktur.
  */
+const DATA_WASM = "data:application/wasm;base64,";
+
+/** Gömülü (data:) modüller ağ isteği olmadan çözülür; diğerleri indirilir. */
+export async function loadModuleBytes(module: string): Promise<ArrayBuffer> {
+  if (module.startsWith(DATA_WASM)) {
+    const bin = atob(module.slice(DATA_WASM.length));
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i += 1) out[i] = bin.charCodeAt(i);
+    return out.buffer;
+  }
+  const res = await fetch(module);
+  if (!res.ok) throw new TbAppError(`Modül indirilemedi (HTTP ${res.status}).`);
+  return res.arrayBuffer();
+}
+
+export const LOG_MAX_BYTES = 1024;
+export const LOG_MAX_PER_SEC = 50;
+
+/** Paket günlüğü: en fazla 1 KB/satır, saniyede en fazla 50 satır. */
+export function createLogSink(emit: (line: string) => void, now: () => number = Date.now) {
+  let windowStart = 0;
+  let count = 0;
+  let dropped = 0;
+  return {
+    write(bytes: Uint8Array) {
+      const t = now();
+      if (t - windowStart >= 1000) {
+        if (dropped) emit(`… ${dropped} satır hız sınırıyla atlandı`);
+        windowStart = t;
+        count = 0;
+        dropped = 0;
+      }
+      if (count >= LOG_MAX_PER_SEC) {
+        dropped += 1;
+        return;
+      }
+      count += 1;
+      const cut = bytes.subarray(0, LOG_MAX_BYTES);
+      emit(new TextDecoder().decode(cut) + (bytes.length > LOG_MAX_BYTES ? "…" : ""));
+    },
+  };
+}
+
 export async function instantiateTbApp(
   m: TbAppManifest,
   granted: readonly Capability[],
+  onLog?: (line: string) => void,
 ): Promise<TbAppInstance> {
   const kernel: Kernel = grantKernel(m.id, granted);
-  const res = await fetch(m.module);
-  if (!res.ok) throw new TbAppError(`Modül indirilemedi (HTTP ${res.status}).`);
-  const bytes = await res.arrayBuffer();
+  const bytes = await loadModuleBytes(m.module);
 
   const host = {
     status_online: () => (kernel.status().online ? 1 : 0),
     status_peers: () => kernel.status().peers,
-    log: (_ptr: number, _len: number) => {
-      /* ayrılmış: paket günlüğü ileride kabuk konsoluna bağlanır */
+    log: (ptr: number, len: number) => {
+      const mem = instance?.exports["memory"];
+      if (!(mem instanceof WebAssembly.Memory) || ptr < 0 || len < 0) return;
+      const end = Math.min(mem.buffer.byteLength, ptr + Math.min(len, LOG_MAX_BYTES + 1));
+      if (ptr >= end) return;
+      sink.write(new Uint8Array(mem.buffer.slice(ptr, end)));
     },
   };
+  const sink = createLogSink(onLog ?? (() => {}));
+  let instance: WebAssembly.Instance | undefined;
 
-  const { instance } = await WebAssembly.instantiate(bytes, { tedbirge: host });
+  ({ instance } = await WebAssembly.instantiate(bytes, { tedbirge: host }));
   let disposed = false;
   return {
     manifest: m,

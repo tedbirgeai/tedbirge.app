@@ -20,3 +20,5 @@
   doğrudan global referans paylaşımı yasak.
 
 - Arka plan servisleri yalnız `src/shell/services/services.ts` kayıt defterine eklenir (bağımlılık, watchdog, yeniden başlatma tek yerde); `BackgroundServices.tsx` doğrudan servis başlatmaz.
+- /repo'ya yalnız `SYSTEM_APPS` içinde `repo.write` sistem yeteneği olan yerleşik uygulama (AxiomStudio) `resolveRepoPath` üzerinden yazar; `.tbapp` paketleri bu yeteneği isteyemez, çünkü kaynak ağacı kullanıcı kodundan korunmalıdır.
+- AssemblyScript derleyicisi yalnız `src/lib/studio/compiler.worker.ts` içinde, yükleme ve derleme ayrı süre sınırlarıyla çalışır; ana iş parçacığını ve CSP'yi gevşetmemek için.

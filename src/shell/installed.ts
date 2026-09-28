@@ -143,6 +143,13 @@ export const LOCAL_APPS: CatalogApp[] = [
     builtin: true,
   },
   {
+    id: "studio",
+    label: "AxiomStudio",
+    hint: "Yerel uygulama geliştirme ortamı",
+    category: "uretkenlik",
+    builtin: true,
+  },
+  {
     id: "pdf",
     label: "PDF Studio",
     hint: "PDF görüntüleme ve yazdırma",

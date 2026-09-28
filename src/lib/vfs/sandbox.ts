@@ -11,6 +11,7 @@
  * uygulama alanında (src/lib/apps/appdata.ts) durur; depo API'si değişmez.
  */
 
+import { hasSystemCapability } from "@/kernel/capabilities";
 import type { Capability } from "@/kernel/capabilities";
 import {
   clearAppData,
@@ -119,4 +120,17 @@ export function openAppVfs(appId: string, caps: readonly Capability[]): AppVfs {
     list: () => listAppData(appId).map((k) => `${root}/${k}`),
     wipe: () => clearAppData(appId),
   };
+}
+
+/** /repo kökü: yalnız `repo.write` sistem yeteneğine sahip uygulama yazabilir. */
+export const REPO_ROOT = "/repo";
+
+export function resolveRepoPath(appId: string, path: string): string {
+  if (!hasSystemCapability(appId, "repo.write"))
+    throw new VfsAccessError(`"${appId}" uygulaması /repo alanına yazamaz.`);
+  const raw = path.startsWith("/") ? path : `${REPO_ROOT}/${path}`;
+  if (/(^|\/)\.\.(\/|$)/.test(raw)) throw new VfsAccessError("Üst dizine çıkış yasak.");
+  const full = normalizeVfsPath(raw);
+  if (!full.startsWith(`${REPO_ROOT}/`)) throw new VfsAccessError("Yol /repo dışında.");
+  return full;
 }

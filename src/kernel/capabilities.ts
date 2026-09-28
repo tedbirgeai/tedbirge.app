@@ -40,6 +40,18 @@ export const ALL_CAPABILITIES: Capability[] = [
   "files.delete",
 ];
 
+/**
+ * Sistem yetenekleri: yalnız yerleşik, imzalı sistem uygulamalarına verilir.
+ * `.tbapp` paketleri bunları isteyemez (ALL_CAPABILITIES dışında tutulur).
+ */
+export type SystemCapability = "repo.write";
+export const SYSTEM_APPS: Readonly<Record<string, readonly SystemCapability[]>> = {
+  studio: ["repo.write"],
+};
+export function hasSystemCapability(appId: string, cap: SystemCapability): boolean {
+  return SYSTEM_APPS[appId]?.includes(cap) ?? false;
+}
+
 export class CapabilityError extends Error {
   constructor(appId: string, cap: Capability) {
     super(`"${appId}" uygulamasının "${cap}" yetkisi yok.`);
