@@ -17,6 +17,7 @@ import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
 import { Route as IadeRouteImport } from './routes/iade'
 import { Route as GizlilikRouteImport } from './routes/gizlilik'
+import { Route as FaturalarRouteImport } from './routes/faturalar'
 import { Route as DevRouteImport } from './routes/dev'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CevrimdisiRouteImport } from './routes/cevrimdisi'
@@ -80,6 +81,11 @@ const IadeRoute = IadeRouteImport.update({
 const GizlilikRoute = GizlilikRouteImport.update({
   id: '/gizlilik',
   path: '/gizlilik',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaturalarRoute = FaturalarRouteImport.update({
+  id: '/faturalar',
+  path: '/faturalar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevRoute = DevRouteImport.update({
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
   '/dev': typeof DevRoute
+  '/faturalar': typeof FaturalarRoute
   '/gizlilik': typeof GizlilikRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByTo {
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
   '/dev': typeof DevRoute
+  '/faturalar': typeof FaturalarRoute
   '/gizlilik': typeof GizlilikRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
   '/dev': typeof DevRoute
+  '/faturalar': typeof FaturalarRoute
   '/gizlilik': typeof GizlilikRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
@@ -316,6 +325,7 @@ export interface FileRouteTypes {
     | '/cevrimdisi'
     | '/chat'
     | '/dev'
+    | '/faturalar'
     | '/gizlilik'
     | '/iade'
     | '/ihracat-uyum'
@@ -350,6 +360,7 @@ export interface FileRouteTypes {
     | '/cevrimdisi'
     | '/chat'
     | '/dev'
+    | '/faturalar'
     | '/gizlilik'
     | '/iade'
     | '/ihracat-uyum'
@@ -384,6 +395,7 @@ export interface FileRouteTypes {
     | '/cevrimdisi'
     | '/chat'
     | '/dev'
+    | '/faturalar'
     | '/gizlilik'
     | '/iade'
     | '/ihracat-uyum'
@@ -419,6 +431,7 @@ export interface RootRouteChildren {
   CevrimdisiRoute: typeof CevrimdisiRoute
   ChatRoute: typeof ChatRoute
   DevRoute: typeof DevRoute
+  FaturalarRoute: typeof FaturalarRoute
   GizlilikRoute: typeof GizlilikRoute
   IadeRoute: typeof IadeRoute
   IhracatUyumRoute: typeof IhracatUyumRoute
@@ -504,6 +517,13 @@ declare module '@tanstack/react-router' {
       path: '/gizlilik'
       fullPath: '/gizlilik'
       preLoaderRoute: typeof GizlilikRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faturalar': {
+      id: '/faturalar'
+      path: '/faturalar'
+      fullPath: '/faturalar'
+      preLoaderRoute: typeof FaturalarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dev': {
@@ -683,6 +703,7 @@ const rootRouteChildren: RootRouteChildren = {
   CevrimdisiRoute: CevrimdisiRoute,
   ChatRoute: ChatRoute,
   DevRoute: DevRoute,
+  FaturalarRoute: FaturalarRoute,
   GizlilikRoute: GizlilikRoute,
   IadeRoute: IadeRoute,
   IhracatUyumRoute: IhracatUyumRoute,

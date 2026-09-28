@@ -439,6 +439,129 @@ X-Axiom-Client: <istemci-kimliği>`}</code>
     ),
   },
   {
+    id: "lisans-fatura",
+    title: "Lisanslama ve faturalama",
+    summary: "Kademeler, abonelik olayları, lisans doğrulama ve UBL-TR 2.1 fatura akışı.",
+    body: (
+      <>
+        <p className="lead">
+          Ödemeler Paddle (Merchant of Record) üzerinden alınır; tahsilat, vergi hesabı ve yasal
+          beyan sağlayıcıya aittir. Tedbirge tarafında yalnız lisans kotası, abonelik durumu ve
+          müşteri muhasebesi için fatura belgesi üretilir.
+        </p>
+        <h2>Kademeler ve düğüm kotası</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Kademe</th>
+              <th>Düğüm</th>
+              <th>Not</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Community</td>
+              <td>5</td>
+              <td>Ücretsiz; fatura üretmez.</td>
+            </tr>
+            <tr>
+              <td>Pro</td>
+              <td>6 – 24</td>
+              <td>Düğüm başına aylık/yıllık.</td>
+            </tr>
+            <tr>
+              <td>Enterprise</td>
+              <td>25 +</td>
+              <td>Hacim indirimi uygulanır.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div className="note">
+          Altıncı düğüm eklendiğinde çalışma zamanı <code>STATUS: SUBSCRIPTION_REQUIRED</code>
+          döndürür; kota tek kaynaktan (<code>resolveNodeLimit</code>) hesaplanır.
+        </div>
+        <h2>Lisans doğrulama</h2>
+        <pre>
+          <code>{`// Anahtar yalnız sunucuda, oturum sahibinin lisanslarıyla karşılaştırılır.
+const res = await verifyLicenseKeyFn({ data: { licenseKey } });
+// { valid, plan, nodeLimit, currentPeriodEnd }`}</code>
+        </pre>
+        <p>
+          Önek eşleşmesi veya istemci tarafı kabul yoktur; süresi geçmiş ya da pasif kayıtlar
+          geçersiz döner.
+        </p>
+        <h2>Abonelik olayları</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Olay</th>
+              <th>Etki</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SubscriptionCreated</td>
+              <td>Abonelik satırı ve lisans kaydı açılır, kota yazılır.</td>
+            </tr>
+            <tr>
+              <td>SubscriptionUpdated</td>
+              <td>Plan/adet değişimi lisans kotasına yansır.</td>
+            </tr>
+            <tr>
+              <td>SubscriptionCanceled</td>
+              <td>Abonelik ve lisans durumu <code>canceled</code> olur.</td>
+            </tr>
+            <tr>
+              <td>TransactionCompleted</td>
+              <td>
+                Ödeme kaydı tekilleştirilerek yazılır; aynı işlem ikinci kez işlenmez, lisans olay
+                günlüğüne düşer.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Uç nokta: <code>POST /api/public/payments/webhook?env=sandbox|production</code>. İmza
+          doğrulanmadan hiçbir veri işlenmez; imza hatası 401, işleme hatası 500 döner (sağlayıcı
+          yeniden dener).
+        </p>
+        <h2>Fatura belgesi (UBL-TR 2.1)</h2>
+        <pre>
+          <code>{`import { buildInvoiceDocument, buildUblTrXml, buildArchiveHtml } from "@/lib/ubl-tr";
+
+const doc = buildInvoiceDocument({
+  transactionId, createdAt, currency, total, tax, description,
+  buyer: { email },
+});
+const xml  = buildUblTrXml(doc);     // e-Arşiv/e-Fatura alanları
+const html = buildArchiveHtml(doc);  // yazdırılabilir özet`}</code>
+        </pre>
+        <ul>
+          <li>
+            Fatura numarası <code>TBG&lt;yıl&gt;&lt;8 hane&gt;</code> ve ETTN, işlem kimliğinden
+            deterministik türetilir; aynı ödeme her zaman aynı belgeyi verir.
+          </li>
+          <li>
+            Matrah, vergi ve ödenecek tutar sağlayıcının bildirdiği değerlerden okunur; istemcide
+            yeniden hesaplanmaz.
+          </li>
+          <li>
+            <code>src/lib/tax.ts</code> yalnız fiyat kartında tahmini oran gösterir; yasal vergi
+            sonucu Paddle checkout'tadır.
+          </li>
+        </ul>
+        <p>
+          Kullanıcı arayüzü: <code>/faturalar</code> sayfası oturum sahibinin ödeme geçmişini
+          listeler ve her kayıt için XML/e-Arşiv indirmesi sunar.
+        </p>
+        <div className="note">
+          Belgeler müşteri muhasebe kaydı içindir; GİB entegratörüne gönderim Tedbirge tarafında
+          yapılmaz.
+        </div>
+      </>
+    ),
+  },
+  {
     id: "surum",
     title: "Sürüm notları",
     summary: "Uyumluluk sözleri ve değişiklik politikası.",
