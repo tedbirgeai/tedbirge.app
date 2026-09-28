@@ -1,0 +1,24 @@
+[Unit]
+Description=Tedbirge AXIOM dogrulama soketi (tedbirge_truth.sock)
+# Ikili yoksa birim hata vermeden atlanir.
+ConditionPathExists=/opt/tedbirge/tedbirge-truthd
+After=network.target
+
+[Service]
+Type=notify
+ExecStart=/opt/tedbirge/tedbirge-truthd --socket /run/tedbirge/tedbirge_truth.sock
+RuntimeDirectory=tedbirge
+RuntimeDirectoryMode=0750
+Restart=on-failure
+RestartSec=2
+WatchdogSec=10
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_UNIX
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target

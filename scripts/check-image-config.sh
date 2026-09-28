@@ -204,4 +204,11 @@ for s in image/build.sh image/install/tedbirge-kur scripts/test-install-qemu.sh 
   bash -n "$s" 2>/dev/null || sh -n "$s" || hata "Sözdizimi hatası: $s"
 done
 
+# 7) Doğrulama daemon birimi: yeniden başlatma, watchdog ve sandbox zorunlu.
+U=image/config/includes.chroot/etc/systemd/system/tedbirge-truth.service
+[ -s "$U" ] || hata "Zorunlu dosya yok: $U"
+for k in 'Restart=on-failure' 'WatchdogSec=' 'NoNewPrivileges=yes' 'ProtectSystem=strict' 'tedbirge_truth.sock'; do
+  grep -q "$k" "$U" || hata "tedbirge-truth.service içinde eksik: $k"
+done
+
 echo "✓ Kurulum imajı yapılandırması doğrulandı."
