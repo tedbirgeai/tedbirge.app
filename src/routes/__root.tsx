@@ -85,8 +85,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         httpEquiv: "Content-Security-Policy",
         // wasm-unsafe-eval: Z3/Lean 4 WASM ikilileri; worker-src: çekirdek daemon'ı.
+        // Paddle ödeme sağlayıcı script/iframe/API uç noktaları izin listeye alındı.
         content:
-          "upgrade-insecure-requests; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; worker-src 'self' blob:",
+          "upgrade-insecure-requests; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://cdn.paddle.com https://*.paddle.com; worker-src 'self' blob:; frame-src 'self' https://*.paddle.com https://buy.paddle.com; connect-src 'self' https: wss: blob:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://*.paddle.com",
       },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Tedbirge® WebOS — tedbirge.app" },
