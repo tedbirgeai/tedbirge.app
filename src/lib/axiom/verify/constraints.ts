@@ -28,10 +28,10 @@ export function normalizeLogic(text: string): string {
     .replace(/≥/g, " >= ")
     .replace(/[∧⋀]/g, " & ")
     .replace(/[∨⋁]/g, " | ")
-    .replace(/[¬~]/g, " ! ")
+    .replace(/[¬~]/g, " __not__ ")
     .replace(/\b(and|ve)\b/gi, " & ")
     .replace(/\b(or|veya)\b/gi, " | ")
-    .replace(/\b(not|değil)\b/gi, " ! ");
+    .replace(/\b(not|değil)\b/gi, " __not__ ");
 }
 
 type Atom = { value: string; kind: "number" | "bool" | "var" | "neg" };
@@ -67,7 +67,7 @@ function conjuncts(tokens: Token[]): Token[][] {
 function literalOf(c: Token[]): { atom: string; negated: boolean } | null {
   let i = 0;
   let neg = false;
-  while (i < c.length && c[i].type === "punct" && c[i].value === "!") {
+  while (i < c.length && c[i].type === "word" && c[i].value === "__not__") {
     neg = !neg;
     i += 1;
   }

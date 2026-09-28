@@ -6,7 +6,7 @@ describe("AST çelişki motoru", () => {
     "%s → çelişki",
     (t) => expect(findContradiction(t)).not.toBeNull(),
   );
-  it.each(["E = mc^2", "x > 1 ∧ x < 5", "1 = 1", "p ∧ ¬¬p", "p | !p", "x > 10 | x < 5", "enerji korunur"])(
+  it.each(["E = mc^2", "x > 1 ∧ x < 5", "1 = 1", "p ∧ ¬¬p", "p | ¬p", "x > 10 | x < 5", "enerji korunur"])(
     "%s → çelişki yok",
     (t) => expect(findContradiction(t)).toBeNull(),
   );
