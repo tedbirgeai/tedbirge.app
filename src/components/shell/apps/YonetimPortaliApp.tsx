@@ -15,6 +15,7 @@ import { LogsPanel } from "@/components/shell/apps/portal/LogsPanel";
 import { MetricsPanel } from "@/components/shell/apps/portal/MetricsPanel";
 import { UsersPanel } from "@/components/shell/apps/portal/UsersPanel";
 import { ghostBtn } from "@/components/shell/apps/portal/ui";
+import { AutonomyBadge } from "@/components/shell/apps/portal/AutonomyBadge";
 import { usePortal } from "@/lib/portal/store";
 
 const TABS = [
@@ -62,6 +63,8 @@ export function YonetimPortaliApp() {
               </p>
             </div>
           </div>
+          <div className="flex shrink-0 items-center gap-2">
+          <AutonomyBadge />
           <button
             type="button"
             onClick={() => void onReset()}
@@ -71,6 +74,7 @@ export function YonetimPortaliApp() {
             <RotateCcw className="mr-1 inline h-3.5 w-3.5" aria-hidden />
             Varsayılana dön
           </button>
+          </div>
         </div>
 
         <nav className="mt-3 flex gap-1.5 overflow-x-auto pb-1" aria-label="Portal bölümleri">
