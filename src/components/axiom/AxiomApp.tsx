@@ -416,8 +416,13 @@ export function AxiomApp() {
   const submit = useCallback((text: string) => {
     if (!text || !text.trim()) return;
     setLastText(text);
+    pendingTextRef.current = text;
     setBusy(true);
     setHata(null);
+    // Yeni sorguya eski kanıtı taşıma: aksi halde AxiomMasterShell effect'i eski
+    // verdict'i yeni karta damgalar (finding 6).
+    setProof(null);
+    setVerifying(true);
 
     // Her Sorguda Tutar ve Çağrı Sayacı Kesin Artar
     meterRecord({
@@ -430,8 +435,12 @@ export function AxiomApp() {
 
     const worker = workerRef.current;
     if (worker) {
-      const msg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
-      worker.postMessage(msg);
+      const analyzeMsg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
+      worker.postMessage(analyzeMsg);
+      // Sorgu gönderildiğinde doğrulama motorunu da tetikle — aksi halde
+      // kart sonsuza dek "beklemede" kalır (finding 2).
+      const verifyMsg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text };
+      worker.postMessage(verifyMsg);
       return;
     }
 
@@ -451,11 +460,14 @@ export function AxiomApp() {
         },
         ...prev,
       ]);
+      // Yerel motor: doğrulamayı da çalıştır.
+      verifyLocally(text);
     } catch (err) {
       setHata(err instanceof Error ? err.message : "Bilinmeyen çözümleme hatası");
       setBusy(false);
+      setVerifying(false);
     }
-  }, []);
+  }, [verifyLocally]);
 
   const verifyLocally = useCallback((text: string) => {
     void localVerify(text)
