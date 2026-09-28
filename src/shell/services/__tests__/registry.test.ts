@@ -118,7 +118,7 @@ describe("mesh eşitleme servisi", () => {
     const send = vi.spyOn(la, "send");
     const a = createMeshDaemon("a", la);
     createMeshDaemon("b", lb);
-    expect(a.publish("d", "1 = 2")).toBe(false);
+    expect(a.publish("d", "100 J = 100 W")).toBe(false);
     expect(send).not.toHaveBeenCalled();
     expect(a.stats().rejectedOutbound).toBe(1);
   });

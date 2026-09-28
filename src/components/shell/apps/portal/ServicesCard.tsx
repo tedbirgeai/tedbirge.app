@@ -13,13 +13,13 @@ const LABEL: Record<ServiceStatus, string> = {
   stopped: "durdu",
 };
 
-const TONE: Record<ServiceStatus, "ok" | "warn" | "err" | undefined> = {
-  idle: undefined,
+const TONE: Record<ServiceStatus, "ok" | "warn" | "bad" | "muted"> = {
+  idle: "muted",
   starting: "warn",
   running: "ok",
   degraded: "warn",
-  failed: "err",
-  stopped: undefined,
+  failed: "bad",
+  stopped: "muted",
 };
 
 export function ServicesCard() {
@@ -29,7 +29,7 @@ export function ServicesCard() {
     <GlassCard>
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-[var(--tb-text)]">Arka plan servisleri</h3>
-        <Badge tone={leader ? "ok" : undefined}>{leader ? "lider sekme" : "takipçi sekme"}</Badge>
+        <Badge tone={leader ? "ok" : "muted"}>{leader ? "lider sekme" : "takipçi sekme"}</Badge>
       </div>
       <ul className="divide-y divide-[var(--tb-border)]" aria-label="Arka plan servisleri">
         {services.map((s) => (
