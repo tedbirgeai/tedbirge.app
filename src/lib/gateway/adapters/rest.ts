@@ -17,6 +17,8 @@ export type RestInboundConfig = {
   hmacEnv?: string;
   /** Zorunlu Content-Type; varsayılan `application/json`. */
   contentType?: string;
+  /** true → imza zorunlu; sırr yoksa istek reddedilir. */
+  strictHmac?: boolean;
 };
 
 export function registerRestInbound(config: RestInboundConfig): void {
@@ -25,11 +27,13 @@ export function registerRestInbound(config: RestInboundConfig): void {
     protocol: "rest",
     direction: "inbound",
     label: config.label,
+    strictHmac: config.strictHmac === true,
     async healthCheck() {
       return true;
     },
   });
 }
+
 
 export function markRestCall(slug: string, ok: boolean): void {
   recordCall(slug, ok);
