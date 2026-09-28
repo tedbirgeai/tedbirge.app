@@ -1,4 +1,5 @@
 import { isRelayEnabled } from "@/shell/relay";
+import { GOSSIP_LABEL, announceGossipLink, openGossipChannel, wrapGossipChannel } from "@/lib/axiom/net/datachannel";
 import { canAcceptPeer, setLicenseTier } from "@/lib/peer-limit";
 
 import { chunkPayload, ingestChunk, isChunkFrame, laneSchedule } from "@/kernel/multipath";
@@ -1079,7 +1080,14 @@ export class BrowserNode {
       }
       this.emit({});
     };
-    pc.ondatachannel = (e) => this.bindChannel(remote, e.channel);
+    pc.ondatachannel = (e) => {
+      // Gossip kanalı ayrı etiketle gelir; sohbet kanalının üzerine yazılmaz.
+      if (e.channel.label === GOSSIP_LABEL) {
+        announceGossipLink(wrapGossipChannel(e.channel, `rtc:${remote}`));
+        return;
+      }
+      this.bindChannel(remote, e.channel);
+    };
     return entry;
   }
 
@@ -1126,6 +1134,7 @@ export class BrowserNode {
     const entry = this.newPeer(remote);
     const dc = entry.pc.createDataChannel("mesh", { ordered: true });
     this.bindChannel(remote, dc);
+    announceGossipLink(openGossipChannel(entry.pc, `rtc:${remote}`));
     const offer = await entry.pc.createOffer();
     await entry.pc.setLocalDescription(offer);
     await this.signal(remote, { type: "offer", sdp: offer.sdp });

@@ -211,4 +211,7 @@ for k in 'Restart=on-failure' 'WatchdogSec=' 'NoNewPrivileges=yes' 'ProtectSyste
   grep -q "$k" "$U" || hata "tedbirge-truth.service içinde eksik: $k"
 done
 
+grep -q 'tedbirge-truthd' image/build.sh || hata "image/build.sh doğrulama daemon'unu gömmüyor."
+grep -q 'crates/tedbirge-truthd' .github/workflows/build-iso.yml || hata "ISO iş akışı tedbirge-truthd derlemiyor."
+
 echo "✓ Kurulum imajı yapılandırması doğrulandı."
