@@ -37,6 +37,7 @@ import { Route as ApiPublicGecitRouteImport } from './routes/api/public/gecit'
 import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
 import { Route as ApiV1McpVerifyRouteImport } from './routes/api/v1/mcp/verify'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicGatewaySlugRouteImport } from './routes/api/public/gateway/$slug'
 import { Route as ApiPublicCronOfflineCheckRouteImport } from './routes/api/public/cron/offline-check'
 import { Route as ApiPublicV1McpVerifyRouteImport } from './routes/api/public/v1/mcp/verify'
 
@@ -181,6 +182,11 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicGatewaySlugRoute = ApiPublicGatewaySlugRouteImport.update({
+  id: '/api/public/gateway/$slug',
+  path: '/api/public/gateway/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronOfflineCheckRoute =
   ApiPublicCronOfflineCheckRouteImport.update({
     id: '/api/public/cron/offline-check',
@@ -221,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/api/public/relay': typeof ApiPublicRelayRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
+  '/api/public/gateway/$slug': typeof ApiPublicGatewaySlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/v1/mcp/verify': typeof ApiV1McpVerifyRoute
   '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
@@ -253,6 +260,7 @@ export interface FileRoutesByTo {
   '/api/public/relay': typeof ApiPublicRelayRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
+  '/api/public/gateway/$slug': typeof ApiPublicGatewaySlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/v1/mcp/verify': typeof ApiV1McpVerifyRoute
   '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
@@ -286,6 +294,7 @@ export interface FileRoutesById {
   '/api/public/relay': typeof ApiPublicRelayRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
+  '/api/public/gateway/$slug': typeof ApiPublicGatewaySlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/v1/mcp/verify': typeof ApiV1McpVerifyRoute
   '/api/public/v1/mcp/verify': typeof ApiPublicV1McpVerifyRoute
@@ -320,6 +329,7 @@ export interface FileRouteTypes {
     | '/api/public/relay'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
+    | '/api/public/gateway/$slug'
     | '/api/public/payments/webhook'
     | '/api/v1/mcp/verify'
     | '/api/public/v1/mcp/verify'
@@ -352,6 +362,7 @@ export interface FileRouteTypes {
     | '/api/public/relay'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
+    | '/api/public/gateway/$slug'
     | '/api/public/payments/webhook'
     | '/api/v1/mcp/verify'
     | '/api/public/v1/mcp/verify'
@@ -384,6 +395,7 @@ export interface FileRouteTypes {
     | '/api/public/relay'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
+    | '/api/public/gateway/$slug'
     | '/api/public/payments/webhook'
     | '/api/v1/mcp/verify'
     | '/api/public/v1/mcp/verify'
@@ -417,6 +429,7 @@ export interface RootRouteChildren {
   ApiPublicRelayRoute: typeof ApiPublicRelayRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
   ApiPublicCronOfflineCheckRoute: typeof ApiPublicCronOfflineCheckRoute
+  ApiPublicGatewaySlugRoute: typeof ApiPublicGatewaySlugRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiV1McpVerifyRoute: typeof ApiV1McpVerifyRoute
   ApiPublicV1McpVerifyRoute: typeof ApiPublicV1McpVerifyRoute
@@ -620,6 +633,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/gateway/$slug': {
+      id: '/api/public/gateway/$slug'
+      path: '/api/public/gateway/$slug'
+      fullPath: '/api/public/gateway/$slug'
+      preLoaderRoute: typeof ApiPublicGatewaySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/offline-check': {
       id: '/api/public/cron/offline-check'
       path: '/api/public/cron/offline-check'
@@ -665,6 +685,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRelayRoute: ApiPublicRelayRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
   ApiPublicCronOfflineCheckRoute: ApiPublicCronOfflineCheckRoute,
+  ApiPublicGatewaySlugRoute: ApiPublicGatewaySlugRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiV1McpVerifyRoute: ApiV1McpVerifyRoute,
   ApiPublicV1McpVerifyRoute: ApiPublicV1McpVerifyRoute,
