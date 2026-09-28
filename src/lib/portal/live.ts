@@ -145,3 +145,10 @@ export function layout(ids: string[], w: number, h: number): { id: string; x: nu
     return { id, x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
   });
 }
+
+export type Quota = { used: number; limit: number; pct: number; over: boolean };
+
+/** Ücretsiz kademe cihaz kotası: sınırı aşan (6.) cihazda abonelik gerekir. */
+export function quotaOf(used: number, limit: number): Quota {
+  return { used, limit, pct: Math.min(100, Math.round((used / limit) * 100)), over: used > limit };
+}
