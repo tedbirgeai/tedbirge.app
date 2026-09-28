@@ -8,8 +8,15 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { recordCall, registerAdapter } from "@/lib/gateway/registry";
 
 export function registerWebhookReceiver(slug: string, label: string): void {
-  registerAdapter({ slug, protocol: "webhook", direction: "inbound", label });
+  registerAdapter({
+    slug,
+    protocol: "webhook",
+    direction: "inbound",
+    label,
+    strictHmac: true,
+  });
 }
+
 
 export function verifyHmacSha256(secret: string, body: string, signatureHex: string): boolean {
   if (!signatureHex) return false;
