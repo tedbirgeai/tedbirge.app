@@ -297,7 +297,7 @@ export function AxiomApp() {
         setQueryHistory((prev) => [
           {
             id: Math.random().toString(36).substring(2, 9),
-            text: "",
+            text: pendingTextRef.current || "",
             analysis: msg.analysis,
             timestamp: new Date().toLocaleTimeString("tr-TR"),
           },
