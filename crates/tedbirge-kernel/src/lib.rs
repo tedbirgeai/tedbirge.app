@@ -283,3 +283,35 @@ mod tests {
         assert_eq!(out[0], 0);
     }
 }
+
+/// `tb_proof_t` ile birebir aynı C-ABI kanıt kaydı (bkz. `sdk/tedbirge_truth.h`).
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct TbProof {
+    pub verdict: i32,
+    pub engine: i32,
+    pub wasm_verified: i32,
+    pub ms: u32,
+    pub cid: [u8; 65],
+    pub seal: [u8; 129],
+    pub _pad: [u8; 2],
+}
+
+const _: () = {
+    use core::mem::{align_of, offset_of, size_of};
+    assert!(size_of::<TbProof>() == 212);
+    assert!(align_of::<TbProof>() == 4);
+    assert!(offset_of!(TbProof, verdict) == 0);
+    assert!(offset_of!(TbProof, engine) == 4);
+    assert!(offset_of!(TbProof, wasm_verified) == 8);
+    assert!(offset_of!(TbProof, ms) == 12);
+    assert!(offset_of!(TbProof, cid) == 16);
+    assert!(offset_of!(TbProof, seal) == 81);
+    assert!(offset_of!(TbProof, _pad) == 210);
+};
+
+/// Kabuğun düzen denetimi için `sizeof(tb_proof_t)`.
+#[no_mangle]
+pub extern "C" fn tb_proof_size() -> u32 {
+    core::mem::size_of::<TbProof>() as u32
+}
