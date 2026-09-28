@@ -10,7 +10,7 @@ export const submitContactMessage = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ContactSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const req = (context as { request?: Request }).request;
+    const req = (context as unknown as { request?: Request } | undefined)?.request;
     const userAgent = req?.headers.get("user-agent") ?? null;
     const { error } = await supabaseAdmin.from("contact_messages").insert({
       email: data.email,
