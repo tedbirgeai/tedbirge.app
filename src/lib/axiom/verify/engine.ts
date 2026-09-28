@@ -16,6 +16,7 @@ import type { InvariantMatch } from "@/lib/axiom/invariants";
 import type { AxiomIr } from "@/lib/axiom/lang/axiom-ir";
 import { isSmtLib } from "@/lib/axiom/lang/detect";
 import { loadEngine, solveWithEngine } from "@/lib/axiom/live/engine-session";
+import { findContradiction } from "@/lib/axiom/verify/constraints";
 import { createDeadline, DeadlineExceeded, runGuarded } from "@/lib/axiom/verify/guard";
 import { toLean } from "@/lib/axiom/verify/lean";
 import { contentId, proofSeal } from "@/lib/axiom/verify/seal";
@@ -31,43 +32,16 @@ import {
 const SNIPPET = 2000;
 
 /**
- * Yerel kural kapısında önerme doğrulama ve semantik çelişki analizi.
- * WASM ikilisi yüklenmediğinde veya yerel modda çalışıldığında
- * geçerli aksiyomların yanlışlıkla reddedilmesini engeller.
+ * Yerel kural kapısı: çelişki AST seviyesinde türetilir (bkz. constraints.ts).
+ * Yerel kapı hiçbir zaman kararı "kanıtlandı" düzeyine yükseltmez.
  */
 function evaluateDeterministicGate(
   text: string,
   baseVerdict: VerifyVerdict,
-  wasmVerified: boolean
+  wasmVerified: boolean,
 ): VerifyVerdict {
-  // Yerel kapı hiçbir zaman kararı "kanıtlandı" düzeyine yükseltmez.
   if (!wasmVerified && baseVerdict === "200_PROVEN") baseVerdict = "422_UNDECIDED";
-  const lower = text.trim().toLowerCase();
-
-  // 2. Doğal Dil ve Aksiyomatik Önerme Taraması (Fiziksel / Mantıksal Çelişkiler)
-  const contradictionKeywords = [
-    "yoktan enerji",
-    "%100 verim",
-    "100% verim",
-    "perpetuum mobile",
-    "sınırsız bant genişliği",
-    "x > 10 and x < 5",
-    "x > 10 & x < 5",
-    "p ∧ ¬p",
-    "p and not p",
-    "p ∧ !p",
-    "false = true",
-    "1 = 2",
-    "1=2",
-    "0 = 1",
-    "0=1",
-  ];
-
-  const hasContradiction = contradictionKeywords.some((kw) => lower.includes(kw));
-  if (hasContradiction) {
-    return "409_REFUTED";
-  }
-
+  if (findContradiction(text)) return "409_REFUTED";
   return baseVerdict;
 }
 

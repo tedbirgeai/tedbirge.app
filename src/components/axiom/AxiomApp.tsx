@@ -7,7 +7,7 @@ import React, { Component, useCallback, useEffect, useMemo, useRef, useState, ty
 
 // Entegre Edilen Master Shell ve C-ABI Köprüsü
 import { AxiomMasterShell } from "@/components/axiom/AxiomMasterShell";
-import { AxiomCABISocketBridge } from "@/core/axiom_cabi_bridge";
+import { verifyProofLayout } from "@/lib/axiom/bridge/cabi-layout";
 
 // Bileşenler ve Araçlar
 import { ArbiterPanel } from "@/components/axiom/ArbiterPanel";
@@ -180,7 +180,7 @@ export function AxiomApp() {
   // C-ABI Soket Köprüsünü ilklendir
   const initCabi = useCallback(() => {
     try {
-      const active = AxiomCABISocketBridge.initializeBridge();
+      const active = verifyProofLayout();
       setCabiActive(active);
     } catch {
       setCabiActive(false);
@@ -786,10 +786,10 @@ export function AxiomApp() {
             <button
               type="button"
               onClick={initCabi}
-              title="C-ABI Soket Bağlantısını Yeniden Dene"
+              title="C-ABI bayt düzenini yeniden denetle"
               className={`text-[9px] px-1.5 py-0.5 rounded border cursor-pointer hover:opacity-80 transition-opacity ${cabiActive ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-rose-950 text-rose-400 border-rose-800"}`}
             >
-              C-ABI Soket: {cabiActive ? "Bağlı (Yenile)" : "Devre Dışı (Yeniden Bağlan)"}
+              C-ABI Düzen: {cabiActive ? "212 B doğrulandı" : "Uyumsuz (Yeniden Denetle)"}
             </button>
           </div>
           <div>

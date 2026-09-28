@@ -4,7 +4,7 @@
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
 import React from "react";
-import type { VerificationResult } from "../../core/kernel.worker";
+import type { VerificationResult } from "@/lib/axiom/verify/viewer-types";
 
 interface ProofViewerProps {
   result?: VerificationResult | null;
