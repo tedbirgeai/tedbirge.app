@@ -16,32 +16,17 @@ import { Component, useCallback, useEffect, useMemo, useRef, useState } from "re
 import type { ErrorInfo, ReactNode } from "react";
 import { Activity, AlertTriangle, Bell, RotateCcw, Save, Wifi, WifiOff } from "lucide-react";
 
-import { instantiateTbApp, type TbAppInstance } from "@/apps/tbapp";
 import { ghostBtn, inputClass, primaryBtn } from "@/components/shell/apps/portal/ui";
 import { readAppData, writeAppData } from "@/lib/apps/appdata";
 import { getNodeSnapshot } from "@/lib/node-runtime";
-import { notify, notifyError } from "@/lib/shell/notify";
+import { notifyError } from "@/lib/shell/notify";
+import { faultTitle, reportFault, startAppRuntime, WATCHDOG_MS, type AppFault, type AppRuntime } from "@/lib/studio/app-runtime";
 import { generatedApp, type GeneratedApp } from "@/lib/studio/generated-apps";
 import type { UiBlock } from "@/lib/studio/generator";
 import { postIpc } from "@/shell/desktop-ipc";
 import { issueVfsToken } from "@/lib/vfs/tokens";
 
-/** Tek bir Wasm çağrısı için üst sınır. */
-export const WATCHDOG_MS = 1500;
-
-export class WatchdogError extends Error {}
-
-/**
- * Çağrıyı süre sigortasıyla ölçer. Tarayıcı iş parçacığı bir Wasm döngüsünü
- * yarıda kesemediği için sigorta, sınırı aşan modülü kapatır ve sonraki
- * çağrıları engeller; böylece hatalı uygulama pencereyi kilitlemeye devam edemez.
- */
-export function runGuarded<T>(fn: () => T, limitMs = WATCHDOG_MS): { value?: T; ms: number; overrun: boolean } {
-  const t0 = performance.now();
-  const value = fn();
-  const ms = performance.now() - t0;
-  return { ...(value === undefined ? {} : { value }), ms, overrun: ms > limitMs };
-}
+export { WATCHDOG_MS };
 
 /* --------------------------- çökme izolasyonu --------------------------- */
 
@@ -92,7 +77,7 @@ class AppBoundary extends Component<{ name: string; children: ReactNode; onReset
 
 type Ctx = {
   app: GeneratedApp;
-  call: (fn: string, args: number[]) => number | null;
+  call: (fn: string, args: number[]) => Promise<number | null>;
   log: string[];
   stopped: string | null;
 };
@@ -138,9 +123,9 @@ function CounterBlock({ label, ctx }: { label: string; ctx: Ctx }) {
         type="button"
         className={ghostBtn}
         disabled={!!ctx.stopped}
-        onClick={() => {
-          const r = ctx.call("artir", [1]);
-          setValue(r ?? value + 1);
+        onClick={async () => {
+          const r = await ctx.call("artir", [1]);
+          if (r !== null) setValue(r);
         }}
       >
         +1
@@ -149,7 +134,7 @@ function CounterBlock({ label, ctx }: { label: string; ctx: Ctx }) {
         type="button"
         className={ghostBtn}
         disabled={!!ctx.stopped}
-        onClick={() => setValue(ctx.call("sifirla", []) ?? 0)}
+        onClick={async () => setValue((await ctx.call("sifirla", [])) ?? 0)}
       >
         Sıfırla
       </button>
@@ -169,8 +154,9 @@ function CalcBlock({ label, fn, ctx }: { label: string; fn: string; ctx: Ctx }) 
         type="button"
         className={primaryBtn}
         disabled={!!ctx.stopped}
-        onClick={() => {
-          const r = ctx.call(fn, [Number(a) || 0, Number(b) || 0]);
+        onClick={async () => {
+          setOut("çalışıyor…");
+          const r = await ctx.call(fn, [Number(a) || 0, Number(b) || 0]);
           setOut(r === null ? "çekirdek yanıt vermedi" : String(r));
         }}
       >
@@ -228,9 +214,8 @@ function NotifyBlock({ label, text, appId }: { label: string; text: string; appI
           const cap = await issueVfsToken(appId, "write", "shell.notifications");
           await postIpc({ from: appId, to: "shell.notifications", kind: "notify", payload: { text }, cap });
         } catch {
-          /* jeton reddedilirse bildirim yine kullanıcıya gösterilir */
+          notifyError("Bildirim reddedildi", "Uygulamanın bildirim yetkisi doğrulanamadı.");
         }
-        notify(label, text);
       }}
     >
       <Bell className="size-3.5" /> {label}
@@ -265,76 +250,75 @@ function BlockView({ block, ctx }: { block: UiBlock; ctx: Ctx }) {
 
 /* ------------------------------ çalıştırıcı ------------------------------ */
 
-function Runner({ app, nonce }: { app: GeneratedApp; nonce: number }) {
+function Runner({ app, nonce, onRestart }: { app: GeneratedApp; nonce: number; onRestart: () => void }) {
   const [log, setLog] = useState<string[]>([]);
-  const [stopped, setStopped] = useState<string | null>(null);
-  const inst = useRef<TbAppInstance | null>(null);
+  const [fault, setFault] = useState<AppFault | null>(null);
+  const rt = useRef<AppRuntime | null>(null);
 
   useEffect(() => {
-    let alive = true;
     setLog([]);
-    setStopped(null);
+    setFault(null);
     if (!app.module) {
-      setStopped("Bu uygulamanın çekirdeği derlenmemiş.");
+      setFault({ appId: app.spec.id, reason: "load", message: "Bu uygulamanın çekirdeği derlenmemiş.", ms: 0 });
       return;
     }
-    const manifest = {
-      id: app.spec.id,
-      name: app.spec.name,
-      version: app.spec.version,
-      capabilities: app.spec.capabilities,
+    const runtime = startAppRuntime({
+      appId: app.spec.id,
       module: app.module,
-      description: app.spec.description,
-    };
-    void instantiateTbApp(manifest, app.spec.capabilities, (line) =>
-      setLog((l) => [...l.slice(-199), line]),
-    )
-      .then((i) => {
-        if (!alive) return i.dispose();
-        inst.current = i;
-        const start = i.exports["start"];
-        if (typeof start === "function") {
-          const r = runGuarded(() => (start as () => void)());
-          if (r.overrun) {
-            i.dispose();
-            inst.current = null;
-            setStopped(`Çekirdek ${Math.round(r.ms)} ms sürdü ve zaman sigortasıyla durduruldu.`);
-          }
-        }
-      })
-      .catch((e: unknown) =>
-        setStopped(e instanceof Error ? e.message : "Çekirdek başlatılamadı."),
-      );
+      status: () => {
+        const s = getNodeSnapshot();
+        return { online: s.online, peers: s.peers.length };
+      },
+      onLog: (line) => setLog((l) => [...l.slice(-199), line]),
+      onFault: (f) => {
+        setFault(f);
+        void reportFault(f, app.spec.name);
+      },
+    });
+    rt.current = runtime;
+    void runtime.call("start", []).catch(() => {});
     return () => {
-      alive = false;
-      inst.current?.dispose();
-      inst.current = null;
+      runtime.dispose();
+      if (rt.current === runtime) rt.current = null;
     };
   }, [app, nonce]);
 
-  const call = useCallback(
-    (fn: string, args: number[]): number | null => {
-      const f = inst.current?.exports[fn];
-      if (typeof f !== "function") return null;
-      const r = runGuarded(() => (f as (...a: number[]) => number)(...args));
-      if (r.overrun) {
-        inst.current?.dispose();
-        inst.current = null;
-        setStopped(`"${fn}" ${Math.round(r.ms)} ms sürdü; kaynak sigortası devreye girdi.`);
-        return null;
-      }
-      return typeof r.value === "number" ? r.value : null;
-    },
-    [],
-  );
+  const call = useCallback(async (fn: string, args: number[]): Promise<number | null> => {
+    const r = rt.current;
+    if (!r || r.dead) return null;
+    try {
+      return await r.call(fn, args);
+    } catch {
+      return null;
+    }
+  }, []);
 
+  const stopped = fault ? fault.message : null;
   const ctx = useMemo<Ctx>(() => ({ app, call, log, stopped }), [app, call, log, stopped]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5">
-      {stopped && (
-        <div className="flex items-center gap-2 rounded-xl bg-[var(--tb-surface-2)] p-3 font-osmono text-[11px] text-[var(--tb-muted)]">
-          <AlertTriangle className="size-3.5" /> {stopped}
+      {fault && (
+        <div role="alert" className="flex flex-col gap-2 rounded-xl bg-[var(--tb-surface-2)] p-3">
+          <div className="flex items-center gap-2 text-[13px] font-semibold text-[var(--tb-danger,#dc2626)]">
+            <AlertTriangle className="size-4" /> {faultTitle(app.spec.name, fault.reason)}
+          </div>
+          <p className="font-osmono text-[12px] text-[var(--tb-text)]">{fault.message}</p>
+          <p className="font-osmono text-[11px] text-[var(--tb-muted)]">
+            {fault.ms ? `Süre: ${fault.ms} ms · ` : ""}Masaüstü ve diğer uygulamalar etkilenmedi.
+          </p>
+          <div className="flex gap-2">
+            <button type="button" className={primaryBtn} onClick={onRestart}>
+              <RotateCcw className="size-3.5" /> Yeniden başlat
+            </button>
+            <button
+              type="button"
+              className={ghostBtn}
+              onClick={() => void navigator.clipboard?.writeText([fault.message, ...log].join("\n")).catch(() => {})}
+            >
+              Günlüğü kopyala
+            </button>
+          </div>
         </div>
       )}
       {app.spec.blocks.map((b, i) => (
@@ -355,7 +339,7 @@ export function GeneratedAppRunner({ appId }: { appId: string }) {
     );
   return (
     <AppBoundary name={app.spec.name} onReset={() => setNonce((n) => n + 1)}>
-      <Runner app={app} nonce={nonce} />
+      <Runner app={app} nonce={nonce} onRestart={() => setNonce((n) => n + 1)} />
     </AppBoundary>
   );
 }
