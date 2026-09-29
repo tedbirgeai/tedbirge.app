@@ -122,18 +122,7 @@ export function TedbirgeWebView({
             <span className="hidden sm:inline">Geçit Üzerinden Çalıştır</span>
           </button>
         ) : null}
-        {offgrid ? null : (
-          <a
-            href={url}
-            target="_blank"
-            rel="noreferrer noopener"
-            title="Harici sekmede aç"
-            className="wa-press inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--tb-border)] px-2 py-1 font-osmono text-[11px] text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
-          >
-            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-            <span className="hidden sm:inline">Harici Sekmede Aç</span>
-          </a>
-        )}
+        {/* Harici sekme yolu kaldırıldı: içerik yalnız bu pencerede açılır. */}
       </div>
 
       {offgrid ? (

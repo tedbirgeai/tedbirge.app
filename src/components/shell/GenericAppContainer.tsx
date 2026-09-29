@@ -120,7 +120,9 @@ export function GenericAppContainer({
         }}
         referrerPolicy="no-referrer"
         allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
-        sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-presentation"
+        /* Dışa kaçış kapalı: açılır pencere yetkileri verilmez, içerik
+           pencereden çıkıp yeni tarayıcı sekmesi açamaz. */
+        sandbox="allow-scripts allow-forms allow-same-origin allow-presentation"
         className="tbos-webview h-full w-full border-0 bg-white"
       />
     </div>
