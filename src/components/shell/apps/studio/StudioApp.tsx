@@ -3,13 +3,14 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FilePlus2, Hammer, Package, Play, Save, ShieldCheck } from "lucide-react";
+import { BookOpen, Eye, FilePlus2, Hammer, Package, Play, Save, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { EditorPane, type EditorHandle } from "@/components/shell/apps/studio/EditorPane";
 import { ghostBtn, inputClass, primaryBtn } from "@/components/shell/apps/portal/ui";
 import { listRepo, projectsOf, readRepo, writeRepo } from "@/lib/studio/repo-fs";
 import {
+  HOST_GUIDE,
   TEMPLATES,
   extractClaims,
   parseStudioManifest,
@@ -21,6 +22,8 @@ import { compile, type Problem } from "@/lib/studio/compiler";
 import { deviceSigner, packageProject } from "@/lib/studio/packager";
 import { instantiateTbApp, installTbAppWithConsent } from "@/apps/tbapp";
 import { TRUST_LABELS } from "@/apps/package";
+
+const PICKER_KEY = "tb.studio.picker.seen";
 
 type Tab = "cikti" | "sorunlar" | "axiom";
 
@@ -35,7 +38,12 @@ export function StudioApp() {
   const [axiom, setAxiom] = useState<Array<{ claim: string; verdict: string }>>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
-  const [tpl, setTpl] = useState<TemplateId>("merhaba");
+  const [tpl, setTpl] = useState<TemplateId>("widget");
+  const [picker, setPicker] = useState(false);
+  const [pickName, setPickName] = useState("");
+  const [pickTpl, setPickTpl] = useState<TemplateId>("widget");
+  const [side, setSide] = useState<"onizleme" | "rehber">("onizleme");
+  const [preview, setPreview] = useState<string[]>([]);
   const [wasm, setWasm] = useState<{ project: string; bytes: Uint8Array } | null>(null);
   const editor = useRef<EditorHandle | null>(null);
 
@@ -53,6 +61,11 @@ export function StudioApp() {
   }, []);
 
   useEffect(() => {
+    try {
+      if (!localStorage.getItem(PICKER_KEY)) setPicker(true);
+    } catch {
+      /* depolama kapalı */
+    }
     void refresh().then((list) => {
       const first = list.find((p) => p.endsWith("assembly/index.ts"));
       if (first) void openFile(first);
@@ -86,16 +99,18 @@ export function StudioApp() {
     }
   }
 
-  async function create() {
-    const slug = newName.trim().toLowerCase();
+  async function create(name = newName, template = tpl): Promise<boolean> {
+    const slug = name.trim().toLowerCase();
     try {
-      for (const f of templateFiles(slug, newName.trim(), tpl)) await writeRepo(f.path, f.text);
+      for (const f of templateFiles(slug, name.trim(), template)) await writeRepo(f.path, f.text);
       setNewName("");
       await refresh();
       await openFile(`${slug}/assembly/index.ts`);
       print(`Proje oluşturuldu: /repo/${slug}`);
+      return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Proje oluşturulamadı");
+      return false;
     }
   }
 
@@ -142,9 +157,12 @@ export function StudioApp() {
     try {
       const m = await loadManifest(project);
       const { pkg } = await packageProject(m, bytes, async (x) => x);
-      const inst = await instantiateTbApp(pkg, m.capabilities, (line) =>
-        print(`[${m.name}] ${line}`),
-      );
+      setPreview([]);
+      setSide("onizleme");
+      const inst = await instantiateTbApp(pkg, m.capabilities, (line) => {
+        print(`[${m.name}] ${line}`);
+        setPreview((p) => [...p.slice(-199), line]);
+      });
       const start = inst.exports["start"];
       if (typeof start === "function") (start as () => void)();
       else print("Pakette start() dışa aktarımı yok.");
@@ -195,10 +213,19 @@ export function StudioApp() {
     setAxiom(rows);
   }
 
+  function closePicker() {
+    setPicker(false);
+    try {
+      localStorage.setItem(PICKER_KEY, "1");
+    } catch {
+      /* depolama kapalı */
+    }
+  }
+
   const btn = `${ghostBtn} inline-flex items-center gap-1.5`;
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[var(--tb-bg)] text-[var(--tb-text)]">
+    <div className="relative flex h-full min-h-0 flex-col bg-[var(--tb-bg)] text-[var(--tb-text)]">
       <div className="flex flex-wrap items-center gap-2 border-b border-[var(--tb-border)] px-3 py-2">
         <strong className="mr-2 text-sm">AxiomStudio</strong>
         <button
@@ -233,12 +260,15 @@ export function StudioApp() {
         >
           <Package className="h-3.5 w-3.5" /> Kur
         </button>
+        <button type="button" className={btn} onClick={() => setPicker(true)}>
+          <FilePlus2 className="h-3.5 w-3.5" /> Yeni proje
+        </button>
         <button type="button" className={btn} onClick={() => void checkClaims()} disabled={!open}>
           <ShieldCheck className="h-3.5 w-3.5" /> AXIOM
         </button>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[220px_1fr]">
+      <div className="grid min-h-0 flex-1 grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_260px]">
         <aside
           className="min-h-0 overflow-auto border-r border-[var(--tb-border)] p-2 text-[12px]"
           aria-label="Proje dosyaları"
@@ -375,7 +405,134 @@ export function StudioApp() {
             </div>
           </div>
         </div>
+        <aside className="hidden min-h-0 flex-col border-l border-[var(--tb-border)] xl:flex" aria-label="Önizleme ve rehber">
+          <div className="flex gap-1 px-2 pt-1.5 text-[11px]" role="tablist">
+            {(
+              [
+                ["onizleme", "Önizleme", Eye],
+                ["rehber", "Rehber", BookOpen],
+              ] as const
+            ).map(([id, label, Icon]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={side === id}
+                onClick={() => setSide(id)}
+                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 ${side === id ? "bg-[var(--tb-accent)]/15 text-[var(--tb-text)]" : "text-[var(--tb-muted)]"}`}
+              >
+                <Icon className="h-3 w-3" /> {label}
+              </button>
+            ))}
+          </div>
+          <div className="min-h-0 flex-1 overflow-auto p-3 text-[12px]">
+            {side === "onizleme" ? (
+              <div>
+                <button
+                  type="button"
+                  className={`${primaryBtn} mb-2 inline-flex items-center gap-1.5`}
+                  onClick={() => void run()}
+                  disabled={!project || !!busy}
+                >
+                  <Play className="h-3.5 w-3.5" /> Önizlemeyi çalıştır
+                </button>
+                {preview.length ? (
+                  <div className="rounded border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-2 font-osmono text-[11.5px]" aria-live="polite">
+                    {preview.map((l, i) => (
+                      <div key={i}>{l}</div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[var(--tb-muted)]">
+                    {wasm?.project === project
+                      ? "Çalıştırınca log() çıktıları burada görünür."
+                      : "Önce derleyin; ardından önizlemeyi çalıştırın."}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-[var(--tb-muted)]">
+                  Paketler yalnız bu host fonksiyonlarını kullanabilir. Tıklayınca örnek açık dosyaya eklenir.
+                </p>
+                {HOST_GUIDE.map((g) => (
+                  <button
+                    key={g.name}
+                    type="button"
+                    disabled={!open}
+                    onClick={() => {
+                      setText((t) => `${t.replace(/\s*$/, "")}\n// ${g.name}\n${g.snippet}\n`);
+                      setDirty(true);
+                    }}
+                    className="block w-full rounded border border-[var(--tb-border)] p-2 text-left hover:bg-[var(--tb-panel-soft)] disabled:opacity-50"
+                  >
+                    <div className="font-osmono text-[11.5px] text-[var(--tb-text)]">{g.sig}</div>
+                    <div className="mt-0.5 text-[var(--tb-muted)]">{g.about}</div>
+                    {g.cap ? (
+                      <div className="mt-1 text-[10.5px] text-[var(--tb-muted)]">Gerekli yetki: {g.cap}</div>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </aside>
       </div>
+
+      {picker ? (
+        <div className="absolute inset-0 z-20 grid place-items-center bg-[var(--tb-bg)]/70 p-4" role="dialog" aria-modal="true" aria-label="Şablon seçin">
+          <div className="w-full max-w-xl rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel)] p-5 shadow-xl">
+            <div className="mb-3 flex items-center justify-between">
+              <strong className="text-[15px]">Yeni proje — şablon seçin</strong>
+              <button type="button" aria-label="Kapat" className={ghostBtn} onClick={closePicker}>
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {(["widget", "meshbot", "wasm"] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setPickTpl(id)}
+                  aria-pressed={pickTpl === id}
+                  className={`rounded-lg border p-3 text-left text-[12px] ${pickTpl === id ? "border-[var(--tb-accent)] bg-[var(--tb-accent)]/10" : "border-[var(--tb-border)]"}`}
+                >
+                  <div className="mb-1 text-[13px] font-semibold">{TEMPLATES[id].label}</div>
+                  <div className="text-[var(--tb-muted)]">{TEMPLATES[id].description}</div>
+                </button>
+              ))}
+            </div>
+            <input
+              className={`${inputClass} mt-3`}
+              placeholder="proje-adi"
+              value={pickName}
+              onChange={(e) => setPickName(e.target.value)}
+              aria-label="Proje adı"
+              autoFocus
+            />
+            <div className="mt-3 flex justify-end gap-2">
+              <button type="button" className={ghostBtn} onClick={closePicker}>
+                Şimdilik geç
+              </button>
+              <button
+                type="button"
+                className={primaryBtn}
+                disabled={!pickName.trim()}
+                onClick={() =>
+                  void create(pickName, pickTpl).then((ok) => {
+                    if (ok) {
+                      setPickName("");
+                      closePicker();
+                    }
+                  })
+                }
+              >
+                Oluştur
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
