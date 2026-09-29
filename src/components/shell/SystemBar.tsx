@@ -25,6 +25,7 @@ import { ControlCenter } from "@/components/shell/ControlCenter";
 import { PeerStatusIndicator } from "@/components/shell/PeerStatusIndicator";
 import { NetworkControl } from "@/components/shell/NetworkControl";
 import { NotificationsPanel } from "@/components/shell/NotificationsPanel";
+import { ClockCenter, OPEN_CLOCK_EVENT } from "@/components/shell/ClockCenter";
 import { useUnreadNoticeCount } from "@/lib/shell/notifications";
 import { useClock } from "@/lib/shell/telemetry-store";
 import { useOnline } from "@/lib/pwa/offline-status";
@@ -50,6 +51,12 @@ export function SystemBar({
   const [control, setControl] = useState(false);
   const [network, setNetwork] = useState(false);
   const [notices, setNotices] = useState(false);
+  const [clockOpen, setClockOpen] = useState(false);
+  useEffect(() => {
+    const open = () => setClockOpen(true);
+    window.addEventListener(OPEN_CLOCK_EVENT, open);
+    return () => window.removeEventListener(OPEN_CLOCK_EVENT, open);
+  }, []);
   const unread = useUnreadNoticeCount();
   const online = useOnline();
   // Saat ve bellek tek paylaşımlı 1 sn zamanlayıcıdan gelir (titreme yok).
@@ -186,12 +193,15 @@ export function SystemBar({
           <BareMetalIsoButton compact />
         </span>
 
-        <span
-          className="hidden w-[104px] shrink-0 whitespace-nowrap px-1 text-center font-osmono text-[11px] leading-4 text-[var(--tb-muted)] tabular-nums md:inline-block"
+        <button
+          type="button"
+          onClick={() => setClockOpen((o) => !o)}
+          aria-label="Takvim ve bildirimler"
+          className="wa-press hidden w-[104px] shrink-0 whitespace-nowrap rounded-lg px-1 text-center font-osmono text-[11px] leading-4 text-[var(--tb-muted)] tabular-nums hover:text-[var(--tb-text)] md:inline-block"
           aria-live="off"
         >
           {clock}
-        </span>
+        </button>
 
         <button
           type="button"
@@ -228,6 +238,7 @@ export function SystemBar({
         </button>
 
         <NotificationsPanel open={notices} onClose={() => setNotices(false)} />
+        <ClockCenter open={clockOpen} onClose={() => setClockOpen(false)} />
       </div>
     </header>
   );
