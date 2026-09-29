@@ -602,26 +602,23 @@ export function FilesApp({
       {/* Nielsen #5: yıkıcı işlem iki aşamalı onay + geri alma ile korunur. */}
       <ConfirmDialog
         open={confirmDelete != null}
-        title="Dosya silinsin mi?"
-        description="Dosya cihazdaki sanal dosya sisteminden kaldırılacak. Silme işlemini Ctrl + Z ile geri alabilirsiniz."
-        confirmLabel="Sil"
+        title="Dosya çöp kutusuna taşınsın mı?"
+        description="Dosya Çöp Kutusu'na taşınacak; oradan geri yükleyebilir ya da kalıcı olarak silebilirsiniz. Ctrl + Z ile de geri alınır."
+        confirmLabel="Çöpe taşı"
         onClose={() => setConfirmDelete(null)}
         onConfirm={() => {
           const id = confirmDelete;
           if (!id) return;
           const entry = files.find((f) => f.id === id);
-          void readFile(id).then(async (file) => {
-            await deleteFile(id);
+          void trashFile(id).then(() => {
             setSelected(null);
-            notifyOk("Silindi", entry?.name ?? "Dosya");
-            if (file) {
-              pushUndo({
-                label: `${entry?.name ?? "Dosya"} silindi`,
-                undo: async () => {
-                  await saveFiles([file]);
-                },
-              });
-            }
+            notifyOk("Çöp kutusuna taşındı", entry?.name ?? "Dosya");
+            pushUndo({
+              label: `${entry?.name ?? "Dosya"} çöpe taşındı`,
+              undo: async () => {
+                await restoreFile(id);
+              },
+            });
           });
         }}
       />
