@@ -208,7 +208,7 @@ export function classifyIntent(prompt: string): Intent {
   const target = detectTarget(t);
 
   // Yönetimsel/analitik metinler her zaman Mod B'dir; üretim isteği gibi okunmaz.
-  if (target && (!appAsk || isInspect(target))) {
+  if (target && (!appAsk || target === "denetim")) {
     return { mode: "sistem", patch: patchFor(target, t), reason: reasonFor(target) };
   }
   if (appAsk) {
