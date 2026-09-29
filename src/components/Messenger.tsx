@@ -97,7 +97,7 @@ type Participant = {
   relay?: boolean;
 };
 
-type TabId = "chat" | "files" | "team" | "system";
+type TabId = "chat" | "bot" | "files" | "team" | "system";
 
 /** Ölçüm yoksa asla değer uydurmaz. */
 function metric(value: number | null | undefined, unit = "", digits = 0): string {
