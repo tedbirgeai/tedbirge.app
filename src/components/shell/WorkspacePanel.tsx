@@ -49,6 +49,8 @@ import { useIsCompact } from "@/hooks/use-mobile";
 import { useEdgeBackGesture } from "@/hooks/useSwipeGesture";
 import { webApp } from "@/shell/web-apps";
 import { catalogApp } from "@/shell/installed";
+import { generatedApp } from "@/lib/studio/generated-apps";
+import { GeneratedAppRunner } from "@/components/shell/apps/generated/GeneratedAppRunner";
 import { getApp } from "@/apps/registry";
 import { getFontScale } from "@/lib/ui/font-scale";
 import { AXIOM_WINDOW_TITLE } from "@/lib/axiom/brand";
@@ -488,6 +490,8 @@ function AppSurface({
   if (win.appId === "limen") return <LimenApp />;
   if (win.appId === "computer")
     return <ComputerApp onMesh={() => onLaunch("mesh")} onLaunch={onLaunch} />;
+  // AxiomStudio'da üretilmiş uygulamalar kendi penceresinde çalışır.
+  if (generatedApp(win.appId)) return <GeneratedAppRunner appId={win.appId} />;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
