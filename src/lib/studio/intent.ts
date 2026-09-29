@@ -209,8 +209,9 @@ export function classifyIntent(prompt: string): Intent {
   const appAsk = APP_PATTERNS.some((re) => re.test(t));
   const target = detectTarget(t);
 
-  // Yönetimsel/analitik metinler her zaman Mod B'dir; üretim isteği gibi okunmaz.
-  if (target && (!appAsk || target === "denetim")) {
+  // Yönetimsel/analitik metinler ve mevcut sistem bileşeni istekleri her zaman Mod B'dir.
+  const explicitAppNoun = /(uygulama|uygulamasi|app|program|programi|pano|panosu|arac)/.test(t);
+  if (target && (!appAsk || target === "denetim" || !explicitAppNoun)) {
     return { mode: "sistem", patch: patchFor(target, t), reason: reasonFor(target) };
   }
   if (appAsk) {
