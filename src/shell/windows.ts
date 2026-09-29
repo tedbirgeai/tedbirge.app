@@ -201,8 +201,10 @@ export function openWindow(appId: string, title: string, fresh = false): string 
     windows = windows.map((w) => (w.id === existing.id ? { ...w, minimized: false } : w));
     normalizeZ(existing.id);
     emit();
+    if (existing.minimized) playSystemSound("window-restore");
     return existing.id;
   }
+
   seq += 1;
   const id = `${appId}#${seq}`;
   windows = [
