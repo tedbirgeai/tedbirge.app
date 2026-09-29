@@ -111,16 +111,16 @@ describe("derleyici", () => {
     } as never);
     expect(r.error).toBeFalsy();
     const lines: string[] = [];
-    let mem: WebAssembly.Memory | undefined;
+    const memRef: { current?: WebAssembly.Memory } = {};
     const { instance } = (await WebAssembly.instantiate(r.binary as Uint8Array, {
       tedbirge: {
         log: (p: number, l: number) =>
-          lines.push(new TextDecoder().decode(new Uint8Array(mem!.buffer, p, l))),
+          lines.push(new TextDecoder().decode(new Uint8Array(memRef.current!.buffer, p, l))),
         status_peers: () => 0,
         status_online: () => 0,
       },
     })) as unknown as WebAssembly.WebAssemblyInstantiatedSource;
-    mem = instance.exports["memory"] as WebAssembly.Memory;
+    memRef.current = instance.exports["memory"] as WebAssembly.Memory;
     (instance.exports["start"] as () => void)();
     expect(lines).toEqual(["Merhaba, Tedbirge!"]);
   }, 30_000);

@@ -20,6 +20,8 @@ export type CompileResult =
 /** asc çıktısındaki "ERROR TS1234: mesaj ... in file.ts(3,5)" satırlarını ayrıştırır. */
 export function parseDiagnostics(stderr: string, fallbackFile: string): Problem[] {
   const out: Problem[] = [];
+  // ANSI renk kaçış dizileri kaldırılır; ESC karakteri bilinçli olarak aranır.
+  // eslint-disable-next-line no-control-regex
   const lines = stderr.replace(/\u001b\[[0-9;]*m/g, "").split("\n");
   for (let i = 0; i < lines.length; i += 1) {
     const m = /^(ERROR|WARNING)\s+(?:[A-Z]+\d+:\s*)?(.*)$/.exec((lines[i] ?? "").trim());

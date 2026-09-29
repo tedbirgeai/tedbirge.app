@@ -167,7 +167,9 @@ async function handleSubscriptionUpdated(data: PaddleSubscriptionData, env: Padd
       .update({
         plan: plan.productId,
         node_limit: resolveNodeLimit(plan, item?.quantity),
-        status: ["active", "trialing", "past_due"].includes(status) ? "active" : status,
+        status: ["active", "trialing", "past_due"].includes(status ?? "")
+          ? "active"
+          : (status ?? "active"),
         current_period_end: currentBillingPeriod?.endsAt,
         updated_at: new Date().toISOString(),
       })
