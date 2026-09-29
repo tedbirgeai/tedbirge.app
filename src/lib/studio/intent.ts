@@ -84,6 +84,8 @@ const APP_PATTERNS: RegExp[] = [
   /(uygulama|app|program|pano|arac)\s*(olustur|yap|uret|kur|yaz|gelistir|ekle)/,
   /(uygulamasi|programi|panosu)\s*(olustur|yap|uret|yaz)/,
   /\bapp\s*(olustur|yap)\b/,
+  // "Yeni bir hesap makinesi yap" gibi açık bağımsız yazılım talepleri.
+  /(yeni|sifirdan|bagimsiz|ayri)\s+bir\s+[a-z0-9 ]{2,40}\s*(olustur|yap|uret|yaz|kodla|gelistir)/,
 ];
 
 /**
