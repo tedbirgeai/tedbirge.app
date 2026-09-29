@@ -309,6 +309,7 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
         aria-hidden={hidden || undefined}
         inert={hidden || undefined}
         data-sleeping={hidden ? "true" : undefined}
+        data-maximized={win.maximized && !hidden ? "true" : undefined}
       >
         <div
           className="flex shrink-0 cursor-grab items-center justify-between gap-3 px-3 py-2 active:cursor-grabbing"
