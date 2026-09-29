@@ -68,8 +68,9 @@ function themeFrom(t: string): "crystal" | "soft" | "night" | undefined {
   return undefined;
 }
 
-const OFF_WORDS = ["kapat", "kapa", "iptal", "sessize alma", "ac sesi", "sesi ac"];
-const ON_WORDS = ["ac", "etkinlestir", "baslat", "aktif"];
+const OFF_RE = /\b(kapat|kapa|iptal|sustur|sessiz)\b/;
+const ON_RE = /\b(ac|acik|etkinlestir|baslat|aktif)\b/;
+
 
 /** İstemi Mod A / Mod B / belirsiz olarak sınıflandırır. */
 export function classifyIntent(prompt: string): Intent {
