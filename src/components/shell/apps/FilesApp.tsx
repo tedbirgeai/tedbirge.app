@@ -95,14 +95,24 @@ function Preview({ entry }: { entry: VfsEntry }) {
   );
 }
 
-export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
+export function FilesApp({
+  onTransfer,
+  onOpenApp,
+}: {
+  onTransfer?: () => void;
+  /** Dosyayı ilişkili uygulamada açmak için kabuğun pencere açıcısı. */
+  onOpenApp?: (id: string) => void;
+}) {
   const { node } = useShell();
   const peers = node.peers.filter((p) => p.direct);
   const [files, setFiles] = useState<VfsEntry[]>([]);
+  const [trash, setTrash] = useState<VfsEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [over, setOver] = useState(false);
   const [target, setTarget] = useState("");
   const [folder, setFolder] = useState<VfsFolder>("Belgeler");
+  /** Çöp kutusu görünümü: klasör ağacının altındaki ayrı alan. */
+  const [inTrash, setInTrash] = useState(false);
   /** "repo" kökünde bulunduğumuz alt dizin yolu. */
   const [dir, setDir] = useState("");
   const [q, setQ] = useState("");
@@ -117,6 +127,9 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
       .catch((e: unknown) =>
         notifyError("Depo okunamadı", e instanceof Error ? e.message : undefined),
       );
+    listTrash()
+      .then(setTrash)
+      .catch(() => setTrash([]));
   }, []);
 
   useEffect(() => {
