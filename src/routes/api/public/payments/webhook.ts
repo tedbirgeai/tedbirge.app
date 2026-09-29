@@ -8,12 +8,17 @@ import {
 } from "@/lib/paddle.server";
 import { planByProductId, planByPriceId, resolveNodeLimit } from "@/lib/paddle-catalog";
 
-type ServiceClient = ReturnType<typeof createClient>;
+import type { Database } from "@/integrations/supabase/types";
+
+type ServiceClient = SupabaseClient<Database>;
 
 let _supabase: ServiceClient | null = null;
 function getSupabase(): ServiceClient {
   if (!_supabase) {
-    _supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+    _supabase = createClient<Database>(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
   }
   return _supabase;
 }
@@ -27,11 +32,13 @@ type PaddleImportMeta = { importMeta?: { externalId?: string | null } | null };
 
 type PaddleSubscriptionItem = {
   quantity?: number;
-  price: PaddleImportMeta & { id?: string };
+  price?: (PaddleImportMeta & { id?: string }) | null;
   product?: (PaddleImportMeta & { id?: string }) | null;
 };
 
 type PaddleBillingPeriod = { startsAt?: string | null; endsAt?: string | null } | null;
+
+type PaddleCustomData = Record<string, unknown> | null | undefined;
 
 type PaddleSubscriptionData = {
   id: string;
@@ -40,7 +47,7 @@ type PaddleSubscriptionData = {
   items?: PaddleSubscriptionItem[];
   currentBillingPeriod?: PaddleBillingPeriod;
   scheduledChange?: { action?: string } | null;
-  customData?: { userId?: string; email?: string } | null;
+  customData?: PaddleCustomData;
 };
 
 type PaddleTransactionData = {
@@ -49,13 +56,19 @@ type PaddleTransactionData = {
   currencyCode?: string;
   subscriptionId?: string | null;
   details?: { totals?: { total?: string | null; tax?: string | null } | null } | null;
-  customData?: { userId?: string } | null;
+  customData?: PaddleCustomData;
 };
+
+/** Serbest biçimli `customData` alanından yalnız metin değerleri okunur. */
+function customText(data: PaddleCustomData, key: string): string | null {
+  const value = data?.[key];
+  return typeof value === "string" && value.trim() ? value : null;
+}
 
 async function handleSubscriptionCreated(data: PaddleSubscriptionData, env: PaddleEnv) {
   const { id, customerId, items, status, currentBillingPeriod, customData } = data;
 
-  const userId = customData?.userId;
+  const userId = customText(customData, "userId");
   if (!userId) {
     console.error("No userId in customData");
     return;
