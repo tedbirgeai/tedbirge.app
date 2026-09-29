@@ -173,7 +173,7 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
             onClick={() => void produce()}
           >
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {busy ? "Üretiliyor…" : "Üret ve kur"}
+            {busy ? "İşleniyor…" : "İsteği uygula"}
           </button>
           <span className="font-osmono text-[11px] text-[var(--tb-muted)]">
             {prompt.length}/{MAX_PROMPT}
