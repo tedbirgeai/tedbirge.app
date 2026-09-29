@@ -27,6 +27,7 @@
     "build:all": "bash scripts/build-all.sh"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.78",
     "@ai-sdk/openai-compatible": "^3.0.14",
     "@ai-sdk/react": "^4.0.40",
     "@capacitor-community/contacts": "^8.0.0",
