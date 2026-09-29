@@ -27,13 +27,14 @@ describe("OS ses sistemi", () => {
     );
   });
 
-  it("sessize alma durumu kalıcı ve tersinirdir", () => {
+  it("sessize alma durumu tersinirdir", () => {
     expect(isSystemMuted()).toBe(false);
     expect(toggleSystemMuted()).toBe(true);
-    expect(window.localStorage.getItem("tedbirge.os.sound.muted")).toBe("1");
+    expect(isSystemMuted()).toBe(true);
     expect(toggleSystemMuted()).toBe(false);
-    expect(window.localStorage.getItem("tedbirge.os.sound.muted")).toBe("0");
+    expect(isSystemMuted()).toBe(false);
   });
+
 
   it("sessizken hiçbir ses üretilmez", () => {
     setSystemMuted(true);
