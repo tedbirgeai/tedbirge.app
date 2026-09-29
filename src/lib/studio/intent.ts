@@ -137,11 +137,12 @@ function patchFor(target: SystemTarget, t: string): SystemPatch {
     case "parlaklik":
       return { target: "parlaklik", delta: has(t, ["azalt", "dusur", "kis", "karart"]) ? -0.1 : 0.1 };
     case "gecelsigi":
-      return { target: "gecelsigi", on: !has(t, OFF_WORDS) };
+      return { target: "gecelsigi", on: !OFF_RE.test(t) };
     case "ses": {
-      if (has(t, OFF_WORDS)) return { target: "ses", muted: true };
-      if (has(t, ON_WORDS)) return { target: "ses", muted: false };
-      return { target: "ses", muted: true };
+      if (OFF_RE.test(t)) return { target: "ses", muted: true };
+      if (ON_RE.test(t)) return { target: "ses", muted: false };
+      return { target: "ses", muted: false };
+
     }
     case "ayarlar":
       return { target: "ayarlar" };
