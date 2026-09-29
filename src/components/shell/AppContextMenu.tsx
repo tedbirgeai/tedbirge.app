@@ -38,13 +38,7 @@ export function appMenuItems({
   return [
     { label: "Uygulamayı Aç", onSelect: () => onOpen(id) },
     { label: "Yeni Pencerede Aç", onSelect: () => onOpenNew(id) },
-    {
-      label: "Harici Sekmede Aç",
-      disabled: !web,
-      onSelect: () => {
-        if (web) window.open(web.url, "_blank", "noopener,noreferrer");
-      },
-    },
+    // Harici sekme yolu kaldırıldı: web hedefleri de OS penceresinde açılır.
     ...(extra.length ? ([{ kind: "sep" }, ...extra] as MenuItem[]) : []),
     { kind: "sep" },
     {
