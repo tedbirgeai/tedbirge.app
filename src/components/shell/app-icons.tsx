@@ -12,31 +12,50 @@ import { webApp } from "@/shell/web-apps";
 
 type IconProps = { className?: string };
 
-function Frame({ className, children }: IconProps & { children: ReactNode }) {
+type IconVariant =
+  | "default"
+  | "axiom"
+  | "limen"
+  | "writer"
+  | "sheets"
+  | "slides"
+  | "pdf"
+  | "notes"
+  | "organizer"
+  | "files"
+  | "settings"
+  | "store"
+  | "terminal"
+  | "computer"
+  | "profile"
+  | "management";
+
+function Frame({
+  className,
+  children,
+  variant = "default",
+}: IconProps & { children: ReactNode; variant?: IconVariant }) {
   return (
-    <svg className={className} viewBox="0 0 64 64" aria-hidden>
-      <rect x="8" y="8" width="48" height="48" rx="14" fill="var(--tb-accent)" opacity=".22" />
+    <svg className={`tb-app-glyph tb-app-glyph--${variant} ${className ?? ""}`} viewBox="0 0 64 64" aria-hidden>
+      <defs>
+        <linearGradient id={`tb-icon-${variant}`} x1="12" y1="8" x2="52" y2="58" gradientUnits="userSpaceOnUse">
+          <stop stopColor="var(--tb-icon-primary)" />
+          <stop offset="1" stopColor="var(--tb-icon-secondary)" />
+        </linearGradient>
+      </defs>
+      <rect x="5" y="5" width="54" height="54" rx="17" fill={`url(#tb-icon-${variant})`} />
       <path
-        d="M14 14h22c8 0 14 6 14 14v22H28c-8 0-14-6-14-14z"
-        fill="var(--tb-accent-2)"
-        opacity=".24"
-      />
-      <rect
-        x="12"
-        y="12"
-        width="40"
-        height="40"
-        rx="11"
-        fill="var(--tb-panel-solid)"
-        opacity=".76"
+        d="M8 8h31c10 0 17 8 17 18v3C43 20 25 19 8 25z"
+        fill="var(--tb-icon-shine)"
+        opacity=".48"
       />
       {children}
       <path
-        d="M18 15h18c7 0 12 5 12 12"
+        d="M12 10h25c8 0 15 6 16 14"
         fill="none"
-        stroke="var(--tb-text)"
-        strokeOpacity=".22"
-        strokeWidth="2"
+        stroke="var(--tb-icon-highlight)"
+        strokeOpacity=".62"
+        strokeWidth="1.5"
         strokeLinecap="round"
       />
     </svg>
@@ -83,15 +102,14 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "files":
       return (
-        <Frame className={className}>
-          <path d="M15 23h15l5 6h14v18H15z" fill="var(--tb-accent)" opacity=".78" />
+        <Frame className={className} variant="files">
+          <path d="M13 22h17l5 6h17v21H13z" fill="var(--tb-icon-ink)" opacity=".34" />
           <path
-            d="M15 29h34v18H15z"
-            fill="var(--tb-panel-solid)"
-            opacity=".9"
-            stroke="var(--tb-accent)"
-            strokeWidth="3"
+            d="M13 29h39l-4 21H17z"
+            fill="var(--tb-icon-ink)"
+            opacity=".92"
           />
+          <path d="M18 34h28" stroke="var(--tb-icon-highlight)" strokeWidth="2" strokeLinecap="round" opacity=".7" />
         </Frame>
       );
     case "media":
@@ -119,18 +137,18 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "store":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="store">
           <path
             d="M18 27h28l-3 22H21z"
             fill="none"
-            stroke="var(--tb-accent)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
             strokeLinejoin="round"
           />
           <path
             d="M24 27c0-7 4-11 8-11s8 4 8 11"
             fill="none"
-            stroke="var(--tb-text)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -138,7 +156,7 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "computer":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="computer">
           <rect
             x="16"
             y="18"
@@ -146,12 +164,12 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
             height="23"
             rx="4"
             fill="none"
-            stroke="var(--tb-accent)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
           />
           <path
             d="M26 48h12M32 41v7"
-            stroke="var(--tb-text)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
             strokeLinecap="round"
           />
@@ -172,12 +190,12 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "profile":
       return (
-        <Frame className={className}>
-          <circle cx="32" cy="25" r="7" fill="var(--tb-accent)" />
+        <Frame className={className} variant="profile">
+          <circle cx="32" cy="24" r="8" fill="var(--tb-icon-ink)" />
           <path
             d="M19 47c3-8 8-12 13-12s10 4 13 12"
             fill="none"
-            stroke="var(--tb-accent)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
             strokeLinecap="round"
           />
@@ -185,11 +203,11 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "settings":
       return (
-        <Frame className={className}>
-          <circle cx="32" cy="32" r="7" fill="none" stroke="var(--tb-accent)" strokeWidth="4" />
+        <Frame className={className} variant="settings">
+          <circle cx="32" cy="32" r="8" fill="none" stroke="var(--tb-icon-ink)" strokeWidth="4" />
           <path
             d="M32 14v7M32 43v7M14 32h7M43 32h7M19 19l5 5M40 40l5 5M45 19l-5 5M24 40l-5 5"
-            stroke="var(--tb-text)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -210,18 +228,18 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
     case "panel":
     case "yonetim":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="management">
           <path
             d="M32 15l15 6v10c0 9-6 15-15 18-9-3-15-9-15-18V21z"
             fill="none"
-            stroke="var(--tb-accent)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
             strokeLinejoin="round"
           />
           <path
             d="M25 32l5 5 10-12"
             fill="none"
-            stroke="var(--tb-text)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -289,17 +307,18 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "writer":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="writer">
           <path
             d="M21 14h18l7 7v29H21z"
             fill="none"
-            stroke="var(--tb-accent)"
+            fill="var(--tb-icon-paper)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
             strokeLinejoin="round"
           />
           <path
             d="M38 15v8h8M26 31h12M26 38h14M26 45h8"
-            stroke="var(--tb-text)"
+            stroke="var(--tb-icon-primary)"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -307,7 +326,7 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "sheets":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="sheets">
           <rect
             x="18"
             y="17"
@@ -315,12 +334,13 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
             height="30"
             rx="4"
             fill="none"
-            stroke="var(--tb-accent)"
+            fill="var(--tb-icon-paper)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
           />
           <path
             d="M18 28h28M18 38h28M28 17v30M38 17v30"
-            stroke="var(--tb-text)"
+            stroke="var(--tb-icon-primary)"
             strokeOpacity=".6"
             strokeWidth="2"
           />
@@ -328,7 +348,7 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "slides":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="slides">
           <rect
             x="17"
             y="18"
@@ -336,13 +356,14 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
             height="24"
             rx="4"
             fill="none"
-            stroke="var(--tb-accent)"
+            fill="var(--tb-icon-paper)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
           />
           <path
             d="M24 48h16M32 42v6M26 35l6-8 6 5 5-8"
             fill="none"
-            stroke="var(--tb-text)"
+            stroke="var(--tb-icon-primary)"
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -364,17 +385,18 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "pdf":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="pdf">
           <path
             d="M22 15h16l7 7v27H22z"
             fill="none"
-            stroke="var(--tb-accent)"
+            fill="var(--tb-icon-paper)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
             strokeLinejoin="round"
           />
           <path
             d="M25 41c7-14 9-14 14 0M28 35h8"
-            stroke="var(--tb-text)"
+            stroke="var(--tb-icon-primary)"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -382,17 +404,18 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "notes":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="notes">
           <path
             d="M19 17h26v25l-8 8H19z"
             fill="none"
-            stroke="var(--tb-accent)"
+            fill="var(--tb-icon-paper)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
             strokeLinejoin="round"
           />
           <path
             d="M37 42v8M26 27h12M26 34h10"
-            stroke="var(--tb-text)"
+            stroke="var(--tb-icon-primary)"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -400,7 +423,7 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "organizer":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="organizer">
           <rect
             x="18"
             y="19"
@@ -408,12 +431,13 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
             height="28"
             rx="4"
             fill="none"
-            stroke="var(--tb-accent)"
+            fill="var(--tb-icon-paper)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
           />
           <path
             d="M24 15v8M40 15v8M18 29h28M25 37h4M35 37h4"
-            stroke="var(--tb-text)"
+            stroke="var(--tb-icon-primary)"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -421,20 +445,20 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "terminal":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="terminal">
           <rect
             x="17"
             y="19"
             width="30"
             height="26"
             rx="4"
-            fill="var(--tb-brand-ink-dark)"
+            fill="var(--tb-icon-terminal-screen)"
             opacity=".86"
           />
           <path
             d="M23 28l5 4-5 4M32 38h9"
             fill="none"
-            stroke="var(--tb-accent)"
+            stroke="var(--tb-icon-terminal-ink)"
             strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -443,31 +467,34 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
       );
     case "axiom":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="axiom">
           <path
-            d="M20 17h26L34 32l12 15H20l12-15z"
+            d="M18 47L32 14l14 33M23 37h18M27 28h10"
             fill="none"
-            stroke="var(--tb-accent)"
-            strokeWidth="4"
+            stroke="var(--tb-icon-ink)"
+            strokeWidth="4.5"
+            strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <circle cx="32" cy="32" r="4" fill="var(--tb-text)" />
+          <circle cx="32" cy="14" r="3" fill="var(--tb-icon-signal)" />
+          <circle cx="18" cy="47" r="3" fill="var(--tb-icon-signal)" />
+          <circle cx="46" cy="47" r="3" fill="var(--tb-icon-signal)" />
         </Frame>
       );
     case "limen":
       return (
-        <Frame className={className}>
+        <Frame className={className} variant="limen">
           <path
-            d="M18 39c8-15 20-19 31-23M18 39c11-2 20 0 28 8M18 39l9-21 19 29"
+            d="M16 43c8-17 19-25 33-27M16 43c12-3 23-1 33 7M16 43l12-24 21 31"
             fill="none"
-            stroke="var(--tb-accent)"
+            stroke="var(--tb-icon-ink)"
             strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <circle cx="18" cy="39" r="4" fill="var(--tb-accent-2)" />
-          <circle cx="49" cy="16" r="4" fill="var(--tb-text)" opacity=".86" />
-          <circle cx="46" cy="47" r="4" fill="var(--tb-text)" opacity=".86" />
+          <circle cx="16" cy="43" r="4" fill="var(--tb-icon-signal)" />
+          <circle cx="49" cy="16" r="4" fill="var(--tb-icon-highlight)" />
+          <circle cx="49" cy="50" r="4" fill="var(--tb-icon-highlight)" />
         </Frame>
       );
     case "web.search":

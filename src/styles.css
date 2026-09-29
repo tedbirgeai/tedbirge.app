@@ -773,6 +773,33 @@ body {
   --tb-brand-google-red: #ea4335;
   --tb-brand-duckduckgo: #de5833;
   --tb-brand-duckduckgo-gold: #f4c36a;
+  --tb-brand-osm-sky: #77b5d9;
+  --tb-brand-osm-land: #7ebc6f;
+  --tb-brand-osm-ink: #455b63;
+  --tb-brand-wikipedia: #202122;
+  --tb-brand-tuta: #850122;
+  --tb-brand-mozilla: #20123a;
+  --tb-brand-blockscout: #5c4ee5;
+  --tb-brand-ipfs: #469ea2;
+  --tb-brand-coingecko: #8dc63f;
+  --tb-brand-coingecko-light: #f0f7dc;
+  --tb-brand-coingecko-ink: #5a8b24;
+  --tb-brand-hn: #ff6600;
+  --tb-brand-topo: #63a36b;
+  --tb-brand-topo-ink: #28543b;
+  --tb-brand-library: #bd3039;
+  --tb-brand-library-ink: #92252c;
+  --tb-brand-arxiv: #b31b1b;
+  --tb-brand-dontpad: #2167d5;
+  --tb-icon-primary: var(--tb-accent);
+  --tb-icon-secondary: var(--tb-accent-2);
+  --tb-icon-ink: var(--tb-brand-ink-light);
+  --tb-icon-paper: color-mix(in srgb, var(--tb-brand-ink-light) 92%, transparent);
+  --tb-icon-shine: var(--tb-brand-ink-light);
+  --tb-icon-highlight: var(--tb-brand-ink-light);
+  --tb-icon-signal: #a7f3d0;
+  --tb-icon-terminal-screen: #07140f;
+  --tb-icon-terminal-ink: #6ee7b7;
 }
 
 :root[data-theme="soft"] {
@@ -1082,37 +1109,28 @@ body {
   place-items: center;
   flex-shrink: 0;
   color: var(--tb-text);
-  background:
-    radial-gradient(
-      circle at 28% 18%,
-      color-mix(in srgb, var(--tb-text) 22%, transparent),
-      transparent 34%
-    ),
-    linear-gradient(
-      145deg,
-      color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 92%, var(--tb-accent) 8%),
-      color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 76%, var(--tb-bg) 24%)
-    );
-  border: 1px solid color-mix(in srgb, var(--tb-border) 86%, var(--tb-text) 14%);
+  background: color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 52%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tb-brand-ink-light) 56%, var(--tb-border));
+  backdrop-filter: blur(18px) saturate(145%);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--tb-text) 18%, transparent),
-    0 14px 30px color-mix(in srgb, var(--tb-bg) 62%, transparent);
+    inset 0 1px 0 color-mix(in srgb, var(--tb-brand-ink-light) 72%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--tb-text) 8%, transparent),
+    0 9px 20px color-mix(in srgb, var(--tb-text) 16%, transparent),
+    0 2px 5px color-mix(in srgb, var(--tb-text) 10%, transparent);
   overflow: hidden;
 }
-.tbos-app-icon::after {
+.tbos-app-icon::before {
   content: "";
   position: absolute;
-  inset: 1px;
+  inset: 2px 3px auto;
+  height: 38%;
   border-radius: inherit;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--tb-text) 12%, transparent),
-    transparent 44%
-  );
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tb-brand-ink-light) 38%, transparent), transparent);
   pointer-events: none;
 }
 .tbos-app-icon--brand {
-  background: color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 78%, var(--tb-text) 8%);
+  background: color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 34%, transparent);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--tb-text) 14%, transparent);
 }
 .tbos-app-icon--system {
   color: var(--tb-accent);
@@ -1121,6 +1139,25 @@ body {
   position: relative;
   z-index: 1;
 }
+.tb-app-glyph {
+  --tb-icon-primary: var(--tb-accent);
+  --tb-icon-secondary: var(--tb-accent-2);
+}
+.tb-app-glyph--axiom { --tb-icon-primary: #0b7d5d; --tb-icon-secondary: #14b8a6; }
+.tb-app-glyph--limen { --tb-icon-primary: #116466; --tb-icon-secondary: #3ba99c; }
+.tb-app-glyph--writer { --tb-icon-primary: #2563eb; --tb-icon-secondary: #1d4ed8; }
+.tb-app-glyph--sheets { --tb-icon-primary: #16a34a; --tb-icon-secondary: #087f5b; }
+.tb-app-glyph--slides { --tb-icon-primary: #f97316; --tb-icon-secondary: #dc2626; }
+.tb-app-glyph--pdf { --tb-icon-primary: #e11d48; --tb-icon-secondary: #9f1239; }
+.tb-app-glyph--notes { --tb-icon-primary: #eab308; --tb-icon-secondary: #f59e0b; }
+.tb-app-glyph--organizer { --tb-icon-primary: #8b5cf6; --tb-icon-secondary: #6d28d9; }
+.tb-app-glyph--files { --tb-icon-primary: #38bdf8; --tb-icon-secondary: #2563eb; }
+.tb-app-glyph--settings { --tb-icon-primary: #64748b; --tb-icon-secondary: #334155; }
+.tb-app-glyph--store { --tb-icon-primary: #06b6d4; --tb-icon-secondary: #0f9d76; }
+.tb-app-glyph--terminal { --tb-icon-primary: #172033; --tb-icon-secondary: #07140f; }
+.tb-app-glyph--computer { --tb-icon-primary: #0ea5e9; --tb-icon-secondary: #475569; }
+.tb-app-glyph--profile { --tb-icon-primary: #ec4899; --tb-icon-secondary: #8b5cf6; }
+.tb-app-glyph--management { --tb-icon-primary: #0f9d76; --tb-icon-secondary: #155e75; }
 .tbos-launcher,
 .tbos-taskbar {
   background: color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 86%, transparent);
