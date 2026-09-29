@@ -149,8 +149,6 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
         reportForApp(prompt, s.name, true, `${r.binary.length} baytlık çekirdek derlendi ve /repo/apps/${s.id}/ altına yazıldı.`),
       );
       notifyOk(`${s.name} kuruldu`, "Masaüstünden açabilirsiniz.");
-
-      notifyOk(`${s.name} kuruldu`, "Masaüstünden açabilirsiniz.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Üretim tamamlanamadı.";
       print(msg);
@@ -168,36 +166,40 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
   return (
     <div className="grid min-h-0 flex-1 gap-3 overflow-auto p-4 lg:grid-cols-[1fr_320px]">
       <div className="flex min-h-0 flex-col gap-3">
-        <label className="font-osmono text-[11px] text-[var(--tb-muted)]" htmlFor="uretim-istem">
-          Ne yapmasını istiyorsunuz? (herhangi bir dilde yazabilirsiniz)
-        </label>
-        <textarea
-          id="uretim-istem"
-          className={`${inputClass} min-h-28 resize-y`}
-          maxLength={MAX_PROMPT}
-          placeholder="Örnek: Ağdaki eş sayısını gösteren, not tutabileceğim ve bana bildirim gönderen bir pano yap."
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-        />
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className={`${primaryBtn} inline-flex items-center gap-1.5`}
-            disabled={busy || prompt.trim().length < 4}
-            onClick={() => void produce()}
-          >
-            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {busy ? "İşleniyor…" : "İsteği uygula"}
-          </button>
-          <span className="font-osmono text-[11px] text-[var(--tb-muted)]">
-            {prompt.length}/{MAX_PROMPT}
-          </span>
+        <div
+          className="rounded-2xl p-3 backdrop-blur-xl"
+          style={{
+            background: "color-mix(in srgb, var(--tb-panel) 78%, transparent)",
+            border: "1px solid var(--tb-border)",
+          }}
+        >
+          <label className="sr-only" htmlFor="uretim-istem">
+            İsteğiniz
+          </label>
+          <textarea
+            id="uretim-istem"
+            className={`${inputClass} min-h-24 resize-y border-0 bg-transparent px-0 text-[14px] focus:ring-0`}
+            maxLength={MAX_PROMPT}
+            placeholder="Ne yapmamı istersiniz?"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+          />
+          <div className="mt-2 flex items-center justify-between">
+            <span className="font-osmono text-[11px] text-[var(--tb-muted)]">
+              {prompt.length}/{MAX_PROMPT}
+            </span>
+            <button
+              type="button"
+              className={`${primaryBtn} inline-flex items-center gap-1.5`}
+              disabled={busy || prompt.trim().length < 4}
+              onClick={() => void produce()}
+            >
+              {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              {busy ? "İşleniyor…" : "Uygula"}
+            </button>
+          </div>
         </div>
 
-        <p className="font-osmono text-[11px] text-[var(--tb-muted)]">
-          Sistem bileşeni istekleri (tema, duvar kâğıdı, ayarlar, sesler) yerinde güncellenir; masaüstüne yeni ikon
-          eklenmez. Yeni ikon yalnız açıkça bağımsız program istendiğinde oluşur.
-        </p>
 
         {ask ? (
           <div className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-2 text-[12px]">
