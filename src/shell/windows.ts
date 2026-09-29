@@ -13,6 +13,8 @@ import { useSyncExternalStore } from "react";
 
 import { announce } from "@/lib/shell/announce";
 import { pushUndo } from "@/lib/shell/undo-stack";
+import { playSystemSound } from "@/os/system/audio";
+
 
 export type WindowRecord = {
   /** Örnek kimliği (aynı uygulamadan birden çok pencere açılabilir). */
