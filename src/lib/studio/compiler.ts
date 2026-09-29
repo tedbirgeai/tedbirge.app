@@ -1,5 +1,7 @@
 /**
- * Derleyici istemcisi: ayrı işçi, 10 sn sert süre sınırı, aşımda işçi sonlandırılır.
+ * Derleyici istemcisi: Çift katmanlı derleme desteği (WASM + UI).
+ * TSX/UI bileşenlerinde AssemblyScript worker'ını baypas eder;
+ * Yalnızca saf AssemblyScript (.ts) modüllerini WASM worker'ına iletir.
  */
 
 export const COMPILE_TIMEOUT_MS = 10_000;
@@ -13,8 +15,9 @@ export type Problem = {
   severity: "error" | "warning";
   message: string;
 };
+
 export type CompileResult =
-  | { ok: true; binary: Uint8Array; problems: Problem[] }
+  | { ok: true; binary: Uint8Array; problems: Problem[]; isUi?: boolean }
   | { ok: false; problems: Problem[]; timeout?: boolean };
 
 /** asc çıktısındaki "ERROR TS1234: mesaj ... in file.ts(3,5)" satırlarını ayrıştırır. */
@@ -69,6 +72,19 @@ export async function compile(
   entry: string,
   opts: { timeoutMs?: number; loadTimeoutMs?: number; factory?: () => WorkerLike } = {},
 ): Promise<CompileResult> {
+  // 1. ÇİFT KATMANLI DERLEYİCİ AYRIMI (UI / TSX Baypası)
+  // Giriş dosyası .tsx / .jsx ise AssemblyScript WASM derleyicisini baypas et.
+  const isUi = entry.endsWith(".tsx") || entry.endsWith(".jsx") || entry.endsWith(".html");
+  if (isUi) {
+    return {
+      ok: true,
+      binary: new Uint8Array(),
+      problems: [],
+      isUi: true,
+    };
+  }
+
+  // 2. Saf AssemblyScript (.ts) WASM Derleme Akışı
   const factory = opts.factory ?? createCompilerWorker;
   worker ??= factory();
   const w = worker;
