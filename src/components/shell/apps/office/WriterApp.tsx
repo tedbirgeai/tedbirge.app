@@ -74,7 +74,7 @@ export function WriterApp() {
     return () => document.removeEventListener("selectionchange", read);
   }, []);
 
-  const title = "belge";
+  const title = (editor.title || "belge").replace(/[\\/:*?"<>|]/g, "_");
   const exportPdf = () => printAsPdf(pageRef.current?.innerHTML ?? "", title);
   const exportWord = () => downloadBlob(buildWordDoc(pageRef.current?.innerHTML ?? "", title), `${title}.doc`);
 
