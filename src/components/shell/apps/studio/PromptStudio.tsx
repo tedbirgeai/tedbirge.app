@@ -21,7 +21,10 @@ import {
   type GeneratedSpec,
 } from "@/lib/studio/generator";
 import { writeRepo } from "@/lib/studio/repo-fs";
-import { notifyError, notifyOk } from "@/lib/shell/notify";
+import { notify, notifyError, notifyOk } from "@/lib/shell/notify";
+import { classifyIntent } from "@/lib/studio/intent";
+import { applySystemPatch } from "@/lib/studio/system-patch";
+
 import { ALLOWED_GENERATED_CAPS } from "@/lib/studio/generated-policy";
 import { installApp, uninstallApp } from "@/shell/installed";
 
@@ -54,7 +57,9 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
   const [log, setLog] = useState<string[]>([]);
   const [spec, setSpec] = useState<GeneratedSpec | null>(null);
   const [busy, setBusy] = useState(false);
+  const [ask, setAsk] = useState<string | null>(null);
   const apps = useGeneratedApps();
+
 
   const print = (line: string) =>
     setLog((l) => [...l.slice(-199), `${new Date().toLocaleTimeString("tr-TR")}  ${line}`]);
