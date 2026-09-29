@@ -112,8 +112,8 @@ if (typeof window !== "undefined") {
   window.addEventListener("tedbirge:vfs-refresh", () => emit());
 }
 
-/** Kayıtlı dosyaların üstverisi (Blob içermez; liste hafif kalır). */
-export async function listFiles(): Promise<VfsEntry[]> {
+/** Depodaki tüm kayıtların üstverisi (çöp kutusu dahil). */
+async function allEntries(): Promise<VfsEntry[]> {
   const all = await tx<VfsRecord[]>("readonly", (s) => s.getAll() as IDBRequest<VfsRecord[]>);
   return all
     .map(({ blob: _blob, ...meta }) => ({
@@ -122,6 +122,21 @@ export async function listFiles(): Promise<VfsEntry[]> {
       folder: normalizeFolder(meta.folder, meta.mime),
     }))
     .sort((a, b) => b.at - a.at);
+}
+
+/**
+ * Kullanıcıya görünen dosyalar (Blob içermez; liste hafif kalır).
+ * Çöp kutusundaki kayıtlar bu listede yer almaz.
+ */
+export async function listFiles(): Promise<VfsEntry[]> {
+  return (await allEntries()).filter((f) => !f.trashedAt);
+}
+
+/** Çöp kutusundaki kayıtlar: en son silinen başta. */
+export async function listTrash(): Promise<VfsEntry[]> {
+  return (await allEntries())
+    .filter((f) => !!f.trashedAt)
+    .sort((a, b) => (b.trashedAt ?? 0) - (a.trashedAt ?? 0));
 }
 
 /** Cihazdan seçilen/sürüklenen dosyaları depoya yazar. */
