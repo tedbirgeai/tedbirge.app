@@ -29,11 +29,27 @@ export type Intent =
   | { mode: "sistem"; patch: SystemPatch; reason: string }
   | { mode: "belirsiz"; reason: string };
 
+const FOLD: Record<string, string> = {
+  ı: "i",
+  İ: "i",
+  I: "i",
+  ç: "c",
+  ğ: "g",
+  ö: "o",
+  ş: "s",
+  ü: "u",
+  â: "a",
+  î: "i",
+  û: "u",
+};
+
+/** Türkçe aksanları sadeleştirir; eşleşme deseni ASCII üzerinden yürür. */
 const norm = (s: string) =>
   s
     .toLocaleLowerCase("tr")
-    .replace(/[İI]/g, "i")
+    .replace(/[ıİIçğöşüâîû]/g, (c) => FOLD[c] ?? c)
     .replace(/\s+/g, " ")
+
     .trim();
 
 /** Bağımsız program talebini gösteren açık kalıplar. */
