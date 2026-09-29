@@ -81,6 +81,36 @@ export function WindowSwitcher({ surface }: { surface: { current: HTMLElement | 
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Super tuşu tek başına bırakılırsa uygulama çekmecesi açılır: başka bir
+      // tuşa basıldığı anda bu "saf basış" bozulur.
+      if (e.key === "Meta" || e.key === "OS") {
+        if (!e.repeat) metaPure.current = true;
+      } else {
+        metaPure.current = false;
+      }
+
+      // Geçiş overlay'i açıkken ok tuşları, Enter ve Escape ile yönetilir.
+      if (switcherRef.current) {
+        if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+          e.preventDefault();
+          const step = e.key === "ArrowRight" ? 1 : -1;
+          setSwitcher((prev) =>
+            prev ? { ...prev, index: (prev.index + step + prev.ids.length) % prev.ids.length } : prev,
+          );
+          return;
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setSwitcher(null);
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commitSwitch();
+          return;
+        }
+      }
+
       // Alt + Tab: görsel geçiş.
       if (e.altKey && e.key === "Tab") {
         const list = getWindows();
@@ -124,28 +154,34 @@ export function WindowSwitcher({ surface }: { surface: { current: HTMLElement | 
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
-      if (e.key !== "Alt") return;
-      setSwitcher((prev) => {
-        if (prev) {
-          const id = prev.ids[prev.index];
-          if (id) {
-            restoreWindow(id);
-            focusWindow(id);
-            const win = getWindows().find((w) => w.id === id);
-            if (win) announce(`${win.title} penceresine geçildi`);
-          }
+      if (e.key === "Meta" || e.key === "OS") {
+        const pure = metaPure.current;
+        metaPure.current = false;
+        if (pure) {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent("tedbirge:launcher-toggle"));
         }
-        return null;
-      });
+        return;
+      }
+      if (e.key !== "Alt") return;
+      commitSwitch();
+    };
+
+    const onBlur = () => {
+      metaPure.current = false;
+      setSwitcher(null);
     };
 
     window.addEventListener("keydown", onKey);
     window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
     return () => {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
     };
-  }, [snap, showDesktop, undo]);
+  }, [snap, showDesktop, undo, commitSwitch]);
+
 
   if (!switcher) return null;
   const items = switcher.ids
