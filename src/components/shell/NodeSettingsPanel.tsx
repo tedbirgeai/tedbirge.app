@@ -13,6 +13,8 @@ import { THEMES, getTheme, setTheme, type ThemeId } from "@/lib/ui/theme";
 import { composeIdentityLabel, getDeviceName, setDeviceName } from "@/lib/identity/device";
 import { getAlias, setAlias } from "@/lib/chat/profile";
 import { announceName } from "@/lib/chat/name-exchange";
+import { playSystemSound, toggleSystemMuted, useSystemMuted } from "@/os/system/audio";
+
 
 import { useNodeRuntime, pingNodePeers } from "@/lib/node-runtime";
 import { activeKernelProvider } from "@/kernel/boot";
@@ -143,6 +145,8 @@ export function NodeSettingsPanel() {
   const [storage, setStorage] = useState<StorageEstimateInfo | null>(null);
   const [queued, setQueued] = useState<number>(0);
   const [prefs, setPrefs] = useState<Prefs>(() => readPrefs());
+  const sysMuted = useSystemMuted();
+
   const [notice, setNotice] = useState<string | null>(null);
   const [theme, setThemeState] = useState<ThemeId>(() => getTheme());
   const [perm, setPerm] = useState<string>("default");
@@ -391,10 +395,19 @@ export function NodeSettingsPanel() {
           </div>
         ) : null}
         <Toggle
+          label="Sistem sesleri (pencere, dock, uyarı)"
+          on={!sysMuted}
+          onToggle={() => {
+            const next = toggleSystemMuted();
+            if (!next) playSystemSound("window-open");
+          }}
+        />
+        <Toggle
           label="Arama ve mesaj sesi"
           on={prefs.sound}
           onToggle={() => savePrefs({ ...prefs, sound: !prefs.sound })}
         />
+
         <Toggle
           label="Titreşim"
           on={prefs.vibrate}
