@@ -509,15 +509,26 @@ export function sendOverBestCarrier(
   return { ok: false, carrier: null, frames: 0, reason: res.reason };
 }
 
+/**
+ * Web Serial köprüsünün kullandığı en küçük port yüzeyi.
+ * Standart tarayıcı tiplerinde bulunmadığı için burada dar tutulur.
+ */
+type SerialPortLike = {
+  open: (options: { baudRate: number }) => Promise<void>;
+  close: () => Promise<void>;
+  readable: ReadableStream<Uint8Array>;
+  writable: WritableStream<Uint8Array>;
+};
+
+type SerialNavigator = { serial?: { requestPort: () => Promise<SerialPortLike> } };
+
 /** USB/UART modem: Web Serial ile bağlanır ve satır satır okur. */
 export async function connectSerialCarrier(carrier: CarrierId) {
   if (!carrierAuthorized(carrier))
     throw new Error(
       "Bu taşıyıcı operatör aboneliği gerektirir. Önce hat/abonelik beyanını işaretleyin.",
     );
-  // Web Serial/Bluetooth tarayıcı tipleri standart d.ts'de yok.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const nav = navigator as unknown as { serial?: { requestPort: () => Promise<any> } };
+  const nav = navigator as unknown as SerialNavigator;
   if (!nav.serial)
     throw new Error("Bu tarayıcı Web Serial desteklemiyor. Chrome/Edge masaüstü kullanın.");
   const def = BRIDGEABLE_CARRIERS.find((c) => c.id === carrier)!;
@@ -596,14 +607,42 @@ const NUS_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
 const NUS_RX = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 const NUS_TX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
+/** BLE köprüsünün kullandığı en küçük GATT yüzeyi. */
+type GattCharacteristicLike = {
+  addEventListener: (type: string, listener: (event: Event) => void) => void;
+  removeEventListener: (type: string, listener: (event: Event) => void) => void;
+  startNotifications: () => Promise<unknown>;
+  stopNotifications: () => Promise<unknown>;
+  writeValueWithoutResponse: (data: BufferSource) => Promise<void>;
+};
+
+type GattDeviceLike = {
+  gatt: {
+    connect: () => Promise<{
+      getPrimaryService: (uuid: string) => Promise<{
+        getCharacteristic: (uuid: string) => Promise<GattCharacteristicLike>;
+      }>;
+    }>;
+    disconnect: () => void;
+  };
+};
+
+type BluetoothNavigator = {
+  bluetooth?: {
+    requestDevice: (options: {
+      filters: Array<{ services: string[] }>;
+      optionalServices?: string[];
+    }) => Promise<GattDeviceLike>;
+  };
+};
+
 /** BLE modem (Meshtastic / Nordic UART): Web Bluetooth ile bağlanır. */
 export async function connectBluetoothCarrier(carrier: CarrierId) {
   if (!carrierAuthorized(carrier))
     throw new Error(
       "Bu taşıyıcı operatör aboneliği gerektirir. Önce hat/abonelik beyanını işaretleyin.",
     );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const nav = navigator as unknown as { bluetooth?: any };
+  const nav = navigator as unknown as BluetoothNavigator;
   if (!nav.bluetooth) throw new Error("Bu tarayıcı Web Bluetooth desteklemiyor.");
   const device = await nav.bluetooth.requestDevice({
     filters: [{ services: [NUS_SERVICE] }],

@@ -30,8 +30,11 @@ export type AppManifest = Omit<ShellApp, "id"> & {
   embed?: EmbedPolicy;
   /** Kısa açıklama (ızgara kartında görünür). */
   hint?: string;
-  /** Uygulama çalıştırıcı bileşeni (React Component). */
-  component?: React.ComponentType<any>;
+  /**
+   * Uygulama çalıştırıcı bileşeni. Kabuk hiçbir zorunlu özellik geçirmez;
+   * bileşenler yalnız isteğe bağlı uygulama kimliği alabilir.
+   */
+  component?: React.ComponentType<{ appId?: string }>;
 };
 
 const CAPS: Record<ShellAppId, Capability[]> = {
