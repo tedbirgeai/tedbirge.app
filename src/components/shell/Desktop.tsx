@@ -51,6 +51,7 @@ import {
   useDesktopLayout,
 } from "@/lib/shell/desktop-layout";
 import { catalogApp, useDesktopState } from "@/shell/installed";
+import { openWithAssociation } from "@/lib/shell/file-association";
 
 const FOLDER_MIME = "application/x-tedbirge-folder";
 
