@@ -155,20 +155,35 @@ export function FilesApp({
 
   /** Mount edilmiş proje ağacında gezinme (yalnız "repo" kökü). */
   const tree = useMemo(() => {
-    if (folder !== "repo" || q.trim()) return null;
+    if (inTrash || folder !== "repo" || q.trim()) return null;
     return childrenOf(
       files.filter((f) => f.folder === "repo"),
       dir,
     );
-  }, [files, folder, q, dir]);
+  }, [files, inTrash, folder, q, dir]);
 
   const visible = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");
+    if (inTrash) {
+      return trash.filter((f) => (needle ? f.name.toLocaleLowerCase("tr").includes(needle) : true));
+    }
     if (tree && !needle) return tree.files;
     return files
       .filter((f) => (needle ? true : f.folder === folder))
       .filter((f) => (needle ? f.name.toLocaleLowerCase("tr").includes(needle) : true));
-  }, [files, folder, q, tree]);
+  }, [files, trash, inTrash, folder, q, tree]);
+
+  /** Dosyayı ilişkili uygulamada açar (çift tıklama / Enter). */
+  const open = useCallback(
+    (entry: VfsEntry) => {
+      if (inTrash) return notifyError("Çöp kutusundaki dosya açılmaz", "Önce geri yükleyin.");
+      if (!onOpenApp) return;
+      if (!openWithAssociation(entry, onOpenApp)) {
+        notifyError("Eşleşen uygulama yok", entry.name);
+      }
+    },
+    [inTrash, onOpenApp],
+  );
 
   const current = visible.find((f) => f.id === selected) ?? null;
 
