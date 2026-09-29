@@ -28,6 +28,8 @@ import {
 import { pushUndo } from "@/lib/shell/undo-stack";
 import { notify, notifyOk } from "@/lib/shell/notify";
 import { useIsCompact } from "@/hooks/use-mobile";
+import { playSystemSound } from "@/os/system/audio";
+
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
 export function Dock({
@@ -84,12 +86,14 @@ export function Dock({
   };
 
   const activate = (id: string) => {
+    playSystemSound("dock-click");
     const win = windows.find((w) => w.appId === id);
     if (!win) return onLaunch(id);
     if (win.minimized) return restoreWindow(win.id);
     if (compact) return closeWindow(win.id);
     focusWindow(win.id);
   };
+
 
   /** Dock zemini: uygulama, pencere ve masaüstü eylemleri. */
   const dockMenu = (): MenuItem[] => [

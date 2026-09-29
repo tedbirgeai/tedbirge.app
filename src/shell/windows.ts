@@ -13,6 +13,8 @@ import { useSyncExternalStore } from "react";
 
 import { announce } from "@/lib/shell/announce";
 import { pushUndo } from "@/lib/shell/undo-stack";
+import { playSystemSound } from "@/os/system/audio";
+
 
 export type WindowRecord = {
   /** Örnek kimliği (aynı uygulamadan birden çok pencere açılabilir). */
@@ -199,8 +201,10 @@ export function openWindow(appId: string, title: string, fresh = false): string 
     windows = windows.map((w) => (w.id === existing.id ? { ...w, minimized: false } : w));
     normalizeZ(existing.id);
     emit();
+    if (existing.minimized) playSystemSound("window-restore");
     return existing.id;
   }
+
   seq += 1;
   const id = `${appId}#${seq}`;
   windows = [
@@ -218,8 +222,10 @@ export function openWindow(appId: string, title: string, fresh = false): string 
   normalizeZ(id);
   emit();
   announce(`${title} açıldı`);
+  playSystemSound("window-open");
   return id;
 }
+
 
 export function closeWindow(id: string) {
   const closed = windows.find((w) => w.id === id);
@@ -230,7 +236,9 @@ export function closeWindow(id: string) {
     // Nielsen #3: kapatma geri alınabilir (Ctrl + Z).
     pushUndo({ label: `${closed.title} kapatıldı`, undo: () => reopenWindow(closed) });
     announce(`${closed.title} kapatıldı`);
+    playSystemSound("window-close");
   }
+
 }
 
 export function focusWindow(id: string) {
@@ -271,13 +279,16 @@ export function minimizeWindow(id: string) {
   windows = windows.map((w) => (w.id === id ? { ...w, minimized: true } : w));
   normalizeZ(activeWindow()?.id);
   emit();
+  playSystemSound("window-minimize");
 }
 
 export function restoreWindow(id: string) {
   windows = windows.map((w) => (w.id === id ? { ...w, minimized: false } : w));
   normalizeZ(id);
   emit();
+  playSystemSound("window-restore");
 }
+
 
 export function closeAllWindows() {
   windows = [];

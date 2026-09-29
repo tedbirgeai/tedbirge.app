@@ -29,6 +29,28 @@ export function WindowSwitcher({ surface }: { surface: { current: HTMLElement | 
   const windows = useWindows();
   const [switcher, setSwitcher] = useState<{ ids: string[]; index: number } | null>(null);
   const hidden = useRef<string[]>([]);
+  // Super tuşunun "yalnız" bırakıldığını anlamak için saf basış izi.
+  const metaPure = useRef(false);
+  // Overlay durumunu dinleyici içinde eşzamanlı okumak için ayna referans.
+  const switcherRef = useRef<{ ids: string[]; index: number } | null>(null);
+  switcherRef.current = switcher;
+
+  /** Seçili pencereye odağı devreder ve overlay'i kapatır. */
+  const commitSwitch = useCallback(() => {
+    setSwitcher((prev) => {
+      if (prev) {
+        const id = prev.ids[prev.index];
+        if (id) {
+          restoreWindow(id);
+          focusWindow(id);
+          const win = getWindows().find((w) => w.id === id);
+          if (win) announce(`${win.title} penceresine geçildi`);
+        }
+      }
+      return null;
+    });
+  }, []);
+
 
   const area = useCallback(() => {
     const el = surface.current;
@@ -81,6 +103,36 @@ export function WindowSwitcher({ surface }: { surface: { current: HTMLElement | 
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Super tuşu tek başına bırakılırsa uygulama çekmecesi açılır: başka bir
+      // tuşa basıldığı anda bu "saf basış" bozulur.
+      if (e.key === "Meta" || e.key === "OS") {
+        if (!e.repeat) metaPure.current = true;
+      } else {
+        metaPure.current = false;
+      }
+
+      // Geçiş overlay'i açıkken ok tuşları, Enter ve Escape ile yönetilir.
+      if (switcherRef.current) {
+        if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+          e.preventDefault();
+          const step = e.key === "ArrowRight" ? 1 : -1;
+          setSwitcher((prev) =>
+            prev ? { ...prev, index: (prev.index + step + prev.ids.length) % prev.ids.length } : prev,
+          );
+          return;
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setSwitcher(null);
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commitSwitch();
+          return;
+        }
+      }
+
       // Alt + Tab: görsel geçiş.
       if (e.altKey && e.key === "Tab") {
         const list = getWindows();
@@ -124,28 +176,34 @@ export function WindowSwitcher({ surface }: { surface: { current: HTMLElement | 
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
-      if (e.key !== "Alt") return;
-      setSwitcher((prev) => {
-        if (prev) {
-          const id = prev.ids[prev.index];
-          if (id) {
-            restoreWindow(id);
-            focusWindow(id);
-            const win = getWindows().find((w) => w.id === id);
-            if (win) announce(`${win.title} penceresine geçildi`);
-          }
+      if (e.key === "Meta" || e.key === "OS") {
+        const pure = metaPure.current;
+        metaPure.current = false;
+        if (pure) {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent("tedbirge:launcher-toggle"));
         }
-        return null;
-      });
+        return;
+      }
+      if (e.key !== "Alt") return;
+      commitSwitch();
+    };
+
+    const onBlur = () => {
+      metaPure.current = false;
+      setSwitcher(null);
     };
 
     window.addEventListener("keydown", onKey);
     window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
     return () => {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
     };
-  }, [snap, showDesktop, undo]);
+  }, [snap, showDesktop, undo, commitSwitch]);
+
 
   if (!switcher) return null;
   const items = switcher.ids
@@ -159,17 +217,18 @@ export function WindowSwitcher({ surface }: { surface: { current: HTMLElement | 
       role="dialog"
       aria-label="Pencere geçişi"
     >
-      <ul className="flex max-w-[92vw] flex-wrap justify-center gap-2 rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel)]/95 p-3 shadow-2xl">
+      <ul className="animate-scale-in flex max-w-[92vw] flex-wrap justify-center gap-2 rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel)]/95 p-3 shadow-2xl">
         {items.map((w, i) => (
           <li
             key={w.id}
             aria-current={i === switcher.index}
-            className={`min-h-12 min-w-[140px] rounded-xl px-3 py-2 text-left font-osmono text-[12px] ${
+            className={`min-h-12 min-w-[140px] rounded-xl px-3 py-2 text-left font-osmono text-[12px] transition-all duration-150 ease-out ${
               i === switcher.index
-                ? "bg-[var(--tb-accent)] text-[var(--tb-bg)]"
-                : "text-[var(--tb-muted)]"
+                ? "scale-[1.04] bg-[var(--tb-accent)] text-[var(--tb-bg)] shadow-lg"
+                : "scale-100 text-[var(--tb-muted)]"
             }`}
           >
+
             <span className="flex items-center gap-2">
               <AppIconSurface id={w.appId} size="window" />
               <span className="block truncate">{w.title}</span>

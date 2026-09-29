@@ -34,6 +34,8 @@ import { Dock } from "@/components/shell/Dock";
 import { SystemBar } from "@/components/shell/SystemBar";
 import { Desktop } from "@/components/shell/Desktop";
 import { Spotlight } from "@/components/shell/Spotlight";
+import { AppLauncher } from "@/components/shell/AppLauncher";
+
 import { pressFeedback } from "@/lib/chat/sounds";
 import { notify, notifyError, notifyOk } from "@/lib/shell/notify";
 import { popUndo } from "@/lib/shell/undo-stack";
@@ -105,6 +107,9 @@ export function WorkspacePanel() {
   const windows = useWindows();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [spotlight, setSpotlight] = useState(false);
+  // Süper / Windows tuşu ile açılan uygulama çekmecesi.
+  const [launcher, setLauncher] = useState(false);
+
   // Telefonda üstten aşağı çekme jestinin başlangıç noktası.
   const pullStart = useRef<number | null>(null);
 
@@ -142,9 +147,17 @@ export function WorkspacePanel() {
         notify("Geri alındı", entry.label);
       }
     };
+    // Süper tuşu tek başına: uygulama çekmecesini aç/kapat (kısayol katmanı
+    // WindowSwitcher'da tek dinleyicide toplanır, burada yalnız durum döner).
+    const onLauncher = () => setLauncher((v) => !v);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("tedbirge:launcher-toggle", onLauncher);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("tedbirge:launcher-toggle", onLauncher);
+    };
   }, []);
+
 
   const launch = useCallback((id: string, fresh = false) => {
     pressFeedback();
@@ -283,6 +296,15 @@ export function WorkspacePanel() {
       <LiveRegion />
 
       <Spotlight open={spotlight} onClose={() => setSpotlight(false)} onLaunch={launch} />
+      <AppLauncher
+        open={launcher}
+        onClose={() => setLauncher(false)}
+        onLaunch={(id) => {
+          setLauncher(false);
+          launch(id);
+        }}
+      />
+
 
       <Onboarding />
 

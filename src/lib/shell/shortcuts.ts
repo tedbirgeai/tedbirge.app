@@ -20,7 +20,9 @@ export type Shortcut = { keys: string; label: string };
 /** Ayarlar ekranında listelenen sistem kısayolları. */
 export const SHELL_SHORTCUTS: Shortcut[] = [
   { keys: "Ctrl / ⌘ + Boşluk", label: "Evrensel arama" },
-  { keys: "Alt + Tab", label: "Pencereler arasında geçiş" },
+  { keys: "Super / Windows", label: "Uygulama çekmecesini aç / kapat" },
+  { keys: "Alt + Tab", label: "Pencereler arasında geçiş (← → ile seç, Esc iptal)" },
+
   { keys: "Ctrl + Z", label: "Son işlemi geri al" },
   { keys: "Super + ←", label: "Pencereyi sola yasla" },
   { keys: "Super + →", label: "Pencereyi sağa yasla" },
