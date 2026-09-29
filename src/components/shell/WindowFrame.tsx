@@ -30,6 +30,7 @@ import {
   type WindowRecord,
 } from "@/shell/windows";
 import { haptic, snapBoxFor, type SnapBox } from "@/lib/shell/window-snap";
+import { WindowSleepContext } from "@/lib/shell/window-sleep";
 
 type Edge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
