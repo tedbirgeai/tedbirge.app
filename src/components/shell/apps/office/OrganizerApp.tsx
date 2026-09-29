@@ -12,7 +12,16 @@ import { CalendarDays, Columns3, Plus, Trash2 } from "lucide-react";
 import { OfficeShell, RibbonGroup, ToolButton, useOfficeEditor } from "./OfficeFrame";
 
 type Column = "yapilacak" | "devam" | "tamam";
-type Card = { id: string; title: string; column: Column; due: string };
+export type Priority = "dusuk" | "orta" | "yuksek" | "kritik";
+type Card = { id: string; title: string; column: Column; due: string; priority: Priority; note: string };
+
+export const PRIORITIES: Array<{ id: Priority; label: string; color: string }> = [
+  { id: "dusuk", label: "Düşük", color: "var(--tb-brand-google-green)" },
+  { id: "orta", label: "Orta", color: "var(--tb-accent)" },
+  { id: "yuksek", label: "Yüksek", color: "var(--tb-brand-google-yellow)" },
+  { id: "kritik", label: "Kritik", color: "var(--tb-brand-google-red)" },
+];
+const prioColor = (p: Priority) => PRIORITIES.find((x) => x.id === p)?.color ?? "var(--tb-accent)";
 type Agenda = { v: 2; cards: Card[] };
 
 const COLUMNS: Array<{ id: Column; label: string }> = [
@@ -24,7 +33,7 @@ const COLUMNS: Array<{ id: Column; label: string }> = [
 const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
-function parseAgenda(text: string): Agenda {
+export function parseAgenda(text: string): Agenda {
   try {
     const data = JSON.parse(text) as
       | Agenda
@@ -37,9 +46,15 @@ function parseAgenda(text: string): Agenda {
           title: t.text ?? "",
           due: t.due ?? "",
           column: t.done ? "tamam" : "yapilacak",
+          priority: "orta" as Priority,
+          note: "",
         })),
       };
-    if (Array.isArray(data?.cards)) return { v: 2, cards: data.cards };
+    if (Array.isArray(data?.cards))
+      return {
+        v: 2,
+        cards: data.cards.map((c) => ({ ...c, priority: c.priority ?? "orta", note: c.note ?? "" })),
+      };
   } catch {
     /* bozuk belge: boş ajanda */
   }
@@ -60,10 +75,18 @@ export function OrganizerApp() {
     [editor],
   );
 
-  const addCard = (column: Column, due = "") => {
-    const title = window.prompt("Kart başlığı");
-    if (!title) return;
-    write([...agenda.cards, { id: uid(), title, column, due }]);
+  const [modal, setModal] = useState<Card | null>(null);
+  const addCard = (column: Column, due = "") =>
+    setModal({ id: "", title: "", column, due, priority: "orta", note: "" });
+  const saveModal = () => {
+    if (!modal || !modal.title.trim()) return;
+    const card = { ...modal, title: modal.title.trim() };
+    write(
+      card.id
+        ? agenda.cards.map((c) => (c.id === card.id ? card : c))
+        : [...agenda.cards, { ...card, id: uid() }],
+    );
+    setModal(null);
   };
 
   const cardsOn = (day: string) => agenda.cards.filter((c) => c.due === day);
@@ -179,8 +202,12 @@ export function OrganizerApp() {
               key={c.id}
               draggable
               onDragStart={() => setDrag(c.id)}
-              className="block truncate rounded-md px-1.5 py-0.5 text-[11px] text-[var(--tb-text)]"
-              style={{ background: "color-mix(in srgb, var(--tb-accent) 22%, transparent)" }}
+              onClick={() => setModal(c)}
+              className="block cursor-pointer truncate rounded-md px-1.5 py-0.5 text-[11px] text-[var(--tb-text)]"
+              style={{
+                background: `color-mix(in srgb, ${prioColor(c.priority)} 22%, transparent)`,
+                borderLeft: `3px solid ${prioColor(c.priority)}`,
+              }}
             >
               {c.title}
             </span>
@@ -198,7 +225,7 @@ export function OrganizerApp() {
       sidebar={false}
       status={<span>{agenda.cards.filter((c) => c.column !== "tamam").length} açık kart</span>}
     >
-      <div className="min-h-0 flex-1 overflow-auto p-3">
+      <div className="relative min-h-0 flex-1 overflow-auto p-3">
         <h2 className="mb-2 text-[15px] font-semibold text-[var(--tb-text)]">
           {view === "pano"
             ? "Görev Panosu"
@@ -270,8 +297,18 @@ export function OrganizerApp() {
                           background: "color-mix(in srgb, var(--tb-text) 5%, transparent)",
                         }}
                       >
-                        <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--tb-text)]">
+                        <button
+                          type="button"
+                          onClick={() => setModal(c)}
+                          className="min-w-0 flex-1 truncate text-left text-[13px] text-[var(--tb-text)]"
+                        >
                           {c.title}
+                        </button>
+                        <span
+                          className="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-[var(--tb-text)]"
+                          style={{ background: `color-mix(in srgb, ${prioColor(c.priority)} 30%, transparent)` }}
+                        >
+                          {PRIORITIES.find((p) => p.id === c.priority)?.label}
                         </span>
                         {c.due ? (
                           <span className="font-osmono text-[10px] text-[var(--tb-muted)]">
@@ -294,6 +331,119 @@ export function OrganizerApp() {
           </div>
         ) : null}
       </div>
+
+      {modal ? (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-[color-mix(in_srgb,var(--tb-bg)_60%,transparent)] p-4"
+          onPointerDown={(e) => e.target === e.currentTarget && setModal(null)}
+        >
+          <form
+            role="dialog"
+            aria-modal="true"
+            aria-label={modal.id ? "Kartı düzenle" : "Yeni kart"}
+            onSubmit={(e) => {
+              e.preventDefault();
+              saveModal();
+            }}
+            onKeyDown={(e) => e.key === "Escape" && setModal(null)}
+            className="w-full max-w-md space-y-3 rounded-2xl bg-[var(--tb-panel-solid)] p-4 text-[13px] text-[var(--tb-text)] shadow-2xl"
+            style={{ border: "1px solid var(--border)" }}
+          >
+            <h3 className="text-[15px] font-semibold">{modal.id ? "Kartı düzenle" : "Yeni kart"}</h3>
+            <label className="block space-y-1">
+              <span className="text-[11px] text-[var(--tb-muted)]">Başlık</span>
+              <input
+                autoFocus
+                required
+                value={modal.title}
+                onChange={(e) => setModal({ ...modal, title: e.target.value })}
+                className="w-full rounded-lg bg-transparent px-2 py-1.5 outline-none"
+                style={{ border: "1px solid var(--border)" }}
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block space-y-1">
+                <span className="text-[11px] text-[var(--tb-muted)]">Tarih</span>
+                <input
+                  type="date"
+                  value={modal.due}
+                  onChange={(e) => setModal({ ...modal, due: e.target.value })}
+                  className="w-full rounded-lg bg-transparent px-2 py-1.5 outline-none"
+                  style={{ border: "1px solid var(--border)" }}
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="text-[11px] text-[var(--tb-muted)]">Sütun</span>
+                <select
+                  value={modal.column}
+                  onChange={(e) => setModal({ ...modal, column: e.target.value as Column })}
+                  className="w-full rounded-lg bg-[var(--tb-panel-solid)] px-2 py-1.5 outline-none"
+                  style={{ border: "1px solid var(--border)" }}
+                >
+                  {COLUMNS.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[11px] text-[var(--tb-muted)]">Öncelik</span>
+              <div className="flex gap-1.5">
+                {PRIORITIES.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    aria-pressed={modal.priority === p.id}
+                    onClick={() => setModal({ ...modal, priority: p.id })}
+                    className="flex-1 rounded-lg px-2 py-1 text-[12px]"
+                    style={{
+                      border: `1px solid ${modal.priority === p.id ? p.color : "var(--border)"}`,
+                      background: modal.priority === p.id ? `color-mix(in srgb, ${p.color} 25%, transparent)` : "transparent",
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="block space-y-1">
+              <span className="text-[11px] text-[var(--tb-muted)]">Not</span>
+              <textarea
+                rows={3}
+                value={modal.note}
+                onChange={(e) => setModal({ ...modal, note: e.target.value })}
+                className="w-full resize-none rounded-lg bg-transparent px-2 py-1.5 outline-none"
+                style={{ border: "1px solid var(--border)" }}
+              />
+            </label>
+            <div className="flex justify-end gap-2">
+              {modal.id ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    write(agenda.cards.filter((c) => c.id !== modal.id));
+                    setModal(null);
+                  }}
+                  className="mr-auto rounded-lg px-3 py-1.5 text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+                >
+                  Sil
+                </button>
+              ) : null}
+              <button type="button" onClick={() => setModal(null)} className="rounded-lg px-3 py-1.5 text-[var(--tb-muted)]">
+                Vazgeç
+              </button>
+              <button
+                type="submit"
+                className="rounded-lg bg-[var(--tb-accent)] px-3 py-1.5 font-medium text-[var(--tb-bg)]"
+              >
+                Kaydet
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </OfficeShell>
   );
 }
