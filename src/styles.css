@@ -670,10 +670,16 @@ body {
   background: var(--tb-panel);
   backdrop-filter: blur(18px) saturate(140%);
   box-shadow: var(--tb-shadow);
-  /* GPU hızlandırma: taşıma/boyutlandırma tek katmanda kalır. */
-  will-change: transform;
+  /* Kalıcı will-change her pencereye ayrı GPU katmanı ayırır; yalnız
+     sürükleme/boyutlandırma sırasında etkinleşir. */
   contain: paint layout;
-  transform: translateZ(0);
+}
+body.tbos-dragging .tbos-window {
+  will-change: transform;
+}
+/* Pencere uyku modu: küçültülen pencerenin gövdesi çizilmez/ölçülmez. */
+.tbos-window[data-sleeping="true"] .tbos-window-body {
+  content-visibility: hidden;
 }
 
 
