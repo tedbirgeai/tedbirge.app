@@ -102,7 +102,7 @@ function StatusBlock() {
   useEffect(() => {
     const read = () => {
       const s = getNodeSnapshot();
-      setSnap({ online: s.peers.length > 0 || s.online === true, peers: s.peers.length });
+      setSnap({ online: s.online, peers: s.peers.length });
     };
     read();
     const t = window.setInterval(read, 2000);
@@ -278,7 +278,15 @@ function Runner({ app, nonce }: { app: GeneratedApp; nonce: number }) {
       setStopped("Bu uygulamanın çekirdeği derlenmemiş.");
       return;
     }
-    void instantiateTbApp(app.spec, app.spec.capabilities, (line) =>
+    const manifest = {
+      id: app.spec.id,
+      name: app.spec.name,
+      version: app.spec.version,
+      capabilities: app.spec.capabilities,
+      module: app.module,
+      description: app.spec.description,
+    };
+    void instantiateTbApp(manifest, app.spec.capabilities, (line) =>
       setLog((l) => [...l.slice(-199), line]),
     )
       .then((i) => {
