@@ -210,8 +210,11 @@ export async function readFile(id: string): Promise<File | null> {
   return new File([rec.blob], rec.name, { type: rec.mime, lastModified: rec.at });
 }
 
-/** Kaydın üstverisini günceller (yeniden adlandırma / klasör taşıma). */
-async function patch(id: string, next: Partial<Pick<VfsEntry, "name" | "folder">>): Promise<void> {
+/** Kaydın üstverisini günceller (yeniden adlandırma / klasör taşıma / çöp). */
+async function patch(
+  id: string,
+  next: Partial<Pick<VfsEntry, "name" | "folder" | "trashedAt" | "trashedFrom">>,
+): Promise<void> {
   const rec = await tx<VfsRecord | undefined>(
     "readonly",
     (s) => s.get(id) as IDBRequest<VfsRecord | undefined>,
@@ -239,6 +242,41 @@ export function moveFile(id: string, folder: VfsFolder): Promise<void> {
   return patch(id, { folder: normalizeFolder(folder) });
 }
 
+/**
+ * Dosyayı çöp kutusuna taşır. Kayıt silinmez; geldiği klasör saklanır ki
+ * geri yükleme aynı yere dönebilsin.
+ */
+export async function trashFile(id: string): Promise<void> {
+  const rec = await tx<VfsRecord | undefined>(
+    "readonly",
+    (s) => s.get(id) as IDBRequest<VfsRecord | undefined>,
+  );
+  if (!rec || rec.trashedAt) return;
+  await patch(id, {
+    trashedAt: Date.now(),
+    trashedFrom: normalizeFolder(rec.folder, rec.mime),
+  });
+}
+
+/** Çöp kutusundaki dosyayı geldiği klasöre geri koyar. */
+export async function restoreFile(id: string): Promise<void> {
+  const rec = await tx<VfsRecord | undefined>(
+    "readonly",
+    (s) => s.get(id) as IDBRequest<VfsRecord | undefined>,
+  );
+  if (!rec?.trashedAt) return;
+  const back = normalizeFolder(rec.trashedFrom ?? rec.folder, rec.mime);
+  await patch(id, { folder: back, trashedAt: undefined, trashedFrom: undefined });
+}
+
+/** Çöp kutusunu boşaltır: içindeki tüm kayıtlar kalıcı olarak silinir. */
+export async function emptyTrash(): Promise<number> {
+  const items = await listTrash();
+  for (const item of items) await deleteFile(item.id);
+  return items.length;
+}
+
+/** Kaydı kalıcı olarak siler (geri alınamaz). */
 export async function deleteFile(id: string): Promise<void> {
   await tx("readwrite", (s) => s.delete(id) as IDBRequest<undefined>);
   const cached = urls.get(id);
