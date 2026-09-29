@@ -18,10 +18,11 @@ import { XDG_LABELS } from "@/shell/xdg";
 import { useContacts } from "@/lib/chat/contacts";
 import { getNodeSnapshot } from "@/lib/node-runtime";
 import { COMMANDS } from "@/lib/terminal/commands";
+import { SETTINGS_INDEX, fuzzyScore } from "@/lib/shell/settings-index";
 
 type Item = {
   key: string;
-  kind: "app" | "file" | "command" | "person" | "peer";
+  kind: "app" | "file" | "command" | "person" | "peer" | "setting";
   label: string;
   hint: string;
   run: () => void;
@@ -43,6 +44,7 @@ export function Spotlight({
   const [peers, setPeers] = useState<Array<{ id: string; direct: boolean }>>([]);
   const [cursor, setCursor] = useState(0);
   const input = useRef<HTMLInputElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -54,8 +56,10 @@ export function Spotlight({
     // Mesh düğümleri açılış anında bir kez okunur: arama titremez.
     const snap = getNodeSnapshot();
     setPeers(snap.peers.map((p) => ({ id: p.nodeId, direct: p.direct })));
-    const t = window.setTimeout(() => input.current?.focus(), 20);
-    return () => window.clearTimeout(t);
+    // Odak aynı karede alınır; kullanıcı anında yazabilir.
+    input.current?.focus();
+    const raf = window.requestAnimationFrame(() => input.current?.focus());
+    return () => window.cancelAnimationFrame(raf);
   }, [open]);
 
   const openFile = useCallback(async (entry: VfsEntry) => {
@@ -155,14 +159,22 @@ export function Spotlight({
       },
     ];
 
-    const all = [...apps, ...fileItems, ...people, ...peerItems, ...commands, ...terminal];
+    const settings: Item[] = SETTINGS_INDEX.map((st) => ({
+      key: `set:${st.key}`,
+      kind: "setting" as const,
+      label: st.label,
+      hint: `Ayar · ${st.keywords.slice(0, 2).join(", ")}`,
+      run: () => onLaunch(st.app),
+    }));
+
+    const all = [...apps, ...fileItems, ...settings, ...people, ...peerItems, ...commands, ...terminal];
     if (!q) return all.slice(0, 12);
     return all
-      .filter(
-        (i) =>
-          i.label.toLocaleLowerCase("tr").includes(q) || i.hint.toLocaleLowerCase("tr").includes(q),
-      )
-      .slice(0, 24);
+      .map((i, idx) => ({ i, idx, s: Math.max(fuzzyScore(q, i.label), fuzzyScore(q, i.hint) - 30) }))
+      .filter((x) => x.s > 0)
+      .sort((a, b) => b.s - a.s || a.idx - b.idx)
+      .slice(0, 24)
+      .map((x) => x.i);
   }, [query, installed, files, contacts, peers, onLaunch, openFile]);
 
   useEffect(() => {
@@ -183,11 +195,21 @@ export function Spotlight({
       role="dialog"
       aria-modal="true"
       aria-label="Evrensel arama"
+      onKeyDown={(e) => {
+        // Odak kilidi: Tab panel dışına çıkamaz, Escape kapatır.
+        if (e.key === "Escape") onClose();
+        if (e.key !== "Tab" || !panel.current) return;
+        const nodes = panel.current.querySelectorAll<HTMLElement>("input,button");
+        const first = nodes[0];
+        const last = nodes[nodes.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="tbos-window w-full max-w-lg overflow-hidden rounded-2xl shadow-2xl">
+      <div ref={panel} className="tbos-window w-full max-w-lg overflow-hidden rounded-2xl shadow-2xl">
         <div className="flex items-center gap-2 border-b border-[var(--tb-border)] px-4 py-3">
           <Search className="h-4 w-4 shrink-0 text-[var(--tb-muted)]" aria-hidden />
           <input
@@ -208,7 +230,7 @@ export function Spotlight({
                 onClose();
               }
             }}
-            placeholder="Uygulama, dosya, kişi, düğüm veya komut arayın…"
+            placeholder="Uygulama, dosya, ayar, kişi veya komut arayın…"
             aria-label="Arama"
             className="min-w-0 flex-1 bg-transparent text-[15px] text-[var(--tb-text)] outline-none"
           />
@@ -224,7 +246,9 @@ export function Spotlight({
                     ? User
                     : item.kind === "peer"
                       ? Radio
-                      : TerminalSquare;
+                      : item.kind === "setting"
+                        ? SlidersHorizontal
+                        : TerminalSquare;
             return (
               <li key={item.key}>
                 <button
