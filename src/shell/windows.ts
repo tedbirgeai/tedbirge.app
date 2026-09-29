@@ -236,7 +236,9 @@ export function closeWindow(id: string) {
     // Nielsen #3: kapatma geri alınabilir (Ctrl + Z).
     pushUndo({ label: `${closed.title} kapatıldı`, undo: () => reopenWindow(closed) });
     announce(`${closed.title} kapatıldı`);
+    playSystemSound("window-close");
   }
+
 }
 
 export function focusWindow(id: string) {
