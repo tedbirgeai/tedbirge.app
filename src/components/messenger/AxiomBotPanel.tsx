@@ -12,6 +12,11 @@ import ReactMarkdown from "react-markdown";
 import { Bot, Send, Square, Trash2 } from "lucide-react";
 
 import { looksLikeClaim, verdictLabel } from "@/lib/axiom-bot";
+import { classifyIntent } from "@/lib/studio/intent";
+import { applySystemPatch } from "@/lib/studio/system-patch";
+import { notifyOk } from "@/lib/shell/notify";
+import { describeNode, useNodeRuntime } from "@/lib/node-runtime";
+
 
 const KEY = "tb.axiom-bot.v1";
 
@@ -38,9 +43,13 @@ export function AxiomBotPanel() {
   });
   const [input, setInput] = useState("");
   const [verdicts, setVerdicts] = useState<Record<string, string>>({});
+  const [patch, setPatch] = useState<string | null>(null);
+  const node = useNodeRuntime();
+  const status2 = describeNode(node);
   const box = useRef<HTMLTextAreaElement | null>(null);
   const end = useRef<HTMLDivElement | null>(null);
   const busy = status === "submitted" || status === "streaming";
+
 
   useEffect(() => {
     if (status === "ready" || status === "error") {
