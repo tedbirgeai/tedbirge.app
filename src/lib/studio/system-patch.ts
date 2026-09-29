@@ -18,7 +18,7 @@ import {
 } from "@/lib/ui/wallpaper";
 import { setSystemMuted } from "@/os/system/audio";
 import { describeNode, getNodeSnapshot } from "@/lib/node-runtime";
-import type { SystemPatch } from "@/lib/studio/intent";
+import type { InspectTarget, SystemPatch } from "@/lib/studio/intent";
 
 
 export type PatchResult = {
@@ -32,10 +32,21 @@ export type PatchResult = {
 };
 
 /** Salt-okunur katman incelemesi: gerçek ölçüm yoksa iddia üretilmez. */
-function inspect(target: "ag" | "cekirdek" | "vfs" | "guvenlik" | "performans" | "arayuz"): PatchResult {
+function inspect(target: InspectTarget): PatchResult {
   const s = getNodeSnapshot();
   const n = describeNode(s);
   switch (target) {
+    case "denetim": {
+      const mem = memoryMb();
+      return {
+        component: "Sistem denetimi",
+        kind: "inceleme",
+        applied: false,
+        summary: `Ağ: ${n.text.toLocaleLowerCase("tr")}, bağlı cihaz ${n.directPeers}, sırada ${n.queued}.${
+          mem ? ` Bellek ${mem} MB.` : ""
+        } Üretilen kodlar ayrı iş parçacığında zaman sınırıyla çalışır; izinler tek tek doğrulanır.`,
+      };
+    }
     case "ag":
       return {
         component: "Ağ / Mesh katmanı",
