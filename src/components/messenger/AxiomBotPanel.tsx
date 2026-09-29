@@ -71,8 +71,19 @@ export function AxiomBotPanel() {
     const t = input.trim();
     if (!t || busy) return;
     setInput("");
+    // Mod B: sistem bileşeni isteği ise yerinde uygulanır, uygulama üretilmez.
+    const intent = classifyIntent(t);
+    if (intent.mode === "sistem") {
+      const r = applySystemPatch(intent.patch);
+      setPatch(`${r.component}: ${r.summary}`);
+      if (r.applied) {
+        notifyOk(r.component, r.summary);
+        return;
+      }
+    }
     void sendMessage({ text: t });
   };
+
 
   return (
     <div
