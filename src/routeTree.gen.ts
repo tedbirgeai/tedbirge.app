@@ -25,6 +25,7 @@ import { Route as AxiomRouteImport } from './routes/axiom'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTranslateRouteImport } from './routes/api/translate'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiAxiomBotRouteImport } from './routes/api/axiom-bot'
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as ApiPublicRelayRouteImport } from './routes/api/public/relay'
 import { Route as ApiPublicQueueRouteImport } from './routes/api/public/queue'
@@ -121,6 +122,11 @@ const ApiTranslateRoute = ApiTranslateRouteImport.update({
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAxiomBotRoute = ApiAxiomBotRouteImport.update({
+  id: '/api/axiom-bot',
+  path: '/api/axiom-bot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sohbet': typeof SohbetRoute
   '/yasal': typeof YasalRoute
+  '/api/axiom-bot': typeof ApiAxiomBotRoute
   '/api/chat': typeof ApiChatRoute
   '/api/translate': typeof ApiTranslateRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sohbet': typeof SohbetRoute
   '/yasal': typeof YasalRoute
+  '/api/axiom-bot': typeof ApiAxiomBotRoute
   '/api/chat': typeof ApiChatRoute
   '/api/translate': typeof ApiTranslateRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
@@ -297,6 +305,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sohbet': typeof SohbetRoute
   '/yasal': typeof YasalRoute
+  '/api/axiom-bot': typeof ApiAxiomBotRoute
   '/api/chat': typeof ApiChatRoute
   '/api/translate': typeof ApiTranslateRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
@@ -334,6 +343,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/sohbet'
     | '/yasal'
+    | '/api/axiom-bot'
     | '/api/chat'
     | '/api/translate'
     | '/api/public/enroll'
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/sohbet'
     | '/yasal'
+    | '/api/axiom-bot'
     | '/api/chat'
     | '/api/translate'
     | '/api/public/enroll'
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/sohbet'
     | '/yasal'
+    | '/api/axiom-bot'
     | '/api/chat'
     | '/api/translate'
     | '/api/public/enroll'
@@ -440,6 +452,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SohbetRoute: typeof SohbetRoute
   YasalRoute: typeof YasalRoute
+  ApiAxiomBotRoute: typeof ApiAxiomBotRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiTranslateRoute: typeof ApiTranslateRoute
   ApiPublicEnrollRoute: typeof ApiPublicEnrollRoute
@@ -573,6 +586,13 @@ declare module '@tanstack/react-router' {
       path: '/api/chat'
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/axiom-bot': {
+      id: '/api/axiom-bot'
+      path: '/api/axiom-bot'
+      fullPath: '/api/axiom-bot'
+      preLoaderRoute: typeof ApiAxiomBotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/telemetry': {
@@ -712,6 +732,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SohbetRoute: SohbetRoute,
   YasalRoute: YasalRoute,
+  ApiAxiomBotRoute: ApiAxiomBotRoute,
   ApiChatRoute: ApiChatRoute,
   ApiTranslateRoute: ApiTranslateRoute,
   ApiPublicEnrollRoute: ApiPublicEnrollRoute,
