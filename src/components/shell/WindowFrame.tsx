@@ -44,10 +44,24 @@ const HANDLES: Array<{ edge: Edge; className: string; cursor: string }> = [
   { edge: "se", className: "right-0 bottom-0 h-3 w-3", cursor: "nwse-resize" },
 ];
 
-function setDragging(on: boolean) {
+/**
+ * Sürükleme/boyutlandırma boyunca gövdeye işaret sınıfı eklenir: gömülü
+ * çerçeveler, video ve ağır yüzeyler imleci yutmaz (`pointer-events: none`),
+ * geçişler kapanır ve reflow kaynaklı titreme oluşmaz.
+ */
+function setDragging(on: boolean, mode: "drag" | "resize" = "drag") {
   if (typeof document === "undefined") return;
   document.body.classList.toggle("tbos-dragging", on);
+  document.body.classList.toggle(
+    mode === "resize" ? "tbos-resizing" : "tbos-moving",
+    on,
+  );
+  if (!on) {
+    document.body.classList.remove("tbos-resizing");
+    document.body.classList.remove("tbos-moving");
+  }
 }
+
 
 export function WindowFrame({ win, children }: { win: WindowRecord; children: ReactNode }) {
   const root = useRef<HTMLDivElement | null>(null);
