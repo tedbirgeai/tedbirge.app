@@ -217,32 +217,38 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
 
         {report ? <DiagnosisCard report={report} /> : null}
 
-        <ol className="space-y-1.5" aria-live="polite">
+        {STEPS.some((s) => state[s.id] !== "bekliyor") ? (
+          <ol className="space-y-1.5" aria-live="polite">
+            {STEPS.map((s) => (
+              <li key={s.id} className="flex items-center gap-2 font-osmono text-[12px]">
+                {state[s.id] === "tamam" ? (
+                  <Check className="h-3.5 w-3.5 text-[var(--tb-accent)]" />
+                ) : state[s.id] === "hata" ? (
+                  <X className="h-3.5 w-3.5 text-[var(--tb-rose-400)]" />
+                ) : state[s.id] === "sürüyor" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--tb-muted)]" />
+                ) : (
+                  <CircleDashed className="h-3.5 w-3.5 text-[var(--tb-muted)]" />
+                )}
+                <span className={state[s.id] === "bekliyor" ? "text-[var(--tb-muted)]" : "text-[var(--tb-text)]"}>
+                  {s.label}
+                </span>
+              </li>
+            ))}
+          </ol>
+        ) : null}
 
-          {STEPS.map((s) => (
-            <li key={s.id} className="flex items-center gap-2 font-osmono text-[12px]">
-              {state[s.id] === "tamam" ? (
-                <Check className="h-3.5 w-3.5 text-[var(--tb-accent)]" />
-              ) : state[s.id] === "hata" ? (
-                <X className="h-3.5 w-3.5 text-[var(--tb-rose-400)]" />
-              ) : state[s.id] === "sürüyor" ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--tb-muted)]" />
-              ) : (
-                <CircleDashed className="h-3.5 w-3.5 text-[var(--tb-muted)]" />
-              )}
-              <span className={state[s.id] === "bekliyor" ? "text-[var(--tb-muted)]" : "text-[var(--tb-text)]"}>
-                {s.label}
-              </span>
-            </li>
-          ))}
-        </ol>
+        {log.length ? (
+          <div
+            className="max-h-32 overflow-auto rounded-xl border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-2 font-osmono text-[11.5px]"
+            aria-live="polite"
+          >
+            {log.map((l, i) => (
+              <div key={i}>{l}</div>
+            ))}
+          </div>
+        ) : null}
 
-        <div
-          className="min-h-24 flex-1 overflow-auto rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-2 font-osmono text-[11.5px]"
-          aria-live="polite"
-        >
-          {log.length ? log.map((l, i) => <div key={i}>{l}</div>) : <span className="text-[var(--tb-muted)]">Konsol boş.</span>}
-        </div>
 
         {spec ? (
           <div>
