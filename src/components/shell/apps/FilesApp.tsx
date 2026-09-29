@@ -7,7 +7,17 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, FileUp, FolderOpen, Loader2, Pencil, Search, Send, Trash2 } from "lucide-react";
+import {
+  Download,
+  FileUp,
+  FolderOpen,
+  Loader2,
+  Pencil,
+  Search,
+  Send,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 
 import { WindowEmpty } from "@/components/shell/WindowShell";
 import { ConfirmDialog } from "@/components/shell/ConfirmDialog";
