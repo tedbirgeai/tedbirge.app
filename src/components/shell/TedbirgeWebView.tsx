@@ -205,18 +205,20 @@ function WebShell({
       />
       <p className="text-[17px] font-semibold text-[var(--tb-text)]">{label}</p>
       <p className="max-w-md font-osmono text-[12px] text-[var(--tb-muted)]">
-        Bu servis pencere içi gömmeyi kısıtlıyor. Aramanızı burada yapabilir ya da servisi harici
-        sekmede açabilirsiniz.
+        Bu servis pencere içi gömmeyi kısıtlıyor. Aramanızı burada yapabilir ya da içeriği Tedbirge
+        Geçidi üzerinden bu pencerede açabilirsiniz.
       </p>
 
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer noopener"
-        className="wa-press inline-flex items-center gap-2 rounded-xl bg-[var(--tb-accent)] px-4 py-2 text-[13px] font-semibold text-[var(--tb-on-accent,var(--tb-bg))]"
-      >
-        <ExternalLink className="h-4 w-4" aria-hidden /> Harici Sekmede Aç
-      </a>
+      {onGateway ? (
+        <button
+          type="button"
+          onClick={onGateway}
+          className="wa-press inline-flex items-center gap-2 rounded-xl bg-[var(--tb-accent)] px-4 py-2 text-[13px] font-semibold text-[var(--tb-on-accent,var(--tb-bg))]"
+        >
+          <Waypoints className="h-4 w-4" aria-hidden /> Geçit Üzerinden Aç
+        </button>
+      ) : null}
+
 
       <div className="flex w-full max-w-md items-center gap-2 pt-1">
         <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] px-3 py-2">
