@@ -105,6 +105,9 @@ export function WorkspacePanel() {
   const windows = useWindows();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [spotlight, setSpotlight] = useState(false);
+  // Süper / Windows tuşu ile açılan uygulama çekmecesi.
+  const [launcher, setLauncher] = useState(false);
+
   // Telefonda üstten aşağı çekme jestinin başlangıç noktası.
   const pullStart = useRef<number | null>(null);
 
@@ -142,9 +145,17 @@ export function WorkspacePanel() {
         notify("Geri alındı", entry.label);
       }
     };
+    // Süper tuşu tek başına: uygulama çekmecesini aç/kapat (kısayol katmanı
+    // WindowSwitcher'da tek dinleyicide toplanır, burada yalnız durum döner).
+    const onLauncher = () => setLauncher((v) => !v);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("tedbirge:launcher-toggle", onLauncher);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("tedbirge:launcher-toggle", onLauncher);
+    };
   }, []);
+
 
   const launch = useCallback((id: string, fresh = false) => {
     pressFeedback();
