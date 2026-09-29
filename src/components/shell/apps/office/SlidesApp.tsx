@@ -24,6 +24,8 @@ type Obj = {
   text?: string;
   src?: string;
   size?: number;
+  fill?: string;
+  opacity?: number;
 };
 type Slide = { id: string; objects: Obj[] };
 type Deck = { v: 2; slides: Slide[] };
@@ -67,6 +69,7 @@ export function SlidesApp() {
   const deck = useMemo(() => parseDeck(editor.text), [editor.text]);
   const [index, setIndex] = useState(0);
   const [sel, setSel] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [present, setPresent] = useState(false);
   const [scale, setScale] = useState(1);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -154,6 +157,7 @@ export function SlidesApp() {
       top: o.y,
       width: o.w,
       height: o.h,
+      opacity: (o.opacity ?? 100) / 100,
     };
     if (o.type === "image")
       return <img key={o.id} src={o.src} alt="" style={base} className="object-contain" />;
@@ -163,30 +167,54 @@ export function SlidesApp() {
           key={o.id}
           style={{
             ...base,
-            background: "color-mix(in srgb, var(--tb-accent) 55%, transparent)",
+            background: o.fill ?? "color-mix(in srgb, var(--tb-accent) 55%, transparent)",
             borderRadius: o.type === "ellipse" ? "50%" : 8,
           }}
         />
       );
+    const isEditing = editable && editingId === o.id;
     return (
       <div
         key={o.id}
-        style={{ ...base, fontSize: o.size ?? 28, color: "#f8fafc", lineHeight: 1.3 }}
-        contentEditable={editable}
+        style={{ ...base, fontSize: o.size ?? 28, color: o.fill ?? "#f8fafc", lineHeight: 1.3, cursor: isEditing ? "text" : "move" }}
+        contentEditable={isEditing}
         suppressContentEditableWarning
-        onBlur={(e) =>
-          patchSlide(
-            slide.objects.map((x) =>
-              x.id === o.id ? { ...x, text: e.currentTarget.innerText } : x,
-            ),
-          )
-        }
+        ref={(el) => {
+          if (el && isEditing && document.activeElement !== el) {
+            el.focus();
+            const r = document.createRange();
+            r.selectNodeContents(el);
+            r.collapse(false);
+            document.getSelection()?.removeAllRanges();
+            document.getSelection()?.addRange(r);
+          }
+        }}
+        onDoubleClick={editable ? () => setEditingId(o.id) : undefined}
+        onPointerDown={isEditing ? (e) => e.stopPropagation() : undefined}
+        onPaste={(e) => {
+          e.preventDefault();
+          document.execCommand("insertText", false, e.clipboardData.getData("text/plain"));
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") (e.currentTarget as HTMLElement).blur();
+          e.stopPropagation();
+        }}
+        onBlur={(e) => {
+          if (!isEditing) return;
+          const text = e.currentTarget.innerText;
+          setEditingId(null);
+          patchSlide(slide.objects.map((x) => (x.id === o.id ? { ...x, text } : x)));
+        }}
         className="whitespace-pre-wrap outline-none"
       >
         {o.text}
       </div>
     );
   };
+
+  const selObj = slide.objects.find((x) => x.id === sel);
+  const patchSel = (p: Partial<Obj>) =>
+    patchSlide(slide.objects.map((x) => (x.id === sel ? { ...x, ...p } : x)));
 
   const tabs = [
     {
@@ -368,8 +396,32 @@ export function SlidesApp() {
             </div>
           </div>
 
-          {sel ? (
-            <div className="mx-auto mt-3 flex w-fit gap-2">
+          {sel && selObj ? (
+            <div className="mx-auto mt-3 flex w-fit flex-wrap items-center gap-2 text-[12px] text-[var(--tb-muted)]">
+              {selObj.type !== "image" ? (
+                <label className="flex items-center gap-1">
+                  Renk
+                  <input
+                    type="color"
+                    aria-label="Nesne rengi"
+                    value={selObj.fill?.startsWith("#") ? selObj.fill : selObj.type === "text" ? "#f8fafc" : "#3b82f6"}
+                    onChange={(e) => patchSel({ fill: e.target.value })}
+                    className="h-6 w-8 cursor-pointer rounded bg-transparent"
+                  />
+                </label>
+              ) : null}
+              <label className="flex items-center gap-1">
+                Opaklık
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  aria-label="Opaklık"
+                  value={selObj.opacity ?? 100}
+                  onChange={(e) => patchSel({ opacity: Number(e.target.value) })}
+                />
+                <span className="w-8 font-osmono">{selObj.opacity ?? 100}%</span>
+              </label>
               <ToolButton
                 onClick={() => {
                   patchSlide(slide.objects.filter((o) => o.id !== sel));

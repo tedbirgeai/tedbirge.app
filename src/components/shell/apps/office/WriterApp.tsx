@@ -21,12 +21,15 @@ import {
   Redo2,
   Ruler as RulerIcon,
   Table,
+  Search,
   Underline,
   Undo2,
+  X,
 } from "lucide-react";
 
 import { OfficeShell, RibbonGroup, ToolButton, useOfficeEditor } from "./OfficeFrame";
 import { buildWordDoc, downloadBlob, printAsPdf } from "./doc-export";
+import { findInDom, replaceAllInDom, replaceMatch, selectMatch } from "./find-replace";
 
 const FONTS = ["Inter", "Georgia", "Times New Roman", "Courier New", "Arial"];
 const SIZES = [10, 11, 12, 14, 16, 18, 24, 32];
@@ -145,6 +148,56 @@ export function WriterApp() {
     input.click();
   };
 
+  const [find, setFind] = useState({ open: false, q: "", r: "", cs: false, pos: 0 });
+  const [matchCount, setMatchCount] = useState(0);
+  useEffect(() => {
+    const el = pageRef.current;
+    setMatchCount(el && find.open ? findInDom(el, find.q, find.cs).length : 0);
+  }, [find, editor.text]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const k = e.key.toLowerCase();
+      if (k !== "f" && k !== "h") return;
+      const host = pageRef.current?.closest(".tbos-window") ?? pageRef.current?.parentElement;
+      if (!host || !(host.contains(document.activeElement) || document.activeElement === document.body)) return;
+      e.preventDefault();
+      const s = document.getSelection()?.toString() ?? "";
+      setFind((f) => ({ ...f, open: true, q: s && s.length < 80 ? s : f.q }));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const step = (dir: number) => {
+    const el = pageRef.current;
+    if (!el) return;
+    const ms = findInDom(el, find.q, find.cs);
+    if (!ms.length) return;
+    const pos = (find.pos + dir + ms.length) % ms.length;
+    selectMatch(ms[pos]!);
+    setFind((f) => ({ ...f, pos }));
+  };
+  const replaceOne = () => {
+    const el = pageRef.current;
+    if (!el) return;
+    const ms = findInDom(el, find.q, find.cs);
+    const m = ms[Math.min(find.pos, ms.length - 1)];
+    if (!m) return;
+    replaceMatch(m, find.r);
+    push();
+    const next = findInDom(el, find.q, find.cs);
+    if (next.length) selectMatch(next[Math.min(find.pos, next.length - 1)]!);
+  };
+  const replaceAll = () => {
+    const el = pageRef.current;
+    if (!el) return;
+    replaceAllInDom(el, find.q, find.r, find.cs);
+    push();
+    setFind((f) => ({ ...f, pos: 0 }));
+  };
+
   const tabs = [
     {
       id: "giris",
@@ -207,6 +260,34 @@ export function WriterApp() {
               title="Altı çizili"
             />
           </RibbonGroup>
+
+          <RibbonGroup label="Renk">
+            <label className="flex items-center gap-1 text-[11px] text-[var(--tb-muted)]">
+              A
+              <input
+                type="color"
+                aria-label="Metin rengi"
+                defaultValue="#111827"
+                onChange={(e) => cmd("foreColor", e.target.value)}
+                className="h-6 w-7 cursor-pointer rounded bg-transparent"
+              />
+            </label>
+            <label className="flex items-center gap-1 text-[11px] text-[var(--tb-muted)]">
+              Vurgu
+              <input
+                type="color"
+                aria-label="Vurgu rengi"
+                defaultValue="#fde047"
+                onChange={(e) => cmd("hiliteColor", e.target.value)}
+                className="h-6 w-7 cursor-pointer rounded bg-transparent"
+              />
+            </label>
+          </RibbonGroup>
+
+          <RibbonGroup label="Düzenleme">
+            <ToolButton onClick={() => setFind((f) => ({ ...f, open: true }))} icon={<Search className="h-4 w-4" />} label="Bul/Değiştir" />
+          </RibbonGroup>
+
 
           <RibbonGroup label="Paragraf">
             <ToolButton
@@ -344,6 +425,58 @@ export function WriterApp() {
         </span>
       }
     >
+      {find.open ? (
+        <div
+          className="flex flex-wrap items-center gap-2 border-b px-3 py-1.5 text-[12px]"
+          style={{ borderColor: "var(--border)" }}
+          role="search"
+        >
+          <input
+            autoFocus
+            value={find.q}
+            onChange={(e) => setFind((f) => ({ ...f, q: e.target.value, pos: 0 }))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") step(e.shiftKey ? -1 : 1);
+              if (e.key === "Escape") setFind((f) => ({ ...f, open: false }));
+            }}
+            placeholder="Bul"
+            aria-label="Bul"
+            className="w-40 rounded-md bg-transparent px-2 py-1 text-[var(--tb-text)] outline-none"
+            style={{ border: "1px solid var(--border)" }}
+          />
+          <input
+            value={find.r}
+            onChange={(e) => setFind((f) => ({ ...f, r: e.target.value }))}
+            placeholder="Değiştir"
+            aria-label="Değiştir"
+            className="w-40 rounded-md bg-transparent px-2 py-1 text-[var(--tb-text)] outline-none"
+            style={{ border: "1px solid var(--border)" }}
+          />
+          <span className="font-osmono text-[11px] text-[var(--tb-muted)]">
+            {matchCount ? `${Math.min(find.pos + 1, matchCount)}/${matchCount}` : "0 eşleşme"}
+          </span>
+          <ToolButton onClick={() => step(-1)} label="Önceki" />
+          <ToolButton onClick={() => step(1)} label="Sonraki" />
+          <ToolButton onClick={replaceOne} label="Değiştir" />
+          <ToolButton onClick={replaceAll} label="Tümünü değiştir" />
+          <label className="flex items-center gap-1 text-[var(--tb-muted)]">
+            <input
+              type="checkbox"
+              checked={find.cs}
+              onChange={(e) => setFind((f) => ({ ...f, cs: e.target.checked }))}
+            />
+            Aa
+          </label>
+          <button
+            type="button"
+            aria-label="Bul panelini kapat"
+            onClick={() => setFind((f) => ({ ...f, open: false }))}
+            className="ml-auto text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : null}
       <div className="min-h-0 flex-1 overflow-auto p-6">
         <div className="mx-auto" style={{ width: 794 * zoom }}>
           {ruler ? (
