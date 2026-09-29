@@ -22,7 +22,9 @@ import { ClockWidget } from "@/components/shell/ClockWidget";
 import { ContextMenu, type MenuItem } from "@/components/shell/ContextMenu";
 import { AppPropertiesDialog, appMenuItems } from "@/components/shell/AppContextMenu";
 import { notifyError, notifyOk } from "@/lib/shell/notify";
-import { useWallpaper } from "@/lib/ui/wallpaper";
+import { isLiveWallpaper, startWallpaperScheduler, useWallpaper } from "@/lib/ui/wallpaper";
+import { DynamicWallpaper } from "@/components/shell/DynamicWallpaper";
+import { TrayClock } from "@/components/shell/ClockCenter";
 import {
   deleteFile,
   listFiles,
@@ -101,6 +103,10 @@ export function Desktop({
   const layout = useDesktopLayout();
   const compact = useIsCompact();
   const wallpaper = useWallpaper();
+  useEffect(() => startWallpaperScheduler(), []);
+  const live = isLiveWallpaper(wallpaper.id) ? (
+    <DynamicWallpaper kind={wallpaper.id as "live-flow" | "live-particles"} />
+  ) : null;
 
   const [files, setFiles] = useState<VfsEntry[]>([]);
   const [selection, setSelection] = useState<string[]>([]);
@@ -416,7 +422,7 @@ export function Desktop({
     return (
       <div
         className="tbos-wallpaper absolute inset-0 overflow-hidden"
-        data-image={wallpaper.id === "aurora" ? "off" : "on"}
+        data-image={wallpaper.id === "aurora" || live ? "off" : "on"}
         onContextMenu={(e) => {
           e.preventDefault();
           if (e.target !== e.currentTarget) return;
@@ -424,6 +430,7 @@ export function Desktop({
           setMenu({ x: e.clientX - r.left, y: e.clientY - r.top });
         }}
       >
+        {live}
         <DesktopPager
           ids={installed.filter((id) => catalogApp(id))}
           renderIcon={(id) => {
@@ -469,8 +476,10 @@ export function Desktop({
     <div
       ref={hostRef}
       className="tbos-wallpaper absolute inset-0 overflow-hidden"
-      data-image={wallpaper.id === "aurora" ? "off" : "on"}
+      data-image={wallpaper.id === "aurora" || live ? "off" : "on"}
     >
+      {live}
+      <TrayClock />
       <DesktopGrid
         onPointerDown={startBand}
         onPointerMove={moveBand}
