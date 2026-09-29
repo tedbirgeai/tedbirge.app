@@ -207,7 +207,8 @@ export function classifyIntent(prompt: string): Intent {
   const appAsk = APP_PATTERNS.some((re) => re.test(t));
   const target = detectTarget(t);
 
-  if (target && !appAsk) {
+  // Yönetimsel/analitik metinler her zaman Mod B'dir; üretim isteği gibi okunmaz.
+  if (target && (!appAsk || isInspect(target))) {
     return { mode: "sistem", patch: patchFor(target, t), reason: reasonFor(target) };
   }
   if (appAsk) {
@@ -237,6 +238,7 @@ function reasonFor(target: SystemTarget): string {
     guvenlik: "Güvenlik, izin ve yalıtım sınırları incelenir.",
     performans: "Bellek ve akıcılık göstergeleri incelenir.",
     arayuz: "Pencere ve masaüstü düzeni katmanı incelenir.",
+    denetim: "Sistem geneli denetlenir ve teşhis raporu üretilir.",
   };
   return `${labels[target]} Yeni uygulama klasörü veya masaüstü ikonu oluşturulmaz.`;
 }
