@@ -132,7 +132,37 @@ export function AxiomBotPanel() {
         </button>
       </div>
 
+      <div
+        className="flex flex-wrap items-center gap-1.5 px-4 py-2 text-[11px]"
+        style={{ borderBottom: "1px solid var(--tb-border)", color: "var(--tb-muted)" }}
+        aria-label="Çekirdek durumu"
+      >
+        <span className="rounded-full px-2 py-0.5" style={{ background: "var(--tb-panel-soft)" }}>
+          Bağlı cihaz: {status2.directPeers}
+        </span>
+        <span className="rounded-full px-2 py-0.5" style={{ background: "var(--tb-panel-soft)" }}>
+          {status2.text}
+        </span>
+        <span className="rounded-full px-2 py-0.5" style={{ background: "var(--tb-panel-soft)" }}>
+          Sırada: {status2.queued}
+        </span>
+        <span className="rounded-full px-2 py-0.5" style={{ background: "var(--tb-panel-soft)" }}>
+          Hakikat motoru bağlı
+        </span>
+      </div>
+
+      {patch ? (
+        <div
+          className="mx-4 mt-2 rounded-lg px-3 py-2 text-[12px]"
+          style={{ background: "var(--tb-panel-soft)", color: "var(--tb-text)" }}
+          role="status"
+        >
+          Sistem bileşeni yerinde güncellendi — {patch}
+        </div>
+      ) : null}
+
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3 text-[14px]">
+
         {!messages.length ? (
           <p style={{ color: "var(--tb-muted)" }}>
             Henüz sohbet yok. Bir soru sorun ya da "2 + 2 = 4" gibi bir iddia yazın.
