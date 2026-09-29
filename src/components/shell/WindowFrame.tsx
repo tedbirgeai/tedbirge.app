@@ -214,7 +214,8 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
   const onResizeStart = useCallback(
     (edge: Edge) => (e: ReactPointerEvent<HTMLDivElement>) => {
       focusWindow(win.id);
-      setDragging(true);
+      setDragging(true, "resize");
+
       size.current = {
         edge,
         px: e.clientX,
@@ -368,7 +369,10 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
           </span>
         </div>
 
-        <div className="tbos-scale flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
+        <div className="tbos-window-body tbos-scale flex min-h-0 flex-1 flex-col overflow-hidden">
+          {children}
+        </div>
+
 
         {!win.maximized
           ? HANDLES.map((h) => (
