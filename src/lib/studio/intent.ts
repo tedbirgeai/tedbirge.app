@@ -1,16 +1,18 @@
 /**
- * NİYET SINIFLANDIRICI (INTENT ROUTING)
+ * NİYET SINIFLANDIRICI VE YETENEK TÜRETİCİ (INTENT ROUTING & CAPABILITIES)
  * ------------------------------------------------------------------
  * AxiomStudio ve sohbet konsolu iki modda çalışır:
  *
  *  Mod A — "uygulama": kullanıcı AÇIKÇA bağımsız yeni bir program istediğinde.
- *          Yalnız bu modda /repo/apps/<slug>/ açılır ve masaüstü/Dock kaydı yapılır.
+ *           Yalnız bu modda /repo/apps/<slug>/ açılır ve masaüstü/Dock kaydı yapılır.
  *  Mod B — "sistem": kullanıcı mevcut sistem bileşenlerini geliştirmek istediğinde.
- *          Yeni ikon üretilmez; ilgili çekirdek modül yerinde güncellenir.
+ *           Yeni ikon üretilmez; ilgili çekirdek modül yerinde güncellenir.
  *
  * Belirsiz istekler "belirsiz" döner; kabuk kullanıcıdan onay ister.
- * Sınıflandırma tamamen yereldir ve deterministiktir (metin cihazdan çıkmaz).
+ * Ayrıca girilen istemden gerekli çekirdek yeteneklerini (capabilities) türetir.
  */
+
+import type { Capability } from "@/kernel/capabilities";
 
 export type IntentMode = "uygulama" | "sistem" | "belirsiz";
 
@@ -50,10 +52,9 @@ export type SystemPatch =
   | { target: InspectTarget };
 
 export type Intent =
-  | { mode: "uygulama"; reason: string }
-  | { mode: "sistem"; patch: SystemPatch; reason: string }
-  | { mode: "belirsiz"; reason: string };
-
+  | { mode: "uygulama"; reason: string; capabilities?: Capability[] }
+  | { mode: "sistem"; patch: SystemPatch; reason: string; capabilities?: Capability[] }
+  | { mode: "belirsiz"; reason: string; capabilities?: Capability[] };
 
 const FOLD: Record<string, string> = {
   ı: "i",
@@ -75,7 +76,6 @@ const norm = (s: string) =>
     .toLocaleLowerCase("tr")
     .replace(/[ıİIçğöşüâîû]/g, (c) => FOLD[c] ?? c)
     .replace(/\s+/g, " ")
-
     .trim();
 
 /** Bağımsız program talebini gösteren açık kalıplar. */
@@ -84,13 +84,11 @@ const APP_PATTERNS: RegExp[] = [
   /(uygulama|app|program|pano|arac)\s*(olustur|yap|uret|kur|yaz|gelistir|ekle)/,
   /(uygulamasi|programi|panosu)\s*(olustur|yap|uret|yaz)/,
   /\bapp\s*(olustur|yap)\b/,
-  // "Yeni bir hesap makinesi yap" gibi açık bağımsız yazılım talepleri.
   /(yeni|sifirdan|bagimsiz|ayri)\s+bir\s+[a-z0-9 ]{2,40}\s*(olustur|yap|uret|yaz|kodla|gelistir)/,
 ];
 
 /**
  * Semantik sözlük — günlük konuşma dili, şikâyet ve arzu kalıpları dahil.
- * Sıralama önemlidir: daha özgül katmanlar üstte yer alır.
  */
 const TARGET_WORDS: Array<{ target: SystemTarget; words: string[] }> = [
   {
@@ -181,8 +179,6 @@ const INSPECT_TARGETS: InspectTarget[] = [
 ];
 
 const isInspect = (t: SystemTarget): t is InspectTarget => (INSPECT_TARGETS as SystemTarget[]).includes(t);
-
-
 const has = (t: string, words: string[]) => words.some((w) => t.includes(w));
 
 function detectTarget(t: string): SystemTarget | null {
@@ -197,33 +193,68 @@ function themeFrom(t: string): "crystal" | "soft" | "night" | undefined {
   return undefined;
 }
 
+/**
+ * İstem metninden gerekli çekirdek yeteneklerini (capabilities) türetir.
+ */
+export function inferCapabilities(prompt: string): Capability[] {
+  const t = norm(prompt);
+  const caps = new Set<Capability>();
+
+  if (has(t, ["mesaj", "gonder", "send", "sohbet", "chat"])) caps.add("mesh.send");
+  if (has(t, ["dinle", "gelen", "receive", "bildirim"])) caps.add("mesh.receive");
+  if (has(t, ["rota", "dugum", "p2p", "mesh", "webrtc"])) caps.add("mesh.route");
+  if (has(t, ["limen", "senkron", "sync"])) caps.add("limen.p2p.sync");
+  if (has(t, ["kimlik", "identity", "profil"])) caps.add("identity.read");
+  if (has(t, ["durum", "status", "sistem"])) caps.add("status.read");
+  if (has(t, ["dosya", "file", "oku", "read"])) {
+    caps.add("files.read");
+    caps.add("fs.read");
+  }
+  if (has(t, ["yaz", "kaydet", "write", "depo", "vfs"])) {
+    caps.add("files.write");
+    caps.add("fs.write");
+    caps.add("vfs.appdata");
+  }
+  if (has(t, ["sil", "delete"])) caps.add("files.delete");
+  if (has(t, ["wasm", "derle", "assemblyscript"])) caps.add("compiler.wasm");
+  if (has(t, ["ui", "arayuz", "komponent", "tsx", "jsx", "react"])) caps.add("compiler.ui");
+
+  if (caps.size === 0) {
+    caps.add("vfs.appdata");
+    caps.add("compiler.ui");
+  }
+
+  return Array.from(caps);
+}
+
 const OFF_RE = /\b(kapat|kapa|iptal|sustur|sessiz)\b/;
 const ON_RE = /\b(ac|acik|etkinlestir|baslat|aktif)\b/;
-
 
 /** İstemi Mod A / Mod B / belirsiz olarak sınıflandırır. */
 export function classifyIntent(prompt: string): Intent {
   const t = norm(prompt);
-  if (!t) return { mode: "belirsiz", reason: "İstem boş." };
+  const capabilities = inferCapabilities(prompt);
+  if (!t) return { mode: "belirsiz", reason: "İstem boş.", capabilities };
 
   const appAsk = APP_PATTERNS.some((re) => re.test(t));
   const target = detectTarget(t);
 
-  // Yönetimsel/analitik metinler ve mevcut sistem bileşeni istekleri her zaman Mod B'dir.
   const explicitAppNoun = /(uygulama|uygulamasi|app|program|programi|pano|panosu|arac)/.test(t);
   if (target && (!appAsk || target === "denetim" || !explicitAppNoun)) {
-    return { mode: "sistem", patch: patchFor(target, t), reason: reasonFor(target) };
+    return { mode: "sistem", patch: patchFor(target, t), reason: reasonFor(target), capabilities };
   }
   if (appAsk) {
     return {
       mode: "uygulama",
       reason: "İstem açıkça bağımsız yeni bir program üretimi istiyor.",
+      capabilities,
     };
   }
   return {
     mode: "belirsiz",
     reason:
       "İstem ne mevcut bir sistem bileşenini ne de açıkça yeni bir programı işaret ediyor. Masaüstü kirlenmesin diye üretim yapılmadı.",
+    capabilities,
   };
 }
 
@@ -246,11 +277,9 @@ function reasonFor(target: SystemTarget): string {
   return `${labels[target]} Yeni uygulama klasörü veya masaüstü ikonu oluşturulmaz.`;
 }
 
-
 function patchFor(target: SystemTarget, t: string): SystemPatch {
   if (isInspect(target)) return { target };
   switch (target) {
-
     case "tema": {
       const theme = themeFrom(t);
       return theme ? { target: "tema", theme } : { target: "tema" };
@@ -283,7 +312,6 @@ function patchFor(target: SystemTarget, t: string): SystemPatch {
       if (OFF_RE.test(t)) return { target: "ses", muted: true };
       if (ON_RE.test(t)) return { target: "ses", muted: false };
       return { target: "ses", muted: false };
-
     }
     case "ayarlar":
       return { target: "ayarlar" };
