@@ -80,13 +80,13 @@ export function evaluate(raw: string, cells: Cells, stack: Set<string> = new Set
   if (!raw.startsWith("=")) return raw;
   try {
     const v = compute(raw.slice(1), cells, stack);
-    const s = Array.isArray(v) ? v[0] ?? "" : v;
+    const s = (Array.isArray(v) ? (flat(v)[0] ?? "") : v) as string | number | boolean;
     if (typeof s === "boolean") return s ? "TRUE" : "FALSE";
     if (typeof s === "number") {
       if (!Number.isFinite(s)) return "#DIV/0";
       return String(Math.round(s * 1e10) / 1e10);
     }
-    const s = (Array.isArray(v) ? (flat(v)[0] ?? "") : v) as string | number | boolean;
+    return s;
   } catch (e) {
     return e instanceof FormulaError ? e.message : "#HATA";
   }
