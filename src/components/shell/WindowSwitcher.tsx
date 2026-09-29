@@ -217,17 +217,18 @@ export function WindowSwitcher({ surface }: { surface: { current: HTMLElement | 
       role="dialog"
       aria-label="Pencere geçişi"
     >
-      <ul className="flex max-w-[92vw] flex-wrap justify-center gap-2 rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel)]/95 p-3 shadow-2xl">
+      <ul className="animate-scale-in flex max-w-[92vw] flex-wrap justify-center gap-2 rounded-2xl border border-[var(--tb-border)] bg-[var(--tb-panel)]/95 p-3 shadow-2xl">
         {items.map((w, i) => (
           <li
             key={w.id}
             aria-current={i === switcher.index}
-            className={`min-h-12 min-w-[140px] rounded-xl px-3 py-2 text-left font-osmono text-[12px] ${
+            className={`min-h-12 min-w-[140px] rounded-xl px-3 py-2 text-left font-osmono text-[12px] transition-all duration-150 ease-out ${
               i === switcher.index
-                ? "bg-[var(--tb-accent)] text-[var(--tb-bg)]"
-                : "text-[var(--tb-muted)]"
+                ? "scale-[1.04] bg-[var(--tb-accent)] text-[var(--tb-bg)] shadow-lg"
+                : "scale-100 text-[var(--tb-muted)]"
             }`}
           >
+
             <span className="flex items-center gap-2">
               <AppIconSurface id={w.appId} size="window" />
               <span className="block truncate">{w.title}</span>
