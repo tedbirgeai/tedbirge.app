@@ -85,8 +85,8 @@ export function LicenseModal({ open, peers, onClose, onSuccess }: LicenseModalPr
           tier === "operator"
             ? "DEVELOPER_PRO"
             : tier === "enterprise"
-            ? "ENTERPRISE_NODE"
-            : "COMMUNITY";
+              ? "ENTERPRISE_NODE"
+              : "COMMUNITY";
 
         if (mappedTier !== "COMMUNITY") {
           await adapter.openCheckout(mappedTier, { nodes: Math.max(peers, FREE_DEVICE_LIMIT + 1) });
@@ -112,7 +112,10 @@ export function LicenseModal({ open, peers, onClose, onSuccess }: LicenseModalPr
     try {
       const result = await adapter.verifyLicenseKey(licenseKeyInput);
       if (result.isLicensed) {
-        saveLicense({ requestedTier: result.tier.toLowerCase() as LicenseTierId, peakDevices: peers });
+        saveLicense({
+          requestedTier: result.tier.toLowerCase() as LicenseTierId,
+          peakDevices: peers,
+        });
         if (onSuccess) onSuccess(result.tier);
         onClose();
       } else {
@@ -183,7 +186,9 @@ export function LicenseModal({ open, peers, onClose, onSuccess }: LicenseModalPr
                       ? t("lic.unlimited")
                       : `${tier.devices} ${t("lic.devices")}`}{" "}
                     ·{" "}
-                    {tier.monthlyUsd === 0 ? t("lic.free") : `$${tier.monthlyUsd}/${t("lic.month")}`}
+                    {tier.monthlyUsd === 0
+                      ? t("lic.free")
+                      : `$${tier.monthlyUsd}/${t("lic.month")}`}
                   </div>
                   <ul className="mt-2 space-y-1 font-osmono text-[10px] text-[var(--tb-muted)]">
                     {tier.features.map((f) => (

@@ -20,9 +20,10 @@ export const ProofViewer: React.FC<ProofViewerProps> = ({ result }) => {
   }
 
   const isProven = result.status === "200_PROVEN";
-  const proofSteps = result.steps && result.steps.length > 0 
-    ? result.steps 
-    : ["Z3 SMT ve Lean 4 kanıt denetleyicisi yürütüldü."];
+  const proofSteps =
+    result.steps && result.steps.length > 0
+      ? result.steps
+      : ["Z3 SMT ve Lean 4 kanıt denetleyicisi yürütüldü."];
 
   return (
     <div className="space-y-3 rounded-xl border border-emerald-500/30 bg-zinc-950/80 p-4 shadow-2xl backdrop-blur-md">
@@ -65,10 +66,15 @@ export const ProofViewer: React.FC<ProofViewerProps> = ({ result }) => {
 
       {/* İspat Adımları */}
       <div className="space-y-1 font-mono text-xs">
-        <span className="text-zinc-400 text-[11px] font-semibold">İspat Adımları (Proof Trace):</span>
+        <span className="text-zinc-400 text-[11px] font-semibold">
+          İspat Adımları (Proof Trace):
+        </span>
         <div className="rounded bg-black/60 p-2.5 border border-zinc-800 space-y-1 max-h-52 overflow-y-auto">
           {proofSteps.map((step, idx) => (
-            <div key={idx} className="text-emerald-400/90 text-[11px] flex items-start gap-1.5 font-mono leading-relaxed">
+            <div
+              key={idx}
+              className="text-emerald-400/90 text-[11px] flex items-start gap-1.5 font-mono leading-relaxed"
+            >
               <span className="text-zinc-600 select-none">›</span>
               <span className="break-all">{step}</span>
             </div>

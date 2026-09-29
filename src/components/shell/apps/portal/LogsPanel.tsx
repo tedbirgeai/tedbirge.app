@@ -45,7 +45,6 @@ function download(name: string, mime: string, body: string) {
   URL.revokeObjectURL(url);
 }
 
-
 export function LogsPanel() {
   const { ready, logs, clearLogs } = usePortal();
   const [q, setQ] = useState("");
@@ -64,17 +63,30 @@ export function LogsPanel() {
     const p = prev.current;
     const add: PortalLog[] = [];
     if (sched.blocked > p.blocked)
-      add.push({ id: `sc-b-${Date.now()}`, at: Date.now(), level: "uyari", source: "tasiyici", message: `${sched.blocked - p.blocked} gönderim bölge kuralıyla bekletildi (${sched.region})` });
+      add.push({
+        id: `sc-b-${Date.now()}`,
+        at: Date.now(),
+        level: "uyari",
+        source: "tasiyici",
+        message: `${sched.blocked - p.blocked} gönderim bölge kuralıyla bekletildi (${sched.region})`,
+      });
     if (sched.sent > p.sent)
-      add.push({ id: `sc-s-${Date.now()}`, at: Date.now(), level: "bilgi", source: "tasiyici", message: `${sched.sent - p.sent} çerçeve gönderildi` });
+      add.push({
+        id: `sc-s-${Date.now()}`,
+        at: Date.now(),
+        level: "bilgi",
+        source: "tasiyici",
+        message: `${sched.sent - p.sent} çerçeve gönderildi`,
+      });
     prev.current = { sent: sched.sent, blocked: sched.blocked };
     if (add.length) setEvents((e) => [...add, ...e].slice(0, MAX_ROWS));
   }, [sched.sent, sched.blocked, sched.region]);
   const svcEvents = useServiceEvents();
   const svcLogs = useMemo(() => serviceEventsToLogs(svcEvents), [svcEvents]);
-  const source = paused && frozen
-    ? frozen
-    : [...svcLogs, ...events, ...logs].sort((a, b) => b.at - a.at).slice(0, MAX_ROWS);
+  const source =
+    paused && frozen
+      ? frozen
+      : [...svcLogs, ...events, ...logs].sort((a, b) => b.at - a.at).slice(0, MAX_ROWS);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");

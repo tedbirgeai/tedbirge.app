@@ -155,7 +155,12 @@ async function handleAxiomMethod(
         simulated: Boolean(result.simulated),
       }).catch(() => undefined);
     }
-    return ok(id, { ...result, lang, matches, chip: `/api/public/proof-chip/${encodeURIComponent(result.cid)}` });
+    return ok(id, {
+      ...result,
+      lang,
+      matches,
+      chip: `/api/public/proof-chip/${encodeURIComponent(result.cid)}`,
+    });
   } catch {
     // Sıfır günlük: hata içeriği dışa verilmez.
     return err(id, JSONRPC_ERRORS.internal, "Doğrulama tamamlanamadı");

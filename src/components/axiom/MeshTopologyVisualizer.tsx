@@ -24,7 +24,7 @@ export const MeshTopologyVisualizer: React.FC = () => {
         prev.map((p) => ({
           ...p,
           latencyMs: Math.max(8, p.latencyMs + Math.floor(Math.random() * 5) - 2),
-        }))
+        })),
       );
     }, 2000);
     return () => clearInterval(interval);

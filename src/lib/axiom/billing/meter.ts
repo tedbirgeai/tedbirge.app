@@ -208,7 +208,7 @@ export function meterResetForTest(): void {
 export async function executeWithAutoRefund<T extends { verdict: VerifyVerdict }>(
   clientKey: string | null | undefined,
   proofTask: () => Promise<T>,
-  options?: { engine?: EngineId; omni?: boolean; planTier?: PlanTier }
+  options?: { engine?: EngineId; omni?: boolean; planTier?: PlanTier },
 ): Promise<T & { refunded?: boolean }> {
   const activePlan = options?.planTier ?? getStoredPlanTier();
   const planConfig = AXIOM_TIERS[activePlan];

@@ -15,18 +15,27 @@ self.onmessage = async (e: MessageEvent<Req>) => {
     (self as unknown as Worker).postMessage({ id, phase: "compiling" });
     const sources: Record<string, string> = {};
     for (const [k, v] of Object.entries(files)) sources[k] = v;
-    const r = await asc.compileString(
-      { [entry]: sources[entry] ?? "" },
-      { optimizeLevel: 2, runtime: "stub", use: ["abort="] } as never,
-    );
+    const r = await asc.compileString({ [entry]: sources[entry] ?? "" }, {
+      optimizeLevel: 2,
+      runtime: "stub",
+      use: ["abort="],
+    } as never);
     const stderr = String(r.stderr ?? "");
     const binary = r.binary as Uint8Array | undefined;
     if (r.error || !binary) {
-      (self as unknown as Worker).postMessage({ id, ok: false, stderr: stderr || String(r.error?.message ?? "Derleme başarısız") });
+      (self as unknown as Worker).postMessage({
+        id,
+        ok: false,
+        stderr: stderr || String(r.error?.message ?? "Derleme başarısız"),
+      });
       return;
     }
     (self as unknown as Worker).postMessage({ id, ok: true, binary, stderr }, [binary.buffer]);
   } catch (err) {
-    (self as unknown as Worker).postMessage({ id, ok: false, stderr: err instanceof Error ? err.message : "Derleyici hatası" });
+    (self as unknown as Worker).postMessage({
+      id,
+      ok: false,
+      stderr: err instanceof Error ? err.message : "Derleyici hatası",
+    });
   }
 };

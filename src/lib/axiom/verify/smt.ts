@@ -25,12 +25,16 @@ export function toSmtLib(ir: AxiomIr, matches: InvariantMatch[]): string {
   const lines: string[] = ["(set-logic QF_NRA)", "(set-option :produce-models true)"];
 
   // 1. Girdide Mantıksal Çelişki Tespiti (Örn: p ∧ -p, p ∧ ¬p, p ∧ !p, p and not p)
-  const rawText = ((ir as { raw?: string; code?: string; statement?: string })?.raw ||
+  const rawText = (
+    (ir as { raw?: string; code?: string; statement?: string })?.raw ||
     (ir as { raw?: string; code?: string; statement?: string })?.code ||
     (ir as { raw?: string; code?: string; statement?: string })?.statement ||
-    "").trim();
+    ""
+  ).trim();
 
-  const contradictionMatch = rawText.match(/\b([a-zA-Z_]\w*)\s*(?:∧|and|\&)\s*(?:¬|-|!|not\s+)\1\b/i);
+  const contradictionMatch = rawText.match(
+    /\b([a-zA-Z_]\w*)\s*(?:∧|and|&)\s*(?:¬|-|!|not\s+)\1\b/i,
+  );
 
   if (contradictionMatch) {
     const varName = contradictionMatch[1];

@@ -26,17 +26,17 @@ function isPrivateIPv4Int(n: number): boolean {
   // 127.0.0.0/8
   if (n >>> 24 === 127) return true;
   // 169.254.0.0/16 (link-local + AWS/GCP metadata)
-  if (n >>> 16 === (169 << 8 | 254)) return true;
+  if (n >>> 16 === ((169 << 8) | 254)) return true;
   // 172.16.0.0/12
-  if ((n >>> 20) === ((172 << 4) | 1)) return true;
+  if (n >>> 20 === ((172 << 4) | 1)) return true;
   // 192.168.0.0/16
-  if (n >>> 16 === (192 << 8 | 168)) return true;
+  if (n >>> 16 === ((192 << 8) | 168)) return true;
   // 100.64.0.0/10 CGNAT
-  if ((n >>> 22) === ((100 << 2) | 1)) return true;
+  if (n >>> 22 === ((100 << 2) | 1)) return true;
   // 224.0.0.0/4 multicast
-  if ((n >>> 28) === 0xe) return true;
+  if (n >>> 28 === 0xe) return true;
   // 240.0.0.0/4 reserved
-  if ((n >>> 28) >= 0xf) return true;
+  if (n >>> 28 >= 0xf) return true;
   return false;
 }
 

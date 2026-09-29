@@ -4,16 +4,42 @@ import { autonomyOf, formatStatus, hitTest, quotaOf, statusSummary } from "@/lib
 import type { PortalNode } from "@/lib/portal/types";
 
 const node = (o: Partial<PortalNode>): PortalNode => ({
-  id: "n", label: "n", region: "r", status: "cevrimici", cpu: 1, memory: 1, latency: 100, quality: 90, lastSeen: 0, ...o,
+  id: "n",
+  label: "n",
+  region: "r",
+  status: "cevrimici",
+  cpu: 1,
+  memory: 1,
+  latency: 100,
+  quality: 90,
+  lastSeen: 0,
+  ...o,
 });
-const snap = { region: "TR", limitNote: "", usedMs: 0, budgetMs: 1000, ratio: 0, nextWindowAt: null, queued: 0, sent: 0, blocked: 0 };
+const snap = {
+  region: "TR",
+  limitNote: "",
+  usedMs: 0,
+  budgetMs: 1000,
+  ratio: 0,
+  nextWindowAt: null,
+  queued: 0,
+  sent: 0,
+  blocked: 0,
+};
 
 describe("durum barı", () => {
   it("boş", () => {
-    expect(formatStatus(statusSummary([], [], null, false))).toBe("0 cihaz aktif | — ms RTT | Mesh ölçülmedi");
+    expect(formatStatus(statusSummary([], [], null, false))).toBe(
+      "0 cihaz aktif | — ms RTT | Mesh ölçülmedi",
+    );
   });
   it("canlı + portal", () => {
-    const s = statusSummary([node({ latency: 100 }), node({ status: "cevrimdisi" })], [{ nodeId: "p", state: "connected" }], 200, true);
+    const s = statusSummary(
+      [node({ latency: 100 }), node({ status: "cevrimdisi" })],
+      [{ nodeId: "p", state: "connected" }],
+      200,
+      true,
+    );
     expect(s).toMatchObject({ active: 2, rttMs: 150, sample: true });
   });
 });
@@ -34,7 +60,9 @@ describe("dışa aktarma", () => {
     expect(csvCell('a"b')).toBe('"a""b"');
   });
   it("NDJSON satır başına bir nesne, ms'li zaman", () => {
-    const logs = [{ id: "1", at: 1_700_000_000_123, level: "bilgi" as const, source: "s", message: "m" }];
+    const logs = [
+      { id: "1", at: 1_700_000_000_123, level: "bilgi" as const, source: "s", message: "m" },
+    ];
     const lines = logsToNdjson([...logs, ...logs]).split("\n");
     expect(lines).toHaveLength(2);
     expect(JSON.parse(lines[0]).at).toBe("2023-11-14T22:13:20.123Z");
@@ -48,7 +76,10 @@ describe("kota ve isabet", () => {
     expect(quotaOf(6, 5).over).toBe(true);
   });
   it("en yakın düğüm seçilir", () => {
-    const pts = [{ id: "a", x: 0, y: 0 }, { id: "b", x: 10, y: 0 }];
+    const pts = [
+      { id: "a", x: 0, y: 0 },
+      { id: "b", x: 10, y: 0 },
+    ];
     expect(hitTest(pts, 8, 0)).toBe("b");
     expect(hitTest(pts, 100, 100)).toBeNull();
   });

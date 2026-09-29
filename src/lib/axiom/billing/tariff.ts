@@ -13,7 +13,7 @@ import type { EngineId } from "@/lib/axiom/verify/types";
  */
 
 // 1. B2B Abonelik Kademeleri (Plan Tiers)
-export type PlanTier = 'COMMUNITY' | 'DEVELOPER' | 'PRO' | 'ENTERPRISE' | 'SOVEREIGN';
+export type PlanTier = "COMMUNITY" | "DEVELOPER" | "PRO" | "ENTERPRISE" | "SOVEREIGN";
 
 export interface PlanConfig {
   monthlyFee: number;
@@ -27,32 +27,32 @@ export const AXIOM_TIERS: Record<PlanTier, PlanConfig> = {
     monthlyFee: 0,
     includedQuota: 100,
     extraCostPerProof: 0,
-    features: ["Browser Extension (Right-Click)", "Basic AST & Type Check"]
+    features: ["Browser Extension (Right-Click)", "Basic AST & Type Check"],
   },
   DEVELOPER: {
     monthlyFee: 10,
     includedQuota: 10000,
     extraCostPerProof: 0.001,
-    features: ["MCP Server Access", "Local WASM Kernel", "Z3 SMT Basic Logic"]
+    features: ["MCP Server Access", "Local WASM Kernel", "Z3 SMT Basic Logic"],
   },
   PRO: {
     monthlyFee: 49,
     includedQuota: 65000,
     extraCostPerProof: 0.0008,
-    features: ["Lean 4 Simulator", "Custom API Key", "Universal Gateway", "5 Team Members"]
+    features: ["Lean 4 Simulator", "Custom API Key", "Universal Gateway", "5 Team Members"],
   },
   ENTERPRISE: {
     monthlyFee: 499,
     includedQuota: 1000000,
     extraCostPerProof: 0.0004,
-    features: ["Dedicated Gateway Node", "99.99% SLA", "SSRF Shield", "ZK Merkle Chain"]
+    features: ["Dedicated Gateway Node", "99.99% SLA", "SSRF Shield", "ZK Merkle Chain"],
   },
   SOVEREIGN: {
     monthlyFee: 0, // Özel Teklif / Custom Quote
     includedQuota: Infinity,
     extraCostPerProof: 0.0001,
-    features: ["Air-Gapped On-Premise", "Custom C-ABI Hardware Enclave", "24/7 SLA"]
-  }
+    features: ["Air-Gapped On-Premise", "Custom C-ABI Hardware Enclave", "24/7 SLA"],
+  },
 };
 
 // 2. Motor Bazlı Ölçüm Katmanları (Engine Billing Tiers)

@@ -1,10 +1,19 @@
 /** Sistem sağlık hesaplaması — tamamen gerçek tablo verisinden türetilir. */
 
-type AnyClient = {
-  // Supabase sorgu zinciri jenerik tipleri burada taşınamıyor.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  from: (table: string) => any;
+/**
+ * Sağlık hesabı için yeterli olan en küçük sorgu yüzeyi.
+ * Zincirin her halkası aynı yüzeyi döndürür; sonuç yalnız satır listesidir.
+ */
+type QueryChain = {
+  select: (columns: string) => QueryChain;
+  gte: (column: string, value: string) => QueryChain;
+  in: (column: string, values: string[]) => QueryChain;
+  then: <T>(
+    onfulfilled: (value: { data: Record<string, unknown>[] | null }) => T,
+  ) => Promise<Awaited<T>>;
 };
+
+type AnyClient = { from: (table: string) => QueryChain };
 
 export type HealthReport = {
   generatedAt: string;

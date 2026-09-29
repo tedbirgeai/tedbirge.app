@@ -115,7 +115,10 @@ export const Route = createFileRoute("/api/public/gateway/$slug")({
           return json({ ok: false, error: "gövde_json_değil" }, 400, cors);
         }
         const claim =
-          parsed && typeof parsed === "object" && "claim" in parsed && typeof (parsed as { claim: unknown }).claim === "string"
+          parsed &&
+          typeof parsed === "object" &&
+          "claim" in parsed &&
+          typeof (parsed as { claim: unknown }).claim === "string"
             ? (parsed as { claim: string }).claim
             : null;
         const decision = gatePacketClaim(claim);
@@ -125,11 +128,7 @@ export const Route = createFileRoute("/api/public/gateway/$slug")({
         }
 
         markRestCall(params.slug, true);
-        return json(
-          { ok: true, slug: params.slug, accepted: true, at: Date.now() },
-          200,
-          cors,
-        );
+        return json({ ok: true, slug: params.slug, accepted: true, at: Date.now() }, 200, cors);
       },
     },
   },

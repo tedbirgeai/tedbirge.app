@@ -17,7 +17,6 @@ export function registerWebhookReceiver(slug: string, label: string): void {
   });
 }
 
-
 export function verifyHmacSha256(secret: string, body: string, signatureHex: string): boolean {
   if (!signatureHex) return false;
   const expected = createHmac("sha256", secret).update(body).digest("hex");

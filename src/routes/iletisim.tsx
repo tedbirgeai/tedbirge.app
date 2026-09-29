@@ -1,16 +1,16 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 
-import { submitContactMessage } from '@/lib/contact.functions';
+import { submitContactMessage } from "@/lib/contact.functions";
 
-export const Route = createFileRoute('/iletisim')({
+export const Route = createFileRoute("/iletisim")({
   component: IletisimPage,
 });
 
 function IletisimPage() {
   const [submitted, setSubmitted] = useState(false);
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ function IletisimPage() {
       await submitContactMessage({ data: { email: email.trim(), message: message.trim() } });
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Mesaj gönderilemedi. Lütfen tekrar deneyin.');
+      setError(err instanceof Error ? err.message : "Mesaj gönderilemedi. Lütfen tekrar deneyin.");
     } finally {
       setBusy(false);
     }
@@ -34,7 +34,8 @@ function IletisimPage() {
       <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
         <h1 className="text-2xl font-bold mb-2 text-emerald-400">Tedbirge® İletişim</h1>
         <p className="text-slate-400 text-sm mb-6">
-          Sistem geliştirmeleri, hata bildirimleri veya kurumsal talepleriniz için doğrudan bize ulaşabilirsiniz.
+          Sistem geliştirmeleri, hata bildirimleri veya kurumsal talepleriniz için doğrudan bize
+          ulaşabilirsiniz.
         </p>
 
         {submitted ? (
@@ -44,7 +45,9 @@ function IletisimPage() {
         ) : (
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">E-posta Adresiniz</label>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">
+                E-posta Adresiniz
+              </label>
               <input
                 type="email"
                 required
@@ -55,7 +58,9 @@ function IletisimPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Mesajınız / Geri Bildiriminiz</label>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">
+                Mesajınız / Geri Bildiriminiz
+              </label>
               <textarea
                 required
                 rows={4}
@@ -75,7 +80,7 @@ function IletisimPage() {
               disabled={busy}
               className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg text-sm transition disabled:opacity-50"
             >
-              {busy ? 'Gönderiliyor…' : 'Mesajı Gönder'}
+              {busy ? "Gönderiliyor…" : "Mesajı Gönder"}
             </button>
           </form>
         )}

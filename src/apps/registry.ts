@@ -30,8 +30,11 @@ export type AppManifest = Omit<ShellApp, "id"> & {
   embed?: EmbedPolicy;
   /** Kısa açıklama (ızgara kartında görünür). */
   hint?: string;
-  /** Uygulama çalıştırıcı bileşeni (React Component). */
-  component?: React.ComponentType<any>;
+  /**
+   * Uygulama çalıştırıcı bileşeni. Kabuk hiçbir zorunlu özellik geçirmez;
+   * bileşenler yalnız isteğe bağlı uygulama kimliği alabilir.
+   */
+  component?: React.ComponentType<{ appId?: string }>;
 };
 
 const CAPS: Record<ShellAppId, Capability[]> = {
@@ -81,7 +84,11 @@ const DESKTOP_CAPS: Record<string, Capability[]> = {
 
 const registry = new Map<string, AppManifest>([
   ...SHELL_APPS.map(
-    (a) => [a.id, { ...a, kind: "builtin" as const, capabilities: CAPS[a.id] ?? ["status.read"] }] as const,
+    (a) =>
+      [
+        a.id,
+        { ...a, kind: "builtin" as const, capabilities: CAPS[a.id] ?? ["status.read"] },
+      ] as const,
   ),
   // Masaüstü yerleşik pencereleri (Dosyalar, Medya, Müzik, Mağaza…):
   // kayıtsız hiçbir pencere açılmaz, her biri yeteneğiyle sınırlıdır.

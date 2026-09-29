@@ -9,11 +9,25 @@ import { json } from "@codemirror/lang-json";
 import { markdown } from "@codemirror/lang-markdown";
 
 const theme = EditorView.theme({
-  "&": { height: "100%", color: "var(--tb-text)", backgroundColor: "var(--tb-panel-solid)", fontSize: "12.5px" },
-  ".cm-content": { fontFamily: "var(--font-osmono, ui-monospace, monospace)", caretColor: "var(--tb-accent)" },
-  ".cm-gutters": { backgroundColor: "var(--tb-panel-solid)", color: "var(--tb-muted)", borderRight: "1px solid var(--tb-border)" },
+  "&": {
+    height: "100%",
+    color: "var(--tb-text)",
+    backgroundColor: "var(--tb-panel-solid)",
+    fontSize: "12.5px",
+  },
+  ".cm-content": {
+    fontFamily: "var(--font-osmono, ui-monospace, monospace)",
+    caretColor: "var(--tb-accent)",
+  },
+  ".cm-gutters": {
+    backgroundColor: "var(--tb-panel-solid)",
+    color: "var(--tb-muted)",
+    borderRight: "1px solid var(--tb-border)",
+  },
   ".cm-activeLine": { backgroundColor: "color-mix(in oklab, var(--tb-accent) 8%, transparent)" },
-  ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": { backgroundColor: "color-mix(in oklab, var(--tb-accent) 25%, transparent)" },
+  ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
+    backgroundColor: "color-mix(in oklab, var(--tb-accent) 25%, transparent)",
+  },
 });
 
 function lang(path: string) {
@@ -93,5 +107,7 @@ export function EditorPane({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path]);
 
-  return <div ref={host} className="h-full min-h-0 overflow-auto" aria-label={`${path} düzenleyici`} />;
+  return (
+    <div ref={host} className="h-full min-h-0 overflow-auto" aria-label={`${path} düzenleyici`} />
+  );
 }

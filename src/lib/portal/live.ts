@@ -37,12 +37,34 @@ export function healthOf(n: Pick<PortalNode, "status" | "latency">): MapHealth {
 
 export function buildMapNodes(nodes: PortalNode[], peers: LivePeer[], selfId: string): MapNode[] {
   const out: MapNode[] = [
-    { id: selfId || "bu-cihaz", label: "Bu cihaz", health: "ok", latency: 0, memoryPct: null, role: "köprü", os: "Tedbirge® WebOS", live: true },
+    {
+      id: selfId || "bu-cihaz",
+      label: "Bu cihaz",
+      health: "ok",
+      latency: 0,
+      memoryPct: null,
+      role: "köprü",
+      os: "Tedbirge® WebOS",
+      live: true,
+    },
   ];
   for (const p of peers) {
     const health: MapHealth =
-      p.state === "connected" ? "ok" : p.state === "failed" || p.state === "closed" ? "error" : "warn";
-    out.push({ id: p.nodeId, label: p.nodeId.slice(0, 10), health, latency: null, memoryPct: null, role: "uç", os: "Tedbirge® WebOS", live: true });
+      p.state === "connected"
+        ? "ok"
+        : p.state === "failed" || p.state === "closed"
+          ? "error"
+          : "warn";
+    out.push({
+      id: p.nodeId,
+      label: p.nodeId.slice(0, 10),
+      health,
+      latency: null,
+      memoryPct: null,
+      role: "uç",
+      os: "Tedbirge® WebOS",
+      live: true,
+    });
   }
   for (const n of nodes) {
     out.push({
@@ -59,7 +81,12 @@ export function buildMapNodes(nodes: PortalNode[], peers: LivePeer[], selfId: st
   return out;
 }
 
-export type StatusSummary = { active: number; rttMs: number | null; meshBytes: number | null; sample: boolean };
+export type StatusSummary = {
+  active: number;
+  rttMs: number | null;
+  meshBytes: number | null;
+  sample: boolean;
+};
 
 export function statusSummary(
   nodes: PortalNode[],
@@ -80,7 +107,8 @@ export function statusSummary(
 
 export function formatStatus(s: StatusSummary): string {
   const rtt = s.rttMs === null ? "— ms RTT" : `${s.rttMs} ms RTT`;
-  const mb = s.meshBytes === null ? "Mesh ölçülmedi" : `${Math.round(s.meshBytes / 1_048_576)} MB Mesh`;
+  const mb =
+    s.meshBytes === null ? "Mesh ölçülmedi" : `${Math.round(s.meshBytes / 1_048_576)} MB Mesh`;
   return `${s.active} cihaz aktif | ${rtt} | ${mb}`;
 }
 
@@ -135,7 +163,11 @@ export function hitTest(
 }
 
 /** Düğümleri çember üzerinde deterministik yerleştirir; merkez bu cihazdır. */
-export function layout(ids: string[], w: number, h: number): { id: string; x: number; y: number }[] {
+export function layout(
+  ids: string[],
+  w: number,
+  h: number,
+): { id: string; x: number; y: number }[] {
   const cx = w / 2;
   const cy = h / 2;
   const r = Math.max(40, Math.min(w, h) / 2 - 36);

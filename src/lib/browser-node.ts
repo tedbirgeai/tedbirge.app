@@ -1,5 +1,10 @@
 import { isRelayEnabled } from "@/shell/relay";
-import { GOSSIP_LABEL, announceGossipLink, openGossipChannel, wrapGossipChannel } from "@/lib/axiom/net/datachannel";
+import {
+  GOSSIP_LABEL,
+  announceGossipLink,
+  openGossipChannel,
+  wrapGossipChannel,
+} from "@/lib/axiom/net/datachannel";
 import { canAcceptPeer, setLicenseTier } from "@/lib/peer-limit";
 
 import { chunkPayload, ingestChunk, isChunkFrame, laneSchedule } from "@/kernel/multipath";

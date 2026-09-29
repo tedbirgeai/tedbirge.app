@@ -59,7 +59,7 @@ export const Route = createFileRoute("/api/public/v1/mcp/verify")({
             cors,
           );
         }
-        let body: any;
+        let body: { method?: unknown; id?: unknown } & Record<string, unknown>;
         try {
           body = JSON.parse(raw);
         } catch {

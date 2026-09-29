@@ -232,9 +232,7 @@ export async function instantiateTbApp(
     },
   };
   const sink = createLogSink(onLog ?? (() => {}));
-  let instance: WebAssembly.Instance | undefined;
-
-  ({ instance } = await WebAssembly.instantiate(bytes, { tedbirge: host }));
+  const { instance } = await WebAssembly.instantiate(bytes, { tedbirge: host });
   let disposed = false;
   return {
     manifest: m,

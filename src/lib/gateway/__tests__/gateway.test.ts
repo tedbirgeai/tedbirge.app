@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { preflightRestBody } from "@/lib/gateway/adapters/rest";
@@ -59,7 +60,6 @@ describe("verifyHmacSha256", () => {
     // sha256("hello", key="s") = precomputed
     const sig = "44f11d5c8578a30ff5e83a4e6d67b3a2bffe97a1b96c1e6f6bc9c3ffea1f7b3d";
     // hesaplamayı çalıştıralım (sabit yerine dinamik doğrulama)
-    const { createHmac } = require("crypto") as typeof import("crypto");
     const expected = createHmac("sha256", "s").update("hello").digest("hex");
     expect(verifyHmacSha256("s", "hello", expected)).toBe(true);
     expect(verifyHmacSha256("s", "hello", sig)).toBe(false);

@@ -25,6 +25,8 @@ export function logsToCsv(logs: PortalLog[]): string {
 
 export function logsToNdjson(logs: PortalLog[]): string {
   return logs
-    .map((l) => JSON.stringify({ at: isoMs(l.at), level: l.level, source: l.source, message: l.message }))
+    .map((l) =>
+      JSON.stringify({ at: isoMs(l.at), level: l.level, source: l.source, message: l.message }),
+    )
     .join("\n");
 }

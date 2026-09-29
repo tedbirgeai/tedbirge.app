@@ -40,24 +40,28 @@ export function ServicesCard() {
           <li key={s.name} className="flex items-center justify-between gap-2 py-1.5 text-[12px]">
             <span className="font-osmono text-[var(--tb-text)]">{s.name}</span>
             <span className="flex items-center gap-2">
-              {s.restarts > 0 ? <span className="text-[var(--tb-muted)]">{s.restarts}× deneme</span> : null}
+              {s.restarts > 0 ? (
+                <span className="text-[var(--tb-muted)]">{s.restarts}× deneme</span>
+              ) : null}
               <Badge tone={TONE[s.status]}>{LABEL[s.status]}</Badge>
               {canOperate ? (
-              <button
-                type="button"
-                className={ghostBtn}
-                aria-label={`${s.name} servisini yeniden başlat`}
-                onClick={() => void serviceManager().restart(s.name)}
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </button>
+                <button
+                  type="button"
+                  className={ghostBtn}
+                  aria-label={`${s.name} servisini yeniden başlat`}
+                  onClick={() => void serviceManager().restart(s.name)}
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                </button>
               ) : null}
             </span>
           </li>
         ))}
       </ul>
       {canOperate ? null : (
-        <p className="mt-2 text-[11px] text-[var(--tb-muted)]">Yetki: görüntüleyici — yeniden başlatma kapalı.</p>
+        <p className="mt-2 text-[11px] text-[var(--tb-muted)]">
+          Yetki: görüntüleyici — yeniden başlatma kapalı.
+        </p>
       )}
     </GlassCard>
   );

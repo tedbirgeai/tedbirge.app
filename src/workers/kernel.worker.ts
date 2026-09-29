@@ -55,7 +55,7 @@ function sendMsg(msg: KernelWorkerResponse): void {
  */
 function setupOffscreenCanvas(canvas: OffscreenCanvas): void {
   offscreenCanvas = canvas;
-  
+
   // Öncelik: WebGL 2.0 -> WebGL 1.0 -> 2D Context
   glContext = canvas.getContext("webgl2") as WebGL2RenderingContext | null;
   if (!glContext) {
@@ -117,7 +117,7 @@ function runKernelLoop(): void {
   // Gecikme kaymasını (drift) önleyen mikro-zamanlama
   const executionTime = performance.now() - now;
   const nextDelay = Math.max(0, frameIntervalMs - executionTime);
-  
+
   timerId = setTimeout(runKernelLoop, nextDelay);
 }
 
@@ -154,12 +154,12 @@ ctx.addEventListener("message", (event: MessageEvent<KernelWorkerCommand>) => {
         isLeader = data.payload?.isLeader ?? false;
         isRunning = true;
         lastFrameTime = performance.now();
-        
+
         sendMsg({
           type: "KERNEL_READY",
           payload: { initializedAt: Date.now(), nodeId },
         });
-        
+
         runKernelLoop();
         break;
       }

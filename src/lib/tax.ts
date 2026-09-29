@@ -20,7 +20,11 @@ export const STANDARD_VAT: Record<string, number> = {
 export type TaxPreview = { net: number; tax: number; gross: number; rate: number; estimated: true };
 
 /** B2B ve geçerli vergi numarası varsa AB içi ters ibraz: vergi 0 gösterilir. */
-export function previewTax(net: number, country: string, opts?: { b2bReverseCharge?: boolean }): TaxPreview {
+export function previewTax(
+  net: number,
+  country: string,
+  opts?: { b2bReverseCharge?: boolean },
+): TaxPreview {
   const rate = opts?.b2bReverseCharge ? 0 : (STANDARD_VAT[country.toUpperCase()] ?? 0);
   const tax = Math.round(net * rate * 100) / 100;
   return { net, tax, gross: Math.round((net + tax) * 100) / 100, rate, estimated: true };

@@ -13,7 +13,12 @@ import { reportRuntimeError } from "@/lib/error-reporting";
 import { createLinkHub, onGossipLink, openLocalLink } from "@/lib/axiom/net/datachannel";
 import { createMeshDaemon, type MeshDaemon } from "@/lib/axiom/net/mesh-daemon";
 import { onIpc } from "@/shell/desktop-ipc";
-import { createServiceManager, type ServiceDef, type ServiceEvent, type ServiceInfo } from "@/shell/services/registry";
+import {
+  createServiceManager,
+  type ServiceDef,
+  type ServiceEvent,
+  type ServiceInfo,
+} from "@/shell/services/registry";
 
 let mesh: MeshDaemon | null = null;
 export const meshDaemon = () => mesh;
@@ -84,7 +89,10 @@ export function serviceManager() {
     manager.subscribe(() => {
       const last = manager?.events().at(-1);
       if (last && (last.status === "failed" || last.status === "degraded")) {
-        reportRuntimeError(new Error(last.detail ?? last.status), { boundary: "boot", service: last.name });
+        reportRuntimeError(new Error(last.detail ?? last.status), {
+          boundary: "boot",
+          service: last.name,
+        });
       }
     });
   }

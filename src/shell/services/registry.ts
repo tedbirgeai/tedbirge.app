@@ -63,7 +63,12 @@ export function topoOrder(defs: readonly ServiceDef[]): string[] {
   return order;
 }
 
-type Entry = { def: ServiceDef; info: ServiceInfo; stop?: () => void; timer?: ReturnType<typeof setTimeout> };
+type Entry = {
+  def: ServiceDef;
+  info: ServiceInfo;
+  stop?: () => void;
+  timer?: ReturnType<typeof setTimeout>;
+};
 
 export type ManagerOptions = {
   now?: () => number;
@@ -93,7 +98,12 @@ export function createServiceManager(defs: readonly ServiceDef[], opts: ManagerO
   };
 
   const set = (e: Entry, status: ServiceStatus, detail?: string) => {
-    e.info = { ...e.info, status, since: now(), lastError: detail ?? (status === "running" ? null : e.info.lastError) };
+    e.info = {
+      ...e.info,
+      status,
+      since: now(),
+      lastError: detail ?? (status === "running" ? null : e.info.lastError),
+    };
     events.push({ at: now(), name: e.def.name, status, ...(detail ? { detail } : {}) });
     if (events.length > 500) events.splice(0, events.length - 500);
     refresh();

@@ -64,16 +64,16 @@ export function YonetimPortaliApp() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-          <AutonomyBadge />
-          <button
-            type="button"
-            onClick={() => void onReset()}
-            disabled={resetting}
-            className={`${ghostBtn} shrink-0`}
-          >
-            <RotateCcw className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-            Varsayılana dön
-          </button>
+            <AutonomyBadge />
+            <button
+              type="button"
+              onClick={() => void onReset()}
+              disabled={resetting}
+              className={`${ghostBtn} shrink-0`}
+            >
+              <RotateCcw className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+              Varsayılana dön
+            </button>
           </div>
         </div>
 

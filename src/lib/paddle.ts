@@ -2,10 +2,23 @@ import { resolvePaddlePrice } from "@/utils/payments.functions";
 
 const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
 
+/** Ödeme sağlayıcısının tarayıcı betiğinden kullandığımız yüzey. */
+export type PaddleCheckoutOptions = {
+  items: Array<{ priceId: string; quantity?: number }>;
+  customer?: { email?: string };
+  customData?: Record<string, string | undefined>;
+  settings?: Record<string, string | boolean | undefined>;
+};
+
+export type PaddleGlobal = {
+  Environment: { set: (env: "sandbox" | "production") => void };
+  Initialize: (options: { token: string; eventCallback?: (event: unknown) => void }) => void;
+  Checkout: { open: (options: PaddleCheckoutOptions) => void };
+};
+
 declare global {
   interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Paddle: any;
+    Paddle: PaddleGlobal;
   }
 }
 

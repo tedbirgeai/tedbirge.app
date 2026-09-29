@@ -3,7 +3,15 @@
  * Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
-import React, { useEffect, useRef, useState, useCallback, ChangeEvent, DragEvent, KeyboardEvent } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  ChangeEvent,
+  DragEvent,
+  KeyboardEvent,
+} from "react";
 import { verifyProofLayout } from "@/lib/axiom/bridge/cabi-layout";
 import { LicenseModal } from "@/components/axiom/LicenseModal";
 import { FREE_DEVICE_LIMIT } from "@/lib/axiom/license/policy";
@@ -13,13 +21,25 @@ import type { ByteDigest } from "@/lib/axiom/digest";
 
 // --- İKON BİLEŞENLERİ (Sıfır Bağımlılık SVG Ekosistemi) ---
 const ShieldIcon = () => (
-  <svg className="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    className="w-4 h-4 text-sky-400"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
   </svg>
 );
 
 const CpuIcon = () => (
-  <svg className="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    className="w-4 h-4 text-cyan-400"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <rect x="4" y="4" width="16" height="16" rx="2" />
     <rect x="9" y="9" width="6" height="6" />
     <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3" />
@@ -27,27 +47,51 @@ const CpuIcon = () => (
 );
 
 const FolderUpIcon = () => (
-  <svg className="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    className="w-4 h-4 text-sky-400"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z" />
     <path d="M12 10v6M9 13l3-3 3 3" />
   </svg>
 );
 
 const ChevronDownIcon = ({ isOpen }: { isOpen: boolean }) => (
-  <svg className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M6 9l6 6 6-6" />
   </svg>
 );
 
 const CheckCircleIcon = () => (
-  <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    className="w-4 h-4 text-emerald-400"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
     <polyline points="22 4 12 14.01 9 11.01" />
   </svg>
 );
 
 const XCircleIcon = () => (
-  <svg className="w-4 h-4 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    className="w-4 h-4 text-rose-400"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <circle cx="12" cy="12" r="10" />
     <line x1="15" y1="9" x2="9" y2="15" />
     <line x1="9" y1="9" x2="15" y2="15" />
@@ -55,14 +99,26 @@ const XCircleIcon = () => (
 );
 
 const ClockIcon = () => (
-  <svg className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    className="w-4 h-4 text-amber-400"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <circle cx="12" cy="12" r="10" />
     <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 
 const GitBranchIcon = () => (
-  <svg className="w-4 h-4 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    className="w-4 h-4 text-purple-400"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <line x1="6" y1="3" x2="6" y2="15" />
     <circle cx="18" cy="6" r="3" />
     <circle cx="6" cy="18" r="3" />
@@ -71,7 +127,13 @@ const GitBranchIcon = () => (
 );
 
 const CopyIcon = () => (
-  <svg className="w-3.5 h-3.5 text-slate-400 hover:text-sky-300 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    className="w-3.5 h-3.5 text-slate-400 hover:text-sky-300 transition"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </svg>
@@ -324,7 +386,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
         handleFileContent(e.dataTransfer.files[0]);
       }
     },
-    [handleFileContent]
+    [handleFileContent],
   );
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -341,7 +403,6 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
       if (!targetText || !targetText.trim() || busy) return;
 
       const trimmedText = targetText.trim();
-
 
       // Dış Prop Callback'i
       if (onSubmit) {
@@ -370,7 +431,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
       setUploadedFileName(null);
       setIsDiagOpen(true);
     },
-    [commandInput, busy, bridgeConnected, onSubmit, uploadedFileName]
+    [commandInput, busy, bridgeConnected, onSubmit, uploadedFileName],
   );
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -382,7 +443,6 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
 
   return (
     <div className="w-full flex flex-col justify-between p-4 bg-[var(--tb-panel,#070b12)] text-[var(--tb-text,#e2e8f0)] font-mono border border-[var(--tb-border,rgba(14,165,233,0.3))] rounded-xl shadow-xl select-none space-y-3">
-      
       {/* ÜST BİLGİ BARI */}
       <div className="flex flex-wrap justify-between items-center border-b border-[var(--tb-border,rgba(14,165,233,0.3))] pb-3 text-xs tracking-wider bg-[var(--tb-panel-soft,#0a101d)] px-4 py-2.5 rounded-lg shadow-inner gap-2">
         <div className="flex flex-wrap items-center gap-3">
@@ -392,9 +452,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
                 bridgeConnected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
               }`}
             />
-            {bridgeConnected
-              ? "AXIOM_CABI_DÜZEN_212B"
-              : "AXIOM_CABI_DÜZEN_UYUMSUZ"}
+            {bridgeConnected ? "AXIOM_CABI_DÜZEN_212B" : "AXIOM_CABI_DÜZEN_UYUMSUZ"}
           </span>
           <span className="text-slate-400 text-[11px]">
             ROM TCB: <strong className="text-white">DEĞİŞMEZ_MÜHÜRLÜ</strong>
@@ -523,7 +581,11 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
             const isVerified = item.status === "VERIFIED";
             const isFalsified = item.status === "FALSIFIED";
             const tone = isVerified
-              ? { border: "border-emerald-500/30", bg: "bg-emerald-950/10", text: "text-emerald-400" }
+              ? {
+                  border: "border-emerald-500/30",
+                  bg: "bg-emerald-950/10",
+                  text: "text-emerald-400",
+                }
               : isFalsified
                 ? { border: "border-rose-500/30", bg: "bg-rose-950/10", text: "text-rose-400" }
                 : { border: "border-amber-500/30", bg: "bg-amber-950/10", text: "text-amber-400" };
@@ -534,10 +596,14 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
               >
                 <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-2">
-                    {isVerified ? <CheckCircleIcon /> : isFalsified ? <XCircleIcon /> : <ClockIcon />}
-                    <span className={`text-xs font-bold ${tone.text}`}>
-                      {item.verdictTitle}
-                    </span>
+                    {isVerified ? (
+                      <CheckCircleIcon />
+                    ) : isFalsified ? (
+                      <XCircleIcon />
+                    ) : (
+                      <ClockIcon />
+                    )}
+                    <span className={`text-xs font-bold ${tone.text}`}>{item.verdictTitle}</span>
                   </div>
                   <span className="text-[10px] text-slate-500">{item.timestamp}</span>
                 </div>
@@ -580,7 +646,9 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
             {/* AST AĞACI */}
             <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-1.5 relative group">
               <div className="flex justify-between items-center">
-                <span className="text-cyan-400 font-bold block text-[11px]">AST Tree Representation</span>
+                <span className="text-cyan-400 font-bold block text-[11px]">
+                  AST Tree Representation
+                </span>
                 <button
                   type="button"
                   onClick={() => handleCopyText(chatHistory[0].astTree, "ast")}
@@ -590,7 +658,11 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
                   <CopyIcon />
                 </button>
               </div>
-              {copiedId === "ast" && <span className="text-[9px] text-emerald-400 absolute top-3 right-8">Kopyalandı</span>}
+              {copiedId === "ast" && (
+                <span className="text-[9px] text-emerald-400 absolute top-3 right-8">
+                  Kopyalandı
+                </span>
+              )}
               <pre className="text-slate-400 font-mono text-[10px] leading-tight overflow-x-auto whitespace-pre-wrap">
                 {chatHistory[0].astTree}
               </pre>
@@ -599,7 +671,9 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
             {/* LEAN 4 KANITI */}
             <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-1.5 relative group">
               <div className="flex justify-between items-center">
-                <span className="text-purple-400 font-bold block text-[11px]">Lean 4 Theorem Proof</span>
+                <span className="text-purple-400 font-bold block text-[11px]">
+                  Lean 4 Theorem Proof
+                </span>
                 <button
                   type="button"
                   onClick={() => handleCopyText(chatHistory[0].lean4Script, "lean")}
@@ -609,7 +683,11 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
                   <CopyIcon />
                 </button>
               </div>
-              {copiedId === "lean" && <span className="text-[9px] text-emerald-400 absolute top-3 right-8">Kopyalandı</span>}
+              {copiedId === "lean" && (
+                <span className="text-[9px] text-emerald-400 absolute top-3 right-8">
+                  Kopyalandı
+                </span>
+              )}
               <pre className="text-purple-200/80 font-mono text-[10px] leading-tight overflow-x-auto whitespace-pre-wrap">
                 {chatHistory[0].lean4Script}
               </pre>
@@ -618,7 +696,9 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
             {/* Z3 SMT ÇIKTISI */}
             <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-1.5 relative group">
               <div className="flex justify-between items-center">
-                <span className="text-emerald-400 font-bold block text-[11px]">Z3 SMT Solver Output</span>
+                <span className="text-emerald-400 font-bold block text-[11px]">
+                  Z3 SMT Solver Output
+                </span>
                 <button
                   type="button"
                   onClick={() => handleCopyText(chatHistory[0].z3Output, "z3")}
@@ -628,7 +708,11 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
                   <CopyIcon />
                 </button>
               </div>
-              {copiedId === "z3" && <span className="text-[9px] text-emerald-400 absolute top-3 right-8">Kopyalandı</span>}
+              {copiedId === "z3" && (
+                <span className="text-[9px] text-emerald-400 absolute top-3 right-8">
+                  Kopyalandı
+                </span>
+              )}
               <pre className="text-emerald-300/80 font-mono text-[10px] leading-tight overflow-x-auto whitespace-pre-wrap">
                 {chatHistory[0].z3Output}
               </pre>
@@ -643,7 +727,9 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
           <button
             onClick={() => setActiveTab("core")}
             className={`pb-1.5 border-b-2 font-bold cursor-pointer transition ${
-              activeTab === "core" ? "border-cyan-400 text-cyan-400" : "border-transparent text-slate-500 hover:text-slate-300"
+              activeTab === "core"
+                ? "border-cyan-400 text-cyan-400"
+                : "border-transparent text-slate-500 hover:text-slate-300"
             }`}
           >
             ÇEKİRDEK TELEMETRİ
@@ -651,7 +737,9 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
           <button
             onClick={() => setActiveTab("mesh")}
             className={`pb-1.5 border-b-2 font-bold cursor-pointer transition ${
-              activeTab === "mesh" ? "border-cyan-400 text-cyan-400" : "border-transparent text-slate-500 hover:text-slate-300"
+              activeTab === "mesh"
+                ? "border-cyan-400 text-cyan-400"
+                : "border-transparent text-slate-500 hover:text-slate-300"
             }`}
           >
             WEBRTC MESH
@@ -659,7 +747,9 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
           <button
             onClick={() => setActiveTab("limen")}
             className={`pb-1.5 border-b-2 font-bold cursor-pointer transition ${
-              activeTab === "limen" ? "border-purple-400 text-purple-400" : "border-transparent text-slate-500 hover:text-slate-300"
+              activeTab === "limen"
+                ? "border-purple-400 text-purple-400"
+                : "border-transparent text-slate-500 hover:text-slate-300"
             }`}
           >
             LIMEN SDK & REPO YÖNETİCİSİ
@@ -669,32 +759,52 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
         <div className="text-[11px] text-slate-400 pt-1">
           {activeTab === "core" && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <div>CPU Load: <span className="text-emerald-400 font-semibold">1.2%</span></div>
-              <div>Memory WASM: <span className="text-cyan-400 font-semibold">14.2 MB</span></div>
-              <div>Execution Time: <span className="text-cyan-400 font-semibold">0.004 ms</span></div>
-              <div>Status: <span className="text-emerald-400 font-bold">DETERMINISTIC</span></div>
+              <div>
+                CPU Load: <span className="text-emerald-400 font-semibold">1.2%</span>
+              </div>
+              <div>
+                Memory WASM: <span className="text-cyan-400 font-semibold">14.2 MB</span>
+              </div>
+              <div>
+                Execution Time: <span className="text-cyan-400 font-semibold">0.004 ms</span>
+              </div>
+              <div>
+                Status: <span className="text-emerald-400 font-bold">DETERMINISTIC</span>
+              </div>
             </div>
           )}
 
           {activeTab === "mesh" && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <div>Active Peers: <span className="text-purple-400 font-semibold">{peers} Node</span></div>
-              <div>Tunnel: <span className="text-emerald-400 font-semibold">WebRTC Encrypted</span></div>
-              <div>Mesh Latency: <span className="text-cyan-400 font-semibold">12 ms</span></div>
-              <div><span className="text-purple-400 font-semibold">Tedbirge P2P</span></div>
+              <div>
+                Active Peers: <span className="text-purple-400 font-semibold">{peers} Node</span>
+              </div>
+              <div>
+                Tunnel: <span className="text-emerald-400 font-semibold">WebRTC Encrypted</span>
+              </div>
+              <div>
+                Mesh Latency: <span className="text-cyan-400 font-semibold">12 ms</span>
+              </div>
+              <div>
+                <span className="text-purple-400 font-semibold">Tedbirge P2P</span>
+              </div>
             </div>
           )}
 
           {activeTab === "limen" && (
             <div className="space-y-1">
               <div className="flex justify-between items-center">
-                <span>Repository: <code className="text-purple-300">tedbirge-labs/tedbirge-guardian</code></span>
+                <span>
+                  Repository:{" "}
+                  <code className="text-purple-300">tedbirge-labs/tedbirge-guardian</code>
+                </span>
                 <span className="text-[10px] bg-purple-950 text-purple-300 px-2 py-0.5 rounded border border-purple-800">
                   CI/CD Bot Active
                 </span>
               </div>
               <p className="text-[10px] text-slate-500">
-                LIMEN WebOS WASM Gateway ve HMAC-SHA256 doğrulayıcı ile otomatik GitHub CI/CD komut akışı senkronize.
+                LIMEN WebOS WASM Gateway ve HMAC-SHA256 doğrulayıcı ile otomatik GitHub CI/CD komut
+                akışı senkronize.
               </p>
             </div>
           )}

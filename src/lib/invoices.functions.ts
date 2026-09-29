@@ -62,9 +62,7 @@ export const listInvoicesFn = createServerFn({ method: "GET" })
         currency: (row.currency ?? "EUR").toUpperCase(),
         total: Number(row.total ?? 0),
         tax: Number(row.tax ?? 0),
-        description: plan
-          ? `Tedbirge® WebOS ${plan.label} aboneliği`
-          : "Tedbirge® WebOS aboneliği",
+        description: plan ? `Tedbirge® WebOS ${plan.label} aboneliği` : "Tedbirge® WebOS aboneliği",
         email,
       };
     });
