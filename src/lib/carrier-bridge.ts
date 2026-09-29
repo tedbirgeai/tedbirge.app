@@ -516,7 +516,7 @@ export function sendOverBestCarrier(
 type SerialPortLike = {
   open: (options: { baudRate: number }) => Promise<void>;
   close: () => Promise<void>;
-  readable: ReadableStream<Uint8Array>;
+  readable: ReadableStream<BufferSource>;
   writable: WritableStream<Uint8Array>;
 };
 
