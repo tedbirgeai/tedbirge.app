@@ -310,7 +310,6 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
         <Frame className={className} variant="writer">
           <path
             d="M21 14h18l7 7v29H21z"
-            fill="none"
             fill="var(--tb-icon-paper)"
             stroke="var(--tb-icon-ink)"
             strokeWidth="4"
@@ -333,7 +332,6 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
             width="28"
             height="30"
             rx="4"
-            fill="none"
             fill="var(--tb-icon-paper)"
             stroke="var(--tb-icon-ink)"
             strokeWidth="4"
@@ -355,7 +353,6 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
             width="30"
             height="24"
             rx="4"
-            fill="none"
             fill="var(--tb-icon-paper)"
             stroke="var(--tb-icon-ink)"
             strokeWidth="4"
@@ -388,7 +385,6 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
         <Frame className={className} variant="pdf">
           <path
             d="M22 15h16l7 7v27H22z"
-            fill="none"
             fill="var(--tb-icon-paper)"
             stroke="var(--tb-icon-ink)"
             strokeWidth="4"
@@ -407,7 +403,6 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
         <Frame className={className} variant="notes">
           <path
             d="M19 17h26v25l-8 8H19z"
-            fill="none"
             fill="var(--tb-icon-paper)"
             stroke="var(--tb-icon-ink)"
             strokeWidth="4"
@@ -430,7 +425,6 @@ function SystemIcon({ id, className }: { id: string; className?: string }) {
             width="28"
             height="28"
             rx="4"
-            fill="none"
             fill="var(--tb-icon-paper)"
             stroke="var(--tb-icon-ink)"
             strokeWidth="4"
