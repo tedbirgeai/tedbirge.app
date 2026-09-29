@@ -46,7 +46,7 @@ type BrandKey =
   | "arxiv"
   | "dontpad";
 
-function brandKey(domain: string): BrandKey | null {
+export function brandKey(domain: string): BrandKey | null {
   const d = domain.toLowerCase().replace(/^www\./, "");
   if (d.includes("duckduckgo")) return "duckduckgo";
   if (d.includes("google")) return "google";
@@ -194,28 +194,105 @@ function BrandSvg({ kind, className }: { kind: BrandKey; className?: string }) {
           <path d="M31 35h7l-4 4z" fill="var(--tb-brand-duckduckgo)" />
         </svg>
       );
+    case "osm":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-osm-sky)" />
+          <path d="M8 42l14-15 10 9 9-13 15 20v13H8z" fill="var(--tb-brand-osm-land)" />
+          <circle cx="39" cy="26" r="12" fill="none" stroke="var(--tb-brand-ink-light)" strokeWidth="5" />
+          <path d="M48 35l9 10" stroke="var(--tb-brand-osm-ink)" strokeWidth="6" strokeLinecap="round" />
+        </svg>
+      );
+    case "wikipedia":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-ink-light)" />
+          <path d="M13 18h14v3l-4 1 10 24 7-17-3-7-4-1v-3h15v3l-4 1-12 29h-4L16 22l-3-1z" fill="var(--tb-brand-wikipedia)" />
+        </svg>
+      );
+    case "tuta":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-tuta)" />
+          <path d="M14 20h36v26H14z" fill="none" stroke="var(--tb-brand-ink-light)" strokeWidth="4" />
+          <path d="M16 23l16 13 16-13" fill="none" stroke="var(--tb-brand-ink-light)" strokeWidth="4" strokeLinejoin="round" />
+        </svg>
+      );
+    case "mozilla":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-mozilla)" />
+          <path d="M13 42V22h7l6 10 6-10h7v20h-6V31l-7 10-7-10v11zM42 42V22h9v20z" fill="var(--tb-brand-ink-light)" />
+        </svg>
+      );
+    case "blockscout":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-blockscout)" />
+          <circle cx="30" cy="30" r="15" fill="none" stroke="var(--tb-brand-ink-light)" strokeWidth="5" />
+          <path d="M41 41l11 11M22 30h16M30 22v16" stroke="var(--tb-brand-ink-light)" strokeWidth="5" strokeLinecap="round" />
+        </svg>
+      );
+    case "ipfs":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-ipfs)" />
+          <path d="M32 11l19 11v21L32 54 13 43V22zM13 22l19 11 19-11M32 33v21" fill="none" stroke="var(--tb-brand-ink-light)" strokeWidth="4" strokeLinejoin="round" />
+          <circle cx="32" cy="11" r="3" fill="var(--tb-brand-ink-light)" />
+        </svg>
+      );
+    case "coingecko":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-coingecko)" />
+          <circle cx="32" cy="32" r="21" fill="var(--tb-brand-coingecko-light)" />
+          <path d="M18 37c4-13 13-20 27-15-4 2-6 5-7 9 5 0 8 2 10 6-8 9-22 11-30 0z" fill="var(--tb-brand-coingecko-ink)" />
+          <circle cx="35" cy="27" r="2.5" fill="var(--tb-brand-ink-dark)" />
+        </svg>
+      );
+    case "hn":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-hn)" />
+          <path d="M17 15h8l7 14 7-14h8L36 36v13h-8V36z" fill="var(--tb-brand-ink-light)" />
+        </svg>
+      );
+    case "topomap":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-topo)" />
+          <path d="M8 47c9-17 16-23 24-9 6-17 14-15 24 9" fill="none" stroke="var(--tb-brand-topo-ink)" strokeWidth="4" />
+          <path d="M11 27c9-9 18-10 27-3s14 5 18 2M8 36c8-7 15-8 22-2" fill="none" stroke="var(--tb-brand-ink-light)" strokeWidth="2" opacity=".8" />
+        </svg>
+      );
+    case "openlibrary":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-library)" />
+          <path d="M12 19c8-3 14-1 20 4v27c-6-5-12-7-20-4zM52 19c-8-3-14-1-20 4v27c6-5 12-7 20-4z" fill="var(--tb-brand-ink-light)" />
+          <path d="M32 23v27" stroke="var(--tb-brand-library-ink)" strokeWidth="2" />
+        </svg>
+      );
+    case "arxiv":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-arxiv)" />
+          <path d="M17 16l15 17 15-17M17 48l15-15 15 15" fill="none" stroke="var(--tb-brand-ink-light)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "dontpad":
+      return (
+        <svg {...common} aria-hidden>
+          <rect width="64" height="64" rx="16" fill="var(--tb-brand-dontpad)" />
+          <path d="M18 13h22l8 8v30H18z" fill="var(--tb-brand-ink-light)" />
+          <path d="M40 13v10h8M24 31h18M24 38h15M24 45h10" fill="none" stroke="var(--tb-brand-dontpad)" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      );
     default:
       return (
         <svg {...common} aria-hidden>
-          <rect width="64" height="64" rx="16" fill="var(--tb-panel-solid)" />
-          <circle
-            cx="32"
-            cy="32"
-            r="21"
-            fill="color-mix(in srgb, var(--tb-accent) 18%, transparent)"
-            stroke="var(--tb-accent)"
-            strokeWidth="3"
-          />
-          <text
-            x="32"
-            y="38"
-            textAnchor="middle"
-            fontSize="18"
-            fontWeight="700"
-            fill="var(--tb-accent)"
-          >
-            {kind === "wikipedia" ? "W" : kind === "arxiv" ? "X" : kind === "ipfs" ? "IP" : "T"}
-          </text>
+          <rect width="64" height="64" rx="16" fill="var(--tb-accent)" />
+          <circle cx="32" cy="32" r="18" fill="none" stroke="var(--tb-brand-ink-light)" strokeWidth="4" />
         </svg>
       );
   }
