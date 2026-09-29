@@ -279,13 +279,16 @@ export function minimizeWindow(id: string) {
   windows = windows.map((w) => (w.id === id ? { ...w, minimized: true } : w));
   normalizeZ(activeWindow()?.id);
   emit();
+  playSystemSound("window-minimize");
 }
 
 export function restoreWindow(id: string) {
   windows = windows.map((w) => (w.id === id ? { ...w, minimized: false } : w));
   normalizeZ(id);
   emit();
+  playSystemSound("window-restore");
 }
+
 
 export function closeAllWindows() {
   windows = [];
