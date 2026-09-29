@@ -12,7 +12,8 @@ import { AppWindow, FileText, Radio, Search, SlidersHorizontal, TerminalSquare, 
 
 import { notifyOk } from "@/lib/shell/notify";
 import { setFocusMode, isFocusMode } from "@/lib/shell/focus-mode";
-import { listFiles, objectUrl, type VfsEntry } from "@/lib/vfs/store";
+import { listFiles, type VfsEntry } from "@/lib/vfs/store";
+import { openWithAssociation } from "@/lib/shell/file-association";
 import { CATALOG, catalogApp, useDesktopState, xdgOf } from "@/shell/installed";
 import { XDG_LABELS } from "@/shell/xdg";
 import { useContacts } from "@/lib/chat/contacts";
@@ -62,10 +63,17 @@ export function Spotlight({
     return () => window.cancelAnimationFrame(raf);
   }, [open]);
 
-  const openFile = useCallback(async (entry: VfsEntry) => {
-    const url = await objectUrl(entry.id);
-    if (url) window.open(url, "_blank", "noopener");
-  }, []);
+  /** Dosya kendi uygulamasında, OS penceresinde açılır; dış sekme kullanılmaz. */
+  const openFile = useCallback(
+    (entry: VfsEntry) => {
+      const ok = openWithAssociation(entry, onLaunch);
+      if (!ok) {
+        onLaunch("files");
+        notifyOk("Bu tür için eşleşen uygulama yok; Dosyalar açıldı");
+      }
+    },
+    [onLaunch],
+  );
 
   const items = useMemo<Item[]>(() => {
     const q = query.trim().toLocaleLowerCase("tr");
