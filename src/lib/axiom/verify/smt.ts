@@ -30,7 +30,9 @@ export function toSmtLib(ir: AxiomIr, matches: InvariantMatch[]): string {
     (ir as { raw?: string; code?: string; statement?: string })?.statement ||
     "").trim();
 
-  const contradictionMatch = rawText.match(/\b([a-zA-Z_]\w*)\s*(?:∧|and|\&)\s*(?:¬|-|!|not\s+)\1\b/i);
+  const contradictionMatch = rawText.match(
+    /\b([a-zA-Z_]\w*)\s*(?:∧|and|&)\s*(?:¬|-|!|not\s+)\1\b/i,
+  );
 
   if (contradictionMatch) {
     const varName = contradictionMatch[1];
