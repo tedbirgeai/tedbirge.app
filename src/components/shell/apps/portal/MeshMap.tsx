@@ -8,6 +8,7 @@
 
 import { useEffect, useRef } from "react";
 
+import { useWindowSuspended } from "@/lib/shell/window-sleep";
 import { hitTest, layout, type MapHealth, type MapNode } from "@/lib/portal/live";
 
 const TONE_VAR: Record<MapHealth, string> = {
@@ -21,8 +22,10 @@ export function MeshMap({ nodes, onSelect }: { nodes: MapNode[]; onSelect: (n: M
   const pointsRef = useRef<{ id: string; x: number; y: number }[]>([]);
   const nodesRef = useRef(nodes);
   nodesRef.current = nodes;
+  const sleeping = useWindowSuspended();
 
   useEffect(() => {
+    if (sleeping) return;
     const canvas = ref.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -118,7 +121,7 @@ export function MeshMap({ nodes, onSelect }: { nodes: MapNode[]; onSelect: (n: M
 
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [sleeping]);
 
   return (
     <canvas
