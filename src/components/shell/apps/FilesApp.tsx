@@ -328,12 +328,13 @@ export function FilesApp({
                   type="button"
                   onClick={() => {
                     setFolder(f);
+                    setInTrash(false);
                     setDir("");
                     setQ("");
                   }}
-                  aria-pressed={folder === f && !q}
+                  aria-pressed={!inTrash && folder === f && !q}
                   className={`wa-press w-full shrink-0 rounded-lg px-2.5 py-1.5 text-left text-[12px] whitespace-nowrap ${
-                    folder === f && !q
+                    !inTrash && folder === f && !q
                       ? "bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] text-[var(--tb-accent)]"
                       : "text-[var(--tb-muted)]"
                   }`}
@@ -345,6 +346,42 @@ export function FilesApp({
                 </button>
               </li>
             ))}
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setInTrash(true);
+                  setSelected(null);
+                  setDir("");
+                  setQ("");
+                }}
+                aria-pressed={inTrash}
+                className={`wa-press w-full shrink-0 rounded-lg px-2.5 py-1.5 text-left text-[12px] whitespace-nowrap ${
+                  inTrash
+                    ? "bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] text-[var(--tb-accent)]"
+                    : "text-[var(--tb-muted)]"
+                }`}
+              >
+                Çöp Kutusu
+                <span className="ml-1.5 font-osmono text-[10px] opacity-70">{trash.length}</span>
+              </button>
+            </li>
+            {inTrash && trash.length > 0 ? (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void emptyTrash().then((n) => {
+                      setSelected(null);
+                      notifyOk("Çöp kutusu boşaltıldı", `${n} dosya kalıcı olarak silindi`);
+                    });
+                  }}
+                  className="wa-press w-full shrink-0 rounded-lg px-2.5 py-1.5 text-left font-osmono text-[11px] whitespace-nowrap text-[var(--tb-muted)]"
+                >
+                  Kutuyu boşalt
+                </button>
+              </li>
+            ) : null}
           </ul>
         </nav>
 
