@@ -66,20 +66,25 @@ export function AppIconSurface({
   id: string;
   size?: Size;
   className?: string;
+  /**
+   * Güvenlik rozeti masaüstü/Dock varsayılanında GİZLİDİR; yalnız detay
+   * görünümlerinde (özellikler, mağaza kartı) veya üzerine gelindiğinde açılır.
+   */
   showBadge?: boolean;
 }) {
   const s = SIZE[size];
   const brand = isBrandApp(id);
   return (
     <span
-      className={`tbos-app-icon ${brand ? "tbos-app-icon--brand" : "tbos-app-icon--system"} ${s.box} ${s.radius} ${className}`}
+      className={`tbos-app-icon group/icon ${brand ? "tbos-app-icon--brand" : "tbos-app-icon--system"} ${s.box} ${s.radius} ${className}`}
     >
       <AppIcon id={id} className={`${s.icon} tbos-app-icon__glyph`} />
       {showBadge ? (
-        <span className="absolute -right-1 -bottom-1">
+        <span className="pointer-events-none absolute -right-1 -bottom-1 opacity-0 transition-opacity duration-150 group-hover/icon:opacity-100 group-hover:opacity-100 group-focus-visible:opacity-100">
           <AppSecurityBadge id={id} compact />
         </span>
       ) : null}
     </span>
   );
 }
+
