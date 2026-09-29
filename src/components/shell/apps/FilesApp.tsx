@@ -18,18 +18,23 @@ import { notifyError, notifyOk } from "@/lib/shell/notify";
 import { baseName, childrenOf } from "@/lib/vfs/tree";
 import {
   deleteFile,
+  emptyTrash,
   listFiles,
+  listTrash,
   moveFile,
   objectUrl,
   onVfsChange,
   readFile,
   releaseUrls,
   renameFile,
+  restoreFile,
   saveFiles,
+  trashFile,
   VFS_FOLDERS,
   type VfsEntry,
   type VfsFolder,
 } from "@/lib/vfs/store";
+import { openWithAssociation } from "@/lib/shell/file-association";
 
 function human(size: number) {
   if (size < 1024) return `${size} B`;
