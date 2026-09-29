@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { ExternalLink, Globe, Layers, RotateCw, Search, ShieldOff, Waypoints } from "lucide-react";
+import { Globe, Layers, RotateCw, Search, ShieldOff, Waypoints } from "lucide-react";
 
 import { BrandIcon, domainOf } from "@/components/shell/BrandIcon";
 import { GenericAppContainer } from "@/components/shell/GenericAppContainer";
@@ -122,18 +122,7 @@ export function TedbirgeWebView({
             <span className="hidden sm:inline">Geçit Üzerinden Çalıştır</span>
           </button>
         ) : null}
-        {offgrid ? null : (
-          <a
-            href={url}
-            target="_blank"
-            rel="noreferrer noopener"
-            title="Harici sekmede aç"
-            className="wa-press inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--tb-border)] px-2 py-1 font-osmono text-[11px] text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
-          >
-            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-            <span className="hidden sm:inline">Harici Sekmede Aç</span>
-          </a>
-        )}
+        {/* Harici sekme yolu kaldırıldı: içerik yalnız bu pencerede açılır. */}
       </div>
 
       {offgrid ? (
@@ -216,18 +205,20 @@ function WebShell({
       />
       <p className="text-[17px] font-semibold text-[var(--tb-text)]">{label}</p>
       <p className="max-w-md font-osmono text-[12px] text-[var(--tb-muted)]">
-        Bu servis pencere içi gömmeyi kısıtlıyor. Aramanızı burada yapabilir ya da servisi harici
-        sekmede açabilirsiniz.
+        Bu servis pencere içi gömmeyi kısıtlıyor. Aramanızı burada yapabilir ya da içeriği Tedbirge
+        Geçidi üzerinden bu pencerede açabilirsiniz.
       </p>
 
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer noopener"
-        className="wa-press inline-flex items-center gap-2 rounded-xl bg-[var(--tb-accent)] px-4 py-2 text-[13px] font-semibold text-[var(--tb-on-accent,var(--tb-bg))]"
-      >
-        <ExternalLink className="h-4 w-4" aria-hidden /> Harici Sekmede Aç
-      </a>
+      {onGateway ? (
+        <button
+          type="button"
+          onClick={onGateway}
+          className="wa-press inline-flex items-center gap-2 rounded-xl bg-[var(--tb-accent)] px-4 py-2 text-[13px] font-semibold text-[var(--tb-on-accent,var(--tb-bg))]"
+        >
+          <Waypoints className="h-4 w-4" aria-hidden /> Geçit Üzerinden Aç
+        </button>
+      ) : null}
+
 
       <div className="flex w-full max-w-md items-center gap-2 pt-1">
         <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[var(--tb-border)] bg-[var(--tb-bg-soft)] px-3 py-2">
@@ -252,15 +243,7 @@ function WebShell({
         </button>
       </div>
 
-      {onGateway ? (
-        <button
-          type="button"
-          onClick={onGateway}
-          className="wa-press inline-flex items-center gap-2 rounded-lg border border-[var(--tb-border)] px-3 py-2 font-osmono text-[12px] text-[var(--tb-muted)]"
-        >
-          <Waypoints className="h-4 w-4" aria-hidden /> Geçit Üzerinden Çalıştır
-        </button>
-      ) : null}
+      {/* Geçit düğmesi kartın üst kısmında birincil eylem olarak durur. */}
     </div>
   );
 }

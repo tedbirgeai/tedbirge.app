@@ -7,7 +7,17 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, FileUp, FolderOpen, Loader2, Pencil, Search, Send, Trash2 } from "lucide-react";
+import {
+  Download,
+  FileUp,
+  FolderOpen,
+  Loader2,
+  Pencil,
+  Search,
+  Send,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 
 import { WindowEmpty } from "@/components/shell/WindowShell";
 import { ConfirmDialog } from "@/components/shell/ConfirmDialog";
@@ -18,18 +28,23 @@ import { notifyError, notifyOk } from "@/lib/shell/notify";
 import { baseName, childrenOf } from "@/lib/vfs/tree";
 import {
   deleteFile,
+  emptyTrash,
   listFiles,
+  listTrash,
   moveFile,
   objectUrl,
   onVfsChange,
   readFile,
   releaseUrls,
   renameFile,
+  restoreFile,
   saveFiles,
+  trashFile,
   VFS_FOLDERS,
   type VfsEntry,
   type VfsFolder,
 } from "@/lib/vfs/store";
+import { openWithAssociation } from "@/lib/shell/file-association";
 
 function human(size: number) {
   if (size < 1024) return `${size} B`;
@@ -90,14 +105,24 @@ function Preview({ entry }: { entry: VfsEntry }) {
   );
 }
 
-export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
+export function FilesApp({
+  onTransfer,
+  onOpenApp,
+}: {
+  onTransfer?: () => void;
+  /** Dosyayı ilişkili uygulamada açmak için kabuğun pencere açıcısı. */
+  onOpenApp?: (id: string) => void;
+}) {
   const { node } = useShell();
   const peers = node.peers.filter((p) => p.direct);
   const [files, setFiles] = useState<VfsEntry[]>([]);
+  const [trash, setTrash] = useState<VfsEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [over, setOver] = useState(false);
   const [target, setTarget] = useState("");
   const [folder, setFolder] = useState<VfsFolder>("Belgeler");
+  /** Çöp kutusu görünümü: klasör ağacının altındaki ayrı alan. */
+  const [inTrash, setInTrash] = useState(false);
   /** "repo" kökünde bulunduğumuz alt dizin yolu. */
   const [dir, setDir] = useState("");
   const [q, setQ] = useState("");
@@ -112,6 +137,9 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
       .catch((e: unknown) =>
         notifyError("Depo okunamadı", e instanceof Error ? e.message : undefined),
       );
+    listTrash()
+      .then(setTrash)
+      .catch(() => setTrash([]));
   }, []);
 
   useEffect(() => {
@@ -137,20 +165,35 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
 
   /** Mount edilmiş proje ağacında gezinme (yalnız "repo" kökü). */
   const tree = useMemo(() => {
-    if (folder !== "repo" || q.trim()) return null;
+    if (inTrash || folder !== "repo" || q.trim()) return null;
     return childrenOf(
       files.filter((f) => f.folder === "repo"),
       dir,
     );
-  }, [files, folder, q, dir]);
+  }, [files, inTrash, folder, q, dir]);
 
   const visible = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");
+    if (inTrash) {
+      return trash.filter((f) => (needle ? f.name.toLocaleLowerCase("tr").includes(needle) : true));
+    }
     if (tree && !needle) return tree.files;
     return files
       .filter((f) => (needle ? true : f.folder === folder))
       .filter((f) => (needle ? f.name.toLocaleLowerCase("tr").includes(needle) : true));
-  }, [files, folder, q, tree]);
+  }, [files, trash, inTrash, folder, q, tree]);
+
+  /** Dosyayı ilişkili uygulamada açar (çift tıklama / Enter). */
+  const open = useCallback(
+    (entry: VfsEntry) => {
+      if (inTrash) return notifyError("Çöp kutusundaki dosya açılmaz", "Önce geri yükleyin.");
+      if (!onOpenApp) return;
+      if (!openWithAssociation(entry, onOpenApp)) {
+        notifyError("Eşleşen uygulama yok", entry.name);
+      }
+    },
+    [inTrash, onOpenApp],
+  );
 
   const current = visible.find((f) => f.id === selected) ?? null;
 
@@ -295,12 +338,13 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
                   type="button"
                   onClick={() => {
                     setFolder(f);
+                    setInTrash(false);
                     setDir("");
                     setQ("");
                   }}
-                  aria-pressed={folder === f && !q}
+                  aria-pressed={!inTrash && folder === f && !q}
                   className={`wa-press w-full shrink-0 rounded-lg px-2.5 py-1.5 text-left text-[12px] whitespace-nowrap ${
-                    folder === f && !q
+                    !inTrash && folder === f && !q
                       ? "bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] text-[var(--tb-accent)]"
                       : "text-[var(--tb-muted)]"
                   }`}
@@ -312,6 +356,42 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
                 </button>
               </li>
             ))}
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setInTrash(true);
+                  setSelected(null);
+                  setDir("");
+                  setQ("");
+                }}
+                aria-pressed={inTrash}
+                className={`wa-press w-full shrink-0 rounded-lg px-2.5 py-1.5 text-left text-[12px] whitespace-nowrap ${
+                  inTrash
+                    ? "bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] text-[var(--tb-accent)]"
+                    : "text-[var(--tb-muted)]"
+                }`}
+              >
+                Çöp Kutusu
+                <span className="ml-1.5 font-osmono text-[10px] opacity-70">{trash.length}</span>
+              </button>
+            </li>
+            {inTrash && trash.length > 0 ? (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void emptyTrash().then((n) => {
+                      setSelected(null);
+                      notifyOk("Çöp kutusu boşaltıldı", `${n} dosya kalıcı olarak silindi`);
+                    });
+                  }}
+                  className="wa-press w-full shrink-0 rounded-lg px-2.5 py-1.5 text-left font-osmono text-[11px] whitespace-nowrap text-[var(--tb-muted)]"
+                >
+                  Kutuyu boşalt
+                </button>
+              </li>
+            ) : null}
           </ul>
         </nav>
 
@@ -353,6 +433,7 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
                   e.dataTransfer.effectAllowed = "copy";
                 }}
                 onClick={() => setSelected(f.id === selected ? null : f.id)}
+                onDoubleClick={() => open(f)}
                 className={`flex min-h-12 cursor-grab items-center gap-3 border-b border-[var(--tb-border)] px-3 active:cursor-grabbing ${
                   selected === f.id ? "bg-[color-mix(in_srgb,var(--tb-accent)_8%,transparent)]" : ""
                 }`}
@@ -415,48 +496,88 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  className={btn}
-                  onClick={() => {
-                    const name = window.prompt("Yeni ad", current.name);
-                    if (name && name.trim() !== current.name) {
-                      void renameFile(current.id, name).then(() =>
-                        notifyOk("Yeniden adlandırıldı"),
-                      );
-                    }
-                  }}
-                >
-                  <Pencil className="h-3.5 w-3.5" aria-hidden /> Yeniden adlandır
-                </button>
+                {inTrash ? (
+                  <>
+                    <button
+                      type="button"
+                      className={btn}
+                      onClick={() => {
+                        void restoreFile(current.id).then(() => {
+                          setSelected(null);
+                          notifyOk("Geri yüklendi", current.name);
+                        });
+                      }}
+                    >
+                      <Undo2 className="h-3.5 w-3.5" aria-hidden /> Geri yükle
+                    </button>
+                    <button
+                      type="button"
+                      className={btn}
+                      onClick={() => {
+                        void deleteFile(current.id).then(() => {
+                          setSelected(null);
+                          notifyOk("Kalıcı olarak silindi", current.name);
+                        });
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden /> Kalıcı sil
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {onOpenApp ? (
+                      <button type="button" className={btn} onClick={() => open(current)}>
+                        <FolderOpen className="h-3.5 w-3.5" aria-hidden /> Aç
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className={btn}
+                      onClick={() => {
+                        const name = window.prompt("Yeni ad", current.name);
+                        if (name && name.trim() !== current.name) {
+                          void renameFile(current.id, name).then(() =>
+                            notifyOk("Yeniden adlandırıldı"),
+                          );
+                        }
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" aria-hidden /> Yeniden adlandır
+                    </button>
 
-                <label className={btn}>
-                  Klasör
-                  <select
-                    value={current.folder}
-                    aria-label="Klasöre taşı"
-                    onChange={(e) => {
-                      void moveFile(current.id, e.target.value as VfsFolder).then(() =>
-                        notifyOk("Taşındı", e.target.value),
-                      );
-                    }}
-                    className="bg-transparent text-[var(--tb-text)] outline-none"
-                  >
-                    {VFS_FOLDERS.map((f) => (
-                      <option key={f} value={f}>
-                        {f}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <label className={btn}>
+                      Klasör
+                      <select
+                        value={current.folder}
+                        aria-label="Klasöre taşı"
+                        onChange={(e) => {
+                          void moveFile(current.id, e.target.value as VfsFolder).then(() =>
+                            notifyOk("Taşındı", e.target.value),
+                          );
+                        }}
+                        className="bg-transparent text-[var(--tb-text)] outline-none"
+                      >
+                        {VFS_FOLDERS.map((f) => (
+                          <option key={f} value={f}>
+                            {f}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
 
-                <button type="button" className={btn} onClick={() => void download(current)}>
-                  <Download className="h-3.5 w-3.5" aria-hidden /> Dışa aktar
-                </button>
+                    <button type="button" className={btn} onClick={() => void download(current)}>
+                      <Download className="h-3.5 w-3.5" aria-hidden /> Dışa aktar
+                    </button>
 
-                <button type="button" className={btn} onClick={() => setConfirmDelete(current.id)}>
-                  <Trash2 className="h-3.5 w-3.5" aria-hidden /> Sil
-                </button>
+                    <button
+                      type="button"
+                      className={btn}
+                      onClick={() => setConfirmDelete(current.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden /> Sil
+                    </button>
+                  </>
+                )}
               </div>
             </aside>
           ) : null}
@@ -491,26 +612,23 @@ export function FilesApp({ onTransfer }: { onTransfer?: () => void }) {
       {/* Nielsen #5: yıkıcı işlem iki aşamalı onay + geri alma ile korunur. */}
       <ConfirmDialog
         open={confirmDelete != null}
-        title="Dosya silinsin mi?"
-        description="Dosya cihazdaki sanal dosya sisteminden kaldırılacak. Silme işlemini Ctrl + Z ile geri alabilirsiniz."
-        confirmLabel="Sil"
+        title="Dosya çöp kutusuna taşınsın mı?"
+        description="Dosya Çöp Kutusu'na taşınacak; oradan geri yükleyebilir ya da kalıcı olarak silebilirsiniz. Ctrl + Z ile de geri alınır."
+        confirmLabel="Çöpe taşı"
         onClose={() => setConfirmDelete(null)}
         onConfirm={() => {
           const id = confirmDelete;
           if (!id) return;
           const entry = files.find((f) => f.id === id);
-          void readFile(id).then(async (file) => {
-            await deleteFile(id);
+          void trashFile(id).then(() => {
             setSelected(null);
-            notifyOk("Silindi", entry?.name ?? "Dosya");
-            if (file) {
-              pushUndo({
-                label: `${entry?.name ?? "Dosya"} silindi`,
-                undo: async () => {
-                  await saveFiles([file]);
-                },
-              });
-            }
+            notifyOk("Çöp kutusuna taşındı", entry?.name ?? "Dosya");
+            pushUndo({
+              label: `${entry?.name ?? "Dosya"} çöpe taşındı`,
+              undo: async () => {
+                await restoreFile(id);
+              },
+            });
           });
         }}
       />

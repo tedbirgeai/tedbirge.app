@@ -51,6 +51,7 @@ import {
   useDesktopLayout,
 } from "@/lib/shell/desktop-layout";
 import { catalogApp, useDesktopState } from "@/shell/installed";
+import { openWithAssociation } from "@/lib/shell/file-association";
 
 const FOLDER_MIME = "application/x-tedbirge-folder";
 
@@ -186,16 +187,11 @@ export function Desktop({
       if (it.type === "app") return onOpen(it.id);
       const entry = files.find((f) => f.id === it.id);
       if (!entry) return;
-      if (entry.mime === FOLDER_MIME) return onOpen("files");
-      if (entry.mime === "application/pdf") return onOpen("pdf");
-      const kind = kindOf(entry.name);
-      if (!kind) {
+      // Tür eşlemesi tek yerden okunur (file-association).
+      if (!openWithAssociation(entry, onOpen)) {
         // Eşleşen uygulama yok: sessizce Dosyalar'a düşmek yerine dürüst kart.
         setUnsupported(entry);
-        return;
       }
-      requestOpenDoc(kind, entry.id);
-      onOpen(KIND_APP[kind]);
     },
     [files, onOpen],
   );

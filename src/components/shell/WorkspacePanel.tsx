@@ -493,7 +493,7 @@ function AppSurface({
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
       {win.appId === "music" && <MusicApp />}
       {win.appId === "media" && <MediaApp />}
-      {win.appId === "files" && <FilesApp onTransfer={onTransfer} />}
+      {win.appId === "files" && <FilesApp onTransfer={onTransfer} onOpenApp={onLaunch} />}
     </div>
   );
 }
