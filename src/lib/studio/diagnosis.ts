@@ -78,8 +78,9 @@ export function reportForPatch(prompt: string, intent: Intent, result: PatchResu
     verbalResponse: verbal,
     diagnosis:
       intent.mode === "sistem"
-        ? `${result.component} katmanı hedeflendi. ${intent.reason}`
-        : `${result.component} katmanı hedeflendi.`,
+        ? `${result.component} hedeflendi. ${intent.reason}`
+        : `${result.component} hedeflendi.`,
+
     treatment: inceleme
       ? `${result.component} yalnız okundu; hiçbir ayar değiştirilmedi.`
       : result.applied
