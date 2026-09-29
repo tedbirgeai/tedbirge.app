@@ -8,17 +8,51 @@ import {
 } from "@/lib/paddle.server";
 import { planByProductId, planByPriceId, resolveNodeLimit } from "@/lib/paddle-catalog";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-let _supabase: any = null;
-function getSupabase(): any {
+type ServiceClient = ReturnType<typeof createClient>;
+
+let _supabase: ServiceClient | null = null;
+function getSupabase(): ServiceClient {
   if (!_supabase) {
     _supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   }
   return _supabase;
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
+/**
+ * Ödeme sağlayıcısının olay gövdesinden yalnız kullandığımız alanlar.
+ * Gövde imza doğrulamasından geçmiş olsa da tipler dar tutulur: beklenmeyen
+ * alanlar okunmaz, böylece sağlayıcı şeması değişse de kayıt bozulmaz.
+ */
+type PaddleImportMeta = { importMeta?: { externalId?: string | null } | null };
+
+type PaddleSubscriptionItem = {
+  quantity?: number;
+  price: PaddleImportMeta & { id?: string };
+  product?: (PaddleImportMeta & { id?: string }) | null;
+};
+
+type PaddleBillingPeriod = { startsAt?: string | null; endsAt?: string | null } | null;
+
+type PaddleSubscriptionData = {
+  id: string;
+  customerId?: string;
+  status?: string;
+  items?: PaddleSubscriptionItem[];
+  currentBillingPeriod?: PaddleBillingPeriod;
+  scheduledChange?: { action?: string } | null;
+  customData?: { userId?: string; email?: string } | null;
+};
+
+type PaddleTransactionData = {
+  id?: string;
+  status?: string;
+  currencyCode?: string;
+  subscriptionId?: string | null;
+  details?: { totals?: { total?: string | null; tax?: string | null } | null } | null;
+  customData?: { userId?: string } | null;
+};
+
+async function handleSubscriptionCreated(data: PaddleSubscriptionData, env: PaddleEnv) {
   const { id, customerId, items, status, currentBillingPeriod, customData } = data;
 
   const userId = customData?.userId;
@@ -27,7 +61,11 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
     return;
   }
 
-  const item = items[0];
+  const item = items?.[0];
+  if (!item) {
+    console.warn("Skipping subscription: no items in payload");
+    return;
+  }
   const priceId = item.price.importMeta?.externalId;
   const productId = item.product?.importMeta?.externalId;
   if (!priceId || !productId) {
