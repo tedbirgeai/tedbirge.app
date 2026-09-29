@@ -25,3 +25,4 @@
 
 - AssemblyScript derleyicisi yalnız `src/lib/studio/compiler.worker.ts` içinde, yükleme ve derleme ayrı süre sınırlarıyla çalışır; ana iş parçacığını ve CSP'yi gevşetmemek için.
 - Üretilen/.tbapp Wasm kodu arayüzde yalnız `src/lib/studio/app-runtime.worker.ts` içinde, çağrı başına 1500 ms `terminate()` sigortasıyla çalışır; ana iş parçacığı asla bloklanmasın diye.
+- AxiomStudio asla placeholder kod üretemez; VFS'ye yazılan her uygulama tam işlevsel, klavye destekli ve %100 çalışır olmak zorundadır — Wasm çekirdeği sıfıra bölme/NaN/taşma korumalı, durum `/appdata/{app_id}` altında kalıcıdır; çünkü kullanıcıya yarım uygulama teslim edilmez.

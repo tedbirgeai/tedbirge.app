@@ -109,26 +109,73 @@ function log(msg: string): void {
 }
 `;
 
+/** Hesap çekirdeği hata kodları (hata_kodu() dönüşü). */
+export const CALC_ERRORS: Record<number, string> = {
+  1: "Sıfıra bölme tanımsız.",
+  2: "Geçersiz sayı (NaN/sonsuz).",
+  3: "Sonuç güvenli sınırı (±1e15) aşıyor.",
+  4: "Bilinmeyen işlem.",
+};
+
+/** İşlem kodları: 0 +, 1 −, 2 ×, 3 ÷, 4 mod. */
+export const CALC_OPS = ["+", "-", "*", "/", "%"] as const;
+
+export const COUNTER_LIMIT = 1_000_000_000;
+
 function assemblyFor(blocks: readonly UiBlock[], name: string): string {
   const parts: string[] = [HOST_HEADER];
   const hesap = blocks.find((b) => b.kind === "hesap");
   if (hesap && hesap.kind === "hesap") {
-    parts.push(`export function ${hesap.fn}(a: f64, b: f64): f64 {
-  return a + b;
+    parts.push(`let hata: i32 = 0;
+const SINIR: f64 = 1e15;
+
+/** Son işlemin hata kodu: 0 yok, 1 sıfıra bölme, 2 NaN, 3 taşma, 4 bilinmeyen işlem. */
+export function hata_kodu(): i32 {
+  return hata;
+}
+
+/** op: 0 toplama, 1 çıkarma, 2 çarpma, 3 bölme, 4 mod. */
+export function ${hesap.fn}(a: f64, b: f64, op: i32): f64 {
+  hata = 0;
+  if (isNaN(a) || isNaN(b) || !isFinite(a) || !isFinite(b)) {
+    hata = 2;
+    return 0;
+  }
+  let r: f64 = 0;
+  if (op == 0) r = a + b;
+  else if (op == 1) r = a - b;
+  else if (op == 2) r = a * b;
+  else if (op == 3 || op == 4) {
+    if (b == 0) {
+      hata = 1;
+      return 0;
+    }
+    r = op == 3 ? a / b : a % b;
+  } else {
+    hata = 4;
+    return 0;
+  }
+  if (isNaN(r) || !isFinite(r)) {
+    hata = 2;
+    return 0;
+  }
+  if (Math.abs(r) > SINIR) {
+    hata = 3;
+    return 0;
+  }
+  return r;
 }
 `);
   }
   if (blocks.some((b) => b.kind === "sayac")) {
-    parts.push(`let sayac: i32 = 0;
+    parts.push(`const SAYAC_SINIR: i64 = ${COUNTER_LIMIT};
 
-export function artir(adim: i32): i32 {
-  sayac += adim;
-  return sayac;
-}
-
-export function sifirla(): i32 {
-  sayac = 0;
-  return sayac;
+/** Doygun (taşmasız) sayaç adımı; durum arayüzde kalıcı tutulur. */
+export function sayac_adim(deger: i32, adim: i32): i32 {
+  const r: i64 = <i64>deger + <i64>adim;
+  if (r > SAYAC_SINIR) return <i32>SAYAC_SINIR;
+  if (r < -SAYAC_SINIR) return <i32>(-SAYAC_SINIR);
+  return <i32>r;
 }
 `);
   }
@@ -152,7 +199,7 @@ export function tsxFor(spec: GeneratedSpec): string {
       case "durum":
         return `      <CekirdekDurumu />   {/* host_online() · host_peers() */}`;
       case "sayac":
-        return `      <Sayac label="${b.label}" wasm="artir" />`;
+        return `      <Sayac label="${b.label}" wasm="sayac_adim" />   {/* ↑/↓/Esc · /appdata */}`;
       case "hesap":
         return `      <Hesap label="${b.label}" wasm="${b.fn}" />`;
       case "not":
