@@ -92,6 +92,36 @@ const APP_PATTERNS: RegExp[] = [
  */
 const TARGET_WORDS: Array<{ target: SystemTarget; words: string[] }> = [
   {
+    target: "denetim",
+    words: [
+      "sistem denetimi",
+      "sistemi denetle",
+      "sistemi tara",
+      "sistemi bastan tara",
+      "bastan tara",
+      "tum sistemi incele",
+      "sistem analizi",
+      "sistemi analiz",
+      "kod tabanini incele",
+      "kod tabani",
+      "eksikler var",
+      "eksik var",
+      "eksiklikleri",
+      "hatalar var",
+      "sorun var",
+      "duzelt",
+      "iyilestir",
+      "gozden gecir",
+      "rapor ver",
+      "raporla",
+      "audit",
+      "sohbet ekrani",
+      "sohbet ekraninda",
+      "arayuzde eksik",
+      "sistem genelinde",
+    ],
+  },
+  {
     target: "duvarkagidi",
     words: ["duvar kagidi", "duvar kagitlari", "wallpaper", "arka plan gorseli", "masaustu gorseli", "masaustu resmi"],
   },
@@ -138,7 +168,15 @@ const TARGET_WORDS: Array<{ target: SystemTarget; words: string[] }> = [
   { target: "ayarlar", words: ["ayarlar", "ayar paneli", "denetim merkezi", "sistem paneli"] },
 ];
 
-const INSPECT_TARGETS: InspectTarget[] = ["ag", "cekirdek", "vfs", "guvenlik", "performans", "arayuz"];
+const INSPECT_TARGETS: InspectTarget[] = [
+  "ag",
+  "cekirdek",
+  "vfs",
+  "guvenlik",
+  "performans",
+  "arayuz",
+  "denetim",
+];
 
 const isInspect = (t: SystemTarget): t is InspectTarget => (INSPECT_TARGETS as SystemTarget[]).includes(t);
 
