@@ -381,7 +381,7 @@ export function Desktop({
           label: app.label,
           sortType: app.category,
           updated: 0,
-          glyph: <AppIconSurface id={id} size="desk" showBadge />,
+          glyph: <AppIconSurface id={id} size="desk" />,
         },
       ];
     });

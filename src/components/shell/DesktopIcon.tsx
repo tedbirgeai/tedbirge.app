@@ -76,7 +76,7 @@ export function DesktopIcon({
       }`}
       style={{ width: ICON_W }}
     >
-      <AppIconSurface id={id} size="desk" showBadge />
+      <AppIconSurface id={id} size="desk" />
       <span className="max-w-[84px] truncate text-center text-xs font-medium text-[var(--tb-text)] drop-shadow-md">
         {label}
       </span>
