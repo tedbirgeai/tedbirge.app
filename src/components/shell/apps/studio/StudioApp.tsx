@@ -33,6 +33,7 @@ import { compile, type Problem } from "@/lib/studio/compiler";
 import { deviceSigner, packageProject } from "@/lib/studio/packager";
 import { instantiateTbApp, installTbAppWithConsent } from "@/apps/tbapp";
 import { TRUST_LABELS } from "@/apps/package";
+import { PromptStudio } from "@/components/shell/apps/studio/PromptStudio";
 
 const PICKER_KEY = "tb.studio.picker.seen";
 
@@ -320,6 +321,7 @@ export function StudioApp() {
         <button type="button" className={btn} onClick={() => void checkClaims()} disabled={!open}>
           <ShieldCheck className="h-3.5 w-3.5" /> AXIOM
         </button>
+        {modeTabs}
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_260px]">
