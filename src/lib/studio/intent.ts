@@ -27,10 +27,18 @@ export type SystemTarget =
   | "vfs"
   | "guvenlik"
   | "performans"
-  | "arayuz";
+  | "arayuz"
+  | "denetim";
 
 /** Salt inceleme (müdahale değil) yapılan katmanlar. */
-export type InspectTarget = "ag" | "cekirdek" | "vfs" | "guvenlik" | "performans" | "arayuz";
+export type InspectTarget =
+  | "ag"
+  | "cekirdek"
+  | "vfs"
+  | "guvenlik"
+  | "performans"
+  | "arayuz"
+  | "denetim";
 
 export type SystemPatch =
   | { target: "tema"; theme?: "crystal" | "soft" | "night" }
@@ -76,6 +84,8 @@ const APP_PATTERNS: RegExp[] = [
   /(uygulama|app|program|pano|arac)\s*(olustur|yap|uret|kur|yaz|gelistir|ekle)/,
   /(uygulamasi|programi|panosu)\s*(olustur|yap|uret|yaz)/,
   /\bapp\s*(olustur|yap)\b/,
+  // "Yeni bir hesap makinesi yap" gibi açık bağımsız yazılım talepleri.
+  /(yeni|sifirdan|bagimsiz|ayri)\s+bir\s+[a-z0-9 ]{2,40}\s*(olustur|yap|uret|yaz|kodla|gelistir)/,
 ];
 
 /**
@@ -83,6 +93,36 @@ const APP_PATTERNS: RegExp[] = [
  * Sıralama önemlidir: daha özgül katmanlar üstte yer alır.
  */
 const TARGET_WORDS: Array<{ target: SystemTarget; words: string[] }> = [
+  {
+    target: "denetim",
+    words: [
+      "sistem denetimi",
+      "sistemi denetle",
+      "sistemi tara",
+      "sistemi bastan tara",
+      "bastan tara",
+      "tum sistemi incele",
+      "sistem analizi",
+      "sistemi analiz",
+      "kod tabanini incele",
+      "kod tabani",
+      "eksikler var",
+      "eksik var",
+      "eksiklikleri",
+      "hatalar var",
+      "sorun var",
+      "duzelt",
+      "iyilestir",
+      "gozden gecir",
+      "rapor ver",
+      "raporla",
+      "audit",
+      "sohbet ekrani",
+      "sohbet ekraninda",
+      "arayuzde eksik",
+      "sistem genelinde",
+    ],
+  },
   {
     target: "duvarkagidi",
     words: ["duvar kagidi", "duvar kagitlari", "wallpaper", "arka plan gorseli", "masaustu gorseli", "masaustu resmi"],
@@ -130,7 +170,15 @@ const TARGET_WORDS: Array<{ target: SystemTarget; words: string[] }> = [
   { target: "ayarlar", words: ["ayarlar", "ayar paneli", "denetim merkezi", "sistem paneli"] },
 ];
 
-const INSPECT_TARGETS: InspectTarget[] = ["ag", "cekirdek", "vfs", "guvenlik", "performans", "arayuz"];
+const INSPECT_TARGETS: InspectTarget[] = [
+  "ag",
+  "cekirdek",
+  "vfs",
+  "guvenlik",
+  "performans",
+  "arayuz",
+  "denetim",
+];
 
 const isInspect = (t: SystemTarget): t is InspectTarget => (INSPECT_TARGETS as SystemTarget[]).includes(t);
 
@@ -161,7 +209,9 @@ export function classifyIntent(prompt: string): Intent {
   const appAsk = APP_PATTERNS.some((re) => re.test(t));
   const target = detectTarget(t);
 
-  if (target && !appAsk) {
+  // Yönetimsel/analitik metinler ve mevcut sistem bileşeni istekleri her zaman Mod B'dir.
+  const explicitAppNoun = /(uygulama|uygulamasi|app|program|programi|pano|panosu|arac)/.test(t);
+  if (target && (!appAsk || target === "denetim" || !explicitAppNoun)) {
     return { mode: "sistem", patch: patchFor(target, t), reason: reasonFor(target) };
   }
   if (appAsk) {
@@ -191,6 +241,7 @@ function reasonFor(target: SystemTarget): string {
     guvenlik: "Güvenlik, izin ve yalıtım sınırları incelenir.",
     performans: "Bellek ve akıcılık göstergeleri incelenir.",
     arayuz: "Pencere ve masaüstü düzeni katmanı incelenir.",
+    denetim: "Sistem geneli denetlenir ve teşhis raporu üretilir.",
   };
   return `${labels[target]} Yeni uygulama klasörü veya masaüstü ikonu oluşturulmaz.`;
 }
