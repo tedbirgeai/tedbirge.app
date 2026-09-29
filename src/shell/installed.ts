@@ -9,6 +9,7 @@
 import { useSyncExternalStore } from "react";
 
 import { deviceScopeLabel } from "@/lib/identity/device";
+import { generatedApp } from "@/lib/studio/generated-apps";
 import { WEB_APPS, type AppCategory } from "@/shell/web-apps";
 import { xdgCategory, type XdgCategory } from "@/shell/xdg";
 
@@ -199,7 +200,19 @@ export const CATALOG: CatalogApp[] = [
 
 export function catalogApp(id: string): CatalogApp | undefined {
   const app = CATALOG.find((a) => a.id === id);
-  if (!app) return undefined;
+  if (!app) {
+    // AxiomStudio'da üretilmiş uygulamalar da masaüstü kataloğunda görünür.
+    const made = generatedApp(id);
+    return made
+      ? {
+          id: made.spec.id,
+          label: made.spec.name,
+          hint: made.spec.description || "AxiomStudio'da üretildi",
+          category: "araclar",
+          builtin: false,
+        }
+      : undefined;
+  }
   // "Bilgisayarım" etiketi cihaz türüne göre isimlendirilir.
   if (app.id === "computer") return { ...app, label: deviceScopeLabel() };
   return app;

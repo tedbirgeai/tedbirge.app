@@ -3,7 +3,18 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Eye, FilePlus2, Hammer, Package, Play, Save, ShieldCheck, X } from "lucide-react";
+import {
+  BookOpen,
+  Eye,
+  FilePlus2,
+  Hammer,
+  Package,
+  Play,
+  Save,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { EditorPane, type EditorHandle } from "@/components/shell/apps/studio/EditorPane";
@@ -22,6 +33,7 @@ import { compile, type Problem } from "@/lib/studio/compiler";
 import { deviceSigner, packageProject } from "@/lib/studio/packager";
 import { instantiateTbApp, installTbAppWithConsent } from "@/apps/tbapp";
 import { TRUST_LABELS } from "@/apps/package";
+import { PromptStudio } from "@/components/shell/apps/studio/PromptStudio";
 
 const PICKER_KEY = "tb.studio.picker.seen";
 
@@ -43,6 +55,7 @@ export function StudioApp() {
   const [pickName, setPickName] = useState("");
   const [pickTpl, setPickTpl] = useState<TemplateId>("widget");
   const [side, setSide] = useState<"onizleme" | "rehber">("onizleme");
+  const [mode, setMode] = useState<"uretici" | "kod">("uretici");
   const [preview, setPreview] = useState<string[]>([]);
   const [wasm, setWasm] = useState<{ project: string; bytes: Uint8Array } | null>(null);
   const editor = useRef<EditorHandle | null>(null);
@@ -224,6 +237,48 @@ export function StudioApp() {
 
   const btn = `${ghostBtn} inline-flex items-center gap-1.5`;
 
+  const modeTabs = (
+    <div className="ml-auto flex gap-1 text-[11px]" role="tablist" aria-label="Stüdyo kipi">
+      {(
+        [
+          ["uretici", "Üretici"],
+          ["kod", "Kod"],
+        ] as const
+      ).map(([id, label]) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={mode === id}
+          onClick={() => setMode(id)}
+          className={`rounded px-2 py-0.5 ${mode === id ? "bg-[var(--tb-accent)]/15 text-[var(--tb-text)]" : "text-[var(--tb-muted)]"}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (mode === "uretici") {
+    return (
+      <div className="relative flex h-full min-h-0 flex-col bg-[var(--tb-bg)] text-[var(--tb-text)]">
+        <div className="flex flex-wrap items-center gap-2 border-b border-[var(--tb-border)] px-3 py-2">
+          <strong className="mr-2 text-sm">AxiomStudio</strong>
+          <span className="inline-flex items-center gap-1.5 font-osmono text-[11px] text-[var(--tb-muted)]">
+            <Sparkles className="h-3.5 w-3.5" /> Doğal dille uygulama üretimi
+          </span>
+          {modeTabs}
+        </div>
+        <PromptStudio
+          onOpenFile={(p) => {
+            setMode("kod");
+            void refresh().then(() => void openFile(p));
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-[var(--tb-bg)] text-[var(--tb-text)]">
       <div className="flex flex-wrap items-center gap-2 border-b border-[var(--tb-border)] px-3 py-2">
@@ -266,6 +321,7 @@ export function StudioApp() {
         <button type="button" className={btn} onClick={() => void checkClaims()} disabled={!open}>
           <ShieldCheck className="h-3.5 w-3.5" /> AXIOM
         </button>
+        {modeTabs}
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_260px]">
