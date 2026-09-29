@@ -16,16 +16,11 @@ export * from "./telemetry";
 export * from "./ipc";
 export * from "./kernel-worker-bridge";
 
-// React Hook ve Entegrasyon Katmanı
-export {
-  useKernelEngine,
-  type KernelTelemetryData,
-  type UseKernelEngineOptions,
-  type UseKernelEngineReturn,
-} from "../hooks/useKernelEngine";
+// React Hook ve Entegrasyon Katmanı: yalnız gerçek Web Worker köprüsü.
+export { useKernelWorker } from "../hooks/useKernelWorker";
 
-// Arayüz Görselleştirme Bileşeni
-export { KernelMonitor, type KernelMonitorProps } from "../components/KernelMonitor";
+// Arayüz Görselleştirme Bileşeni (canlı işçi telemetrisini tüketir).
+export { KernelMonitor } from "./KernelMonitor";
 
 // Sabitler ve Sistem Tanımları
 export const AXIOM_KERNEL_VERSION = "2026.9.0";

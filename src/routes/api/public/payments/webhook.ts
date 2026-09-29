@@ -136,7 +136,7 @@ async function handleSubscriptionCreated(data: PaddleSubscriptionData, env: Padd
   }
 }
 
-async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {
+async function handleSubscriptionUpdated(data: PaddleSubscriptionData, env: PaddleEnv) {
   const { id, status, currentBillingPeriod, scheduledChange, items } = data;
 
   await getSupabase()
@@ -173,7 +173,7 @@ async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {
   }
 }
 
-async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
+async function handleSubscriptionCanceled(data: PaddleSubscriptionData, env: PaddleEnv) {
   await getSupabase()
     .from("subscriptions")
     .update({ status: "canceled", updated_at: new Date().toISOString() })
