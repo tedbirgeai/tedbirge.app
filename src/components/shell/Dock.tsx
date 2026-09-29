@@ -28,6 +28,8 @@ import {
 import { pushUndo } from "@/lib/shell/undo-stack";
 import { notify, notifyOk } from "@/lib/shell/notify";
 import { useIsCompact } from "@/hooks/use-mobile";
+import { playSystemSound } from "@/os/system/audio";
+
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
 export function Dock({
