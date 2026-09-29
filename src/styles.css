@@ -1109,27 +1109,12 @@ body {
   place-items: center;
   flex-shrink: 0;
   color: var(--tb-text);
-  background: color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 52%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tb-brand-ink-light) 56%, var(--tb-border));
-  backdrop-filter: blur(18px) saturate(145%);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--tb-brand-ink-light) 72%, transparent),
-    inset 0 -1px 0 color-mix(in srgb, var(--tb-text) 8%, transparent),
-    0 9px 20px color-mix(in srgb, var(--tb-text) 16%, transparent),
-    0 2px 5px color-mix(in srgb, var(--tb-text) 10%, transparent);
+  background: transparent;
+  border: 0;
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--tb-text) 16%, transparent);
   overflow: hidden;
 }
-.tbos-app-icon::before {
-  content: "";
-  position: absolute;
-  inset: 2px 3px auto;
-  height: 38%;
-  border-radius: inherit;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--tb-brand-ink-light) 38%, transparent), transparent);
-  pointer-events: none;
-}
 .tbos-app-icon--brand {
-  background: color-mix(in srgb, var(--tb-panel-solid, var(--tb-panel)) 34%, transparent);
   box-shadow: 0 8px 18px color-mix(in srgb, var(--tb-text) 14%, transparent);
 }
 .tbos-app-icon--system {

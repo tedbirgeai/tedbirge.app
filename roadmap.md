@@ -58,3 +58,6 @@
 - [x] Fatura akışının oturumlu tarayıcı testi ve imzasız webhook reddi (401)
 - [ ] Gerçek sandbox test satın alması (Paddle anahtarları tanımlı değil)
 - [ ] GİB entegratörüne e-Fatura gönderimi (kapsam dışı; MoR sağlayıcıda)
+
+## WebOS görsel sistem
+- [x] Faz 1 ikonografi: monokrom halkaları kaldır, akrilik yerleşik ikon ailesini ve eksiksiz yerel marka logolarını kur
