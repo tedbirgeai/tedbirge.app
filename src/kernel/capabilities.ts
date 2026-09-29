@@ -22,12 +22,26 @@ export type Capability =
   | "identity.read"
   /** Düğüm durumunu okuyabilir. */
   | "status.read"
+  /** Düğüm durumunu değiştirebilir. */
+  | "status.write"
   /** Kendi alanındaki dosyaları okuyabilir. */
   | "files.read"
   /** Kendi alanına dosya yazabilir. */
   | "files.write"
   /** Kendi alanındaki dosyaları silebilir. */
-  | "files.delete";
+  | "files.delete"
+  /** VFS / FS Dosya Okuma Yetkisi */
+  | "fs.read"
+  /** VFS / FS Dosya Yazma Yetkisi */
+  | "fs.write"
+  /** Uygulama VFS Veri Alanı Erişimi */
+  | "vfs.appdata"
+  /** LIMEN P2P Senkronizasyonu */
+  | "limen.p2p.sync"
+  /** WASM Derleyici Motoru */
+  | "compiler.wasm"
+  /** UI / TSX Derleyici Motoru */
+  | "compiler.ui";
 
 export const ALL_CAPABILITIES: Capability[] = [
   "mesh.send",
@@ -35,9 +49,16 @@ export const ALL_CAPABILITIES: Capability[] = [
   "mesh.route",
   "identity.read",
   "status.read",
+  "status.write",
   "files.read",
   "files.write",
   "files.delete",
+  "fs.read",
+  "fs.write",
+  "vfs.appdata",
+  "limen.p2p.sync",
+  "compiler.wasm",
+  "compiler.ui",
 ];
 
 /**
