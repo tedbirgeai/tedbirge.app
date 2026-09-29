@@ -84,12 +84,14 @@ export function Dock({
   };
 
   const activate = (id: string) => {
+    playSystemSound("dock-click");
     const win = windows.find((w) => w.appId === id);
     if (!win) return onLaunch(id);
     if (win.minimized) return restoreWindow(win.id);
     if (compact) return closeWindow(win.id);
     focusWindow(win.id);
   };
+
 
   /** Dock zemini: uygulama, pencere ve masaüstü eylemleri. */
   const dockMenu = (): MenuItem[] => [
