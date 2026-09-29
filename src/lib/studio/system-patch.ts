@@ -128,6 +128,7 @@ export function applySystemPatch(patch: SystemPatch): PatchResult {
     case "guvenlik":
     case "performans":
     case "arayuz":
+    case "denetim":
       return inspect(patch.target);
     case "tema": {
       const theme = patch.theme ?? nextTheme();
