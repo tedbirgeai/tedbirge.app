@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { ExternalLink, Globe, Layers, RotateCw, Search, ShieldOff, Waypoints } from "lucide-react";
+import { Globe, Layers, RotateCw, Search, ShieldOff, Waypoints } from "lucide-react";
 
 import { BrandIcon, domainOf } from "@/components/shell/BrandIcon";
 import { GenericAppContainer } from "@/components/shell/GenericAppContainer";
@@ -243,15 +243,7 @@ function WebShell({
         </button>
       </div>
 
-      {onGateway ? (
-        <button
-          type="button"
-          onClick={onGateway}
-          className="wa-press inline-flex items-center gap-2 rounded-lg border border-[var(--tb-border)] px-3 py-2 font-osmono text-[12px] text-[var(--tb-muted)]"
-        >
-          <Waypoints className="h-4 w-4" aria-hidden /> Geçit Üzerinden Çalıştır
-        </button>
-      ) : null}
+      {/* Geçit düğmesi kartın üst kısmında birincil eylem olarak durur. */}
     </div>
   );
 }
