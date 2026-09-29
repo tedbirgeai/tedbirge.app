@@ -486,48 +486,88 @@ export function FilesApp({
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  className={btn}
-                  onClick={() => {
-                    const name = window.prompt("Yeni ad", current.name);
-                    if (name && name.trim() !== current.name) {
-                      void renameFile(current.id, name).then(() =>
-                        notifyOk("Yeniden adlandırıldı"),
-                      );
-                    }
-                  }}
-                >
-                  <Pencil className="h-3.5 w-3.5" aria-hidden /> Yeniden adlandır
-                </button>
+                {inTrash ? (
+                  <>
+                    <button
+                      type="button"
+                      className={btn}
+                      onClick={() => {
+                        void restoreFile(current.id).then(() => {
+                          setSelected(null);
+                          notifyOk("Geri yüklendi", current.name);
+                        });
+                      }}
+                    >
+                      <Undo2 className="h-3.5 w-3.5" aria-hidden /> Geri yükle
+                    </button>
+                    <button
+                      type="button"
+                      className={btn}
+                      onClick={() => {
+                        void deleteFile(current.id).then(() => {
+                          setSelected(null);
+                          notifyOk("Kalıcı olarak silindi", current.name);
+                        });
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden /> Kalıcı sil
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {onOpenApp ? (
+                      <button type="button" className={btn} onClick={() => open(current)}>
+                        <FolderOpen className="h-3.5 w-3.5" aria-hidden /> Aç
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className={btn}
+                      onClick={() => {
+                        const name = window.prompt("Yeni ad", current.name);
+                        if (name && name.trim() !== current.name) {
+                          void renameFile(current.id, name).then(() =>
+                            notifyOk("Yeniden adlandırıldı"),
+                          );
+                        }
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" aria-hidden /> Yeniden adlandır
+                    </button>
 
-                <label className={btn}>
-                  Klasör
-                  <select
-                    value={current.folder}
-                    aria-label="Klasöre taşı"
-                    onChange={(e) => {
-                      void moveFile(current.id, e.target.value as VfsFolder).then(() =>
-                        notifyOk("Taşındı", e.target.value),
-                      );
-                    }}
-                    className="bg-transparent text-[var(--tb-text)] outline-none"
-                  >
-                    {VFS_FOLDERS.map((f) => (
-                      <option key={f} value={f}>
-                        {f}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <label className={btn}>
+                      Klasör
+                      <select
+                        value={current.folder}
+                        aria-label="Klasöre taşı"
+                        onChange={(e) => {
+                          void moveFile(current.id, e.target.value as VfsFolder).then(() =>
+                            notifyOk("Taşındı", e.target.value),
+                          );
+                        }}
+                        className="bg-transparent text-[var(--tb-text)] outline-none"
+                      >
+                        {VFS_FOLDERS.map((f) => (
+                          <option key={f} value={f}>
+                            {f}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
 
-                <button type="button" className={btn} onClick={() => void download(current)}>
-                  <Download className="h-3.5 w-3.5" aria-hidden /> Dışa aktar
-                </button>
+                    <button type="button" className={btn} onClick={() => void download(current)}>
+                      <Download className="h-3.5 w-3.5" aria-hidden /> Dışa aktar
+                    </button>
 
-                <button type="button" className={btn} onClick={() => setConfirmDelete(current.id)}>
-                  <Trash2 className="h-3.5 w-3.5" aria-hidden /> Sil
-                </button>
+                    <button
+                      type="button"
+                      className={btn}
+                      onClick={() => setConfirmDelete(current.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden /> Sil
+                    </button>
+                  </>
+                )}
               </div>
             </aside>
           ) : null}
