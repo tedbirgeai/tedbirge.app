@@ -127,3 +127,10 @@ export function useServiceEvents(): ServiceEvent[] {
     () => NO_EVENTS,
   );
 }
+
+/** WebRTC eş kanalını (mesh-sync) kullanıcı isteğiyle açar/kapatır. */
+export async function setPeerLinkEnabled(on: boolean) {
+  const m = serviceManager();
+  if (on) await m.start("mesh-sync");
+  else m.stop("mesh-sync");
+}

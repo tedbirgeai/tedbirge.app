@@ -12,7 +12,15 @@ import { Check } from "lucide-react";
 import { notifyOk } from "@/lib/shell/notify";
 import { FONT_SCALES, setFontScale, useFontScale } from "@/lib/ui/font-scale";
 import { getTheme, setTheme, THEMES, type ThemeId } from "@/lib/ui/theme";
-import { setWallpaper, useWallpaper, WALLPAPERS } from "@/lib/ui/wallpaper";
+import { notifyError } from "@/lib/shell/notify";
+import { listByKind, readFile, type VfsEntry } from "@/lib/vfs/store";
+import {
+  setAutoWallpaper,
+  setCustomWallpaper,
+  setWallpaper,
+  useWallpaper,
+  WALLPAPERS,
+} from "@/lib/ui/wallpaper";
 
 type TabId = "duvar" | "tema" | "yazi";
 
@@ -36,9 +44,97 @@ function useThemeId(): ThemeId {
   );
 }
 
+function CustomPicker() {
+  const { id, auto, customUrl } = useWallpaper();
+  const [vfs, setVfs] = useState<VfsEntry[] | null>(null);
+  const apply = async (blob: Blob, label: string) => {
+    try {
+      await setCustomWallpaper(blob);
+      notifyOk("Duvar kâğıdı değişti", label);
+    } catch (e) {
+      notifyError("Görsel uygulanamadı", e instanceof Error ? e.message : undefined);
+    }
+  };
+  return (
+    <div className="mb-4 space-y-3">
+      <label className="flex items-center justify-between gap-3 rounded-xl border border-[var(--tb-border)] px-3 py-2">
+        <span>
+          <span className="block text-[13px] font-medium text-[var(--tb-text)]">Otomatik (gün/gece)</span>
+          <span className="block font-osmono text-[11px] text-[var(--tb-muted)]">
+            07:00–19:00 Kristal Açık, diğer saatler Koyu Kristal
+          </span>
+        </span>
+        <input
+          type="checkbox"
+          role="switch"
+          checked={auto}
+          onChange={(e) => setAutoWallpaper(e.target.checked)}
+          aria-label="Otomatik gün/gece duvar kâğıdı"
+          className="h-5 w-5 accent-[var(--tb-accent)]"
+        />
+      </label>
+      <div className="rounded-xl border border-[var(--tb-border)] p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-auto text-[13px] font-medium text-[var(--tb-text)]">
+            Kendi görselim {id === "custom" ? "· etkin" : ""}
+          </span>
+          <label className="wa-press cursor-pointer rounded-lg border border-[var(--tb-border)] px-3 py-1.5 font-osmono text-[11px] text-[var(--tb-text)]">
+            Bilgisayardan yükle
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void apply(f, f.name);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => void listByKind("image/").then(setVfs)}
+            className="wa-press rounded-lg border border-[var(--tb-border)] px-3 py-1.5 font-osmono text-[11px] text-[var(--tb-text)]"
+          >
+            Dosyalar'dan seç
+          </button>
+        </div>
+        {id === "custom" && customUrl ? (
+          <img src={customUrl} alt="Kendi duvar kâğıdım" className="mt-2 h-20 w-36 rounded-lg object-cover" />
+        ) : null}
+        {vfs ? (
+          vfs.length ? (
+            <ul className="mt-2 grid max-h-40 grid-cols-2 gap-1.5 overflow-y-auto sm:grid-cols-3">
+              {vfs.map((f) => (
+                <li key={f.id}>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const file = await readFile(f.id);
+                      if (file) void apply(file, f.name);
+                      setVfs(null);
+                    }}
+                    className="wa-press w-full truncate rounded-lg border border-[var(--tb-border)] px-2 py-1.5 text-left text-[12px] text-[var(--tb-text)]"
+                  >
+                    {f.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 font-osmono text-[11px] text-[var(--tb-muted)]">Dosyalar'da görsel yok.</p>
+          )
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function WallpaperTab() {
   const { id } = useWallpaper();
   return (
+    <>
+    <CustomPicker />
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {WALLPAPERS.map((w) => (
         <button
@@ -46,6 +142,7 @@ function WallpaperTab() {
           type="button"
           aria-pressed={id === w.id}
           onClick={() => {
+            setAutoWallpaper(false);
             setWallpaper(w.id);
             notifyOk("Duvar kâğıdı değişti", w.label);
           }}
@@ -81,6 +178,7 @@ function WallpaperTab() {
         </button>
       ))}
     </div>
+    </>
   );
 }
 

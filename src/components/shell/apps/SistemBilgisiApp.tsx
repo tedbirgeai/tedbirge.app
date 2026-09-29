@@ -16,6 +16,20 @@ import { BUILD_ID } from "@/lib/build-id";
 import { SITE_URL } from "@/lib/site";
 import { PanelEnergy } from "@/components/site/PanelEnergy";
 import { openPath } from "@/components/shell/OsLink";
+import { useFps } from "@/lib/shell/fps";
+
+function FpsBadge() {
+  const { fps, worst } = useFps();
+  return (
+    <span
+      className="ml-auto grid shrink-0 place-items-center rounded-xl border border-[var(--tb-border)] px-3 font-osmono text-[11px] text-[var(--tb-muted)]"
+      aria-label="Ölçülen kare hızı"
+      title="Bu pencerede ölçülen kare hızı; cihaza göre değişir"
+    >
+      {fps} FPS · en uzun kare {worst} ms
+    </span>
+  );
+}
 
 type TabId = "kurumsal" | "katmanlar" | "paketler" | "enerji" | "kayitlar" | "yasal";
 
@@ -61,6 +75,7 @@ export function SistemBilgisiApp() {
               {t.label}
             </button>
           ))}
+          <FpsBadge />
         </nav>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-24">

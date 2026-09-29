@@ -30,6 +30,7 @@ import {
   type WindowRecord,
 } from "@/shell/windows";
 import { haptic, snapBoxFor, type SnapBox } from "@/lib/shell/window-snap";
+import { WindowSleepContext } from "@/lib/shell/window-sleep";
 
 type Edge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
@@ -307,6 +308,8 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
         aria-label={win.title}
         aria-hidden={hidden || undefined}
         inert={hidden || undefined}
+        data-sleeping={hidden ? "true" : undefined}
+        data-maximized={win.maximized && !hidden ? "true" : undefined}
       >
         <div
           className="flex shrink-0 cursor-grab items-center justify-between gap-3 px-3 py-2 active:cursor-grabbing"
@@ -370,7 +373,7 @@ export function WindowFrame({ win, children }: { win: WindowRecord; children: Re
         </div>
 
         <div className="tbos-window-body tbos-scale flex min-h-0 flex-1 flex-col overflow-hidden">
-          {children}
+          <WindowSleepContext.Provider value={hidden}>{children}</WindowSleepContext.Provider>
         </div>
 
 
