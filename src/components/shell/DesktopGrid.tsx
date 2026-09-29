@@ -19,7 +19,7 @@ export function DesktopGrid({
 
   const layout =
     tier === "desktop"
-      ? "grid-flow-col auto-cols-[104px] grid-rows-[repeat(auto-fill,minmax(104px,1fr))] gap-x-2 gap-y-3 p-6 overflow-x-auto"
+      ? "grid-flow-col auto-cols-[104px] grid-rows-[repeat(auto-fill,108px)] content-start gap-x-2 gap-y-1 p-6 overflow-x-auto"
       : tier === "tablet"
         ? "grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-x-3 gap-y-6 p-5 overflow-y-auto"
         : "grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-x-2 gap-y-5 p-4 overflow-y-auto";
