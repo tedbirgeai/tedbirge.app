@@ -29,6 +29,28 @@ export function WindowSwitcher({ surface }: { surface: { current: HTMLElement | 
   const windows = useWindows();
   const [switcher, setSwitcher] = useState<{ ids: string[]; index: number } | null>(null);
   const hidden = useRef<string[]>([]);
+  // Super tuşunun "yalnız" bırakıldığını anlamak için saf basış izi.
+  const metaPure = useRef(false);
+  // Overlay durumunu dinleyici içinde eşzamanlı okumak için ayna referans.
+  const switcherRef = useRef<{ ids: string[]; index: number } | null>(null);
+  switcherRef.current = switcher;
+
+  /** Seçili pencereye odağı devreder ve overlay'i kapatır. */
+  const commitSwitch = useCallback(() => {
+    setSwitcher((prev) => {
+      if (prev) {
+        const id = prev.ids[prev.index];
+        if (id) {
+          restoreWindow(id);
+          focusWindow(id);
+          const win = getWindows().find((w) => w.id === id);
+          if (win) announce(`${win.title} penceresine geçildi`);
+        }
+      }
+      return null;
+    });
+  }, []);
+
 
   const area = useCallback(() => {
     const el = surface.current;
