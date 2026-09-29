@@ -14,7 +14,9 @@ import { MessageList } from "@/components/messenger/MessageList";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@/components/shell/OsLink";
 import { DEV_PORTAL_URL } from "@/lib/site";
+import { AxiomBotPanel } from "@/components/messenger/AxiomBotPanel";
 import {
+  Bot,
   FolderOpen,
   Lock,
   MessageSquare,
@@ -97,7 +99,7 @@ type Participant = {
   relay?: boolean;
 };
 
-type TabId = "chat" | "files" | "team" | "system";
+type TabId = "chat" | "bot" | "files" | "team" | "system";
 
 /** Ölçüm yoksa asla değer uydurmaz. */
 function metric(value: number | null | undefined, unit = "", digits = 0): string {
@@ -536,6 +538,7 @@ export default function Messenger() {
 
   const navItems: { id: TabId; label: string; icon: typeof MessageSquare }[] = [
     { id: "chat", label: "Sohbet", icon: MessageSquare },
+    { id: "bot", label: "Axiom Bot", icon: Bot },
     { id: "files", label: "Dosyalar", icon: FolderOpen },
     { id: "team", label: "Ekip", icon: Users },
   ];
@@ -999,6 +1002,12 @@ export default function Messenger() {
                 </Card>
               </div>
             </div>
+          ) : null}
+
+          {tab === "bot" ? (
+            <AppErrorBoundary title="Axiom Bot yüklenemedi">
+              <AxiomBotPanel />
+            </AppErrorBoundary>
           ) : null}
 
           {tab === "files" ? (

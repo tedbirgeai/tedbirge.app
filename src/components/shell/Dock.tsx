@@ -20,11 +20,13 @@ import {
   closeWindow,
   focusWindow,
   minimizeAll,
+  minimizeWindow,
   restoreMany,
   restoreWindow,
   toggleMaximize,
   type WindowRecord,
 } from "@/shell/windows";
+import { dockAction } from "@/shell/dock-action";
 import { pushUndo } from "@/lib/shell/undo-stack";
 import { notify, notifyOk } from "@/lib/shell/notify";
 import { useIsCompact } from "@/hooks/use-mobile";
@@ -87,11 +89,12 @@ export function Dock({
 
   const activate = (id: string) => {
     playSystemSound("dock-click");
-    const win = windows.find((w) => w.appId === id);
-    if (!win) return onLaunch(id);
-    if (win.minimized) return restoreWindow(win.id);
-    if (compact) return closeWindow(win.id);
-    focusWindow(win.id);
+    const topZ = Math.max(0, ...windows.filter((w) => !w.minimized).map((w) => w.z));
+    const act = dockAction(windows.filter((w) => w.appId === id), topZ);
+    if (act.kind === "launch") return onLaunch(id);
+    if (act.kind === "restore") return restoreWindow(act.id);
+    if (act.kind === "minimize") return compact ? closeWindow(act.id) : minimizeWindow(act.id);
+    focusWindow(act.id);
   };
 
 
@@ -188,16 +191,26 @@ export function Dock({
       >
         <AppIconSurface id={id} size="dock" />
         <span className="sr-only">{label}</span>
-        <span
-          aria-hidden
-          className={`mt-1 block rounded-full transition-all ${
-            win
-              ? win.minimized
-                ? "h-1 w-1 bg-[var(--tb-accent)] opacity-50"
-                : "h-1 w-3 bg-[var(--tb-accent)]"
-              : "h-1 w-1 bg-transparent"
-          }`}
-        />
+        <span aria-hidden className="mt-1 flex h-1 items-center gap-0.5">
+          {(() => {
+            const all = windows.filter((w) => w.appId === id);
+            if (!all.length) return <span className="block h-1 w-1" />;
+            return all.slice(0, 3).map((w) => (
+              <span
+                key={w.id}
+                data-state={w.minimized ? "minimized" : "open"}
+                className={`block h-1 rounded-full bg-[var(--tb-accent)] transition-all ${
+                  w.minimized ? "w-1 opacity-45" : all.length > 1 ? "w-1.5" : "w-3"
+                }`}
+              />
+            ));
+          })()}
+        </span>
+        {win ? (
+          <span className="sr-only">
+            {windows.some((w) => w.appId === id && !w.minimized) ? " · açık" : " · küçültülmüş"}
+          </span>
+        ) : null}
       </button>
     );
   };
