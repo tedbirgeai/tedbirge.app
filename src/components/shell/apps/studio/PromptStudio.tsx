@@ -180,6 +180,26 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
           </span>
         </div>
 
+        <p className="font-osmono text-[11px] text-[var(--tb-muted)]">
+          Sistem bileşeni istekleri (tema, duvar kâğıdı, ayarlar, sesler) yerinde güncellenir; masaüstüne yeni ikon
+          eklenmez. Yeni ikon yalnız açıkça bağımsız program istendiğinde oluşur.
+        </p>
+
+        {ask ? (
+          <div className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-2 text-[12px]">
+            <div className="mb-1.5">{ask}</div>
+            <div className="flex gap-1.5">
+              <button type="button" className={ghostBtn} disabled={busy} onClick={() => void produce(true)}>
+                Yine de bağımsız uygulama üret
+              </button>
+              <button type="button" className={ghostBtn} onClick={() => setAsk(null)}>
+                Vazgeç
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+
         <ol className="space-y-1.5" aria-live="polite">
           {STEPS.map((s) => (
             <li key={s.id} className="flex items-center gap-2 font-osmono text-[12px]">
