@@ -9,31 +9,24 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 
 import { OfficeShell, RibbonGroup, ToolButton, useOfficeEditor } from "./OfficeFrame";
+import { colIndex, colName, evaluate, fillSeries, parseRef } from "./formula";
+import { SheetChart, type ChartKind } from "./SheetChart";
+
+export { colName, evaluate };
+
+type Rect = { c1: number; r1: number; c2: number; r2: number };
+const rectOf = (a: string, b: string): Rect => {
+  const p = parseRef(a)!;
+  const q = parseRef(b)!;
+  return { c1: Math.min(p.c, q.c), r1: Math.min(p.r, q.r), c2: Math.max(p.c, q.c), r2: Math.max(p.r, q.r) };
+};
+const inRect = (x: Rect, c: number, r: number) => c >= x.c1 && c <= x.c2 && r >= x.r1 && r <= x.r2;
 
 const COLS = 20;
 const ROWS = 60;
 
 type Sheet = { name: string; cells: Record<string, string> };
 type Book = { v: 2; sheets: Sheet[] };
-
-export function colName(index: number): string {
-  let n = index;
-  let out = "";
-  do {
-    out = String.fromCharCode(65 + (n % 26)) + out;
-    n = Math.floor(n / 26) - 1;
-  } while (n >= 0);
-  return out;
-}
-
-function colIndex(name: string): number {
-  return (
-    name
-      .toUpperCase()
-      .split("")
-      .reduce((acc, ch) => acc * 26 + (ch.charCodeAt(0) - 64), 0) - 1
-  );
-}
 
 /** Eski CSV belgelerini çok sayfalı yapıya yükseltir. */
 function parseBook(text: string): Book {
@@ -56,91 +49,6 @@ function parseBook(text: string): Book {
   return { v: 2, sheets: [{ name: "Sheet1", cells }] };
 }
 
-/** Formül değerlendirici: SUM, AVERAGE, MIN, MAX, COUNT, IF, ROUND + aritmetik. */
-export function evaluate(
-  raw: string,
-  cells: Record<string, string>,
-  seen: Set<string> = new Set(),
-): string {
-  if (!raw.startsWith("=")) return raw;
-  const body = raw.slice(1).trim();
-
-  const valueOf = (ref: string): number => {
-    if (seen.has(ref)) return 0;
-    const next = new Set(seen);
-    next.add(ref);
-    const v = cells[ref.toUpperCase()] ?? "";
-    const out = v.startsWith("=") ? evaluate(v, cells, next) : v;
-    return Number(out) || 0;
-  };
-
-  const rangeValues = (from: string, to: string): number[] => {
-    const m1 = /^([A-Z]+)(\d+)$/.exec(from.toUpperCase());
-    const m2 = /^([A-Z]+)(\d+)$/.exec(to.toUpperCase());
-    if (!m1 || !m2) return [];
-    const c1 = colIndex(m1[1]!);
-    const c2 = colIndex(m2[1]!);
-    const r1 = Number(m1[2]);
-    const r2 = Number(m2[2]);
-    const out: number[] = [];
-    for (let r = Math.min(r1, r2); r <= Math.max(r1, r2); r++)
-      for (let c = Math.min(c1, c2); c <= Math.max(c1, c2); c++)
-        out.push(valueOf(`${colName(c)}${r}`));
-    return out;
-  };
-
-  const agg = /^(SUM|AVERAGE|AVG|MIN|MAX|COUNT)\(([A-Z]+\d+):([A-Z]+\d+)\)$/i.exec(body);
-  if (agg) {
-    const fn = agg[1]!.toUpperCase();
-    const vals = rangeValues(agg[2]!, agg[3]!);
-    if (fn === "COUNT") return String(vals.filter((v) => v !== 0).length);
-    if (!vals.length) return "0";
-    if (fn === "SUM") return String(vals.reduce((a, b) => a + b, 0));
-    if (fn === "AVERAGE" || fn === "AVG")
-      return String(vals.reduce((a, b) => a + b, 0) / vals.length);
-    if (fn === "MIN") return String(Math.min(...vals));
-    return String(Math.max(...vals));
-  }
-
-  const round = /^ROUND\((.+),\s*(\d+)\)$/i.exec(body);
-  if (round) {
-    const inner = evaluate(`=${round[1]}`, cells, seen);
-    const digits = Number(round[2]);
-    const n = Number(inner);
-    return Number.isFinite(n) ? n.toFixed(digits) : "#HATA";
-  }
-
-  const cond = /^IF\((.+?)(<=|>=|<>|=|<|>)(.+?),(.+?),(.+)\)$/i.exec(body);
-  if (cond) {
-    const left = Number(evaluate(`=${cond[1]}`, cells, seen));
-    const right = Number(evaluate(`=${cond[3]}`, cells, seen));
-    const op = cond[2]!;
-    const ok =
-      op === "="
-        ? left === right
-        : op === "<>"
-          ? left !== right
-          : op === "<"
-            ? left < right
-            : op === ">"
-              ? left > right
-              : op === "<="
-                ? left <= right
-                : left >= right;
-    const branch = (ok ? cond[4] : cond[5])!.trim();
-    return /^["'].*["']$/.test(branch) ? branch.slice(1, -1) : evaluate(`=${branch}`, cells, seen);
-  }
-
-  const expr = body.replace(/[A-Z]+\d+/gi, (ref) => String(valueOf(ref)));
-  if (!/^[-+*/(). 0-9]+$/.test(expr)) return "#HATA";
-  try {
-    const out = new Function(`"use strict";return (${expr});`)() as unknown;
-    return typeof out === "number" && Number.isFinite(out) ? String(out) : "#HATA";
-  } catch {
-    return "#HATA";
-  }
-}
-
 export function SheetsApp() {
   const editor = useOfficeEditor("sheets");
   const book = useMemo(() => parseBook(editor.text), [editor.text]);
@@ -148,6 +56,11 @@ export function SheetsApp() {
   const [active, setActive] = useState("A1");
   const [draft, setDraft] = useState("");
   const barRef = useRef<HTMLInputElement>(null);
+  const [anchor, setAnchor] = useState("A1");
+  const [selecting, setSelecting] = useState(false);
+  const [fillTo, setFillTo] = useState<string | null>(null);
+  const [chart, setChart] = useState<{ kind: ChartKind; rect: Rect } | null>(null);
+  const sel = rectOf(anchor, active);
 
   const sheet = book.sheets[Math.min(sheetIndex, book.sheets.length - 1)]!;
   const cells = sheet.cells;
@@ -166,11 +79,57 @@ export function SheetsApp() {
     [book, sheetIndex, writeBook],
   );
 
+  const setMany = useCallback(
+    (patch: Record<string, string>) => {
+      const sheets = book.sheets.map((s, i) =>
+        i === sheetIndex ? { ...s, cells: { ...s.cells, ...patch } } : s,
+      );
+      writeBook({ v: 2, sheets });
+    },
+    [book, sheetIndex, writeBook],
+  );
+
+  /** Doldurma tutamacı bırakıldığında seçimi hedefe kadar çoğaltır. */
+  const applyFill = (target: string) => {
+    const t = parseRef(target);
+    if (!t) return;
+    const patch: Record<string, string> = {};
+    if (t.r > sel.r2) {
+      for (let c = sel.c1; c <= sel.c2; c++) {
+        const src = [];
+        for (let r = sel.r1; r <= sel.r2; r++) src.push(cells[`${colName(c)}${r}`] ?? "");
+        fillSeries(src, t.r - sel.r2, "down").forEach((v, i) => (patch[`${colName(c)}${sel.r2 + 1 + i}`] = v));
+      }
+    } else if (t.c > sel.c2) {
+      for (let r = sel.r1; r <= sel.r2; r++) {
+        const src = [];
+        for (let c = sel.c1; c <= sel.c2; c++) src.push(cells[`${colName(c)}${r}`] ?? "");
+        fillSeries(src, t.c - sel.c2, "right").forEach((v, i) => (patch[`${colName(sel.c2 + 1 + i)}${r}`] = v));
+      }
+    }
+    if (Object.keys(patch).length) setMany(patch);
+  };
+
+  useEffect(() => {
+    const up = () => {
+      setSelecting(false);
+      setFillTo((f) => {
+        if (f) applyFill(f);
+        return null;
+      });
+    };
+    window.addEventListener("pointerup", up);
+    return () => window.removeEventListener("pointerup", up);
+  });
+
+  const rangeLabel = `${colName(sel.c1)}${sel.r1}:${colName(sel.c2)}${sel.r2}`;
+
   const move = (dc: number, dr: number) => {
     const m = /^([A-Z]+)(\d+)$/.exec(active)!;
     const c = Math.min(COLS - 1, Math.max(0, colIndex(m[1]!) + dc));
     const r = Math.min(ROWS, Math.max(1, Number(m[2]) + dr));
     setActive(`${colName(c)}${r}`);
+    setAnchor(`${colName(c)}${r}`);
   };
 
   const tabs = [
@@ -195,6 +154,12 @@ export function SheetsApp() {
             <ToolButton onClick={() => setCell(active, "")} label="Temizle" />
             <ToolButton onClick={() => setCell(active, "=SUM(A1:A10)")} label="=SUM" />
             <ToolButton onClick={() => setCell(active, "=AVERAGE(A1:A10)")} label="=AVERAGE" />
+            <ToolButton onClick={() => setCell(active, "=COUNT(A1:A10)")} label="=COUNT" />
+            <ToolButton onClick={() => setCell(active, '=IF(A1>0,"Evet","Hayır")')} label="=IF" />
+          </RibbonGroup>
+          <RibbonGroup label="Grafik">
+            <ToolButton onClick={() => setChart({ kind: "bar", rect: sel })} label="Çubuk" />
+            <ToolButton onClick={() => setChart({ kind: "line", rect: sel })} label="Çizgi" />
           </RibbonGroup>
         </>
       ),
@@ -218,7 +183,7 @@ export function SheetsApp() {
           className="w-16 rounded-md px-2 py-1 text-center font-osmono text-[12px] text-[var(--tb-text)]"
           style={{ border: "1px solid var(--border)" }}
         >
-          {active}
+          {sel.c1 === sel.c2 && sel.r1 === sel.r2 ? active : rangeLabel}
         </span>
         <span className="font-osmono text-[13px] text-[var(--tb-muted)]">fx</span>
         <input
@@ -273,11 +238,44 @@ export function SheetsApp() {
                   const raw = cells[ref] ?? "";
                   const shown = raw.startsWith("=") ? evaluate(raw, cells) : raw;
                   const on = ref === active;
+                  const inSel = inRect(sel, c, r + 1);
+                  const fr = fillTo ? rectOf(anchor, fillTo) : null;
+                  const inFill = !!fr && inRect({ ...fr, c1: Math.min(fr.c1, sel.c1), r1: Math.min(fr.r1, sel.r1), c2: Math.max(fr.c2, sel.c2), r2: Math.max(fr.r2, sel.r2) }, c, r + 1) && !inSel;
+                  const isCorner = c === sel.c2 && r + 1 === sel.r2;
                   return (
-                    <td key={c} style={{ border: "1px solid var(--border)" }} className="p-0">
+                    <td
+                      key={c}
+                      style={{
+                        border: "1px solid var(--border)",
+                        outline: inFill ? "1px dashed var(--tb-accent)" : undefined,
+                      }}
+                      className="relative p-0"
+                      onPointerEnter={() => {
+                        if (fillTo) setFillTo(ref);
+                        else if (selecting) setActive(ref);
+                      }}
+                    >
+                      {isCorner ? (
+                        <span
+                          aria-label="Doldurma tutamacı"
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setFillTo(ref);
+                          }}
+                          className="absolute -bottom-1 -right-1 z-[5] h-2 w-2 cursor-crosshair bg-[var(--tb-accent)]"
+                        />
+                      ) : null}
                       <button
                         type="button"
-                        onClick={() => setActive(ref)}
+                        onPointerDown={(e) => {
+                          if (e.shiftKey) setActive(ref);
+                          else {
+                            setAnchor(ref);
+                            setActive(ref);
+                          }
+                          setSelecting(true);
+                        }}
                         onDoubleClick={() => barRef.current?.focus()}
                         onKeyDown={(e) => {
                           if (e.key === "ArrowRight") move(1, 0);
@@ -290,7 +288,7 @@ export function SheetsApp() {
                         }}
                         aria-label={`Hücre ${ref}`}
                         className={`h-7 w-full min-w-24 truncate px-2 text-left ${
-                          on
+                          on || inSel
                             ? "bg-[color-mix(in_srgb,var(--tb-accent)_22%,transparent)] text-[var(--tb-text)]"
                             : "text-[var(--tb-text)] hover:bg-[color-mix(in_srgb,var(--tb-text)_5%,transparent)]"
                         }`}
@@ -305,6 +303,18 @@ export function SheetsApp() {
           </tbody>
         </table>
       </div>
+
+      {chart ? (
+        <SheetChart
+          kind={chart.kind}
+          rect={chart.rect}
+          value={(c, r) => {
+            const raw = cells[`${colName(c)}${r}`] ?? "";
+            return raw.startsWith("=") ? evaluate(raw, cells) : raw;
+          }}
+          onClose={() => setChart(null)}
+        />
+      ) : null}
 
       {/* Sayfa sekmeleri */}
       <div
