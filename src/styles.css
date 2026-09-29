@@ -1179,16 +1179,29 @@ body {
 
 /* --- Pencere fiziği: sürükleme koruması, yapışma önizlemesi, düğme tepkisi --- */
 body.tbos-dragging iframe,
-body.tbos-dragging video {
+body.tbos-dragging video,
+body.tbos-dragging canvas,
+body.tbos-dragging .tbos-webview,
+body.tbos-dragging .tbos-window-body {
   pointer-events: none !important;
 }
 body.tbos-dragging {
   user-select: none;
   cursor: grabbing;
 }
+body.tbos-resizing {
+  cursor: inherit;
+}
 body.tbos-dragging .tbos-window {
   transition: none !important;
+  animation: none !important;
 }
+/* Sürükleme/boyutlandırmada pencere kendi GPU katmanında kalır: içerideki
+   yeniden çizim dış düzeni tetiklemez, titreme (jitter) oluşmaz. */
+body.tbos-dragging .tbos-window-body {
+  contain: strict;
+}
+
 
 .tbos-snap-preview {
   background: color-mix(in oklab, var(--tb-accent) 14%, transparent);
