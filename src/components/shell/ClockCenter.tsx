@@ -76,9 +76,12 @@ export function ClockCenter({ open, onClose }: { open: boolean; onClose: () => v
   const agenda = useAgendaDays(open);
   const grid = useMemo(() => monthGrid(cursor.getFullYear(), cursor.getMonth()), [cursor]);
   const today = isoDay(new Date());
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
+    const onClose = () => closeRef.current();
     setCursor(new Date());
     markAllNoticesRead();
     const onDown = (e: PointerEvent) => {
@@ -92,7 +95,7 @@ export function ClockCenter({ open, onClose }: { open: boolean; onClose: () => v
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
   const shift = (n: number) => setCursor((c) => new Date(c.getFullYear(), c.getMonth() + n, 1));
