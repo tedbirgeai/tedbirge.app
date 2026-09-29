@@ -24,6 +24,9 @@ import { writeRepo } from "@/lib/studio/repo-fs";
 import { notify, notifyError, notifyOk } from "@/lib/shell/notify";
 import { classifyIntent } from "@/lib/studio/intent";
 import { applySystemPatch } from "@/lib/studio/system-patch";
+import { reportForApp, reportForPatch, type DiagnosisReport } from "@/lib/studio/diagnosis";
+import { DiagnosisCard } from "@/components/axiom/DiagnosisCard";
+
 
 import { ALLOWED_GENERATED_CAPS } from "@/lib/studio/generated-policy";
 import { installApp, uninstallApp } from "@/shell/installed";
@@ -58,37 +61,43 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
   const [spec, setSpec] = useState<GeneratedSpec | null>(null);
   const [busy, setBusy] = useState(false);
   const [ask, setAsk] = useState<string | null>(null);
+  const [report, setReport] = useState<DiagnosisReport | null>(null);
   const apps = useGeneratedApps();
+
 
 
   const print = (line: string) =>
     setLog((l) => [...l.slice(-199), `${new Date().toLocaleTimeString("tr-TR")}  ${line}`]);
   const mark = (id: StepId, s: StepState) => setState((p) => ({ ...p, [id]: s }));
 
-  /** Mod B — mevcut sistem bileşenini yerinde güncelle (ikon/klasör üretilmez). */
-  function patchSystem(patch: Parameters<typeof applySystemPatch>[0], reason: string) {
+  /** Mod B — mevcut sistem bileşenini yerinde güncelle/incele (ikon/klasör üretilmez). */
+  function patchSystem(intent: Extract<ReturnType<typeof classifyIntent>, { mode: "sistem" }>) {
     setState({ analiz: "tamam", derleme: "bekliyor", vfs: "bekliyor", guvenlik: "bekliyor", kurulum: "bekliyor" });
-    const r = applySystemPatch(patch);
-    print(`Mod B — yerinde sistem güncellemesi: ${reason}`);
+    const r = applySystemPatch(intent.patch);
+    print(`Mod B — ${intent.reason}`);
     print(`${r.component}: ${r.summary}`);
+    setReport(reportForPatch(prompt, intent, r));
     if (r.applied) notifyOk(r.component, r.summary);
     else notify(r.component, r.summary);
   }
+
 
   async function produce(force = false) {
     setBusy(true);
     setLog([]);
     setSpec(null);
     setAsk(null);
+    setReport(null);
     setState({ analiz: "bekliyor", derleme: "bekliyor", vfs: "bekliyor", guvenlik: "bekliyor", kurulum: "bekliyor" });
     try {
       mark("analiz", "sürüyor");
       if (!force) {
         const intent = classifyIntent(prompt);
         if (intent.mode === "sistem") {
-          patchSystem(intent.patch, intent.reason);
+          patchSystem(intent);
           return;
         }
+
         if (intent.mode === "belirsiz") {
           mark("analiz", "hata");
           print(intent.reason);
@@ -136,6 +145,11 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
       installApp(s.id);
       mark("kurulum", "tamam");
       print(`Kuruldu: ${s.name} — masaüstünde ve görev çubuğunda hazır.`);
+      setReport(
+        reportForApp(prompt, s.name, true, `${r.binary.length} baytlık çekirdek derlendi ve /repo/apps/${s.id}/ altına yazıldı.`),
+      );
+      notifyOk(`${s.name} kuruldu`, "Masaüstünden açabilirsiniz.");
+
       notifyOk(`${s.name} kuruldu`, "Masaüstünden açabilirsiniz.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Üretim tamamlanamadı.";
@@ -199,8 +213,10 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
           </div>
         ) : null}
 
+        {report ? <DiagnosisCard report={report} /> : null}
 
         <ol className="space-y-1.5" aria-live="polite">
+
           {STEPS.map((s) => (
             <li key={s.id} className="flex items-center gap-2 font-osmono text-[12px]">
               {state[s.id] === "tamam" ? (

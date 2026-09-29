@@ -14,7 +14,23 @@
 
 export type IntentMode = "uygulama" | "sistem" | "belirsiz";
 
-export type SystemTarget = "tema" | "duvarkagidi" | "parlaklik" | "gecelsigi" | "ses" | "ayarlar";
+/** Yerinde müdahale edilebilen ya da incelenebilen OS katmanları. */
+export type SystemTarget =
+  | "tema"
+  | "duvarkagidi"
+  | "parlaklik"
+  | "gecelsigi"
+  | "ses"
+  | "ayarlar"
+  | "ag"
+  | "cekirdek"
+  | "vfs"
+  | "guvenlik"
+  | "performans"
+  | "arayuz";
+
+/** Salt inceleme (müdahale değil) yapılan katmanlar. */
+export type InspectTarget = "ag" | "cekirdek" | "vfs" | "guvenlik" | "performans" | "arayuz";
 
 export type SystemPatch =
   | { target: "tema"; theme?: "crystal" | "soft" | "night" }
@@ -22,12 +38,14 @@ export type SystemPatch =
   | { target: "parlaklik"; delta: number }
   | { target: "gecelsigi"; on: boolean }
   | { target: "ses"; muted: boolean }
-  | { target: "ayarlar" };
+  | { target: "ayarlar" }
+  | { target: InspectTarget };
 
 export type Intent =
   | { mode: "uygulama"; reason: string }
   | { mode: "sistem"; patch: SystemPatch; reason: string }
   | { mode: "belirsiz"; reason: string };
+
 
 const FOLD: Record<string, string> = {
   ı: "i",
@@ -60,15 +78,62 @@ const APP_PATTERNS: RegExp[] = [
   /\bapp\s*(olustur|yap)\b/,
 ];
 
-/** Sistem bileşeni anahtar kelimeleri. */
+/**
+ * Semantik sözlük — günlük konuşma dili, şikâyet ve arzu kalıpları dahil.
+ * Sıralama önemlidir: daha özgül katmanlar üstte yer alır.
+ */
 const TARGET_WORDS: Array<{ target: SystemTarget; words: string[] }> = [
-  { target: "duvarkagidi", words: ["duvar kagidi", "duvar kagitlari", "wallpaper", "arka plan gorseli", "masaustu gorseli"] },
-  { target: "tema", words: ["tema", "gorunum", "renk paleti", "koyu mod", "acik mod", "karanlik mod"] },
-  { target: "parlaklik", words: ["parlaklik", "ekran isigi"] },
-  { target: "gecelsigi", words: ["gece isigi", "gece modu", "amber filtre"] },
-  { target: "ses", words: ["sistem sesi", "sistem sesleri", "ses efekti", "ses efektleri", "sessiz"] },
+  {
+    target: "duvarkagidi",
+    words: ["duvar kagidi", "duvar kagitlari", "wallpaper", "arka plan gorseli", "masaustu gorseli", "masaustu resmi"],
+  },
+  {
+    target: "gecelsigi",
+    words: ["gece isigi", "gece modu", "amber filtre", "gozum yaniyor", "gozlerim yaniyor", "mavi isik", "gece rahatsiz"],
+  },
+  {
+    target: "parlaklik",
+    words: ["parlaklik", "ekran isigi", "cok parlak", "cok karanlik", "ekran soluk", "isik fazla", "gozumu aliyor"],
+  },
+  {
+    target: "ses",
+    words: ["sistem sesi", "sistem sesleri", "ses efekti", "ses efektleri", "sessiz", "gurultu", "cok ses cikariyor", "bip sesi", "ses kisilsin"],
+  },
+  {
+    target: "tema",
+    words: ["tema", "gorunum", "renk paleti", "koyu mod", "acik mod", "karanlik mod", "renkler agir", "ferah bir gorunum", "renkleri degistir"],
+  },
+  {
+    target: "ag",
+    words: ["ag katmani", "mesh", "baglanti", "internet", "cihaz bulunamiyor", "cihaz gorunmuyor", "eslesme", "gecikme", "ping", "kopuyor", "webrtc", "topoloji"],
+  },
+  {
+    target: "performans",
+    words: ["yavas", "takiliyor", "donuyor", "kasiyor", "bellek", "ram", "performans", "fps", "akici degil", "hizlandir", "optimize"],
+  },
+  {
+    target: "vfs",
+    words: ["dosya sistemi", "vfs", "klasor", "depolama", "disk", "cop kutusu", "indirilenler", "dosyalarim", "kota"],
+  },
+  {
+    target: "guvenlik",
+    words: ["guvenlik", "izin", "yetki", "sandbox", "yalitim", "imza", "sifreleme", "gizlilik", "kalkan"],
+  },
+  {
+    target: "cekirdek",
+    words: ["cekirdek", "kernel", "wasm", "worker", "hakikat motoru", "dogrulama motoru", "zaman asimi", "watchdog"],
+  },
+  {
+    target: "arayuz",
+    words: ["pencere", "ikon", "dock", "gorev cubugu", "yazi boyutu", "arayuz", "masaustu duzeni", "izgara", "ust bar"],
+  },
   { target: "ayarlar", words: ["ayarlar", "ayar paneli", "denetim merkezi", "sistem paneli"] },
 ];
+
+const INSPECT_TARGETS: InspectTarget[] = ["ag", "cekirdek", "vfs", "guvenlik", "performans", "arayuz"];
+
+const isInspect = (t: SystemTarget): t is InspectTarget => (INSPECT_TARGETS as SystemTarget[]).includes(t);
+
 
 const has = (t: string, words: string[]) => words.some((w) => t.includes(w));
 
@@ -120,12 +185,21 @@ function reasonFor(target: SystemTarget): string {
     gecelsigi: "Gece ışığı katmanı yerinde ayarlanır.",
     ses: "Sistem ses motoru yerinde ayarlanır.",
     ayarlar: "Ayarlar paneli yerinde güncellenir.",
+    ag: "Ağ/mesh katmanı canlı ölçümlerle incelenir.",
+    cekirdek: "Çekirdek ve WASM çalışma zamanı incelenir.",
+    vfs: "Dosya sistemi (VFS) kotası ve ağacı incelenir.",
+    guvenlik: "Güvenlik, izin ve yalıtım sınırları incelenir.",
+    performans: "Bellek ve akıcılık göstergeleri incelenir.",
+    arayuz: "Pencere ve masaüstü düzeni katmanı incelenir.",
   };
   return `${labels[target]} Yeni uygulama klasörü veya masaüstü ikonu oluşturulmaz.`;
 }
 
+
 function patchFor(target: SystemTarget, t: string): SystemPatch {
+  if (isInspect(target)) return { target };
   switch (target) {
+
     case "tema": {
       const theme = themeFrom(t);
       return theme ? { target: "tema", theme } : { target: "tema" };
