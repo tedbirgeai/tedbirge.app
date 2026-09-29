@@ -222,8 +222,10 @@ export function openWindow(appId: string, title: string, fresh = false): string 
   normalizeZ(id);
   emit();
   announce(`${title} açıldı`);
+  playSystemSound("window-open");
   return id;
 }
+
 
 export function closeWindow(id: string) {
   const closed = windows.find((w) => w.id === id);
