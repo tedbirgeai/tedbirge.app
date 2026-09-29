@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppWindow, FileText, Radio, Search, TerminalSquare, User } from "lucide-react";
+import { AppWindow, FileText, Radio, Search, SlidersHorizontal, TerminalSquare, User } from "lucide-react";
 
 import { notifyOk } from "@/lib/shell/notify";
 import { setFocusMode, isFocusMode } from "@/lib/shell/focus-mode";
