@@ -86,7 +86,7 @@ export function evaluate(raw: string, cells: Cells, stack: Set<string> = new Set
       if (!Number.isFinite(s)) return "#DIV/0";
       return String(Math.round(s * 1e10) / 1e10);
     }
-    return s;
+    const s = (Array.isArray(v) ? (flat(v)[0] ?? "") : v) as string | number | boolean;
   } catch (e) {
     return e instanceof FormulaError ? e.message : "#HATA";
   }
