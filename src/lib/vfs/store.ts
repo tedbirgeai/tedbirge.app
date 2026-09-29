@@ -50,6 +50,12 @@ export type VfsEntry = {
   size: number;
   at: number;
   folder: VfsFolder;
+  /**
+   * Çöp kutusu alanı: dosya silindiğinde kalıcı olarak yok edilmez, yalnız
+   * işaretlenir ve geldiği klasör saklanır. Geri yükleme bu bilgiyi kullanır.
+   */
+  trashedAt?: number;
+  trashedFrom?: VfsFolder;
 };
 
 type VfsRecord = VfsEntry & { blob: Blob };
