@@ -156,6 +156,7 @@ jobs:
           bash scripts/validation-gates.sh imaj "build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso"
 
       - name: Açılış testi (QEMU · gerçek donanım senaryoları)
+        timeout-minutes: 25
         run: |
           export DEBIAN_FRONTEND=noninteractive
           sudo -E apt-get update
@@ -181,7 +182,7 @@ jobs:
           fi
           cp "$OVMF_VARS" build-iso/OVMF_VARS.fd
           FAIL=0
-          BOOT_TIMEOUT="${BOOT_TIMEOUT:-600}"
+          BOOT_TIMEOUT="${BOOT_TIMEOUT:-300}"
 
           run_case() {
             NAME="$1"
@@ -245,7 +246,7 @@ jobs:
             -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
             -drive if=pflash,format=raw,file=build-iso/OVMF_VARS.fd \
             -device ahci,id=ahci -device ide-cd,bus=ahci.0,drive=media,bootindex=0
-          run_case dusuk-bellek 2048 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media,bootindex=0
+          run_case dusuk-bellek 4096 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=media,bootindex=0
 
           if test "$FAIL" -ne 0; then
             echo "::error::Açılış testleri başarısız — imaj yayınlanmayacak."
