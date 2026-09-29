@@ -8,9 +8,7 @@ type Bucket = { count: number; windowStart: number };
 
 const buckets = new Map<string, Bucket>();
 
-export type RateLimitResult =
-  | { ok: true }
-  | { ok: false; retryAfterSeconds: number };
+export type RateLimitResult = { ok: true } | { ok: false; retryAfterSeconds: number };
 
 export function checkRate(
   key: string,

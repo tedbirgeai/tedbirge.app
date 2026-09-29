@@ -31,7 +31,8 @@ export function startKioskReadySignal(): () => void {
       const el = document.querySelector("title");
       if (!el) return;
       observer = new MutationObserver(() => {
-        if (!document.title.includes(KIOSK_READY_MARK)) document.title = withReadyMark(document.title);
+        if (!document.title.includes(KIOSK_READY_MARK))
+          document.title = withReadyMark(document.title);
       });
       observer.observe(el, { childList: true, characterData: true, subtree: true });
     });

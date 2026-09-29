@@ -39,7 +39,8 @@ export function StudioApp() {
   const [wasm, setWasm] = useState<{ project: string; bytes: Uint8Array } | null>(null);
   const editor = useRef<EditorHandle | null>(null);
 
-  const print = (line: string) => setOut((o) => [...o.slice(-499), `${new Date().toLocaleTimeString("tr-TR")}  ${line}`]);
+  const print = (line: string) =>
+    setOut((o) => [...o.slice(-499), `${new Date().toLocaleTimeString("tr-TR")}  ${line}`]);
 
   const refresh = useCallback(async () => {
     let list = await listRepo();
@@ -63,7 +64,12 @@ export function StudioApp() {
   const projects = useMemo(() => projectsOf(paths), [paths]);
 
   async function openFile(p: string) {
-    if (dirty && open && !window.confirm("Kaydedilmemiş değişiklikler kaybolacak. Devam edilsin mi?")) return;
+    if (
+      dirty &&
+      open &&
+      !window.confirm("Kaydedilmemiş değişiklikler kaybolacak. Devam edilsin mi?")
+    )
+      return;
     setText((await readRepo(p)) ?? "");
     setOpen(p);
     setDirty(false);
@@ -112,7 +118,11 @@ export function StudioApp() {
       setProblems(r.problems.map((p) => ({ ...p, file: `${project}/${m.entry}` })));
       if (!r.ok) {
         setTab("sorunlar");
-        print(r.timeout ? "Derleme süre sınırını aştı." : `Derleme başarısız (${r.problems.length} sorun).`);
+        print(
+          r.timeout
+            ? "Derleme süre sınırını aştı."
+            : `Derleme başarısız (${r.problems.length} sorun).`,
+        );
         return null;
       }
       print(`Derlendi: ${r.binary.length} bayt, ${Math.round(performance.now() - t)} ms`);
@@ -132,7 +142,9 @@ export function StudioApp() {
     try {
       const m = await loadManifest(project);
       const { pkg } = await packageProject(m, bytes, async (x) => x);
-      const inst = await instantiateTbApp(pkg, m.capabilities, (line) => print(`[${m.name}] ${line}`));
+      const inst = await instantiateTbApp(pkg, m.capabilities, (line) =>
+        print(`[${m.name}] ${line}`),
+      );
       const start = inst.exports["start"];
       if (typeof start === "function") (start as () => void)();
       else print("Pakette start() dışa aktarımı yok.");
@@ -155,7 +167,9 @@ export function StudioApp() {
         window.confirm("Bu paket yerel geliştirici anahtarınızla imzalandı. Kurulsun mu?"),
       );
       await refresh();
-      print(`Kuruldu: ${m.name} ${m.version} — ${TRUST_LABELS[trust.level].title} (yerel geliştirici)`);
+      print(
+        `Kuruldu: ${m.name} ${m.version} — ${TRUST_LABELS[trust.level].title} (yerel geliştirici)`,
+      );
       toast.success(`${m.name} masaüstüne kuruldu`);
     } catch (e) {
       print(`Kurulum hatası: ${e instanceof Error ? e.message : "bilinmiyor"}`);
@@ -187,16 +201,36 @@ export function StudioApp() {
     <div className="flex h-full min-h-0 flex-col bg-[var(--tb-bg)] text-[var(--tb-text)]">
       <div className="flex flex-wrap items-center gap-2 border-b border-[var(--tb-border)] px-3 py-2">
         <strong className="mr-2 text-sm">AxiomStudio</strong>
-        <button type="button" className={btn} onClick={() => void save()} disabled={!open || !dirty}>
+        <button
+          type="button"
+          className={btn}
+          onClick={() => void save()}
+          disabled={!open || !dirty}
+        >
           <Save className="h-3.5 w-3.5" /> Kaydet
         </button>
-        <button type="button" className={btn} onClick={() => void build()} disabled={!project || !!busy}>
+        <button
+          type="button"
+          className={btn}
+          onClick={() => void build()}
+          disabled={!project || !!busy}
+        >
           <Hammer className="h-3.5 w-3.5" /> {busy === "derle" ? "Derleniyor…" : "Derle"}
         </button>
-        <button type="button" className={btn} onClick={() => void run()} disabled={!project || !!busy}>
+        <button
+          type="button"
+          className={btn}
+          onClick={() => void run()}
+          disabled={!project || !!busy}
+        >
           <Play className="h-3.5 w-3.5" /> Çalıştır
         </button>
-        <button type="button" className={`${primaryBtn} inline-flex items-center gap-1.5`} onClick={() => void install()} disabled={!project || !!busy}>
+        <button
+          type="button"
+          className={`${primaryBtn} inline-flex items-center gap-1.5`}
+          onClick={() => void install()}
+          disabled={!project || !!busy}
+        >
           <Package className="h-3.5 w-3.5" /> Kur
         </button>
         <button type="button" className={btn} onClick={() => void checkClaims()} disabled={!open}>
@@ -205,16 +239,38 @@ export function StudioApp() {
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-[220px_1fr]">
-        <aside className="min-h-0 overflow-auto border-r border-[var(--tb-border)] p-2 text-[12px]" aria-label="Proje dosyaları">
+        <aside
+          className="min-h-0 overflow-auto border-r border-[var(--tb-border)] p-2 text-[12px]"
+          aria-label="Proje dosyaları"
+        >
           <div className="mb-3 space-y-1.5">
-            <input className={inputClass} placeholder="yeni-proje" value={newName} onChange={(e) => setNewName(e.target.value)} aria-label="Yeni proje adı" />
+            <input
+              className={inputClass}
+              placeholder="yeni-proje"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              aria-label="Yeni proje adı"
+            />
             <div className="flex gap-1.5">
-              <select className={inputClass} value={tpl} onChange={(e) => setTpl(e.target.value as TemplateId)} aria-label="Şablon">
+              <select
+                className={inputClass}
+                value={tpl}
+                onChange={(e) => setTpl(e.target.value as TemplateId)}
+                aria-label="Şablon"
+              >
                 {(Object.keys(TEMPLATES) as TemplateId[]).map((k) => (
-                  <option key={k} value={k}>{TEMPLATES[k].label}</option>
+                  <option key={k} value={k}>
+                    {TEMPLATES[k].label}
+                  </option>
                 ))}
               </select>
-              <button type="button" className={ghostBtn} onClick={() => void create()} disabled={!newName.trim()} aria-label="Proje oluştur">
+              <button
+                type="button"
+                className={ghostBtn}
+                onClick={() => void create()}
+                disabled={!newName.trim()}
+                aria-label="Proje oluştur"
+              >
                 <FilePlus2 className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -222,16 +278,18 @@ export function StudioApp() {
           {projects.map((p) => (
             <div key={p} className="mb-2">
               <div className="font-semibold text-[var(--tb-text)]">/repo/{p}</div>
-              {paths.filter((x) => x.startsWith(`${p}/`)).map((x) => (
-                <button
-                  type="button"
-                  key={x}
-                  onClick={() => void openFile(x)}
-                  className={`block w-full truncate rounded px-2 py-0.5 text-left font-osmono ${x === open ? "bg-[var(--tb-accent)]/15 text-[var(--tb-text)]" : "text-[var(--tb-muted)] hover:text-[var(--tb-text)]"}`}
-                >
-                  {x.slice(p.length + 1)}
-                </button>
-              ))}
+              {paths
+                .filter((x) => x.startsWith(`${p}/`))
+                .map((x) => (
+                  <button
+                    type="button"
+                    key={x}
+                    onClick={() => void openFile(x)}
+                    className={`block w-full truncate rounded px-2 py-0.5 text-left font-osmono ${x === open ? "bg-[var(--tb-accent)]/15 text-[var(--tb-text)]" : "text-[var(--tb-muted)] hover:text-[var(--tb-text)]"}`}
+                  >
+                    {x.slice(p.length + 1)}
+                  </button>
+                ))}
             </div>
           ))}
         </aside>
@@ -256,25 +314,62 @@ export function StudioApp() {
           </div>
           <div className="flex min-h-0 flex-col border-t border-[var(--tb-border)]">
             <div className="flex gap-1 px-2 pt-1 text-[11px]" role="tablist">
-              {([["cikti", "Çıktı"], ["sorunlar", `Sorunlar (${problems.length})`], ["axiom", "AXIOM"]] as const).map(([id, label]) => (
-                <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`rounded px-2 py-0.5 ${tab === id ? "bg-[var(--tb-accent)]/15 text-[var(--tb-text)]" : "text-[var(--tb-muted)]"}`}>
+              {(
+                [
+                  ["cikti", "Çıktı"],
+                  ["sorunlar", `Sorunlar (${problems.length})`],
+                  ["axiom", "AXIOM"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === id}
+                  onClick={() => setTab(id)}
+                  className={`rounded px-2 py-0.5 ${tab === id ? "bg-[var(--tb-accent)]/15 text-[var(--tb-text)]" : "text-[var(--tb-muted)]"}`}
+                >
                   {label}
                 </button>
               ))}
             </div>
-            <div className="min-h-0 flex-1 overflow-auto px-3 py-1 font-osmono text-[11.5px]" aria-live="polite">
+            <div
+              className="min-h-0 flex-1 overflow-auto px-3 py-1 font-osmono text-[11.5px]"
+              aria-live="polite"
+            >
               {tab === "cikti" && out.map((l, i) => <div key={i}>{l}</div>)}
               {tab === "sorunlar" &&
-                (problems.length ? problems.map((p, i) => (
-                  <button key={i} type="button" className="block text-left hover:underline" onClick={() => { if (open === p.file) editor.current?.goto(p.line, p.col); else void openFile(p.file); }}>
-                    <span className={p.severity === "error" ? "text-[var(--tb-rose-400)]" : "text-[var(--tb-amber-400)]"}>{p.severity === "error" ? "hata" : "uyarı"}</span>{" "}
-                    {p.line}:{p.col} {p.message}
-                  </button>
-                )) : <div className="text-[var(--tb-muted)]">Sorun yok.</div>)}
+                (problems.length ? (
+                  problems.map((p, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className="block text-left hover:underline"
+                      onClick={() => {
+                        if (open === p.file) editor.current?.goto(p.line, p.col);
+                        else void openFile(p.file);
+                      }}
+                    >
+                      <span
+                        className={
+                          p.severity === "error"
+                            ? "text-[var(--tb-rose-400)]"
+                            : "text-[var(--tb-amber-400)]"
+                        }
+                      >
+                        {p.severity === "error" ? "hata" : "uyarı"}
+                      </span>{" "}
+                      {p.line}:{p.col} {p.message}
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-[var(--tb-muted)]">Sorun yok.</div>
+                ))}
               {tab === "axiom" &&
                 axiom.map((r, i) => (
                   <div key={i}>
-                    <span className="text-[var(--tb-muted)]">{r.claim}</span> → <strong>{r.verdict}</strong>
+                    <span className="text-[var(--tb-muted)]">{r.claim}</span> →{" "}
+                    <strong>{r.verdict}</strong>
                   </div>
                 ))}
             </div>

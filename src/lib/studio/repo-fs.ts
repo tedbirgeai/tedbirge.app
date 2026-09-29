@@ -50,5 +50,9 @@ export async function removeRepo(path: string, appId = STUDIO_APP_ID): Promise<v
 
 /** Proje kökleri: tbapp.json içeren dizinler. */
 export function projectsOf(paths: readonly string[]): string[] {
-  return [...new Set(paths.filter((p) => /^[^/]+\/tbapp\.json$/.test(p)).map((p) => p.split("/")[0] as string))];
+  return [
+    ...new Set(
+      paths.filter((p) => /^[^/]+\/tbapp\.json$/.test(p)).map((p) => p.split("/")[0] as string),
+    ),
+  ];
 }

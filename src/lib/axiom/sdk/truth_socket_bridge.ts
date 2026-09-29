@@ -10,7 +10,7 @@
  */
 
 export type VerdictCode = 200 | 409 | 422 | 504 | 500;
-export type EngineType = 'local' | 'z3' | 'lean4';
+export type EngineType = "local" | "z3" | "lean4";
 
 export interface ProofResult {
   verdict: VerdictCode;
@@ -33,8 +33,8 @@ export class TruthSocketBridge {
   private timeoutMs: number;
 
   constructor(options: TruthSocketOptions = {}) {
-    this.socketPath = options.socketPath || '/run/tedbirge/tedbirge_truth.sock';
-    this.wssUrl = options.wssUrl || 'wss://tedbirge.dev/ws';
+    this.socketPath = options.socketPath || "/run/tedbirge/tedbirge_truth.sock";
+    this.wssUrl = options.wssUrl || "wss://tedbirge.dev/ws";
     this.timeoutMs = options.timeoutMs || 500;
   }
 
@@ -51,25 +51,25 @@ export class TruthSocketBridge {
           isSettled = true;
           resolve({
             verdict: 504, // TB_VERDICT_EXECUTION_TIMEOUT
-            engine: 'local',
+            engine: "local",
             wasmVerified: false,
             ms: this.timeoutMs,
-            cid: '',
-            seal: ''
+            cid: "",
+            seal: "",
           });
         }
       }, this.timeoutMs);
 
       try {
-        if (typeof window !== 'undefined' && 'WebSocket' in window) {
+        if (typeof window !== "undefined" && "WebSocket" in window) {
           // Tarayıcı Ortamı — WebSocket Yedeği
           const ws = new WebSocket(this.wssUrl);
 
           ws.onopen = () => {
             const payload = JSON.stringify({
               id: Date.now(),
-              method: 'axiom.verify',
-              text: statement
+              method: "axiom.verify",
+              text: statement,
             });
             ws.send(payload);
           };
@@ -83,25 +83,25 @@ export class TruthSocketBridge {
             try {
               const data = JSON.parse(event.data);
               let verdictCode: VerdictCode = 422;
-              if (data.verdict === '200_PROVEN') verdictCode = 200;
-              else if (data.verdict === '409_REFUTED') verdictCode = 409;
-              else if (data.verdict === '504_EXECUTION_TIMEOUT') verdictCode = 504;
+              if (data.verdict === "200_PROVEN") verdictCode = 200;
+              else if (data.verdict === "409_REFUTED") verdictCode = 409;
+              else if (data.verdict === "504_EXECUTION_TIMEOUT") verdictCode = 504;
 
               resolve({
                 verdict: verdictCode,
-                engine: (data.engine as EngineType) || 'z3',
+                engine: (data.engine as EngineType) || "z3",
                 wasmVerified: !!data.wasmVerified,
                 ms: data.ms || 0,
-                cid: data.cid || '',
-                seal: data.seal || ''
+                cid: data.cid || "",
+                seal: data.seal || "",
               });
             } catch {
               resolve({
                 verdict: 422,
-                engine: 'local',
+                engine: "local",
                 wasmVerified: false,
                 ms: 0,
-                cid: ''
+                cid: "",
               });
             }
           };
@@ -113,10 +113,10 @@ export class TruthSocketBridge {
             ws.close();
             resolve({
               verdict: 500,
-              engine: 'local',
+              engine: "local",
               wasmVerified: false,
               ms: 0,
-              cid: ''
+              cid: "",
             });
           };
         } else {
@@ -127,11 +127,11 @@ export class TruthSocketBridge {
 
           resolve({
             verdict: 200,
-            engine: 'z3',
+            engine: "z3",
             wasmVerified: true,
             ms: 12,
-            cid: 'local-ipc-bridge',
-            seal: 'TEDBIRGE-WEBOS-ZKP'
+            cid: "local-ipc-bridge",
+            seal: "TEDBIRGE-WEBOS-ZKP",
           });
         }
       } catch {
@@ -140,10 +140,10 @@ export class TruthSocketBridge {
           clearTimeout(timer);
           resolve({
             verdict: 500,
-            engine: 'local',
+            engine: "local",
             wasmVerified: false,
             ms: 0,
-            cid: ''
+            cid: "",
           });
         }
       }

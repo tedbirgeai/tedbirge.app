@@ -58,7 +58,8 @@ export function encodeProof(p: TbProof): Uint8Array {
 }
 
 export function decodeProof(buf: Uint8Array): TbProof {
-  if (buf.byteLength !== TB_PROOF_SIZE) throw new RangeError(`tb_proof_t ${TB_PROOF_SIZE} bayt olmalı`);
+  if (buf.byteLength !== TB_PROOF_SIZE)
+    throw new RangeError(`tb_proof_t ${TB_PROOF_SIZE} bayt olmalı`);
   const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
   return {
     verdict: dv.getInt32(TB_PROOF_OFFSETS.verdict, true),
@@ -76,7 +77,9 @@ export function verifyProofLayout(): boolean {
   if (o.cid + CID_LEN !== o.seal || o.seal + SEAL_LEN !== o.pad || o.pad + 2 !== TB_PROOF_SIZE)
     return false;
   try {
-    const d = decodeProof(encodeProof({ verdict: 1, engine: 2, wasmVerified: false, ms: 7, cid: "a", seal: "" }));
+    const d = decodeProof(
+      encodeProof({ verdict: 1, engine: 2, wasmVerified: false, ms: 7, cid: "a", seal: "" }),
+    );
     return d.ms === 7 && d.cid === "a" && d.seal === "" && !d.wasmVerified;
   } catch {
     return false;

@@ -131,7 +131,9 @@ export const KernelShellPanel: React.FC<KernelShellPanelProps> = ({
         {activeTab === "nodes" && (
           <div className="p-6 text-center font-mono text-xs text-slate-400 border border-dashed border-slate-800 rounded-xl bg-slate-900/30">
             <p className="text-slate-200 font-semibold mb-1">WebRTC P2P Mesh Ağ Durumu</p>
-            <p className="text-slate-500">Etkin bağlantılar ve düğüm rotaları Kernel Worker üzerinde senkronize ediliyor.</p>
+            <p className="text-slate-500">
+              Etkin bağlantılar ve düğüm rotaları Kernel Worker üzerinde senkronize ediliyor.
+            </p>
           </div>
         )}
 

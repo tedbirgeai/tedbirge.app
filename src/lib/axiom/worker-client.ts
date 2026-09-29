@@ -6,7 +6,7 @@ export function createAxiomWorker(): Worker {
     return new Worker(new URL("./kernel.worker.ts", import.meta.url), { type: "module" });
   } catch (err) {
     console.warn("[AXIOM] Worker oluşturulamadı, yerel motor moduna düşülüyor:", err);
-    // Güvenli fallback: Hata fırlatmak yerine sahte/dummy worker objesi yerine 
+    // Güvenli fallback: Hata fırlatmak yerine sahte/dummy worker objesi yerine
     // yerel fallback akışını tetikleyecek güvenli bir yapı sunuyoruz.
     throw err;
   }

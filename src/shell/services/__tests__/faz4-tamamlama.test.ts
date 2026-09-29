@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { serviceEventsToLogs, serviceLevel } from "@/shell/services/log-map";
-import { announceGossipLink, createLinkHub, onGossipLink, type MeshLink } from "@/lib/axiom/net/datachannel";
+import {
+  announceGossipLink,
+  createLinkHub,
+  onGossipLink,
+  type MeshLink,
+} from "@/lib/axiom/net/datachannel";
 import { createMeshDaemon } from "@/lib/axiom/net/mesh-daemon";
 import type { GossipPacket } from "@/lib/axiom/net/gossip";
 
@@ -26,7 +31,12 @@ function fakeLink(id: string) {
     },
     close: () => subs.clear(),
   };
-  return { link, sent, emit: (p: GossipPacket) => subs.forEach((f) => f(p)), closeRemote: () => closers.forEach((f) => f()) };
+  return {
+    link,
+    sent,
+    emit: (p: GossipPacket) => subs.forEach((f) => f(p)),
+    closeRemote: () => closers.forEach((f) => f()),
+  };
 }
 
 describe("servis olayları → kayıtlar", () => {
@@ -38,7 +48,11 @@ describe("servis olayları → kayıtlar", () => {
       { at: 1, name: "a", status: "starting" },
       { at: 2, name: "a", status: "failed", detail: "boom" },
     ]);
-    expect(rows[0]).toMatchObject({ level: "hata", source: "servis", message: "a: arızalı — boom" });
+    expect(rows[0]).toMatchObject({
+      level: "hata",
+      source: "servis",
+      message: "a: arızalı — boom",
+    });
     expect(rows).toHaveLength(2);
   });
 });

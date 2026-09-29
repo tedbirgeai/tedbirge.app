@@ -146,7 +146,9 @@ export function onGossipLink(fn: (link: MeshLink) => void): () => void {
 }
 
 /** Birden çok bağlantıyı tek bağlantı gibi gösterir. */
-export function createLinkHub(id = "hub"): MeshLink & { add: (link: MeshLink) => void; size: () => number } {
+export function createLinkHub(
+  id = "hub",
+): MeshLink & { add: (link: MeshLink) => void; size: () => number } {
   const links = new Map<MeshLink, () => void>();
   const subs = new Set<(packet: GossipPacket) => void>();
   const remove = (link: MeshLink) => {

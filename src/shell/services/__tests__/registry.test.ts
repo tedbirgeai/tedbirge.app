@@ -1,13 +1,24 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { acquireLeadership, backoffMs, createServiceManager, MAX_RESTARTS, topoOrder } from "@/shell/services/registry";
+import {
+  acquireLeadership,
+  backoffMs,
+  createServiceManager,
+  MAX_RESTARTS,
+  topoOrder,
+} from "@/shell/services/registry";
 import { createMeshDaemon } from "@/lib/axiom/net/mesh-daemon";
 import type { GossipPacket } from "@/lib/axiom/net/gossip";
 import type { MeshLink } from "@/lib/axiom/net/datachannel";
 
 describe("servis kayıt defteri", () => {
   it("bağımlılık sırası ve döngü", () => {
-    expect(topoOrder([{ name: "b", deps: ["a"], start: () => {} }, { name: "a", start: () => {} }])).toEqual(["a", "b"]);
+    expect(
+      topoOrder([
+        { name: "b", deps: ["a"], start: () => {} },
+        { name: "a", start: () => {} },
+      ]),
+    ).toEqual(["a", "b"]);
     expect(() =>
       topoOrder([
         { name: "a", deps: ["b"], start: () => {} },
@@ -25,8 +36,20 @@ describe("servis kayıt defteri", () => {
     const jobs: Array<() => void> = [];
     let ok = false;
     const m = createServiceManager(
-      [{ name: "x", start: () => { if (!ok) throw new Error("boom"); } }],
-      { schedule: (fn) => { jobs.push(fn); return 0 as unknown as ReturnType<typeof setTimeout>; } },
+      [
+        {
+          name: "x",
+          start: () => {
+            if (!ok) throw new Error("boom");
+          },
+        },
+      ],
+      {
+        schedule: (fn) => {
+          jobs.push(fn);
+          return 0 as unknown as ReturnType<typeof setTimeout>;
+        },
+      },
     );
     await m.startAll();
     for (let i = 0; i < MAX_RESTARTS; i += 1) {
@@ -53,7 +76,12 @@ describe("servis kayıt defteri", () => {
     const start = vi.fn();
     const m = createServiceManager(
       [
-        { name: "a", start: () => { throw new Error("x"); } },
+        {
+          name: "a",
+          start: () => {
+            throw new Error("x");
+          },
+        },
         { name: "b", deps: ["a"], start },
       ],
       { schedule: () => 0 as unknown as ReturnType<typeof setTimeout> },
@@ -67,8 +95,14 @@ describe("servis kayıt defteri", () => {
     let busy = false;
     const locks = {
       request: (_n: string, cb: () => Promise<void>) => {
-        const run = async () => { busy = true; await cb(); busy = false; await queue.shift()?.(); };
-        if (busy) queue.push(run); else void run();
+        const run = async () => {
+          busy = true;
+          await cb();
+          busy = false;
+          await queue.shift()?.();
+        };
+        if (busy) queue.push(run);
+        else void run();
         return Promise.resolve();
       },
     } as unknown as LockManager;
@@ -91,8 +125,16 @@ function pair(): [MeshLink, MeshLink] {
       id: "t",
       subs,
       ready: () => true,
-      send: (p: GossipPacket) => { (link.peer as unknown as { subs: Set<(p: GossipPacket) => void> }).subs.forEach((f) => f(p)); return true; },
-      onPacket: (f: (p: GossipPacket) => void) => { subs.add(f); return () => void subs.delete(f); },
+      send: (p: GossipPacket) => {
+        (link.peer as unknown as { subs: Set<(p: GossipPacket) => void> }).subs.forEach((f) =>
+          f(p),
+        );
+        return true;
+      },
+      onPacket: (f: (p: GossipPacket) => void) => {
+        subs.add(f);
+        return () => void subs.delete(f);
+      },
       close: () => subs.clear(),
     } as MeshLink & { peer?: MeshLink; subs: Set<(p: GossipPacket) => void> };
     return link;

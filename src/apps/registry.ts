@@ -84,7 +84,11 @@ const DESKTOP_CAPS: Record<string, Capability[]> = {
 
 const registry = new Map<string, AppManifest>([
   ...SHELL_APPS.map(
-    (a) => [a.id, { ...a, kind: "builtin" as const, capabilities: CAPS[a.id] ?? ["status.read"] }] as const,
+    (a) =>
+      [
+        a.id,
+        { ...a, kind: "builtin" as const, capabilities: CAPS[a.id] ?? ["status.read"] },
+      ] as const,
   ),
   // Masaüstü yerleşik pencereleri (Dosyalar, Medya, Müzik, Mağaza…):
   // kayıtsız hiçbir pencere açılmaz, her biri yeteneğiyle sınırlıdır.

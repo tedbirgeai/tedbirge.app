@@ -187,8 +187,8 @@ function InvoicesPage() {
             </ul>
 
             <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
-              Tahsilat ve yasal vergi beyanı Paddle (Merchant of Record) tarafından yapılır. Buradaki
-              belgeler kendi muhasebe kaydınız için standart biçimde üretilir.
+              Tahsilat ve yasal vergi beyanı Paddle (Merchant of Record) tarafından yapılır.
+              Buradaki belgeler kendi muhasebe kaydınız için standart biçimde üretilir.
             </p>
           </>
         )}

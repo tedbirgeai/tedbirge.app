@@ -3,7 +3,15 @@
  * Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
  * Official Hub: https://tedbirge.dev | https://tedbirge.app */
 
-import React, { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import React, {
+  Component,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 // Entegre Edilen Master Shell ve C-ABI Köprüsü
 import { AxiomMasterShell } from "@/components/axiom/AxiomMasterShell";
@@ -67,7 +75,10 @@ const WORKER_WATCHDOG_MS = VERIFY_TIMEOUT_MS + 250;
 const PRESET_QUERIES = [
   { label: "Z3 Mantık Eşleşmesi", text: "(assert (and (or p q) (not p)))" },
   { label: "Lean 4 Teorem İspatı", text: "theorem add_comm (n m : ℕ) : n + m = m + n" },
-  { label: "Değişmez Bakiye Denetimi", text: "invariant { state.balance >= 0 && state.nonce > 0 }" },
+  {
+    label: "Değişmez Bakiye Denetimi",
+    text: "invariant { state.balance >= 0 && state.nonce > 0 }",
+  },
   { label: "C-ABI Soket Testi", text: "SOCKET_CALL: ping_kernel --channel=0x7e --mode=cabi" },
 ];
 
@@ -102,10 +113,11 @@ class MasterShellBoundary extends Component<ShellBoundaryProps, ShellBoundarySta
     if (this.state.hasError) {
       return (
         <div className="p-4 rounded-xl border border-[var(--tb-rose-400,#f43f5e)] bg-[var(--tb-panel-soft,#0a101d)] text-[var(--tb-rose-400,#f43f5e)] font-mono text-xs space-y-2">
-          <div className="font-bold uppercase tracking-wider">
-            AXIOM Komuta Merkezi Teşhisi
+          <div className="font-bold uppercase tracking-wider">AXIOM Komuta Merkezi Teşhisi</div>
+          <div>
+            {this.state.error?.message ||
+              "Komuta merkezi ilklendirilirken çalışma zamanı hatası oluştu."}
           </div>
-          <div>{this.state.error?.message || "Komuta merkezi ilklendirilirken çalışma zamanı hatası oluştu."}</div>
         </div>
       );
     }
@@ -378,7 +390,7 @@ export function AxiomApp() {
         last = now;
         setFps(shown);
       }
-      const activeRatio = Math.max(0.40, ratioRef.current);
+      const activeRatio = Math.max(0.4, ratioRef.current);
       renderer.draw({
         ratio: activeRatio,
         fps: shown,
@@ -428,60 +440,63 @@ export function AxiomApp() {
       });
   }, []);
 
-  const submit = useCallback((text: string) => {
-    if (!text || !text.trim()) return;
-    setLastText(text);
-    pendingTextRef.current = text;
-    setBusy(true);
-    setHata(null);
-    // Yeni sorguya eski kanıtı taşıma: aksi halde AxiomMasterShell effect'i eski
-    // verdict'i yeni karta damgalar (finding 6).
-    setProof(null);
-    setVerifying(true);
+  const submit = useCallback(
+    (text: string) => {
+      if (!text || !text.trim()) return;
+      setLastText(text);
+      pendingTextRef.current = text;
+      setBusy(true);
+      setHata(null);
+      // Yeni sorguya eski kanıtı taşıma: aksi halde AxiomMasterShell effect'i eski
+      // verdict'i yeni karta damgalar (finding 6).
+      setProof(null);
+      setVerifying(true);
 
-    // Her Sorguda Tutar ve Çağrı Sayacı Kesin Artar
-    meterRecord({
-      engine: "local",
-      simulated: true,
-      verdict: "422_UNDECIDED",
-      ms: 11,
-      client: "yerel-arayüz",
-    });
+      // Her Sorguda Tutar ve Çağrı Sayacı Kesin Artar
+      meterRecord({
+        engine: "local",
+        simulated: true,
+        verdict: "422_UNDECIDED",
+        ms: 11,
+        client: "yerel-arayüz",
+      });
 
-    const worker = workerRef.current;
-    if (worker) {
-      const analyzeMsg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
-      worker.postMessage(analyzeMsg);
-      // Doğrulama motorunu da tetikle — aksi halde kart sonsuza dek "beklemede"
-      // kalır (finding 2).
-      const verifyMsg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text };
-      worker.postMessage(verifyMsg);
-      return;
-    }
+      const worker = workerRef.current;
+      if (worker) {
+        const analyzeMsg: KernelRequest = { id: (seqRef.current += 1), type: "analyze", text };
+        worker.postMessage(analyzeMsg);
+        // Doğrulama motorunu da tetikle — aksi halde kart sonsuza dek "beklemede"
+        // kalır (finding 2).
+        const verifyMsg: KernelRequest = { id: (seqRef.current += 1), type: "verify", text };
+        worker.postMessage(verifyMsg);
+        return;
+      }
 
-    try {
-      const out = localAnalyze(text);
-      setAnalysis(out.analysis);
-      setDigest(out.analysis.digest);
-      setRam(out.ram);
-      setBusy(false);
+      try {
+        const out = localAnalyze(text);
+        setAnalysis(out.analysis);
+        setDigest(out.analysis.digest);
+        setRam(out.ram);
+        setBusy(false);
 
-      setQueryHistory((prev) => [
-        {
-          id: Math.random().toString(36).substring(2, 9),
-          text: text,
-          analysis: out.analysis,
-          timestamp: new Date().toLocaleTimeString("tr-TR"),
-        },
-        ...prev,
-      ]);
-      verifyLocally(text);
-    } catch (err) {
-      setHata(err instanceof Error ? err.message : "Bilinmeyen çözümleme hatası");
-      setBusy(false);
-      setVerifying(false);
-    }
-  }, [verifyLocally]);
+        setQueryHistory((prev) => [
+          {
+            id: Math.random().toString(36).substring(2, 9),
+            text: text,
+            analysis: out.analysis,
+            timestamp: new Date().toLocaleTimeString("tr-TR"),
+          },
+          ...prev,
+        ]);
+        verifyLocally(text);
+      } catch (err) {
+        setHata(err instanceof Error ? err.message : "Bilinmeyen çözümleme hatası");
+        setBusy(false);
+        setVerifying(false);
+      }
+    },
+    [verifyLocally],
+  );
 
   const runVerify = useCallback(() => {
     if (!lastText.trim()) return;
@@ -528,7 +543,11 @@ export function AxiomApp() {
   // Teşhis ve Analiz verisini JSON olarak kopyalama
   const copyDiagnosticJSON = useCallback(() => {
     if (!analysis) return;
-    const report = JSON.stringify({ analysis, digest, proof, timestamp: new Date().toISOString() }, null, 2);
+    const report = JSON.stringify(
+      { analysis, digest, proof, timestamp: new Date().toISOString() },
+      null,
+      2,
+    );
     navigator.clipboard.writeText(report);
     setCopiedStatus(true);
     setTimeout(() => setCopiedStatus(false), 2000);
@@ -537,7 +556,8 @@ export function AxiomApp() {
   // Geçmiş Akışını JSON Olarak İndirme (Export)
   const exportHistoryJSON = useCallback(() => {
     if (queryHistory.length === 0) return;
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(queryHistory, null, 2));
+    const dataStr =
+      "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(queryHistory, null, 2));
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
     downloadAnchor.setAttribute("download", `axiom_session_history_${Date.now()}.json`);
@@ -554,7 +574,10 @@ export function AxiomApp() {
   const filteredHistory = useMemo(() => {
     if (!searchFilter.trim()) return queryHistory;
     const q = searchFilter.toLowerCase();
-    return queryHistory.filter((item) => item.text.toLowerCase().includes(q) || item.analysis.lang?.label?.toLowerCase().includes(q));
+    return queryHistory.filter(
+      (item) =>
+        item.text.toLowerCase().includes(q) || item.analysis.lang?.label?.toLowerCase().includes(q),
+    );
   }, [queryHistory, searchFilter]);
 
   const romListesi = useMemo(() => ROM_SEED, []);
@@ -576,7 +599,9 @@ export function AxiomApp() {
 
       {/* 1.1 HIZLI ŞABLON VE AKSİYOM ÖRNEKLERİ (Konsol Hazır/Boşken veya Her An) */}
       <div className="flex flex-wrap items-center gap-2 px-1">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hızlı Aksiyomlar:</span>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          Hızlı Aksiyomlar:
+        </span>
         {PRESET_QUERIES.map((preset, idx) => (
           <button
             key={idx}
@@ -607,7 +632,11 @@ export function AxiomApp() {
                 {copiedStatus ? "✓ Rapor Kopyalandı" : "📋 Teşhisi Kopyala (JSON)"}
               </button>
               <span className="text-[10px] text-slate-400 truncate max-w-[250px]">
-                {busy ? "Çözümleniyor..." : lastText ? `İşlenen Sorgu: "${lastText.slice(0, 40)}..."` : ""}
+                {busy
+                  ? "Çözümleniyor..."
+                  : lastText
+                    ? `İşlenen Sorgu: "${lastText.slice(0, 40)}..."`
+                    : ""}
               </span>
             </div>
           </div>
@@ -630,7 +659,9 @@ export function AxiomApp() {
                 <dl className="mt-2 space-y-1 font-mono text-[11px] text-[var(--tb-text,#ffffff)]">
                   <div className="flex justify-between gap-3">
                     <dt className="text-slate-400">Bayt / Karakter</dt>
-                    <dd className="font-bold">{digest.bytes} / {digest.chars}</dd>
+                    <dd className="font-bold">
+                      {digest.bytes} / {digest.chars}
+                    </dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-slate-400">Saf ASCII</dt>
@@ -638,7 +669,9 @@ export function AxiomApp() {
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-slate-400">Parmak İzi (Hash)</dt>
-                    <dd className="text-sky-400 font-bold truncate max-w-[220px]">{digest.fingerprint}</dd>
+                    <dd className="text-sky-400 font-bold truncate max-w-[220px]">
+                      {digest.fingerprint}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-slate-400">İlk 16 Bayt</dt>
@@ -646,7 +679,9 @@ export function AxiomApp() {
                   </div>
                 </dl>
               ) : (
-                <p className="mt-2 font-mono text-[11px] text-slate-400">Çözümleme verisi bekleniyor...</p>
+                <p className="mt-2 font-mono text-[11px] text-slate-400">
+                  Çözümleme verisi bekleniyor...
+                </p>
               )}
             </div>
 
@@ -817,8 +852,11 @@ export function AxiomApp() {
         className="relative h-36 w-full shrink-0 overflow-hidden rounded-xl border border-[var(--tb-border,rgba(14,165,233,0.3))] bg-[var(--tb-panel,#070b12)] shadow-sm sm:h-44"
       >
         <canvas ref={glRef} className="absolute inset-0 block h-full w-full" />
-        <canvas ref={textRef} className="absolute inset-0 pointer-events-none block h-full w-full" />
-        
+        <canvas
+          ref={textRef}
+          className="absolute inset-0 pointer-events-none block h-full w-full"
+        />
+
         {/* GPU HUD Katmanı Overlay */}
         <div className="absolute top-2 right-2 pointer-events-none flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded border border-sky-500/30 text-[10px] font-mono">
           <span className="flex items-center gap-1.5 text-emerald-400">
@@ -846,7 +884,8 @@ export function AxiomApp() {
           <div className="break-words font-semibold">Çözümleme Teşhisi: {hata}</div>
           {yerel ? (
             <div className="text-[var(--tb-muted,#94a3b8)]">
-              Yerel motor devrede: Çözümleme ve doğrulama ana iş parçacığında kesintisiz ve güvenli olarak sürdürülüyor.
+              Yerel motor devrede: Çözümleme ve doğrulama ana iş parçacığında kesintisiz ve güvenli
+              olarak sürdürülüyor.
             </div>
           ) : null}
           <Button
@@ -872,7 +911,10 @@ export function AxiomApp() {
             variant="outline"
             className="h-8 rounded-lg px-4 py-1 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
             style={{
-              borderColor: sekme === id ? "var(--tb-cyan-400, #38bdf8)" : "var(--tb-border, rgba(14,165,233,0.3))",
+              borderColor:
+                sekme === id
+                  ? "var(--tb-cyan-400, #38bdf8)"
+                  : "var(--tb-border, rgba(14,165,233,0.3))",
               color: sekme === id ? "var(--tb-cyan-400, #38bdf8)" : "var(--tb-muted, #94a3b8)",
               backgroundColor: sekme === id ? "var(--tb-panel, #070b12)" : "transparent",
             }}

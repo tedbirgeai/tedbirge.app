@@ -69,7 +69,8 @@ export class MoRPaymentAdapter {
     tier: LicenseTier,
     options: { nodes: number; interval?: "month" | "year" },
   ): Promise<void> {
-    const plan = tier === "ENTERPRISE_NODE" || tier === "GOVERNMENT_SUITE" ? PLANS.enterprise : PLANS.pro;
+    const plan =
+      tier === "ENTERPRISE_NODE" || tier === "GOVERNMENT_SUITE" ? PLANS.enterprise : PLANS.pro;
     const { data } = await supabase.auth.getUser();
     const user = data.user;
     if (!user) throw new Error("AUTH_REQUIRED");

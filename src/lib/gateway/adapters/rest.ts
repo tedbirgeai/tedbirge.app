@@ -34,7 +34,6 @@ export function registerRestInbound(config: RestInboundConfig): void {
   });
 }
 
-
 export function markRestCall(slug: string, ok: boolean): void {
   recordCall(slug, ok);
 }

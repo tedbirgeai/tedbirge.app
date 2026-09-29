@@ -6,7 +6,13 @@ export const COMPILE_TIMEOUT_MS = 10_000;
 /** Derleyicinin ilk yüklenmesi için ayrı üst sınır. */
 export const LOAD_TIMEOUT_MS = 90_000;
 
-export type Problem = { file: string; line: number; col: number; severity: "error" | "warning"; message: string };
+export type Problem = {
+  file: string;
+  line: number;
+  col: number;
+  severity: "error" | "warning";
+  message: string;
+};
 export type CompileResult =
   | { ok: true; binary: Uint8Array; problems: Problem[] }
   | { ok: false; problems: Problem[]; timeout?: boolean };
@@ -22,7 +28,9 @@ export function parseDiagnostics(stderr: string, fallbackFile: string): Problem[
     let line = 1;
     let col = 1;
     for (let j = i + 1; j < Math.min(lines.length, i + 6); j += 1) {
-      const loc = /([\w./-]+\.ts)\((\d+),(\d+)\)/.exec(lines[j] ?? "") ?? /([\w./-]+\.ts):(\d+):(\d+)/.exec(lines[j] ?? "");
+      const loc =
+        /([\w./-]+\.ts)\((\d+),(\d+)\)/.exec(lines[j] ?? "") ??
+        /([\w./-]+\.ts):(\d+):(\d+)/.exec(lines[j] ?? "");
       if (loc) {
         file = loc[1] as string;
         line = Number(loc[2]);
@@ -30,18 +38,28 @@ export function parseDiagnostics(stderr: string, fallbackFile: string): Problem[
         break;
       }
     }
-    out.push({ file, line, col, severity: m[1] === "ERROR" ? "error" : "warning", message: (m[2] ?? "").trim() });
+    out.push({
+      file,
+      line,
+      col,
+      severity: m[1] === "ERROR" ? "error" : "warning",
+      message: (m[2] ?? "").trim(),
+    });
   }
   return out;
 }
 
-type WorkerLike = Pick<Worker, "postMessage" | "terminate"> & { onmessage: ((e: MessageEvent) => void) | null };
+type WorkerLike = Pick<Worker, "postMessage" | "terminate"> & {
+  onmessage: ((e: MessageEvent) => void) | null;
+};
 
 let worker: WorkerLike | null = null;
 let seq = 0;
 
 export function createCompilerWorker(): WorkerLike {
-  return new Worker(new URL("./compiler.worker.ts", import.meta.url), { type: "module" }) as WorkerLike;
+  return new Worker(new URL("./compiler.worker.ts", import.meta.url), {
+    type: "module",
+  }) as WorkerLike;
 }
 
 export async function compile(
@@ -58,19 +76,48 @@ export async function compile(
       setTimeout(() => {
         w.terminate();
         if (worker === w) worker = null;
-        resolve({ ok: false, timeout: true, problems: [{ file: entry, line: 1, col: 1, severity: "error", message }] });
+        resolve({
+          ok: false,
+          timeout: true,
+          problems: [{ file: entry, line: 1, col: 1, severity: "error", message }],
+        });
       }, ms);
     let timer = arm(opts.loadTimeoutMs ?? LOAD_TIMEOUT_MS, "Derleyici yüklenemedi; durduruldu.");
-    w.onmessage = (e: MessageEvent<{ id: number; ok: boolean; phase?: string; binary?: Uint8Array; stderr: string }>) => {
+    w.onmessage = (
+      e: MessageEvent<{
+        id: number;
+        ok: boolean;
+        phase?: string;
+        binary?: Uint8Array;
+        stderr: string;
+      }>,
+    ) => {
       if (e.data.id !== id) return;
       clearTimeout(timer);
       if (e.data.phase === "compiling") {
-        timer = arm(opts.timeoutMs ?? COMPILE_TIMEOUT_MS, "Derleme 10 sn içinde bitmedi; derleyici durduruldu.");
+        timer = arm(
+          opts.timeoutMs ?? COMPILE_TIMEOUT_MS,
+          "Derleme 10 sn içinde bitmedi; derleyici durduruldu.",
+        );
         return;
       }
       const problems = parseDiagnostics(e.data.stderr, entry);
       if (e.data.ok && e.data.binary) resolve({ ok: true, binary: e.data.binary, problems });
-      else resolve({ ok: false, problems: problems.length ? problems : [{ file: entry, line: 1, col: 1, severity: "error", message: e.data.stderr || "Derleme başarısız" }] });
+      else
+        resolve({
+          ok: false,
+          problems: problems.length
+            ? problems
+            : [
+                {
+                  file: entry,
+                  line: 1,
+                  col: 1,
+                  severity: "error",
+                  message: e.data.stderr || "Derleme başarısız",
+                },
+              ],
+        });
     };
     w.postMessage({ id, files, entry });
   });

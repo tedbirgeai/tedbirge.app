@@ -10,7 +10,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useCarrierScheduler } from "@/lib/carrier-scheduler";
 import { autonomyOf } from "@/lib/portal/live";
 
-const DOT = { ok: "bg-[var(--tb-emerald-400)]", warn: "bg-[var(--tb-amber-400)]", error: "bg-[var(--tb-rose-500)]" };
+const DOT = {
+  ok: "bg-[var(--tb-emerald-400)]",
+  warn: "bg-[var(--tb-amber-400)]",
+  error: "bg-[var(--tb-rose-500)]",
+};
 
 export function AutonomyBadge() {
   const snap = useCarrierScheduler();

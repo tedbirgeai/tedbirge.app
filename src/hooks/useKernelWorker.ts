@@ -88,10 +88,9 @@ export function useKernelWorker(options: UseKernelWorkerOptions = {}): UseKernel
 
     try {
       // Vite / Webpack Web Worker modül yükleme kurgusu
-      const workerInstance = new Worker(
-        new URL("../workers/kernel.worker.ts", import.meta.url),
-        { type: "module" }
-      );
+      const workerInstance = new Worker(new URL("../workers/kernel.worker.ts", import.meta.url), {
+        type: "module",
+      });
 
       workerRef.current = workerInstance;
 

@@ -7,7 +7,12 @@
  */
 
 import { gatePacketClaim } from "@/lib/axiom/net/packet-gate";
-import { createGossip, createPacket, receivePacket, type GossipState } from "@/lib/axiom/net/gossip";
+import {
+  createGossip,
+  createPacket,
+  receivePacket,
+  type GossipState,
+} from "@/lib/axiom/net/gossip";
 import type { MeshLink } from "@/lib/axiom/net/datachannel";
 import { tick } from "@/lib/axiom/sync/vector-clock";
 import { createState, put, type CrdtState } from "@/lib/axiom/sync/crdt";
@@ -67,7 +72,10 @@ export function createMeshDaemon(node: string, link: MeshLink) {
       let n = 0;
       const rest = queue.pending.filter((item) => {
         const ok = item.delta.entries.every((e) =>
-          send(String(e.fields["digest"] ?? ""), typeof e.fields["claim"] === "string" ? e.fields["claim"] : undefined),
+          send(
+            String(e.fields["digest"] ?? ""),
+            typeof e.fields["claim"] === "string" ? e.fields["claim"] : undefined,
+          ),
         );
         if (ok) n += 1;
         return !ok;

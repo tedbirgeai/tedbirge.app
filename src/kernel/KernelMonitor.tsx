@@ -67,11 +67,15 @@ export const KernelMonitor: React.FC<KernelMonitorProps> = ({
   };
 
   return (
-    <div className={`flex flex-col gap-4 p-5 rounded-xl bg-slate-950/90 border border-slate-800 text-slate-100 font-sans shadow-2xl backdrop-blur-md ${className}`}>
+    <div
+      className={`flex flex-col gap-4 p-5 rounded-xl bg-slate-950/90 border border-slate-800 text-slate-100 font-sans shadow-2xl backdrop-blur-md ${className}`}
+    >
       {/* Üst Başlık & Durum Çubuğu */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2">
-          <span className={`h-3 w-3 rounded-full ${isReady ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+          <span
+            className={`h-3 w-3 rounded-full ${isReady ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`}
+          />
           <h3 className="font-mono text-sm tracking-wide font-semibold text-slate-200">
             AXIOM KERNEL MONITOR ({nodeId})
           </h3>
@@ -80,7 +84,9 @@ export const KernelMonitor: React.FC<KernelMonitorProps> = ({
           <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-400">
             {isLeader ? "LEADER NODE" : "PEER NODE"}
           </span>
-          <span className={`px-2 py-0.5 rounded ${isReady ? "bg-emerald-950 text-emerald-400 border border-emerald-800" : "bg-amber-950 text-amber-400 border border-amber-800"}`}>
+          <span
+            className={`px-2 py-0.5 rounded ${isReady ? "bg-emerald-950 text-emerald-400 border border-emerald-800" : "bg-amber-950 text-amber-400 border border-amber-800"}`}
+          >
             {isReady ? "ONLINE" : "INITIALIZING"}
           </span>
         </div>
@@ -127,13 +133,17 @@ export const KernelMonitor: React.FC<KernelMonitorProps> = ({
             </div>
             <div className="p-2.5 rounded bg-slate-900 border border-slate-800 col-span-2">
               <span className="text-slate-500 block text-[10px]">TOPLAM TICK SAYISI</span>
-              <span className="text-base font-bold text-indigo-300">{telemetry.tickCount.toLocaleString()}</span>
+              <span className="text-base font-bold text-indigo-300">
+                {telemetry.tickCount.toLocaleString()}
+              </span>
             </div>
           </div>
 
           {/* FPS Kontrolü */}
           <div className="flex items-center justify-between text-xs font-mono pt-1">
-            <label htmlFor="fps-select" className="text-slate-400">Hedef Yenileme Hızı:</label>
+            <label htmlFor="fps-select" className="text-slate-400">
+              Hedef Yenileme Hızı:
+            </label>
             <select
               id="fps-select"
               defaultValue={targetFps}
@@ -170,7 +180,11 @@ export const KernelMonitor: React.FC<KernelMonitorProps> = ({
         {lastZkpResult && (
           <div className="p-2 rounded bg-slate-900/80 border border-slate-800 text-[11px] font-mono flex items-center justify-between text-slate-300">
             <span>ID: {lastZkpResult.proofId}</span>
-            <span className={lastZkpResult.valid ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+            <span
+              className={
+                lastZkpResult.valid ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"
+              }
+            >
               {lastZkpResult.valid ? "VALID PROOF ✓" : "INVALID PROOF ✗"}
             </span>
           </div>

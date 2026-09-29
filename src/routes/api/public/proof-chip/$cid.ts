@@ -39,7 +39,8 @@ export const Route = createFileRoute("/api/public/proof-chip/$cid")({
           .eq("cid", cid)
           .maybeSingle();
         if (!data) return new Response(svg("AXIOM", "kayıt yok", "warn"), { status: 404, headers });
-        if (data.simulated) return new Response(svg("AXIOM", `${data.verdict} · simülasyon`, "warn"), { headers });
+        if (data.simulated)
+          return new Response(svg("AXIOM", `${data.verdict} · simülasyon`, "warn"), { headers });
         const tone = data.verdict === "proved" ? "ok" : data.verdict === "refuted" ? "bad" : "warn";
         return new Response(svg("AXIOM", `${data.verdict} · doğrulandı`, tone), { headers });
       },

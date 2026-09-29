@@ -85,7 +85,7 @@ function safeBounds() {
 function preferredSize(appId?: string) {
   const bounds = safeBounds();
   if (bounds.width < 768) return { w: bounds.width, h: bounds.height };
-  
+
   // AXIOM Komuta Merkezi için yüksek çözünürlüklü varsayılan boyut
   if (appId === "axiom") {
     return {

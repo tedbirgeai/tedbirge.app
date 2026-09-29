@@ -53,7 +53,9 @@ async function verifyIncoming(msg: IpcMessage): Promise<boolean> {
 async function dispatch(msg: IpcMessage) {
   const ok = await verifyIncoming(msg);
   if (!ok) return;
-  const summary = await digest(`${msg.from}\u0000${msg.to}\u0000${msg.kind}\u0000${JSON.stringify(msg.payload ?? null)}`);
+  const summary = await digest(
+    `${msg.from}\u0000${msg.to}\u0000${msg.kind}\u0000${JSON.stringify(msg.payload ?? null)}`,
+  );
   recordTransition({
     kind: `ipc.${msg.kind}`,
     payloadDigest: summary,
@@ -71,11 +73,12 @@ async function dispatch(msg: IpcMessage) {
   });
 }
 
-if (typeof channel?.addEventListener === "function") channel.addEventListener("message", (event: MessageEvent<IpcMessage>) => {
-  const msg = event.data;
-  if (!msg || typeof msg !== "object") return;
-  void dispatch(msg);
-});
+if (typeof channel?.addEventListener === "function")
+  channel.addEventListener("message", (event: MessageEvent<IpcMessage>) => {
+    const msg = event.data;
+    if (!msg || typeof msg !== "object") return;
+    void dispatch(msg);
+  });
 
 /**
  * Mesajı yayınlar. Jeton geçersizse mesaj gönderilmez ve red sayacı artar.

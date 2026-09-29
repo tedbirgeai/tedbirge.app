@@ -59,7 +59,11 @@ export function MeshMap({ nodes, onSelect }: { nodes: MapNode[]; onSelect: (n: M
       ctx.clearRect(0, 0, w, h);
       const c = colors();
       const list = nodesRef.current;
-      const pts = layout(list.map((n) => n.id), w, h);
+      const pts = layout(
+        list.map((n) => n.id),
+        w,
+        h,
+      );
       pointsRef.current = pts;
       const center = pts[0];
       if (!center) return;
@@ -77,11 +81,17 @@ export function MeshMap({ nodes, onSelect }: { nodes: MapNode[]; onSelect: (n: M
         if (n.health !== "error") {
           // parçacık darbeleri
           for (let k = 0; k < 3; k++) {
-            const f = ((t / 1400 + k / 3 + i * 0.17) % 1 + 1) % 1;
+            const f = (((t / 1400 + k / 3 + i * 0.17) % 1) + 1) % 1;
             ctx.globalAlpha = 1 - f * 0.6;
             ctx.fillStyle = n.health === "warn" ? c.warn : c.pulse;
             ctx.beginPath();
-            ctx.arc(center.x + (p.x - center.x) * f, center.y + (p.y - center.y) * f, 2.2, 0, Math.PI * 2);
+            ctx.arc(
+              center.x + (p.x - center.x) * f,
+              center.y + (p.y - center.y) * f,
+              2.2,
+              0,
+              Math.PI * 2,
+            );
             ctx.fill();
           }
         }

@@ -95,21 +95,23 @@ async function handleSubscriptionCreated(data: PaddleSubscriptionData, env: Padd
     return;
   }
 
-  await getSupabase().from("subscriptions").upsert(
-    {
-      user_id: userId,
-      paddle_subscription_id: id,
-      paddle_customer_id: customerId ?? "",
-      product_id: productId,
-      price_id: priceId,
-      status: status ?? "active",
-      current_period_start: currentBillingPeriod?.startsAt,
-      current_period_end: currentBillingPeriod?.endsAt,
-      environment: env,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "paddle_subscription_id" },
-  );
+  await getSupabase()
+    .from("subscriptions")
+    .upsert(
+      {
+        user_id: userId,
+        paddle_subscription_id: id,
+        paddle_customer_id: customerId ?? "",
+        product_id: productId,
+        price_id: priceId,
+        status: status ?? "active",
+        current_period_start: currentBillingPeriod?.startsAt,
+        current_period_end: currentBillingPeriod?.endsAt,
+        environment: env,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "paddle_subscription_id" },
+    );
 
   const { data: existing } = await getSupabase()
     .from("licenses")
@@ -191,16 +193,18 @@ async function handleTransactionCompleted(data: PaddleTransactionData, env: Padd
   const txnId = data?.id;
   if (!txnId) return;
   const userId = customText(data.customData, "userId");
-  const { error } = await getSupabase().from("payment_transactions").insert({
-    paddle_transaction_id: txnId,
-    user_id: userId,
-    subscription_id: data.subscriptionId ?? null,
-    status: data.status ?? "completed",
-    currency: data.currencyCode ?? null,
-    total: data.details?.totals?.total ?? null,
-    tax: data.details?.totals?.tax ?? null,
-    environment: env,
-  });
+  const { error } = await getSupabase()
+    .from("payment_transactions")
+    .insert({
+      paddle_transaction_id: txnId,
+      user_id: userId,
+      subscription_id: data.subscriptionId ?? null,
+      status: data.status ?? "completed",
+      currency: data.currencyCode ?? null,
+      total: data.details?.totals?.total ?? null,
+      tax: data.details?.totals?.tax ?? null,
+      environment: env,
+    });
   if (error) {
     if (error.code === "23505") return; // zaten işlendi
     throw error;
@@ -212,13 +216,15 @@ async function handleTransactionCompleted(data: PaddleTransactionData, env: Padd
     .eq("provider_subscription_id", data.subscriptionId)
     .maybeSingle();
   if (lic) {
-    await getSupabase().from("license_events").insert({
-      license_id: lic.id,
-      user_id: userId,
-      event: "payment_completed",
-      detail: `İşlem ${txnId} tamamlandı.`,
-      actor: "paddle",
-    });
+    await getSupabase()
+      .from("license_events")
+      .insert({
+        license_id: lic.id,
+        user_id: userId,
+        event: "payment_completed",
+        detail: `İşlem ${txnId} tamamlandı.`,
+        actor: "paddle",
+      });
   }
 }
 

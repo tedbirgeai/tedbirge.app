@@ -31,7 +31,8 @@ export function parseStudioManifest(text: string): StudioManifest {
     throw new StudioError("tbapp.json geçerli JSON değil.");
   }
   const m = raw as Partial<StudioManifest>;
-  if (!m || typeof m.id !== "string" || !ID_RE.test(m.id)) throw new StudioError("Proje kimliği geçersiz.");
+  if (!m || typeof m.id !== "string" || !ID_RE.test(m.id))
+    throw new StudioError("Proje kimliği geçersiz.");
   if (typeof m.name !== "string" || !m.name.trim()) throw new StudioError("Proje adı eksik.");
   if (typeof m.version !== "string" || !/^\d+\.\d+\.\d+$/.test(m.version))
     throw new StudioError("Sürüm x.y.z biçiminde olmalı.");
@@ -39,7 +40,8 @@ export function parseStudioManifest(text: string): StudioManifest {
   const unknown = caps.filter((c) => !ALL_CAPABILITIES.includes(c as Capability));
   if (unknown.length) throw new StudioError(`Tanınmayan yetki: ${unknown.join(", ")}`);
   const entry = typeof m.entry === "string" && m.entry ? m.entry : "assembly/index.ts";
-  if (entry.includes("..") || entry.startsWith("/")) throw new StudioError("Giriş dosyası proje dışında olamaz.");
+  if (entry.includes("..") || entry.startsWith("/"))
+    throw new StudioError("Giriş dosyası proje dışında olamaz.");
   return {
     id: m.id,
     name: m.name.trim(),
@@ -95,7 +97,8 @@ export function start(): void {}
 };
 
 export function templateFiles(slug: string, name: string, tpl: TemplateId): ProjectFile[] {
-  if (!isSlug(slug)) throw new StudioError("Proje adı yalnız küçük harf, rakam ve tire içerebilir.");
+  if (!isSlug(slug))
+    throw new StudioError("Proje adı yalnız küçük harf, rakam ve tire içerebilir.");
   const t = TEMPLATES[tpl];
   const manifest: StudioManifest = {
     id: `yerel.${slug}`,
@@ -107,7 +110,10 @@ export function templateFiles(slug: string, name: string, tpl: TemplateId): Proj
   return [
     { path: `${slug}/tbapp.json`, text: `${JSON.stringify(manifest, null, 2)}\n` },
     { path: `${slug}/assembly/index.ts`, text: t.code },
-    { path: `${slug}/README.md`, text: `# ${name}\n\nAxiomStudio ile oluşturuldu. Derle → Çalıştır → Kur.\n` },
+    {
+      path: `${slug}/README.md`,
+      text: `# ${name}\n\nAxiomStudio ile oluşturuldu. Derle → Çalıştır → Kur.\n`,
+    },
   ];
 }
 
@@ -118,8 +124,7 @@ export function seedStudioProject(): ProjectFile[] {
     f.path.endsWith("README.md")
       ? {
           ...f,
-          text:
-            "# AxiomStudio örnek projesi\n\nBu proje Studio'nun kendi paket akışını gösterir: kodu düzenleyin, derleyin, yeni sürümü kurun.\nÇalışan WebOS'un derlenmiş kodu değiştirilmez.\n\n// @claim 2 = 2\n",
+          text: "# AxiomStudio örnek projesi\n\nBu proje Studio'nun kendi paket akışını gösterir: kodu düzenleyin, derleyin, yeni sürümü kurun.\nÇalışan WebOS'un derlenmiş kodu değiştirilmez.\n\n// @claim 2 = 2\n",
         }
       : f,
   );
@@ -127,5 +132,7 @@ export function seedStudioProject(): ProjectFile[] {
 
 /** `// @claim ...` satırlarını çıkarır. */
 export function extractClaims(text: string): string[] {
-  return [...text.matchAll(/\/\/\s*@claim\s+(.+)$/gm)].map((m) => (m[1] ?? "").trim()).filter(Boolean);
+  return [...text.matchAll(/\/\/\s*@claim\s+(.+)$/gm)]
+    .map((m) => (m[1] ?? "").trim())
+    .filter(Boolean);
 }

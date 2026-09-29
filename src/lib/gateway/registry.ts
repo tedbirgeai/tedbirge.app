@@ -36,7 +36,6 @@ export type GatewayAdapter = {
   strictHmac?: boolean;
 };
 
-
 type MetricsEntry = { ok: number; err: number; at: number };
 
 const adapters = new Map<string, GatewayAdapter>();
@@ -102,7 +101,6 @@ export function collectMetrics(): GatewayMetrics[] {
     };
   });
 }
-
 
 /** Test yardımcısı: sadece test dosyalarında çağrılmalı. */
 export function __resetGatewayRegistry(): void {
