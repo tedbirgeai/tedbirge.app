@@ -423,6 +423,7 @@ export function FilesApp({
                   e.dataTransfer.effectAllowed = "copy";
                 }}
                 onClick={() => setSelected(f.id === selected ? null : f.id)}
+                onDoubleClick={() => open(f)}
                 className={`flex min-h-12 cursor-grab items-center gap-3 border-b border-[var(--tb-border)] px-3 active:cursor-grabbing ${
                   selected === f.id ? "bg-[color-mix(in_srgb,var(--tb-accent)_8%,transparent)]" : ""
                 }`}
