@@ -121,7 +121,7 @@ export function SystemBar({
         onNetwork={() => setNetwork(true)}
       />
 
-      <div className="pointer-events-auto relative z-[90] flex shrink-0 items-center gap-0.5">
+      <div className="pointer-events-auto relative z-[90] flex min-w-0 shrink-0 flex-nowrap items-center justify-end gap-0.5">
         {onSearch ? (
           <button
             type="button"
@@ -155,7 +155,7 @@ export function SystemBar({
         <span
           title={diskBusy ? "Disk yazılıyor / okunuyor" : "Disk boşta"}
           aria-label={diskBusy ? "Disk etkin" : "Disk boşta"}
-          className="flex shrink-0 items-center gap-1 px-1 font-osmono text-[11px] text-[var(--tb-muted)]"
+          className="hidden shrink-0 items-center gap-1 px-1 font-osmono text-[11px] text-[var(--tb-muted)] sm:flex"
         >
           <HardDrive
             className={`h-4 w-4 ${diskBusy ? "text-[var(--tb-accent)]" : ""}`}
@@ -172,11 +172,14 @@ export function SystemBar({
             ) : (
               <Battery className="h-4 w-4" aria-hidden />
             )}
-            {battery.percent}%
+            <span className="hidden sm:inline">{battery.percent}%</span>
           </span>
         ) : null}
-        <InstallSystemButton compact />
-        <BareMetalIsoButton compact />
+        <span className="hidden shrink-0 items-center gap-0.5 lg:flex">
+          <InstallSystemButton compact />
+          <BareMetalIsoButton compact />
+        </span>
+
         <span
           className="hidden w-[104px] shrink-0 whitespace-nowrap px-1 text-center font-osmono text-[11px] leading-4 text-[var(--tb-muted)] tabular-nums md:inline-block"
           aria-live="off"
