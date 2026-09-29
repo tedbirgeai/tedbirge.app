@@ -181,6 +181,27 @@ export function createServiceManager(defs: readonly ServiceDef[], opts: ManagerO
       e.info = { ...e.info, restarts: 0, status: "stopped" };
       await run(name);
     },
+    /** Kullanıcı isteğiyle tek servisi durdurur (yeniden başlatma yok). */
+    stop(name: string) {
+      const e = entries.get(name);
+      if (!e) return;
+      if (e.timer) clearTimeout(e.timer);
+      e.timer = undefined;
+      try {
+        e.stop?.();
+      } catch {
+        /* izole */
+      }
+      e.stop = undefined;
+      set(e, "stopped");
+    },
+    /** Durdurulmuş servisi yeniden başlatır. */
+    async start(name: string) {
+      const e = entries.get(name);
+      if (!e) return;
+      e.info = { ...e.info, restarts: 0 };
+      await run(name);
+    },
     /** Test/teşhis için servisi düşmüş say. */
     crash(name: string, detail = "zorla düşürüldü") {
       const e = entries.get(name);

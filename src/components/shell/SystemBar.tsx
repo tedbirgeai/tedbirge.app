@@ -195,6 +195,7 @@ export function SystemBar({
 
         <button
           type="button"
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={() => setClockOpen((o) => !o)}
           aria-label="Takvim ve bildirimler"
           className="wa-press hidden w-[104px] shrink-0 whitespace-nowrap rounded-lg px-1 text-center font-osmono text-[11px] leading-4 text-[var(--tb-muted)] tabular-nums hover:text-[var(--tb-text)] md:inline-block"
