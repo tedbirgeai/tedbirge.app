@@ -9,6 +9,8 @@
  * ölçülmemiş metrikler "—" basar.
  */
 
+import { Composer, type ComposerHandle } from "@/components/messenger/Composer";
+import { MessageList } from "@/components/messenger/MessageList";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@/components/shell/OsLink";
 import { DEV_PORTAL_URL } from "@/lib/site";
@@ -18,9 +20,7 @@ import {
   MessageSquare,
   Mic,
   MonitorUp,
-  Paperclip,
   PhoneOff,
-  Send,
   Settings2,
   ShieldCheck,
   Users,
@@ -313,7 +313,6 @@ export default function Messenger() {
 
   const [tab, setTab] = useState<TabId>("chat");
   const [systemView, setSystemView] = useState<"network" | "security" | "settings">("network");
-  const [draft, setDraft] = useState("");
   const [feed, setFeed] = useState<LiveMessage[]>([]);
   const [route, setRoute] = useState<{ hops: number; cost: number } | null>(null);
   const [camOn, setCamOn] = useState(false);
@@ -324,7 +323,9 @@ export default function Messenger() {
   const [hydrated, setHydrated] = useState(false);
   const [identityTick, setIdentityTick] = useState(0);
   const [activePeer, setActivePeer] = useState<string | null>(null);
-  const draftRef = useRef<HTMLInputElement | null>(null);
+  const draftRef = useRef<ComposerHandle | null>(null);
+  // Her mesajın geliş günü bir kez kaydedilir (gün ayırıcıları için).
+  const dayOf = useRef(new Map<string, string>());
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const call = useCall();
@@ -365,6 +366,19 @@ export default function Messenger() {
       alive = false;
     };
   }, [node.nodeId, node.peers, node.rttMs]);
+
+  const feedWithDay = useMemo(
+    () =>
+      feed.map((m) => {
+        let d = dayOf.current.get(m.id);
+        if (!d) {
+          d = new Date().toDateString();
+          dayOf.current.set(m.id, d);
+        }
+        return { ...m, day: d };
+      }),
+    [feed],
+  );
 
   const selfLabel = hydrated ? nodeLabel(node.nodeId) : nodeLabel("");
   const livePeers: LivePeer[] = useMemo(() => toLivePeers(node.peers), [node.peers]);
@@ -504,10 +518,9 @@ export default function Messenger() {
   const stamp = () =>
     new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 
-  const send = async () => {
-    const text = draft.trim();
+  const send = async (raw: string) => {
+    const text = raw.trim();
     if (!text) return;
-    setDraft("");
     setFeed((prev) => [
       ...prev,
       { id: `self-${Date.now()}`, from: selfLabel, at: stamp(), text, self: true },
@@ -904,77 +917,8 @@ export default function Messenger() {
                   </div>
                 </div>
 
-                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
-                  {feed.length === 0 ? (
-                    <p
-                      className="pt-10 text-center text-[13px]"
-                      style={{ color: "var(--tb-muted)" }}
-                    >
-                      Henüz mesaj yok. Eş bağlandığında konuşma burada görünür.
-                    </p>
-                  ) : null}
-                  {feed.map((m) => (
-                    <div key={m.id} className="space-y-1">
-                      <div
-                        className="flex justify-between gap-2 text-[11px]"
-                        style={{ color: "var(--tb-muted)" }}
-                      >
-                        <span className="truncate font-medium">
-                          {m.self ? `Siz · ${selfLabel}` : m.from}
-                        </span>
-                        <span className="shrink-0">{m.at}</span>
-                      </div>
-                      <p
-                        className="inline-block max-w-full rounded-lg px-3 py-2 text-[14px]"
-                        style={{
-                          background: m.self ? "var(--tb-panel-soft)" : "transparent",
-                          border: "1px solid var(--tb-border)",
-                        }}
-                      >
-                        {m.text}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void send();
-                  }}
-                  className="flex shrink-0 items-center gap-2 px-3 py-3"
-                  style={{ borderTop: "1px solid var(--tb-border)" }}
-                >
-                  <button
-                    type="button"
-                    aria-label="Dosya ekle"
-                    onClick={() => setTab("files")}
-                    className="grid h-9 w-9 place-items-center rounded-lg"
-                    style={{ color: "var(--tb-muted)" }}
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </button>
-                  <input
-                    ref={draftRef}
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    placeholder="Mesaj yazın…"
-                    className="min-w-0 flex-1 rounded-lg px-3 py-2 text-[14px] outline-none"
-                    style={{
-                      background: "var(--tb-panel-soft)",
-                      border: "1px solid var(--tb-border)",
-                      color: "var(--tb-text)",
-                    }}
-                  />
-                  <button
-                    type="submit"
-                    disabled={!draft.trim()}
-                    className="flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] font-medium disabled:opacity-40"
-                    style={{ background: "var(--tb-accent)", color: "var(--tb-bg)" }}
-                  >
-                    <Send className="h-4 w-4" /> Gönder
-                  </button>
-                </form>
+                <MessageList messages={feedWithDay} selfLabel={selfLabel} />
+                <Composer ref={draftRef} onSend={(t) => void send(t)} onAttach={() => setTab("files")} />
               </div>
 
               <div className="flex min-h-0 flex-col gap-3 xl:overflow-y-auto">

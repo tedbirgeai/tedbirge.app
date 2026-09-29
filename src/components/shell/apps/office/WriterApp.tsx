@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 
 import { OfficeShell, RibbonGroup, ToolButton, useOfficeEditor } from "./OfficeFrame";
+import { buildWordDoc, downloadBlob, printAsPdf } from "./doc-export";
 
 const FONTS = ["Inter", "Georgia", "Times New Roman", "Courier New", "Arial"];
 const SIZES = [10, 11, 12, 14, 16, 18, 24, 32];
@@ -54,6 +55,28 @@ export function WriterApp() {
   const [ruler, setRuler] = useState(true);
   const [stats, setStats] = useState({ words: 0, chars: 0, pages: 1 });
   const loadedFor = useRef<string | null>(null);
+  const [fmt, setFmt] = useState<Record<string, boolean>>({});
+
+  // Araç çubuğu aktif durumu: imleç konumundaki biçim okunur.
+  useEffect(() => {
+    const read = () => {
+      const el = pageRef.current;
+      const sel = document.getSelection();
+      if (!el || !sel?.anchorNode || !el.contains(sel.anchorNode)) return;
+      const next: Record<string, boolean> = {};
+      for (const k of ["bold", "italic", "underline", "justifyLeft", "justifyCenter", "justifyRight", "justifyFull", "insertUnorderedList", "insertOrderedList"])
+        next[k] = document.queryCommandState(k);
+      const block = String(document.queryCommandValue("formatBlock")).toUpperCase();
+      next[block === "" ? "P" : block] = true;
+      setFmt(next);
+    };
+    document.addEventListener("selectionchange", read);
+    return () => document.removeEventListener("selectionchange", read);
+  }, []);
+
+  const title = (editor.title || "belge").replace(/[\\/:*?"<>|]/g, "_");
+  const exportPdf = () => printAsPdf(pageRef.current?.innerHTML ?? "", title);
+  const exportWord = () => downloadBlob(buildWordDoc(pageRef.current?.innerHTML ?? "", title), `${title}.doc`);
 
   /* Belge değiştiğinde gövde bir kez basılır (yazarken imleç kaçmaz). */
   useEffect(() => {
@@ -167,16 +190,19 @@ export function WriterApp() {
           <RibbonGroup label="Biçim">
             <ToolButton
               onClick={() => cmd("bold")}
+              active={!!fmt.bold}
               icon={<Bold className="h-4 w-4" />}
               title="Kalın"
             />
             <ToolButton
               onClick={() => cmd("italic")}
+              active={!!fmt.italic}
               icon={<Italic className="h-4 w-4" />}
               title="İtalik"
             />
             <ToolButton
               onClick={() => cmd("underline")}
+              active={!!fmt.underline}
               icon={<Underline className="h-4 w-4" />}
               title="Altı çizili"
             />
@@ -185,31 +211,37 @@ export function WriterApp() {
           <RibbonGroup label="Paragraf">
             <ToolButton
               onClick={() => cmd("justifyLeft")}
+              active={!!fmt.justifyLeft}
               icon={<AlignLeft className="h-4 w-4" />}
               title="Sola hizala"
             />
             <ToolButton
               onClick={() => cmd("justifyCenter")}
+              active={!!fmt.justifyCenter}
               icon={<AlignCenter className="h-4 w-4" />}
               title="Ortala"
             />
             <ToolButton
               onClick={() => cmd("justifyRight")}
+              active={!!fmt.justifyRight}
               icon={<AlignRight className="h-4 w-4" />}
               title="Sağa hizala"
             />
             <ToolButton
               onClick={() => cmd("justifyFull")}
+              active={!!fmt.justifyFull}
               icon={<AlignJustify className="h-4 w-4" />}
               title="İki yana yasla"
             />
             <ToolButton
               onClick={() => cmd("insertUnorderedList")}
+              active={!!fmt.insertUnorderedList}
               icon={<List className="h-4 w-4" />}
               title="Madde listesi"
             />
             <ToolButton
               onClick={() => cmd("insertOrderedList")}
+              active={!!fmt.insertOrderedList}
               icon={<ListOrdered className="h-4 w-4" />}
               title="Numaralı liste"
             />
@@ -220,6 +252,7 @@ export function WriterApp() {
               <ToolButton
                 key={s}
                 onClick={() => cmd("formatBlock", s === "P" ? "P" : s)}
+                active={!!fmt[s]}
                 label={s === "P" ? "Metin" : `Başlık ${s[1]}`}
               />
             ))}
@@ -270,6 +303,16 @@ export function WriterApp() {
       ),
     },
     {
+      id: "disa",
+      label: "Dışa aktar",
+      content: (
+        <>
+          <ToolButton onClick={exportPdf} label="PDF (A4)" />
+          <ToolButton onClick={exportWord} label="Word (.doc)" />
+        </>
+      ),
+    },
+    {
       id: "gorunum",
       label: "Görünüm",
       content: (
@@ -309,7 +352,8 @@ export function WriterApp() {
               style={{ border: "1px solid var(--border)", width: 794 * zoom }}
               aria-hidden
             >
-              {Array.from({ length: 20 }).map((_, i) => (
+              <span className="h-full shrink-0 bg-[color-mix(in_srgb,var(--tb-text)_10%,transparent)]" style={{ width: `${(76 / 794) * 100}%` }} />
+              {Array.from({ length: 17 }).map((_, i) => (
                 <span
                   key={i}
                   className="flex-1 border-r text-[8px] text-[var(--tb-muted)]"
@@ -318,6 +362,7 @@ export function WriterApp() {
                   {i + 1}
                 </span>
               ))}
+              <span className="h-full shrink-0 bg-[color-mix(in_srgb,var(--tb-text)_10%,transparent)]" style={{ width: `${(76 / 794) * 100}%` }} />
             </div>
           ) : null}
 

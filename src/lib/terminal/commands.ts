@@ -24,6 +24,7 @@ import { baseName, childrenOf, entriesUnder, treeAt } from "@/lib/vfs/tree";
 
 import { ROOT, folderOf, resolvePath, splitTarget, subPathOf } from "./paths";
 import type { TerminalHost } from "./host";
+import { FILTER_COMMANDS } from "./filters";
 
 export type Tone = "out" | "ok" | "err" | "warn" | "dim" | "accent";
 
@@ -790,6 +791,7 @@ export const COMMANDS: Command[] = [
   cmdCp,
   cmdMv,
   cmdGrep,
+  ...FILTER_COMMANDS,
   cmdDf,
   cmdSysinfo,
   cmdNeofetch,

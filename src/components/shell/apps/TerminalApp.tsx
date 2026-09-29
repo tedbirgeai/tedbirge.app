@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { browserHost } from "@/lib/terminal/browser-host";
 import type { Line } from "@/lib/terminal/commands";
 import { TerminalShell } from "@/lib/terminal/shell";
+import { parseAnsi } from "@/lib/terminal/ansi";
 
 const BANNER: Line[] = [
   { text: "Tedbirge(R) WebOS — sistem kabuğu", tone: "accent" },
@@ -31,6 +32,7 @@ export function TerminalApp() {
   const [input, setInput] = useState("");
   const [cursor, setCursor] = useState(-1);
   const [busy, setBusy] = useState(false);
+  const draftRef = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -87,6 +89,7 @@ export function TerminalApp() {
       if (options.length > 1) setLines((l) => [...l, { text: options.join("   "), tone: "dim" }]);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
+      if (cursor === -1) draftRef.current = input;
       const next = Math.min(hist.length - 1, cursor + 1);
       setCursor(next);
       setInput(hist[next] ?? "");
@@ -94,7 +97,7 @@ export function TerminalApp() {
       e.preventDefault();
       const next = Math.max(-1, cursor - 1);
       setCursor(next);
-      setInput(next < 0 ? "" : (hist[next] ?? ""));
+      setInput(next < 0 ? draftRef.current : (hist[next] ?? ""));
     } else if (e.key === "c" && e.ctrlKey) {
       e.preventDefault();
       setLines((l) => [...l, { text: `${cwd} $ ${input}^C`, tone: "dim" }]);
@@ -115,7 +118,23 @@ export function TerminalApp() {
       <div className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap break-words">
         {lines.map((l, i) => (
           <div key={i} className={TONE[l.tone ?? "out"]}>
-            {l.text || "\u00a0"}
+            {l.text
+              ? parseAnsi(l.text).map((sp, j) => (
+                  <span
+                    key={j}
+                    style={{
+                      color: sp.style.fg,
+                      background: sp.style.bg,
+                      fontWeight: sp.style.bold ? 700 : undefined,
+                      opacity: sp.style.dim ? 0.6 : undefined,
+                      fontStyle: sp.style.italic ? "italic" : undefined,
+                      textDecoration: sp.style.underline ? "underline" : undefined,
+                    }}
+                  >
+                    {sp.text}
+                  </span>
+                ))
+              : "\u00a0"}
           </div>
         ))}
         <div ref={endRef} />

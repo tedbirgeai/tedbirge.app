@@ -55,7 +55,8 @@ type PdfDoc = {
     render: (o: {
       canvasContext: CanvasRenderingContext2D;
       viewport: { width: number; height: number };
-    }) => { promise: Promise<void> };
+    }) => { promise: Promise<void>; cancel: () => void };
+    getTextContent: () => Promise<{ items: Array<{ str?: string }> }>;
   }>;
 };
 
@@ -68,6 +69,11 @@ export function PdfStudioApp() {
   const [tool, setTool] = useState<Tool>("sec");
   const [marks, setMarks] = useState<Mark[]>([]);
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [hits, setHits] = useState<number[]>([]);
+  const [hitIdx, setHitIdx] = useState(0);
+  const [searching, setSearching] = useState(false);
+  const textCache = useRef(new Map<number, string>());
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const thumbsRef = useRef<HTMLDivElement>(null);
@@ -118,10 +124,11 @@ export function PdfStudioApp() {
     };
   }, [active]);
 
-  /* Ana sayfa çizimi */
+  /* Ana sayfa çizimi — sayfa değişince önceki çizim iptal edilir */
   useEffect(() => {
     if (!pdf) return;
     let cancelled = false;
+    let task: { cancel: () => void; promise: Promise<void> } | null = null;
     void (async () => {
       const p = await pdf.getPage(page);
       const viewport = p.getViewport({ scale: zoom });
@@ -130,45 +137,94 @@ export function PdfStudioApp() {
       if (!canvas || !ctx || cancelled) return;
       canvas.width = viewport.width;
       canvas.height = viewport.height;
-      await p.render({ canvasContext: ctx, viewport }).promise;
+      task = p.render({ canvasContext: ctx, viewport });
+      await task.promise.catch(() => undefined);
     })();
     return () => {
       cancelled = true;
+      task?.cancel();
     };
   }, [pdf, page, zoom]);
 
-  /* Minyatürler */
+  /* Minyatürler — yalnız görünür olanlar boşta çizilir (ana iş parçacığı bloke olmaz) */
   useEffect(() => {
     if (!pdf) return;
-    let cancelled = false;
-    void (async () => {
-      const host = thumbsRef.current;
-      if (!host) return;
-      host.innerHTML = "";
-      for (let n = 1; n <= pdf.numPages; n++) {
-        const p = await pdf.getPage(n);
-        const viewport = p.getViewport({ scale: 0.22 });
-        const c = document.createElement("canvas");
-        c.width = viewport.width;
-        c.height = viewport.height;
-        const ctx = c.getContext("2d");
-        if (!ctx || cancelled) return;
-        await p.render({ canvasContext: ctx, viewport }).promise;
-        if (cancelled) return;
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "block w-full rounded-md p-0.5";
-        btn.style.border = "1px solid var(--border)";
-        btn.setAttribute("aria-label", `Sayfa ${n}`);
-        btn.onclick = () => setPage(n);
-        btn.appendChild(c);
-        host.appendChild(btn);
+    textCache.current.clear();
+    setHits([]);
+    const host = thumbsRef.current;
+    if (!host) return;
+    host.innerHTML = "";
+    const tasks: Array<{ cancel: () => void }> = [];
+    const draw = async (n: number, btn: HTMLButtonElement) => {
+      const p = await pdf.getPage(n);
+      const viewport = p.getViewport({ scale: 0.22 });
+      const c = document.createElement("canvas");
+      c.width = viewport.width;
+      c.height = viewport.height;
+      const ctx = c.getContext("2d");
+      if (!ctx) return;
+      const t = p.render({ canvasContext: ctx, viewport });
+      tasks.push(t);
+      await t.promise.catch(() => undefined);
+      btn.replaceChildren(c);
+    };
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        io.unobserve(e.target);
+        const btn = e.target as HTMLButtonElement;
+        const n = Number(btn.dataset.page);
+        const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 16));
+        idle(() => void draw(n, btn));
       }
-    })();
+    }, { root: host, rootMargin: "200px" });
+    for (let n = 1; n <= pdf.numPages; n++) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.dataset.page = String(n);
+      btn.className = "block w-full rounded-md p-0.5 text-[10px]";
+      btn.style.border = "1px solid var(--border)";
+      btn.style.minHeight = "60px";
+      btn.textContent = String(n);
+      btn.setAttribute("aria-label", `Sayfa ${n}`);
+      btn.onclick = () => setPage(n);
+      host.appendChild(btn);
+      io.observe(btn);
+    }
     return () => {
-      cancelled = true;
+      io.disconnect();
+      tasks.forEach((t) => t.cancel());
     };
   }, [pdf]);
+
+  /* Metin arama — sayfa metinleri bir kez çıkarılır, olay döngüsüne nefes aldırılır */
+  const runSearch = useCallback(async () => {
+    const q = query.trim().toLocaleLowerCase("tr");
+    if (!pdf || !q) return setHits([]);
+    setSearching(true);
+    const found: number[] = [];
+    for (let n = 1; n <= pdf.numPages; n++) {
+      let text = textCache.current.get(n);
+      if (text === undefined) {
+        const tc = await (await pdf.getPage(n)).getTextContent();
+        text = tc.items.map((i) => i.str ?? "").join(" ").toLocaleLowerCase("tr");
+        textCache.current.set(n, text);
+        if (n % 5 === 0) await new Promise((r) => setTimeout(r, 0));
+      }
+      if (text.includes(q)) found.push(n);
+    }
+    setHits(found);
+    setHitIdx(0);
+    setSearching(false);
+    if (found[0]) setPage(found[0]);
+  }, [pdf, query]);
+
+  const goHit = (d: number) => {
+    if (!hits.length) return;
+    const i = (hitIdx + d + hits.length) % hits.length;
+    setHitIdx(i);
+    setPage(hits[i]!);
+  };
 
   const saveMarks = useCallback(async () => {
     if (!active) return;
@@ -400,9 +456,49 @@ export function PdfStudioApp() {
           ) : null}
 
           {pdf ? (
-            <p className="pt-3 text-center font-osmono text-[11px] text-[var(--tb-muted)]">
-              Sayfa {page}/{pdf.numPages}
-            </p>
+            <div className="sticky bottom-0 mt-3 flex flex-wrap items-center justify-center gap-2 rounded-lg bg-[var(--tb-panel-solid)] p-2 font-osmono text-[11px] text-[var(--tb-muted)]" style={{ border: "1px solid var(--border)" }}>
+              <Btn onClick={() => setPage((n) => Math.max(1, n - 1))} label="‹ Önceki" />
+              <label className="flex items-center gap-1">
+                Sayfa
+                <input
+                  type="number"
+                  min={1}
+                  max={pdf.numPages}
+                  value={page}
+                  aria-label="Sayfa numarası"
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    if (n >= 1 && n <= pdf.numPages) setPage(n);
+                  }}
+                  className="w-14 rounded bg-transparent px-1 text-center text-[var(--tb-text)]"
+                  style={{ border: "1px solid var(--border)" }}
+                />
+                / {pdf.numPages}
+              </label>
+              <Btn onClick={() => setPage((n) => Math.min(pdf.numPages, n + 1))} label="Sonraki ›" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (hits.length && !e.shiftKey) goHit(1);
+                    else void runSearch();
+                  }
+                }}
+                placeholder="Metinde ara…"
+                aria-label="PDF içinde ara"
+                className="w-40 rounded bg-transparent px-2 py-1 text-[var(--tb-text)]"
+                style={{ border: "1px solid var(--border)" }}
+              />
+              <Btn onClick={() => void runSearch()} label={searching ? "Aranıyor…" : "Ara"} />
+              {hits.length ? (
+                <>
+                  <span>{hitIdx + 1}/{hits.length} sayfa</span>
+                  <Btn onClick={() => goHit(-1)} label="↑" />
+                  <Btn onClick={() => goHit(1)} label="↓" />
+                </>
+              ) : query && !searching ? <span>eşleşme yok</span> : null}
+            </div>
           ) : null}
         </div>
       </div>
