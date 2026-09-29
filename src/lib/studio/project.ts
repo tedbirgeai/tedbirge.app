@@ -65,9 +65,50 @@ function log(msg: string): void {
 }
 `;
 
-export type TemplateId = "merhaba" | "sayac" | "bos";
+export type TemplateId = "widget" | "meshbot" | "wasm" | "merhaba" | "sayac" | "bos";
 
-export const TEMPLATES: Record<TemplateId, { label: string; caps: Capability[]; code: string }> = {
+export const TEMPLATES: Record<
+  TemplateId,
+  { label: string; caps: Capability[]; code: string; description?: string }
+> = {
+  widget: {
+    label: "Widget",
+    description: "Masaüstünde durum özeti gösteren küçük uygulama.",
+    caps: ["status.read"],
+    code: `${HOST}
+export function start(): void {
+  const on = host_online() == 1;
+  log("Durum: " + (on ? "çevrimiçi" : "çevrimdışı"));
+  log("Eşler: " + host_peers().toString());
+}
+`,
+  },
+  meshbot: {
+    label: "Mesh Botu",
+    description: "Bağlı eş sayısına göre karar veren ağ botu.",
+    caps: ["status.read"],
+    code: `${HOST}
+export function start(): void {
+  const n = host_peers();
+  if (n == 0) log("Yakında eş yok; bekleniyor.");
+  else log(n.toString() + " eş bağlı; mesh hazır.");
+}
+`,
+  },
+  wasm: {
+    label: "WASM Modülü",
+    description: "Hesaplama yapan boş modül; kendi fonksiyonlarınızı ekleyin.",
+    caps: [],
+    code: `${HOST}
+export function topla(a: i32, b: i32): i32 {
+  return a + b;
+}
+
+export function start(): void {
+  log("2 + 3 = " + topla(2, 3).toString());
+}
+`,
+  },
   merhaba: {
     label: "Merhaba",
     caps: [],
@@ -95,6 +136,30 @@ export function start(): void {}
 `,
   },
 };
+
+/** Paketlere sağlanan gerçek host fonksiyonları (başka içe aktarım yoktur). */
+export const HOST_GUIDE: Array<{ name: string; sig: string; about: string; snippet: string; cap?: Capability }> = [
+  {
+    name: "log",
+    sig: "log(msg: string): void",
+    about: "Önizleme/Çıktı paneline bir satır yazar (host_log üzerinden).",
+    snippet: 'log("mesaj");',
+  },
+  {
+    name: "host_peers",
+    sig: "host_peers(): i32",
+    about: "Şu an bağlı mesh eşlerinin sayısını döndürür.",
+    snippet: "const n = host_peers();",
+    cap: "status.read",
+  },
+  {
+    name: "host_online",
+    sig: "host_online(): i32",
+    about: "Cihaz çevrimiçiyse 1, değilse 0 döndürür.",
+    snippet: "const on = host_online() == 1;",
+    cap: "status.read",
+  },
+];
 
 export function templateFiles(slug: string, name: string, tpl: TemplateId): ProjectFile[] {
   if (!isSlug(slug))
