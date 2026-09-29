@@ -26,7 +26,15 @@ import { usePeerStatus } from "@/lib/shell/peer-status";
 import { setFocusMode, useFocusMode } from "@/lib/shell/focus-mode";
 import { setVolume, useVolume } from "@/lib/ui/audio-gain";
 import { getTheme, setTheme, THEMES } from "@/lib/ui/theme";
-import { setBrightness, setNightLight, useWallpaper } from "@/lib/ui/wallpaper";
+import {
+  setBrightness,
+  setNightLight,
+  setNightLightAuto,
+  toggleNightLight,
+  useWallpaper,
+} from "@/lib/ui/wallpaper";
+import { isRelayEnabled, setRelayEnabled } from "@/shell/relay";
+import { setPeerLinkEnabled, useServices } from "@/shell/services/services";
 import {
   POWER_LABELS,
   powerBridgeReady,
@@ -47,7 +55,10 @@ export function ControlCenter({
 }) {
   // Ağ durumu kabuktan değil, kendi sönümlenmiş deposundan okunur.
   const { text: status, peers, rttMs } = usePeerStatus();
-  const { brightness, night } = useWallpaper();
+  const { brightness, night, nightAuto } = useWallpaper();
+  const services = useServices();
+  const peerOn = services.find((x) => x.name === "mesh-sync")?.status !== "stopped";
+  const [relay, setRelay] = useState(true);
   const volume = useVolume();
   const focus = useFocusMode();
   const [muted, setMuted] = useState(false);
@@ -59,6 +70,7 @@ export function ControlCenter({
   useEffect(() => {
     if (!open) return;
     setMuted(isSoundMuted());
+    setRelay(isRelayEnabled());
     setThemeState(getTheme());
     void powerBridgeReady().then(setPowerReady);
     const onDown = (e: MouseEvent) => {
@@ -169,6 +181,32 @@ export function ControlCenter({
         />
       </label>
 
+      <div className="mt-2 grid grid-cols-2 gap-1.5">
+        <QuickToggle label="Gece ışığı" on={night > 0} onClick={() => toggleNightLight()} />
+        <QuickToggle
+          label="Gün batımında oto."
+          on={nightAuto}
+          onClick={() => setNightLightAuto(!nightAuto)}
+        />
+        <QuickToggle
+          label="Ağ rölesi"
+          on={relay}
+          onClick={() => {
+            setRelayEnabled(!relay);
+            setRelay(!relay);
+            notify(relay ? "Röle kapandı" : "Röle açık");
+          }}
+        />
+        <QuickToggle
+          label="WebRTC eşler"
+          on={peerOn}
+          onClick={() => {
+            void setPeerLinkEnabled(!peerOn);
+            notify(peerOn ? "Eş bağlantıları durduruldu" : "Eş bağlantıları açılıyor");
+          }}
+        />
+      </div>
+
       <button
         type="button"
         onClick={() => {
@@ -261,5 +299,27 @@ export function ControlCenter({
         <Moon className="h-4 w-4" aria-hidden /> Duvar kâğıdı ve tema
       </button>
     </div>
+  );
+}
+
+function QuickToggle({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={onClick}
+      className={`wa-press flex items-center justify-between gap-2 rounded-xl border px-2.5 py-2 text-left font-osmono text-[11px] ${
+        on
+          ? "border-[var(--tb-accent)] bg-[color-mix(in_srgb,var(--tb-accent)_14%,transparent)] text-[var(--tb-text)]"
+          : "border-[var(--tb-border)] text-[var(--tb-muted)]"
+      }`}
+    >
+      <span className="truncate">{label}</span>
+      <span
+        aria-hidden
+        className={`h-2 w-2 shrink-0 rounded-full ${on ? "bg-[var(--tb-accent)]" : "bg-[var(--tb-border)]"}`}
+      />
+    </button>
   );
 }
