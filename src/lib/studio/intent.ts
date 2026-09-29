@@ -27,10 +27,18 @@ export type SystemTarget =
   | "vfs"
   | "guvenlik"
   | "performans"
-  | "arayuz";
+  | "arayuz"
+  | "denetim";
 
 /** Salt inceleme (müdahale değil) yapılan katmanlar. */
-export type InspectTarget = "ag" | "cekirdek" | "vfs" | "guvenlik" | "performans" | "arayuz";
+export type InspectTarget =
+  | "ag"
+  | "cekirdek"
+  | "vfs"
+  | "guvenlik"
+  | "performans"
+  | "arayuz"
+  | "denetim";
 
 export type SystemPatch =
   | { target: "tema"; theme?: "crystal" | "soft" | "night" }
