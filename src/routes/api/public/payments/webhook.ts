@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   verifyWebhook,
   WebhookSignatureError,
@@ -79,11 +79,11 @@ async function handleSubscriptionCreated(data: PaddleSubscriptionData, env: Padd
     console.warn("Skipping subscription: no items in payload");
     return;
   }
-  const priceId = item.price.importMeta?.externalId;
+  const priceId = item.price?.importMeta?.externalId;
   const productId = item.product?.importMeta?.externalId;
   if (!priceId || !productId) {
     console.warn("Skipping subscription: missing importMeta.externalId", {
-      rawPriceId: item.price.id,
+      rawPriceId: item.price?.id,
       rawProductId: item.product?.id,
     });
     return;
@@ -119,7 +119,7 @@ async function handleSubscriptionCreated(data: PaddleSubscriptionData, env: Padd
 
   const licenseRow = {
     user_id: userId,
-    email: customData?.email ?? "",
+    email: customText(customData, "email") ?? "",
     plan: productId,
     status: "active",
     node_limit: resolveNodeLimit(plan, item.quantity),
@@ -187,10 +187,10 @@ async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
 }
 
 /** Tamamlanan işlem: idempotent kayıt + lisans olayı (aynı txn ikinci kez işlenmez). */
-async function handleTransactionCompleted(data: any, env: PaddleEnv) {
-  const txnId: string | undefined = data?.id;
+async function handleTransactionCompleted(data: PaddleTransactionData, env: PaddleEnv) {
+  const txnId = data?.id;
   if (!txnId) return;
-  const userId: string | null = data.customData?.userId ?? null;
+  const userId = customText(data.customData, "userId");
   const { error } = await getSupabase().from("payment_transactions").insert({
     paddle_transaction_id: txnId,
     user_id: userId,
