@@ -21,7 +21,10 @@ import {
   type GeneratedSpec,
 } from "@/lib/studio/generator";
 import { writeRepo } from "@/lib/studio/repo-fs";
-import { notifyError, notifyOk } from "@/lib/shell/notify";
+import { notify, notifyError, notifyOk } from "@/lib/shell/notify";
+import { classifyIntent } from "@/lib/studio/intent";
+import { applySystemPatch } from "@/lib/studio/system-patch";
+
 import { ALLOWED_GENERATED_CAPS } from "@/lib/studio/generated-policy";
 import { installApp, uninstallApp } from "@/shell/installed";
 
@@ -54,20 +57,48 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
   const [log, setLog] = useState<string[]>([]);
   const [spec, setSpec] = useState<GeneratedSpec | null>(null);
   const [busy, setBusy] = useState(false);
+  const [ask, setAsk] = useState<string | null>(null);
   const apps = useGeneratedApps();
+
 
   const print = (line: string) =>
     setLog((l) => [...l.slice(-199), `${new Date().toLocaleTimeString("tr-TR")}  ${line}`]);
   const mark = (id: StepId, s: StepState) => setState((p) => ({ ...p, [id]: s }));
 
-  async function produce() {
+  /** Mod B — mevcut sistem bileşenini yerinde güncelle (ikon/klasör üretilmez). */
+  function patchSystem(patch: Parameters<typeof applySystemPatch>[0], reason: string) {
+    setState({ analiz: "tamam", derleme: "bekliyor", vfs: "bekliyor", guvenlik: "bekliyor", kurulum: "bekliyor" });
+    const r = applySystemPatch(patch);
+    print(`Mod B — yerinde sistem güncellemesi: ${reason}`);
+    print(`${r.component}: ${r.summary}`);
+    if (r.applied) notifyOk(r.component, r.summary);
+    else notify(r.component, r.summary);
+  }
+
+  async function produce(force = false) {
     setBusy(true);
     setLog([]);
     setSpec(null);
+    setAsk(null);
     setState({ analiz: "bekliyor", derleme: "bekliyor", vfs: "bekliyor", guvenlik: "bekliyor", kurulum: "bekliyor" });
     try {
       mark("analiz", "sürüyor");
+      if (!force) {
+        const intent = classifyIntent(prompt);
+        if (intent.mode === "sistem") {
+          patchSystem(intent.patch, intent.reason);
+          return;
+        }
+        if (intent.mode === "belirsiz") {
+          mark("analiz", "hata");
+          print(intent.reason);
+          setAsk(intent.reason);
+          return;
+        }
+        print(`Mod A — ${intent.reason}`);
+      }
       const s = generateApp(prompt);
+
       setSpec(s);
       print(`İstem çözümlendi: ${s.name} (${s.blocks.length} arayüz bloğu)`);
       mark("analiz", "tamam");
@@ -142,12 +173,32 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
             onClick={() => void produce()}
           >
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {busy ? "Üretiliyor…" : "Üret ve kur"}
+            {busy ? "İşleniyor…" : "İsteği uygula"}
           </button>
           <span className="font-osmono text-[11px] text-[var(--tb-muted)]">
             {prompt.length}/{MAX_PROMPT}
           </span>
         </div>
+
+        <p className="font-osmono text-[11px] text-[var(--tb-muted)]">
+          Sistem bileşeni istekleri (tema, duvar kâğıdı, ayarlar, sesler) yerinde güncellenir; masaüstüne yeni ikon
+          eklenmez. Yeni ikon yalnız açıkça bağımsız program istendiğinde oluşur.
+        </p>
+
+        {ask ? (
+          <div className="rounded-lg border border-[var(--tb-border)] bg-[var(--tb-panel-soft)] p-2 text-[12px]">
+            <div className="mb-1.5">{ask}</div>
+            <div className="flex gap-1.5">
+              <button type="button" className={ghostBtn} disabled={busy} onClick={() => void produce(true)}>
+                Yine de bağımsız uygulama üret
+              </button>
+              <button type="button" className={ghostBtn} onClick={() => setAsk(null)}>
+                Vazgeç
+              </button>
+            </div>
+          </div>
+        ) : null}
+
 
         <ol className="space-y-1.5" aria-live="polite">
           {STEPS.map((s) => (

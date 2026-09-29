@@ -12,6 +12,11 @@ import ReactMarkdown from "react-markdown";
 import { Bot, Send, Square, Trash2 } from "lucide-react";
 
 import { looksLikeClaim, verdictLabel } from "@/lib/axiom-bot";
+import { classifyIntent } from "@/lib/studio/intent";
+import { applySystemPatch } from "@/lib/studio/system-patch";
+import { notifyOk } from "@/lib/shell/notify";
+import { describeNode, useNodeRuntime } from "@/lib/node-runtime";
+
 
 const KEY = "tb.axiom-bot.v1";
 
@@ -38,9 +43,13 @@ export function AxiomBotPanel() {
   });
   const [input, setInput] = useState("");
   const [verdicts, setVerdicts] = useState<Record<string, string>>({});
+  const [patch, setPatch] = useState<string | null>(null);
+  const node = useNodeRuntime();
+  const status2 = describeNode(node);
   const box = useRef<HTMLTextAreaElement | null>(null);
   const end = useRef<HTMLDivElement | null>(null);
   const busy = status === "submitted" || status === "streaming";
+
 
   useEffect(() => {
     if (status === "ready" || status === "error") {
@@ -71,8 +80,19 @@ export function AxiomBotPanel() {
     const t = input.trim();
     if (!t || busy) return;
     setInput("");
+    // Mod B: sistem bileşeni isteği ise yerinde uygulanır, uygulama üretilmez.
+    const intent = classifyIntent(t);
+    if (intent.mode === "sistem") {
+      const r = applySystemPatch(intent.patch);
+      setPatch(`${r.component}: ${r.summary}`);
+      if (r.applied) {
+        notifyOk(r.component, r.summary);
+        return;
+      }
+    }
     void sendMessage({ text: t });
   };
+
 
   return (
     <div
@@ -112,7 +132,37 @@ export function AxiomBotPanel() {
         </button>
       </div>
 
+      <div
+        className="flex flex-wrap items-center gap-1.5 px-4 py-2 text-[11px]"
+        style={{ borderBottom: "1px solid var(--tb-border)", color: "var(--tb-muted)" }}
+        aria-label="Çekirdek durumu"
+      >
+        <span className="rounded-full px-2 py-0.5" style={{ background: "var(--tb-panel-soft)" }}>
+          Bağlı cihaz: {status2.directPeers}
+        </span>
+        <span className="rounded-full px-2 py-0.5" style={{ background: "var(--tb-panel-soft)" }}>
+          {status2.text}
+        </span>
+        <span className="rounded-full px-2 py-0.5" style={{ background: "var(--tb-panel-soft)" }}>
+          Sırada: {status2.queued}
+        </span>
+        <span className="rounded-full px-2 py-0.5" style={{ background: "var(--tb-panel-soft)" }}>
+          Hakikat motoru bağlı
+        </span>
+      </div>
+
+      {patch ? (
+        <div
+          className="mx-4 mt-2 rounded-lg px-3 py-2 text-[12px]"
+          style={{ background: "var(--tb-panel-soft)", color: "var(--tb-text)" }}
+          role="status"
+        >
+          Sistem bileşeni yerinde güncellendi — {patch}
+        </div>
+      ) : null}
+
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3 text-[14px]">
+
         {!messages.length ? (
           <p style={{ color: "var(--tb-muted)" }}>
             Henüz sohbet yok. Bir soru sorun ya da "2 + 2 = 4" gibi bir iddia yazın.
