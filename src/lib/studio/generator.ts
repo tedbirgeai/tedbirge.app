@@ -70,8 +70,13 @@ export function nameFromPrompt(prompt: string): string {
     .replace(/\s+/g, " ")
     .trim();
   if (!clean) throw new GeneratorError("İstem boş; ne yapmasını istediğinizi yazın.");
-  const words = clean.split(" ").filter((w) => w.length > 2).slice(0, 3);
-  const base = (words.length ? words : clean.split(" ").slice(0, 3)).join(" ");
+  const words: string[] = [];
+  for (const w of clean.split(" ")) {
+    if (words.join(" ").length + w.length > 32) break;
+    words.push(w);
+    if (words.length === 4) break;
+  }
+  const base = words.join(" ") || clean.slice(0, 32);
   return base.charAt(0).toLocaleUpperCase("tr-TR") + base.slice(1);
 }
 
