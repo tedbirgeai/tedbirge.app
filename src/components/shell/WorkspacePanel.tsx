@@ -34,6 +34,8 @@ import { Dock } from "@/components/shell/Dock";
 import { SystemBar } from "@/components/shell/SystemBar";
 import { Desktop } from "@/components/shell/Desktop";
 import { Spotlight } from "@/components/shell/Spotlight";
+import { AppLauncher } from "@/components/shell/AppLauncher";
+
 import { pressFeedback } from "@/lib/chat/sounds";
 import { notify, notifyError, notifyOk } from "@/lib/shell/notify";
 import { popUndo } from "@/lib/shell/undo-stack";
@@ -294,6 +296,15 @@ export function WorkspacePanel() {
       <LiveRegion />
 
       <Spotlight open={spotlight} onClose={() => setSpotlight(false)} onLaunch={launch} />
+      <AppLauncher
+        open={launcher}
+        onClose={() => setLauncher(false)}
+        onLaunch={(id) => {
+          setLauncher(false);
+          launch(id);
+        }}
+      />
+
 
       <Onboarding />
 
