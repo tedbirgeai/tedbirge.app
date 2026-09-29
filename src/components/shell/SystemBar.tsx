@@ -14,6 +14,8 @@ import {
   Search,
   Settings,
   UserRound,
+  Volume2,
+  VolumeX,
   Wifi,
 } from "lucide-react";
 
@@ -27,6 +29,8 @@ import { useUnreadNoticeCount } from "@/lib/shell/notifications";
 import { useClock } from "@/lib/shell/telemetry-store";
 import { useOnline } from "@/lib/pwa/offline-status";
 import { useBattery, useDiskActivity } from "@/lib/shell/device-status";
+import { toggleSystemMuted, useSystemMuted } from "@/os/system/audio";
+
 
 export function SystemBar({
   onSettings,
@@ -189,6 +193,20 @@ export function SystemBar({
 
         <button
           type="button"
+          onClick={() => toggleSystemMuted()}
+          aria-label={sysMuted ? "Sistem seslerini aç" : "Sistem seslerini sessize al"}
+          aria-pressed={sysMuted}
+          title={sysMuted ? "Sistem sesleri kapalı" : "Sistem sesleri açık"}
+          className="wa-press grid min-h-12 min-w-12 shrink-0 place-items-center rounded-full text-[var(--tb-muted)] hover:text-[var(--tb-text)]"
+        >
+          {sysMuted ? (
+            <VolumeX className="h-4 w-4" aria-hidden />
+          ) : (
+            <Volume2 className="h-4 w-4" aria-hidden />
+          )}
+        </button>
+        <button
+          type="button"
           onClick={onSettings}
           aria-label="Sistem ayarları"
           title="Sistem Ayarları"
@@ -196,6 +214,7 @@ export function SystemBar({
         >
           <Settings className="h-4 w-4" aria-hidden />
         </button>
+
         <button
           type="button"
           onClick={onProfile}
