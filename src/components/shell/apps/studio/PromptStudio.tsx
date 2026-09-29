@@ -60,14 +60,40 @@ export function PromptStudio({ onOpenFile }: { onOpenFile: (path: string) => voi
     setLog((l) => [...l.slice(-199), `${new Date().toLocaleTimeString("tr-TR")}  ${line}`]);
   const mark = (id: StepId, s: StepState) => setState((p) => ({ ...p, [id]: s }));
 
-  async function produce() {
+  /** Mod B — mevcut sistem bileşenini yerinde güncelle (ikon/klasör üretilmez). */
+  function patchSystem(patch: Parameters<typeof applySystemPatch>[0], reason: string) {
+    setState({ analiz: "tamam", derleme: "bekliyor", vfs: "bekliyor", guvenlik: "bekliyor", kurulum: "bekliyor" });
+    const r = applySystemPatch(patch);
+    print(`Mod B — yerinde sistem güncellemesi: ${reason}`);
+    print(`${r.component}: ${r.summary}`);
+    if (r.applied) notifyOk(r.component, r.summary);
+    else notify(r.component, r.summary);
+  }
+
+  async function produce(force = false) {
     setBusy(true);
     setLog([]);
     setSpec(null);
+    setAsk(null);
     setState({ analiz: "bekliyor", derleme: "bekliyor", vfs: "bekliyor", guvenlik: "bekliyor", kurulum: "bekliyor" });
     try {
       mark("analiz", "sürüyor");
+      if (!force) {
+        const intent = classifyIntent(prompt);
+        if (intent.mode === "sistem") {
+          patchSystem(intent.patch, intent.reason);
+          return;
+        }
+        if (intent.mode === "belirsiz") {
+          mark("analiz", "hata");
+          print(intent.reason);
+          setAsk(intent.reason);
+          return;
+        }
+        print(`Mod A — ${intent.reason}`);
+      }
       const s = generateApp(prompt);
+
       setSpec(s);
       print(`İstem çözümlendi: ${s.name} (${s.blocks.length} arayüz bloğu)`);
       mark("analiz", "tamam");
