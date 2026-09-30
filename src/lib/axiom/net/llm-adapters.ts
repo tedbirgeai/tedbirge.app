@@ -7,8 +7,8 @@
  * LLM İSTEMCİ ADAPTÖRLERİ
  * ------------------------------------------------------------------
  * AXIOM MCP uç noktası tek bir JSON-RPC yüzeyi sunar. Bu dosya, yaygın
- * LLM araç çağrısı biçimlerini (OpenAI tool-call, Anthropic tool) o
- * yüzeye ve geri çevirir. Ağ çağrısı yapmaz, yalnız biçim dönüştürür.
+ * LLM araç çağrısı biçimlerini (OpenAI tool-call, Anthropic tool, Gemini tool)
+ * o yüzeye ve geri çevirir. Ağ çağrısı yapmaz, yalnız biçim dönüştürür.
  */
 
 import { mcpCapabilities, type JsonRpcResponse } from "@/lib/axiom/net/mcp-server";
@@ -42,6 +42,24 @@ export function anthropicTool() {
   };
 }
 
+/** Google Gemini (Google AI SDK / Vertex AI) araç tanımı. */
+export function geminiTool() {
+  return {
+    name: "axiom_verify",
+    description: openAiTool().function.description,
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        text: {
+          type: "STRING",
+          description: "Doğrulanacak önerme ya da kod",
+        },
+      },
+      required: ["text"],
+    },
+  };
+}
+
 /** Araç çağrısı argümanlarını JSON-RPC isteğine çevirir. */
 export function toJsonRpc(
   args: unknown,
@@ -69,6 +87,6 @@ export async function toolCatalogue() {
   return {
     mcp: MCP_PATH,
     capabilities: await mcpCapabilities(),
-    tools: [openAiTool(), anthropicTool()],
+    tools: [openAiTool(), anthropicTool(), geminiTool()],
   };
 }
