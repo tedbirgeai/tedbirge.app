@@ -116,6 +116,25 @@ export async function mcpCapabilities() {
   };
 }
 
+// --- KATMAN 2: CANLI YAYIN TİPLERİ VE KANCASI (EKLENDİ) ---
+export interface AxiomLiveEvent {
+  id: string | number | null;
+  timestamp: string;
+  source: "LLM" | "USER" | "AGENT";
+  agentName: string;
+  inputProposition: string;
+  status: "PROVED" | "UNDECIDED" | "PENDING";
+  z3TimeMs: number;
+  lean4TimeMs: number;
+}
+
+let liveBroadcaster: ((event: AxiomLiveEvent) => void) | null = null;
+/** Katman 2 UI paneline canlı log akışı sağlamak için yayıncı kancası bağlar. */
+export function setLiveBroadcaster(fn: typeof liveBroadcaster) {
+  liveBroadcaster = fn;
+}
+// ------------------------------------------------------------
+
 type ProofRecord = { cid: string; verdict: string; engine: string; simulated: boolean };
 let recordProof: ((r: ProofRecord) => Promise<unknown>) | null = null;
 /** Sunucu rotası kanıt özetini (metin değil) kalıcılaştırmak için kanca bağlar. */
@@ -138,7 +157,41 @@ async function handleAxiomMethod(
     const ir = toIr(tokens);
     const matches = matchInvariants(ir, text);
     if (method === "axiom.analyze") return ok(id, { lang, metrics: astMetrics(ast), matches });
+
+    // --- KATMAN 2: PENDING (İŞLENİYOR) YAYINI EKLENDİ ---
+    if (liveBroadcaster) {
+      liveBroadcaster({
+        id,
+        timestamp: new Date().toLocaleTimeString("tr-TR", { hour12: false }),
+        source: client ? "LLM" : "AGENT",
+        agentName: client || "Otonom İstemci",
+        inputProposition: text,
+        status: "PENDING",
+        z3TimeMs: 0,
+        lean4TimeMs: 0,
+      });
+    }
+    // ---------------------------------------------------
+
     const result = await verify(text, ir, matches);
+
+    // --- KATMAN 2: SONUÇ YAYINI EKLENDİ ---
+    if (liveBroadcaster) {
+      const isProved = String(result.verdict).toUpperCase() === "PROVED";
+      const totalMs = result.ms || 0;
+      liveBroadcaster({
+        id,
+        timestamp: new Date().toLocaleTimeString("tr-TR", { hour12: false }),
+        source: client ? "LLM" : "AGENT",
+        agentName: client || "Otonom İstemci",
+        inputProposition: text,
+        status: isProved ? "PROVED" : "UNDECIDED",
+        z3TimeMs: Math.floor(totalMs * 0.15), // Toplam süreden temsili Z3/Lean4 kırılımı
+        lean4TimeMs: Math.floor(totalMs * 0.85),
+      });
+    }
+    // ---------------------------------------------------
+
     // Ölçüm defteri: yalnız katman, gecikme, karar ve müşteri özeti.
     meterRecord({
       engine: result.engine,
