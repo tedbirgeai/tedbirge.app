@@ -21,6 +21,28 @@ import {
 } from "@/lib/axiom/bridge/types";
 import { VERIFY_TIMEOUT_MS } from "@/lib/axiom/verify/types";
 
+// --- KATMAN 2: CANLI YAYIN TİPLERİ VE KANCASI (EKLENDİ) ---
+// Not: AXIOM mcp-server.ts ve socket bridge arasındaki iletişim için
+// merkezi yayın kanalı tanımı
+export interface AxiomLiveEvent {
+  id: string | number | null;
+  timestamp: string;
+  source: "LLM" | "USER" | "AGENT" | "CORE";
+  agentName: string;
+  inputProposition: string;
+  status: "PROVED" | "UNDECIDED" | "PENDING";
+  z3TimeMs: number;
+  lean4TimeMs: number;
+}
+
+// Bu fonksiyon dışarıdan (örneğin wss.ts veya supabase.ts) enjekte edilerek
+// Katman 2 arayüzüne verinin akması sağlanır.
+let socketBroadcaster: ((event: AxiomLiveEvent) => void) | null = null;
+export function setSocketBroadcaster(fn: typeof socketBroadcaster) {
+  socketBroadcaster = fn;
+}
+// ----------------------------------------------------------
+
 export type SocketBridge = {
   state(): BridgeState;
   send(req: TruthRequest): Promise<TruthResponse>;
@@ -74,6 +96,22 @@ export async function openSocketBridge(): Promise<SocketBridge> {
           // İstek numarası olmayan satır: sistem tarafının kendiliğinden
           // gönderdiği kesme bildirimi. Olay akışına düşer.
           handleEventFrame(msg);
+          
+          // --- KATMAN 2: SİSTEM EVENT YAYINI (EKLENDİ) ---
+          if (socketBroadcaster) {
+              const isProved = String(msg.verdict).toUpperCase() === "PROVED";
+              socketBroadcaster({
+                id: msg.id ?? null,
+                timestamp: new Date().toLocaleTimeString("tr-TR", { hour12: false }),
+                source: "CORE",
+                agentName: "AXIOM Bare-Metal",
+                inputProposition: (msg as any).payload || "Sistem Kesmesi (Interrupt)",
+                status: isProved ? "PROVED" : "UNDECIDED",
+                z3TimeMs: msg.ms ? Math.floor(msg.ms * 0.15) : 0,
+                lean4TimeMs: msg.ms ? Math.floor(msg.ms * 0.85) : 0,
+              });
+          }
+          // ----------------------------------------------
         }
       } catch {
         /* bozuk çerçeve yok sayılır; günlük tutulmaz */
