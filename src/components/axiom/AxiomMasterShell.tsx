@@ -19,6 +19,19 @@ import type { KernelAnalysis } from "@/lib/axiom/analyze";
 import type { VerifyResult } from "@/lib/axiom/verify/types";
 import type { ByteDigest } from "@/lib/axiom/digest";
 
+// --- KATMAN 2 EVENT DİNLEYİCİ İÇİN TİPLER VE GLOBAL KAYIT ---
+// Not: AXIOM mcp-server.ts ve socket bridge yayınları bu window event'i üzerinden gelir.
+export interface AxiomLiveEvent {
+  id: string | number | null;
+  timestamp: string;
+  source: "LLM" | "USER" | "AGENT" | "CORE";
+  agentName: string;
+  inputProposition: string;
+  status: "PROVED" | "UNDECIDED" | "PENDING";
+  z3TimeMs: number;
+  lean4TimeMs: number;
+}
+
 // --- İKON BİLEŞENLERİ (Sıfır Bağımlılık SVG Ekosistemi) ---
 const ShieldIcon = () => (
   <svg
@@ -195,7 +208,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     {
       id: "init-1",
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: new Date().toLocaleTimeString("tr-TR", { hour12: false }),
       prompt: "AXIOM çekirdeği hazır. Doğrulanacak önermeyi girin.",
       status: "EVALUATING",
       verdictTitle: "BEKLEMEDE — GİRDİ DOĞRULAMA MOTORUNA VERİLMEDİ",
@@ -207,10 +220,66 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
     },
   ]);
 
-  // C-ABI bayt düzeni öz-denetimi (sahte bağlantı durumu üretilmez)
+  // C-ABI bayt düzeni öz-denetimi
   useEffect(() => {
     setBridgeConnected(verifyProofLayout());
   }, []);
+
+  // --- KATMAN 2: CANLI EVENT DİNLEME (EKLENDİ) ---
+  useEffect(() => {
+    const handleAxiomLiveEvent = (e: CustomEvent<AxiomLiveEvent>) => {
+      const liveData = e.detail;
+
+      setChatHistory((prev) => {
+        // Eğer zaten PENDING olan ve ID'si eşleşen bir log varsa onu güncelle, yoksa yeni ekle
+        const existingIndex = prev.findIndex(
+          (msg) => msg.id === String(liveData.id) && msg.status === "EVALUATING"
+        );
+
+        const statusMap = {
+          PROVED: "VERIFIED" as const,
+          UNDECIDED: "EVALUATING" as const,
+          PENDING: "EVALUATING" as const,
+        };
+
+        const isProved = liveData.status === "PROVED";
+        const isPending = liveData.status === "PENDING";
+
+        const newMsg: ChatMessage = {
+          id: String(liveData.id || Date.now()),
+          timestamp: liveData.timestamp,
+          prompt: liveData.inputProposition,
+          fileName: `[Kaynak: ${liveData.source}] ${liveData.agentName}`,
+          status: statusMap[liveData.status],
+          verdictTitle: isPending 
+             ? `[CANLI AKIŞ] İŞLENİYOR — ${liveData.agentName} Bekleniyor...` 
+             : isProved 
+                ? `[CANLI AKIŞ] MANTIKSAL DOĞRULAMA BAŞARILI (${liveData.agentName})` 
+                : `[CANLI AKIŞ] KARARSIZ / İTİRAZ (422_UNDECIDED — ${liveData.agentName})`,
+          verdictSummary: isPending
+             ? `${liveData.agentName} tarafından gönderilen veri doğrulanmak üzere sıraya alındı.`
+             : `Canlı yayın ile ${liveData.source} kaynağından gelen önerme ${liveData.z3TimeMs + liveData.lean4TimeMs}ms (Z3: ${liveData.z3TimeMs}ms, Lean4: ${liveData.lean4TimeMs}ms) içerisinde işlendi.`,
+          astTree: "Root: LiveStreamNode\n └── Auto-Generated via Layer 2 Hook",
+          lean4Script: "-- Canlı yayın kancası üzerinden gelen veri.",
+          z3Output: "; Canlı yayın kancası üzerinden gelen veri.",
+        };
+
+        if (existingIndex > -1) {
+          const newArray = [...prev];
+          newArray[existingIndex] = newMsg;
+          return newArray;
+        }
+
+        return [newMsg, ...prev];
+      });
+    };
+
+    window.addEventListener("axiom-live-stream", handleAxiomLiveEvent as EventListener);
+    return () => {
+      window.removeEventListener("axiom-live-stream", handleAxiomLiveEvent as EventListener);
+    };
+  }, []);
+  // ----------------------------------------------
 
   // AxiomApp'ten Gelen Analiz ve Kanıt Çıktılarını Canlı Akışa Yansıtma
   useEffect(() => {
@@ -237,7 +306,6 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
               first.verdictTitle = `MANTIKSAL DOĞRULAMA BAŞARILI (${engineLabel} MÜHÜRLÜ)`;
               first.verdictSummary = `Önerme ${proof.ms}ms içinde ${engineLabel} motoru ile doğrulandı ve TEDBİRGE-WEBOS-ZKP mührü üretildi.`;
             } else {
-              // Canlı WASM olmadan mühür yok: dürüstçe kararsız göster.
               first.status = "EVALUATING";
               first.verdictTitle = `KARARSIZ / KANITLANAMADI (422_UNDECIDED — ${engineLabel})`;
               first.verdictSummary = `Yerel kural kapısı çelişki bulmadı fakat canlı Z3/Lean WASM ikilisi bağlı olmadığı için mühürlü kanıt üretilemedi. Sonuç ${proof.ms}ms içinde döndü.`;
@@ -396,7 +464,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
     e.target.value = "";
   };
 
-  // İcra Tetikleyicisi (Gelişmiş Semantik Analiz ve Hakikat Motoru Entegrasyonu)
+  // İcra Tetikleyicisi
   const handleExecute = useCallback(
     (textToRun?: string) => {
       const targetText = typeof textToRun === "string" ? textToRun : commandInput;
@@ -404,17 +472,13 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
 
       const trimmedText = targetText.trim();
 
-      // Dış Prop Callback'i
       if (onSubmit) {
         onSubmit(trimmedText);
       }
 
-      // Karar üretimi tamamen doğrulama motoruna (Z3 / Lean 4 / yerel kapı)
-      // devredilir. Arayüz burada asla ön karar vermez; girdi bir "beklemede"
-      // kartı olarak eklenir, motor cevabı geldiğinde useEffect kartı günceller.
       const newEntry: ChatMessage = {
         id: Date.now().toString(),
-        timestamp: new Date().toLocaleTimeString(),
+        timestamp: new Date().toLocaleTimeString("tr-TR", { hour12: false }),
         prompt: trimmedText,
         fileName: uploadedFileName || undefined,
         status: "EVALUATING",
@@ -481,7 +545,6 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
       >
         <canvas ref={canvasRef} className="w-full h-full object-cover opacity-95" />
 
-        {/* Canlı Hakikat Matris Kartı */}
         <div className="absolute top-2 left-3 bg-[var(--tb-panel,#070b12)]/90 p-2.5 rounded-lg border border-sky-500/30 backdrop-blur-md text-xs space-y-0.5 shadow-xl">
           <div className="text-sky-400 font-bold tracking-wider uppercase text-[10px]">
             &gt;&gt; EVRENSEL BİLİM DEĞİŞMEZ MATRİSİ
@@ -535,7 +598,6 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
             className="w-full bg-transparent text-[var(--tb-text,#ffffff)] focus:outline-none font-mono text-xs placeholder-slate-400 font-medium"
           />
 
-          {/* Gizli Dosya Girişi */}
           <input
             type="file"
             ref={fileInputRef}
@@ -544,7 +606,6 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
             className="hidden"
           />
 
-          {/* Dosya Yükleme Butonu */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -555,7 +616,6 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
             <span>{uploadedFileName ? uploadedFileName.slice(0, 12) + "..." : "Belge Ekle"}</span>
           </button>
 
-          {/* Çalıştır / Doğrula Butonu */}
           <button
             type="button"
             onClick={() => handleExecute()}
@@ -567,7 +627,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
         </div>
       </div>
 
-      {/* KATMAN 2: ANLIK HAKİKAT VE MANTIK AKIŞI (SAYFA KAYDIRMASIZ) */}
+      {/* KATMAN 2: ANLIK HAKİKAT VE MANTIK AKIŞI */}
       <section className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-3 shadow-inner">
         <div className="text-[11px] font-bold text-slate-400 flex justify-between items-center px-1">
           <span className="flex items-center gap-1.5 text-emerald-400">
@@ -613,7 +673,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
                   {item.prompt}
                   {item.fileName && (
                     <span className="ml-2 text-[10px] text-sky-400 bg-sky-950/50 px-1.5 py-0.5 rounded border border-sky-800/50">
-                      [{item.fileName}]
+                      {item.fileName}
                     </span>
                   )}
                 </div>
