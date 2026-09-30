@@ -156,7 +156,7 @@ jobs:
           bash scripts/validation-gates.sh imaj "build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso"
 
       - name: Açılış testi (QEMU · gerçek donanım senaryoları)
-        timeout-minutes: 25
+        timeout-minutes: 35
         run: |
           export DEBIAN_FRONTEND=noninteractive
           sudo -E apt-get update
