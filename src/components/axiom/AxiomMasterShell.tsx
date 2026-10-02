@@ -19,40 +19,30 @@ import type { KernelAnalysis } from "@/lib/axiom/analyze";
 import type { VerifyResult } from "@/lib/axiom/verify/types";
 import type { ByteDigest } from "@/lib/axiom/digest";
 
-// --- KATMAN 2 EVENT DİNLEYİCİ İÇİN TİPLER VE GLOBAL KAYIT ---
-// Not: AXIOM mcp-server.ts ve socket bridge yayınları bu window event'i üzerinden gelir.
+// --- KATMAN 2: WSS VE EVENT KÖPRÜSÜ İÇİN GENİŞLETİLMİŞ TİPLER ---
 export interface AxiomLiveEvent {
   id: string | number | null;
   timestamp: string;
   source: "LLM" | "USER" | "AGENT" | "CORE";
   agentName: string;
   inputProposition: string;
-  status: "PROVED" | "UNDECIDED" | "PENDING";
+  status: "PROVED" | "REFUTED" | "UNDECIDED" | "PENDING" | "ERROR";
   z3TimeMs: number;
   lean4TimeMs: number;
+  astTree?: string;
+  lean4Script?: string;
+  z3Output?: string;
 }
 
-// --- İKON BİLEŞENLERİ (Sıfır Bağımlılık SVG Ekosistemi) ---
+// --- İKON BİLEŞENLERİ (Sıfır Bağımlılık) ---
 const ShieldIcon = () => (
-  <svg
-    className="w-4 h-4 text-sky-400"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg className="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
   </svg>
 );
 
 const CpuIcon = () => (
-  <svg
-    className="w-4 h-4 text-cyan-400"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg className="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <rect x="4" y="4" width="16" height="16" rx="2" />
     <rect x="9" y="9" width="6" height="6" />
     <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3" />
@@ -60,51 +50,27 @@ const CpuIcon = () => (
 );
 
 const FolderUpIcon = () => (
-  <svg
-    className="w-4 h-4 text-sky-400"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg className="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z" />
     <path d="M12 10v6M9 13l3-3 3 3" />
   </svg>
 );
 
 const ChevronDownIcon = ({ isOpen }: { isOpen: boolean }) => (
-  <svg
-    className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M6 9l6 6 6-6" />
   </svg>
 );
 
 const CheckCircleIcon = () => (
-  <svg
-    className="w-4 h-4 text-emerald-400"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
     <polyline points="22 4 12 14.01 9 11.01" />
   </svg>
 );
 
 const XCircleIcon = () => (
-  <svg
-    className="w-4 h-4 text-rose-400"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg className="w-4 h-4 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="12" cy="12" r="10" />
     <line x1="15" y1="9" x2="9" y2="15" />
     <line x1="9" y1="9" x2="15" y2="15" />
@@ -112,26 +78,14 @@ const XCircleIcon = () => (
 );
 
 const ClockIcon = () => (
-  <svg
-    className="w-4 h-4 text-amber-400"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="12" cy="12" r="10" />
     <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 
 const GitBranchIcon = () => (
-  <svg
-    className="w-4 h-4 text-purple-400"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg className="w-4 h-4 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <line x1="6" y1="3" x2="6" y2="15" />
     <circle cx="18" cy="6" r="3" />
     <circle cx="6" cy="18" r="3" />
@@ -140,13 +94,7 @@ const GitBranchIcon = () => (
 );
 
 const CopyIcon = () => (
-  <svg
-    className="w-3.5 h-3.5 text-slate-400 hover:text-sky-300 transition"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg className="w-3.5 h-3.5 text-slate-400 hover:text-sky-300 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </svg>
@@ -204,7 +152,6 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
   const [isDiagOpen, setIsDiagOpen] = useState<boolean>(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Anlık Hakikat ve Mantık Akışı (Chat/Hakikat Geçmişi)
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     {
       id: "init-1",
@@ -220,66 +167,111 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
     },
   ]);
 
-  // C-ABI bayt düzeni öz-denetimi
   useEffect(() => {
     setBridgeConnected(verifyProofLayout());
   }, []);
 
-  // --- KATMAN 2: CANLI EVENT DİNLEME (EKLENDİ) ---
-  useEffect(() => {
-    const handleAxiomLiveEvent = (e: CustomEvent<AxiomLiveEvent>) => {
-      const liveData = e.detail;
+  // --- MERKEZİ CANLI VERİ İŞLEYİCİSİ ---
+  const handleIncomingLiveData = useCallback((liveData: AxiomLiveEvent) => {
+    setChatHistory((prev) => {
+      const existingIndex = prev.findIndex(
+        (msg) => msg.id === String(liveData.id) && msg.status === "EVALUATING"
+      );
 
-      setChatHistory((prev) => {
-        // Eğer zaten PENDING olan ve ID'si eşleşen bir log varsa onu güncelle, yoksa yeni ekle
-        const existingIndex = prev.findIndex(
-          (msg) => msg.id === String(liveData.id) && msg.status === "EVALUATING"
-        );
+      const statusMap: Record<AxiomLiveEvent["status"], ChatMessage["status"]> = {
+        PROVED: "VERIFIED",
+        REFUTED: "FALSIFIED",
+        ERROR: "FALSIFIED",
+        UNDECIDED: "EVALUATING",
+        PENDING: "EVALUATING",
+      };
 
-        const statusMap = {
-          PROVED: "VERIFIED" as const,
-          UNDECIDED: "EVALUATING" as const,
-          PENDING: "EVALUATING" as const,
-        };
+      const isProved = liveData.status === "PROVED";
+      const isRefuted = liveData.status === "REFUTED" || liveData.status === "ERROR";
+      const isPending = liveData.status === "PENDING";
 
-        const isProved = liveData.status === "PROVED";
-        const isPending = liveData.status === "PENDING";
+      const newMsg: ChatMessage = {
+        id: String(liveData.id || Date.now()),
+        timestamp: liveData.timestamp || new Date().toLocaleTimeString("tr-TR", { hour12: false }),
+        prompt: liveData.inputProposition || "[Girdi Yok]",
+        fileName: `[Kaynak: ${liveData.source}] ${liveData.agentName}`,
+        status: statusMap[liveData.status] || "EVALUATING",
+        verdictTitle: isPending 
+           ? `[CANLI AKIŞ] İŞLENİYOR — ${liveData.agentName} Bekleniyor...` 
+           : isProved 
+              ? `[CANLI AKIŞ] MANTIKSAL DOĞRULAMA BAŞARILI (${liveData.agentName})` 
+              : isRefuted
+              ? `[CANLI AKIŞ] ÇELİŞKİ / İHLAL TESPİT EDİLDİ (${liveData.agentName})`
+              : `[CANLI AKIŞ] KARARSIZ (422_UNDECIDED — ${liveData.agentName})`,
+        verdictSummary: isPending
+           ? `${liveData.agentName} tarafından gönderilen veri doğrulanmak üzere sıraya alındı.`
+           : `Canlı yayın ile ${liveData.source} kaynağından gelen önerme toplam ${Number(liveData.z3TimeMs || 0) + Number(liveData.lean4TimeMs || 0)}ms (Z3: ${liveData.z3TimeMs || 0}ms, Lean4: ${liveData.lean4TimeMs || 0}ms) içerisinde işlendi.`,
+        astTree: liveData.astTree || "Root: LiveStreamNode\n └── wss.ts / Köprü üzerinden asenkron alındı.",
+        lean4Script: liveData.lean4Script || "-- Canlı yayın kancası üzerinden gelen veri.",
+        z3Output: liveData.z3Output || "; Canlı yayın kancası üzerinden gelen veri.",
+      };
 
-        const newMsg: ChatMessage = {
-          id: String(liveData.id || Date.now()),
-          timestamp: liveData.timestamp,
-          prompt: liveData.inputProposition,
-          fileName: `[Kaynak: ${liveData.source}] ${liveData.agentName}`,
-          status: statusMap[liveData.status],
-          verdictTitle: isPending 
-             ? `[CANLI AKIŞ] İŞLENİYOR — ${liveData.agentName} Bekleniyor...` 
-             : isProved 
-                ? `[CANLI AKIŞ] MANTIKSAL DOĞRULAMA BAŞARILI (${liveData.agentName})` 
-                : `[CANLI AKIŞ] KARARSIZ / İTİRAZ (422_UNDECIDED — ${liveData.agentName})`,
-          verdictSummary: isPending
-             ? `${liveData.agentName} tarafından gönderilen veri doğrulanmak üzere sıraya alındı.`
-             : `Canlı yayın ile ${liveData.source} kaynağından gelen önerme ${liveData.z3TimeMs + liveData.lean4TimeMs}ms (Z3: ${liveData.z3TimeMs}ms, Lean4: ${liveData.lean4TimeMs}ms) içerisinde işlendi.`,
-          astTree: "Root: LiveStreamNode\n └── Auto-Generated via Layer 2 Hook",
-          lean4Script: "-- Canlı yayın kancası üzerinden gelen veri.",
-          z3Output: "; Canlı yayın kancası üzerinden gelen veri.",
-        };
-
-        if (existingIndex > -1) {
-          const newArray = [...prev];
-          newArray[existingIndex] = newMsg;
-          return newArray;
-        }
-
-        return [newMsg, ...prev];
-      });
-    };
-
-    window.addEventListener("axiom-live-stream", handleAxiomLiveEvent as EventListener);
-    return () => {
-      window.removeEventListener("axiom-live-stream", handleAxiomLiveEvent as EventListener);
-    };
+      if (existingIndex > -1) {
+        const newArray = [...prev];
+        newArray[existingIndex] = newMsg;
+        return newArray;
+      }
+      return [newMsg, ...prev];
+    });
   }, []);
-  // ----------------------------------------------
+
+  // --- KÖPRÜ 1: wss.ts DOĞRUDAN WEBSOCKET BAĞLANTISI ---
+  useEffect(() => {
+    let ws: WebSocket;
+    let reconnectTimer: NodeJS.Timeout;
+
+    const connectWebSocket = () => {
+      // Çevresel değişkenden URL alınır, yoksa varsayılan local websocket portuna düşer.
+      const socketUrl = process.env.NEXT_PUBLIC_WSS_URL || "ws://127.0.0.1:8080/axiom-live";
+      try {
+        ws = new WebSocket(socketUrl);
+
+        ws.onopen = () => {
+          console.log("[AXIOM] wss.ts canlı köprüsü bağlandı.");
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data) as AxiomLiveEvent;
+            handleIncomingLiveData(data);
+          } catch (err) {
+            console.error("[AXIOM] wss.ts veri ayrıştırma hatası:", err);
+          }
+        };
+
+        ws.onclose = () => {
+          console.log("[AXIOM] wss.ts bağlantısı koptu, yeniden bağlanılıyor...");
+          reconnectTimer = setTimeout(connectWebSocket, 3000);
+        };
+      } catch (e) {
+        reconnectTimer = setTimeout(connectWebSocket, 3000);
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      clearTimeout(reconnectTimer);
+      if (ws) ws.close();
+    };
+  }, [handleIncomingLiveData]);
+
+  // --- KÖPRÜ 2: PENCERE OLAYI (CUSTOM EVENT) YEDEK DİNLEYİCİ ---
+  useEffect(() => {
+    const handleAxiomEvent = (e: CustomEvent<AxiomLiveEvent>) => {
+      handleIncomingLiveData(e.detail);
+    };
+
+    window.addEventListener("axiom-live-stream", handleAxiomEvent as EventListener);
+    return () => {
+      window.removeEventListener("axiom-live-stream", handleAxiomEvent as EventListener);
+    };
+  }, [handleIncomingLiveData]);
 
   // AxiomApp'ten Gelen Analiz ve Kanıt Çıktılarını Canlı Akışa Yansıtma
   useEffect(() => {
@@ -414,14 +406,12 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
     };
   }, []);
 
-  // Panoya Kopyalama İşlevi
   const handleCopyText = (text: string, idKey: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(idKey);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Dosya İçeriğini İşleme Fonksiyonu
   const handleFileContent = useCallback((file: File) => {
     setUploadedFileName(file.name);
     const reader = new FileReader();
@@ -434,7 +424,6 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
     reader.readAsText(file);
   }, []);
 
-  // Sürükle-Bırak Olayları
   const handleDrag = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -464,7 +453,6 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
     e.target.value = "";
   };
 
-  // İcra Tetikleyicisi
   const handleExecute = useCallback(
     (textToRun?: string) => {
       const targetText = typeof textToRun === "string" ? textToRun : commandInput;
@@ -495,7 +483,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
       setUploadedFileName(null);
       setIsDiagOpen(true);
     },
-    [commandInput, busy, bridgeConnected, onSubmit, uploadedFileName],
+    [commandInput, busy, onSubmit, uploadedFileName],
   );
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -641,11 +629,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
             const isVerified = item.status === "VERIFIED";
             const isFalsified = item.status === "FALSIFIED";
             const tone = isVerified
-              ? {
-                  border: "border-emerald-500/30",
-                  bg: "bg-emerald-950/10",
-                  text: "text-emerald-400",
-                }
+              ? { border: "border-emerald-500/30", bg: "bg-emerald-950/10", text: "text-emerald-400" }
               : isFalsified
                 ? { border: "border-rose-500/30", bg: "bg-rose-950/10", text: "text-rose-400" }
                 : { border: "border-amber-500/30", bg: "bg-amber-950/10", text: "text-amber-400" };
@@ -656,13 +640,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
               >
                 <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-2">
-                    {isVerified ? (
-                      <CheckCircleIcon />
-                    ) : isFalsified ? (
-                      <XCircleIcon />
-                    ) : (
-                      <ClockIcon />
-                    )}
+                    {isVerified ? <CheckCircleIcon /> : isFalsified ? <XCircleIcon /> : <ClockIcon />}
                     <span className={`text-xs font-bold ${tone.text}`}>{item.verdictTitle}</span>
                   </div>
                   <span className="text-[10px] text-slate-500">{item.timestamp}</span>
@@ -718,11 +696,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
                   <CopyIcon />
                 </button>
               </div>
-              {copiedId === "ast" && (
-                <span className="text-[9px] text-emerald-400 absolute top-3 right-8">
-                  Kopyalandı
-                </span>
-              )}
+              {copiedId === "ast" && <span className="text-[9px] text-emerald-400 absolute top-3 right-8">Kopyalandı</span>}
               <pre className="text-slate-400 font-mono text-[10px] leading-tight overflow-x-auto whitespace-pre-wrap">
                 {chatHistory[0].astTree}
               </pre>
@@ -743,11 +717,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
                   <CopyIcon />
                 </button>
               </div>
-              {copiedId === "lean" && (
-                <span className="text-[9px] text-emerald-400 absolute top-3 right-8">
-                  Kopyalandı
-                </span>
-              )}
+              {copiedId === "lean" && <span className="text-[9px] text-emerald-400 absolute top-3 right-8">Kopyalandı</span>}
               <pre className="text-purple-200/80 font-mono text-[10px] leading-tight overflow-x-auto whitespace-pre-wrap">
                 {chatHistory[0].lean4Script}
               </pre>
@@ -768,11 +738,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
                   <CopyIcon />
                 </button>
               </div>
-              {copiedId === "z3" && (
-                <span className="text-[9px] text-emerald-400 absolute top-3 right-8">
-                  Kopyalandı
-                </span>
-              )}
+              {copiedId === "z3" && <span className="text-[9px] text-emerald-400 absolute top-3 right-8">Kopyalandı</span>}
               <pre className="text-emerald-300/80 font-mono text-[10px] leading-tight overflow-x-auto whitespace-pre-wrap">
                 {chatHistory[0].z3Output}
               </pre>
@@ -787,9 +753,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
           <button
             onClick={() => setActiveTab("core")}
             className={`pb-1.5 border-b-2 font-bold cursor-pointer transition ${
-              activeTab === "core"
-                ? "border-cyan-400 text-cyan-400"
-                : "border-transparent text-slate-500 hover:text-slate-300"
+              activeTab === "core" ? "border-cyan-400 text-cyan-400" : "border-transparent text-slate-500 hover:text-slate-300"
             }`}
           >
             ÇEKİRDEK TELEMETRİ
@@ -797,9 +761,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
           <button
             onClick={() => setActiveTab("mesh")}
             className={`pb-1.5 border-b-2 font-bold cursor-pointer transition ${
-              activeTab === "mesh"
-                ? "border-cyan-400 text-cyan-400"
-                : "border-transparent text-slate-500 hover:text-slate-300"
+              activeTab === "mesh" ? "border-cyan-400 text-cyan-400" : "border-transparent text-slate-500 hover:text-slate-300"
             }`}
           >
             WEBRTC MESH
@@ -807,9 +769,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
           <button
             onClick={() => setActiveTab("limen")}
             className={`pb-1.5 border-b-2 font-bold cursor-pointer transition ${
-              activeTab === "limen"
-                ? "border-purple-400 text-purple-400"
-                : "border-transparent text-slate-500 hover:text-slate-300"
+              activeTab === "limen" ? "border-purple-400 text-purple-400" : "border-transparent text-slate-500 hover:text-slate-300"
             }`}
           >
             LIMEN SDK & REPO YÖNETİCİSİ
@@ -819,52 +779,30 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
         <div className="text-[11px] text-slate-400 pt-1">
           {activeTab === "core" && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <div>
-                CPU Load: <span className="text-emerald-400 font-semibold">1.2%</span>
-              </div>
-              <div>
-                Memory WASM: <span className="text-cyan-400 font-semibold">14.2 MB</span>
-              </div>
-              <div>
-                Execution Time: <span className="text-cyan-400 font-semibold">0.004 ms</span>
-              </div>
-              <div>
-                Status: <span className="text-emerald-400 font-bold">DETERMINISTIC</span>
-              </div>
+              <div>CPU Load: <span className="text-emerald-400 font-semibold">1.2%</span></div>
+              <div>Memory WASM: <span className="text-cyan-400 font-semibold">14.2 MB</span></div>
+              <div>Execution Time: <span className="text-cyan-400 font-semibold">0.004 ms</span></div>
+              <div>Status: <span className="text-emerald-400 font-bold">DETERMINISTIC</span></div>
             </div>
           )}
 
           {activeTab === "mesh" && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <div>
-                Active Peers: <span className="text-purple-400 font-semibold">{peers} Node</span>
-              </div>
-              <div>
-                Tunnel: <span className="text-emerald-400 font-semibold">WebRTC Encrypted</span>
-              </div>
-              <div>
-                Mesh Latency: <span className="text-cyan-400 font-semibold">12 ms</span>
-              </div>
-              <div>
-                <span className="text-purple-400 font-semibold">Tedbirge P2P</span>
-              </div>
+              <div>Active Peers: <span className="text-purple-400 font-semibold">{peers} Node</span></div>
+              <div>Tunnel: <span className="text-emerald-400 font-semibold">WebRTC Encrypted</span></div>
+              <div>Mesh Latency: <span className="text-cyan-400 font-semibold">12 ms</span></div>
+              <div><span className="text-purple-400 font-semibold">Tedbirge P2P</span></div>
             </div>
           )}
 
           {activeTab === "limen" && (
             <div className="space-y-1">
               <div className="flex justify-between items-center">
-                <span>
-                  Repository:{" "}
-                  <code className="text-purple-300">tedbirge-labs/tedbirge-guardian</code>
-                </span>
-                <span className="text-[10px] bg-purple-950 text-purple-300 px-2 py-0.5 rounded border border-purple-800">
-                  CI/CD Bot Active
-                </span>
+                <span>Repository: <code className="text-purple-300">tedbirge-labs/tedbirge-guardian</code></span>
+                <span className="text-[10px] bg-purple-950 text-purple-300 px-2 py-0.5 rounded border border-purple-800">CI/CD Bot Active</span>
               </div>
               <p className="text-[10px] text-slate-500">
-                LIMEN WebOS WASM Gateway ve HMAC-SHA256 doğrulayıcı ile otomatik GitHub CI/CD komut
-                akışı senkronize.
+                LIMEN WebOS WASM Gateway ve HMAC-SHA256 doğrulayıcı ile otomatik GitHub CI/CD komut akışı senkronize.
               </p>
             </div>
           )}
@@ -872,9 +810,7 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
 
         <div className="flex flex-wrap justify-between items-center text-[10px] text-slate-400 pt-2 border-t border-slate-800/80 gap-2 font-medium">
           <span>AXIOM Kernel v12 — Powered by Tedbirge WebOS © 2026 Tedbirge Labs</span>
-          <span className="text-sky-400 font-semibold">
-            C-ABI SOKETİ: tedbirge_truth.sock // ZKP-SHA256
-          </span>
+          <span className="text-sky-400 font-semibold">C-ABI SOKETİ: tedbirge_truth.sock // ZKP-SHA256</span>
         </div>
       </footer>
 
