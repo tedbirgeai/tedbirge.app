@@ -1,12 +1,5 @@
 name: Tedbirge WebOS ISO
 
-# Depo: tedbirgeai/tedbirge.app
-# Önyüklenebilir imaj tamamen bu hatta üretilir; son kullanıcı hiçbir şey derlemez.
-#
-# MİMARİ: kök dosya sistemi DERLEME sırasında bir kez kurulur ve squashfs olarak
-# ISO'ya konur (Debian live-build). Kullanıcının bilgisayarı açılışta paket
-# kurmaz — eski Alpine hattındaki "Attempted to kill init" paniğinin kaynağı
-# buydu ve mimari değişimiyle tamamen ortadan kalkmıştır.
 on:
   push:
     branches: [main]
@@ -27,21 +20,15 @@ permissions:
 
 concurrency:
   group: tedbirge-iso-${{ github.ref }}
-  # Kalici kurulum + ikinci acilis testi uzun surer; yarim kalan dogrulama
-  # yayina yanlis guven verir. Bu yuzden calisan is asla iptal edilmez.
   cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Iki urun surumu tek depodan uretilir: workstation (masaustu/laptop) ve
-    # touch (tablet/2'si 1 arada). Her surum ayri is olarak derlenip dogrulanir.
     strategy:
       fail-fast: false
       matrix:
         edition: [workstation, touch]
-    # ISO derleme + acilis testi + BIOS/UEFI kalici kurulum zinciri en kotu
-    # durumda ~100 dakika surer; 120 dakika sinira cok yakindi.
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@v5
@@ -144,8 +131,6 @@ jobs:
             -e TEDBIRGE_COMMIT="$GITHUB_SHA" \
             -e TEDBIRGE_BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             debian:bookworm bash /work/image/build.sh
-          # Docker kök kullanıcı olarak yazar; sonraki adımlar (manifest güncelleme,
-          # artifact yükleme) yazma izni ister. Sahipliği koşucu kullanıcısına al.
           sudo chown -R "$(id -u):$(id -g)" build-iso
 
       - name: İmajı doğrula (sahte çıktı yayınlanmaz)
@@ -303,8 +288,8 @@ jobs:
           name: tedbirge-webos-iso-${{ matrix.edition }}
           path: |
             build-iso/iso/*.iso
-            build-iso/iso/SHA256SUMS-${{ matrix.edition }}
-            build-iso/iso/TEDBIRGE-ISO-MANIFEST-${{ matrix.edition }}.json
+            build-iso/iso/SHA256SUMS-*
+            build-iso/iso/TEDBIRGE-ISO-MANIFEST-*.json
 
   release:
     needs: build
