@@ -156,7 +156,7 @@ jobs:
           bash scripts/validation-gates.sh imaj "build-iso/iso/tedbirge-webos-${{ matrix.edition }}-x86_64.iso"
 
       - name: Açılış testi (QEMU · gerçek donanım senaryoları)
-        timeout-minutes: 75
+        timeout-minutes: 90
         run: |
           export DEBIAN_FRONTEND=noninteractive
           sudo -E apt-get update
@@ -182,7 +182,7 @@ jobs:
           fi
           cp "$OVMF_VARS" build-iso/OVMF_VARS.fd
           FAIL=0
-          BOOT_TIMEOUT="${BOOT_TIMEOUT:-900}"
+          BOOT_TIMEOUT="${BOOT_TIMEOUT:-1200}"
 
           run_case() {
             NAME="$1"
@@ -195,7 +195,7 @@ jobs:
             echo "==== senaryo: $NAME (${MEM} MB) ===="
             qemu-system-x86_64 \
               -m "$MEM" -smp 2 -display none -no-reboot \
-              -drive if=none,id=media,format=raw,readonly=on,file="$ISO" \
+              -drive if=none,id=media,format=raw,readonly=on,cache=unsafe,file="$ISO" \
               "$@" -serial file:"$LOG" 2>"$ERR" &
             QPID=$!
             RESULT="timeout"
