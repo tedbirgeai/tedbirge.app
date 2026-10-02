@@ -27,7 +27,11 @@ izle() { # log, basari-deseni, hata-deseni, pid, ilerlemesizlik-siniri
   while :; do
     grep -qE "$ok" "$log" 2>/dev/null && return 0
     grep -qiE "$bad" "$log" 2>/dev/null && return 2
-    kill -0 "$pid" 2>/dev/null || return 3
+    kill -0 "$pid" 2>/dev/null || {
+      grep -qE "$ok" "$log" 2>/dev/null && return 0
+      grep -qiE "$bad" "$log" 2>/dev/null && return 2
+      return 3
+    }
     boy=$(stat -c%s "$log" 2>/dev/null || echo 0)
     if [ "$boy" = "$onceki" ]; then sessiz=$((sessiz + 3)); else sessiz=0; onceki="$boy"; fi
     if [ $((i % 60)) -eq 0 ] && [ "$i" -gt 0 ]; then
@@ -44,22 +48,24 @@ izle() { # log, basari-deseni, hata-deseni, pid, ilerlemesizlik-siniri
 qemu_temiz_kapat() { # pid, qmp-soketi, basari-bayragi-goruldu(0/1)
   local pid="$1" soket="$2" bayrak="${3:-0}" i=0 rc=0
   if ! kill -0 "$pid" 2>/dev/null; then
-    wait "$pid"; rc=$?
-    [ "$rc" = 0 ] || echo "::warning::QEMU kendiliginden $rc koduyla kapandi."
+    wait "$pid" 2>/dev/null || true
     return 0
   fi
 
   # QMP quit, emulatore kontrollu ve sifir cikis kodlu kapanis yaptirir.
   python3 - "$soket" <<'PY' 2>/dev/null || true
 import socket, sys, time
-sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-sock.settimeout(3)
-sock.connect(sys.argv[1])
-sock.recv(4096)
-sock.sendall(b'{"execute":"qmp_capabilities"}\r\n')
-time.sleep(0.1)
-sock.sendall(b'{"execute":"quit"}\r\n')
-sock.close()
+try:
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    sock.settimeout(3)
+    sock.connect(sys.argv[1])
+    sock.recv(4096)
+    sock.sendall(b'{"execute":"qmp_capabilities"}\r\n')
+    time.sleep(0.1)
+    sock.sendall(b'{"execute":"quit"}\r\n')
+    sock.close()
+except Exception:
+    pass
 PY
   while kill -0 "$pid" 2>/dev/null && [ "$i" -lt "$QEMU_STOP_TIMEOUT" ]; do
     sleep 1; i=$((i + 1))
@@ -76,13 +82,11 @@ PY
     echo "::error::QEMU kontrollu kapanisa ${QEMU_STOP_TIMEOUT}s icinde yanit vermedi."
     return 1
   fi
-  wait "$pid"; rc=$?
-  [ "$rc" = 0 ] || echo "::warning::QEMU kapanis kodu: $rc (basari bayragi esas alindi)."
+  wait "$pid" 2>/dev/null || true
   return 0
 }
 
-
-# Sessiz UEFI acilis hatalarinda diskin acilis bolumunu (ESP) disaridan okur.
+# Sessiz UEFI/BIOS acilis hatalarinda diskin acilis bolumunu disaridan okur.
 esp_denetle() { # qcow2-disk
   local disk="$1" ham="build-iso/esp-denetim.raw" ofs
   command -v mdir >/dev/null 2>&1 || { echo "(ESP denetimi icin mtools yok)"; return 0; }
@@ -94,20 +98,21 @@ try: t=json.load(sys.stdin)["partitiontable"]
 except Exception: sys.exit()
 s=t.get("sectorsize",512)
 for p in t.get("partitions",[]):
-    if "EFI" in str(p.get("name","")) or str(p.get("type","")).upper().startswith("C12A7328"):
+    ptype = str(p.get("type","")).upper()
+    pname = str(p.get("name","")).upper()
+    if "EFI" in pname or "ESP" in pname or ptype.startswith("C12A7328") or ptype == "EF":
         print(p["start"]*s); break
-')
+' 2>/dev/null || true)
   if [ -n "${ofs:-}" ]; then
     echo "---- ESP icerigi (EFI/BOOT) ----"
     mdir -i "$ham@@$ofs" ::/EFI/BOOT 2>&1 | head -20 || true
   else
-    echo "(ESP bolumu bulunamadi)"
+    echo "(ESP / Önyükleme bölümü bulunamadı)"
   fi
   rm -f "$ham"
 }
 
 kurulum_senaryosu() {
-
   local mod="$1"; shift
   local disk="build-iso/kurulum-${mod}.qcow2"
   local log1="build-iso/kurulum-${mod}-asama1.log"
@@ -192,7 +197,8 @@ kurulum_senaryosu bios || HATA=1
 OVMF_CODE="${OVMF_CODE:-}"; OVMF_VARS="${OVMF_VARS:-}"
 if [ -z "$OVMF_CODE" ] || [ -z "$OVMF_VARS" ]; then
   for c in /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_CODE.fd \
-           /usr/share/ovmf/OVMF_CODE.fd /usr/share/edk2-ovmf/x64/OVMF_CODE.fd; do
+           /usr/share/ovmf/OVMF_CODE.fd /usr/share/edk2-ovmf/x64/OVMF_CODE.fd \
+           /usr/share/edk2/ovmf/OVMF_CODE.fd; do
     [ -r "$c" ] || continue
     v="${c/CODE/VARS}"
     [ -r "$v" ] || continue
@@ -210,7 +216,6 @@ cp "$OVMF_VARS" build-iso/kurulum-OVMF_VARS.fd
 kurulum_senaryosu uefi \
   -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
   -drive if=pflash,format=raw,file=build-iso/kurulum-OVMF_VARS.fd || HATA=1
-
 
 # Onceden bu betik senaryolar basarisiz olsa bile 0 ile cikiyordu; hatali imaj
 # yayinlanabiliyordu. Artik tek bir basarisiz senaryo bile is akisini durdurur.
