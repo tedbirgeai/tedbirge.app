@@ -22,6 +22,30 @@ import {
   type TruthResponse,
 } from "@/lib/axiom/bridge/types";
 
+// --- KATMAN 2 MERKEZİ KÖPRÜ BAĞLANTILARI (EKLENDİ) ---
+import { setLiveBroadcaster, type AxiomLiveEvent } from "@/lib/axiom/net/mcp-server";
+import { setSocketBroadcaster } from "@/lib/axiom/bridge/socket.server";
+
+/** MCP ve Yerel Soketten gelen verileri tarayıcı UI akışına (CustomEvent) fırlatır */
+const dispatchLiveStreamEvent = (event: AxiomLiveEvent) => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("axiom-live-stream", {
+        detail: event,
+      })
+    );
+  }
+};
+
+// Arka uç kancalarını tarayıcının olay fırlatıcısına bağlıyoruz
+try {
+  setLiveBroadcaster(dispatchLiveStreamEvent);
+  setSocketBroadcaster(dispatchLiveStreamEvent);
+} catch (e) {
+  // Çevresel (SSR) izolasyon koruması
+}
+// -----------------------------------------------------
+
 /** Test edilebilirlik için yalnız kullandığımız yüzey. */
 export type WsLike = {
   send(data: string): void;
