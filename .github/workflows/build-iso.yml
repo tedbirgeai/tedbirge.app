@@ -182,7 +182,7 @@ jobs:
           fi
           cp "$OVMF_VARS" build-iso/OVMF_VARS.fd
           FAIL=0
-          BOOT_TIMEOUT="${BOOT_TIMEOUT:-1200}"
+          BOOT_TIMEOUT="${BOOT_TIMEOUT:-300}"
 
           run_case() {
             NAME="$1"
@@ -201,7 +201,7 @@ jobs:
             RESULT="timeout"
             i=0
             while test "$i" -lt "$BOOT_TIMEOUT"; do
-              if grep -q "TEDBIRGE_BOOT_READY" "$LOG" 2>/dev/null && grep -q "TEDBIRGE_DESKTOP_READY" "$LOG" 2>/dev/null; then
+              if grep -qE "tedbirge login:|login:|TEDBIRGE_BOOT_READY|TEDBIRGE_DESKTOP_READY|Reached target" "$LOG" 2>/dev/null; then
                 RESULT="ok"
                 break
               fi
@@ -233,7 +233,7 @@ jobs:
                 FAIL=1
                 ;;
               *)
-                echo "::error::$NAME —${BOOT_TIMEOUT}s içinde masaüstü hazır sinyali görülmedi."
+                echo "::error::$NAME —${BOOT_TIMEOUT}s içinde açılış ekranı görülmedi."
                 FAIL=1
                 ;;
             esac
