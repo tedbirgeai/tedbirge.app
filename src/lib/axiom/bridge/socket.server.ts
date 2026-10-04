@@ -107,8 +107,9 @@ export async function openSocketBridge(): Promise<SocketBridge> {
                 agentName: "AXIOM Bare-Metal",
                 inputProposition: (msg as any).payload || "Sistem Kesmesi (Interrupt)",
                 status: isProved ? "PROVED" : "UNDECIDED",
-                z3TimeMs: msg.ms ? Math.floor(msg.ms * 0.15) : 0,
-                lean4TimeMs: msg.ms ? Math.floor(msg.ms * 0.85) : 0,
+                // Motor ayrı Z3/Lean4 süresi raporlamıyor; uydurma kırılım üretilmez.
+                z3TimeMs: 0,
+                lean4TimeMs: 0,
               });
           }
           // ----------------------------------------------

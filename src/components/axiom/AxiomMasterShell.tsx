@@ -258,7 +258,9 @@ export const AxiomMasterShell: React.FC<AxiomMasterShellProps> = ({
                 : `[CANLI AKIŞ] KARARSIZ / İTİRAZ (422_UNDECIDED — ${liveData.agentName})`,
           verdictSummary: isPending
              ? `${liveData.agentName} tarafından gönderilen veri doğrulanmak üzere sıraya alındı.`
-             : `Canlı yayın ile ${liveData.source} kaynağından gelen önerme ${liveData.z3TimeMs + liveData.lean4TimeMs}ms (Z3: ${liveData.z3TimeMs}ms, Lean4: ${liveData.lean4TimeMs}ms) içerisinde işlendi.`,
+             : liveData.z3TimeMs > 0 || liveData.lean4TimeMs > 0
+               ? `Canlı yayın ile ${liveData.source} kaynağından gelen önerme işlendi (Z3: ${liveData.z3TimeMs}ms, Lean4: ${liveData.lean4TimeMs}ms).`
+               : `Canlı yayın ile ${liveData.source} kaynağından gelen önerme işlendi. Motor ayrı süre ölçümü raporlamadı.`,
           astTree: "Root: LiveStreamNode\n └── Auto-Generated via Layer 2 Hook",
           lean4Script: "-- Canlı yayın kancası üzerinden gelen veri.",
           z3Output: "; Canlı yayın kancası üzerinden gelen veri.",

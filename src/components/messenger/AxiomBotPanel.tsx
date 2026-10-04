@@ -86,14 +86,16 @@ export function AxiomBotPanel() {
     setInput("");
     setThinking(openingLine(t));
     // Mod B: sistem bileşeni isteği ise yerinde uygulanır/incelenir; uygulama üretilmez.
+    // Bilgi soruları her zaman AI'ya gider; sistem incelemesine çevrilmez.
+    const isQuestion = /\?\s*$|\b(nedir|nasıl|nasil|neden|niçin|nicin|ne demek|kimdir|hangi)\b/i.test(t);
     const intent = classifyIntent(t);
-    if (intent.mode === "sistem") {
+    if (!isQuestion && intent.mode === "sistem") {
       const r = applySystemPatch(intent.patch);
       const report = reportForPatch(t, intent, r);
       setReports((prev) => [...prev.slice(-9), report]);
       setThinking(null);
       if (r.applied) notifyOk(r.component, r.summary);
-      if (r.applied || r.kind === "inceleme") return;
+      if (r.applied) return;
     }
     void sendMessage({ text: t });
   };

@@ -19,7 +19,7 @@ import { Activity, AlertTriangle, Bell, RotateCcw, Save, Wifi, WifiOff } from "l
 import { ghostBtn, inputClass, primaryBtn } from "@/components/shell/apps/portal/ui";
 import { readAppData, removeAppData, writeAppData } from "@/lib/apps/appdata";
 import { getNodeSnapshot } from "@/lib/node-runtime";
-import { notifyError } from "@/lib/shell/notify";
+import { notifyError, notifyOk } from "@/lib/shell/notify";
 import { faultTitle, reportFault, startAppRuntime, WATCHDOG_MS, type AppFault, type AppRuntime } from "@/lib/studio/app-runtime";
 import { generatedApp, type GeneratedApp } from "@/lib/studio/generated-apps";
 import { CALC_ERRORS, CALC_OPS, COUNTER_LIMIT, type UiBlock } from "@/lib/studio/generator";
@@ -483,6 +483,7 @@ function NotifyBlock({ label, text, appId }: { label: string; text: string; appI
         try {
           const cap = await issueVfsToken(appId, "write", "shell.notifications");
           await postIpc({ from: appId, to: "shell.notifications", kind: "notify", payload: { text }, cap });
+          notifyOk(label, text);
         } catch {
           notifyError("Bildirim reddedildi", "Uygulamanın bildirim yetkisi doğrulanamadı.");
         }

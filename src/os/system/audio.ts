@@ -10,6 +10,7 @@
 import { useSyncExternalStore } from "react";
 
 import { getVolume } from "@/lib/ui/audio-gain";
+import { isSoundMuted, setSoundMuted } from "@/lib/chat/sounds";
 
 export type SystemSound =
   | "window-open"
@@ -37,11 +38,13 @@ function readMuted(): boolean {
 }
 
 export function isSystemMuted(): boolean {
-  return muted;
+  return muted || isSoundMuted();
 }
 
 export function setSystemMuted(next: boolean) {
   muted = next;
+  // Kontrol Merkezi ve sohbet sesleri aynı sessize alma tercihini paylaşır.
+  setSoundMuted(next);
   try {
     window.localStorage.setItem(MUTE_KEY, next ? "1" : "0");
   } catch {
@@ -144,7 +147,7 @@ function layer(ac: AudioContext, out: GainNode, l: Layer) {
 
 /** Sistem sesini çalar; sessizken veya Web Audio yokken sessizce geçer. */
 export function playSystemSound(name: SystemSound): boolean {
-  if (muted) return false;
+  if (muted || isSoundMuted()) return false;
   const ac = audio();
   if (!ac) return false;
   const out = bus(ac);

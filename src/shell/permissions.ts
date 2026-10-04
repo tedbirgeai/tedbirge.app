@@ -89,4 +89,11 @@ export const CAPABILITY_LABELS: Record<Capability, { title: string; detail: stri
     title: "Kendi dosyalarını silme",
     detail: "Uygulama yalnız kendi kaydettiği dosyaları silebilir.",
   },
+  "status.write": { title: "Durum değiştirme", detail: "Uygulama cihaz durumunu güncelleyebilir." },
+  "fs.read": { title: "Dosya okuma", detail: "Uygulama izin verilen dosyaları okuyabilir." },
+  "fs.write": { title: "Dosya yazma", detail: "Uygulama izin verilen yerlere dosya yazabilir." },
+  "vfs.appdata": { title: "Uygulama verisi", detail: "Uygulama kendi veri alanında ayarlarını saklayabilir." },
+  "limen.p2p.sync": { title: "Cihazlar arası eşitleme", detail: "Uygulama verisini bağlı cihazlarınızla eşitleyebilir." },
+  "compiler.wasm": { title: "Çekirdek derleme", detail: "Uygulama hızlı çalışan çekirdek modülleri derleyebilir." },
+  "compiler.ui": { title: "Arayüz derleme", detail: "Uygulama kendi ekranlarını hazırlayabilir." },
 };
