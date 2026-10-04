@@ -56,7 +56,7 @@ export function hasAllCapabilities(appId: string, caps: readonly Capability[]) {
 }
 
 /** Arayüzde gösterilecek sade Türkçe açıklamalar (jargon yok). */
-export const CAPABILITY_LABELS: Record<Capability, { title: string; detail: string }> = {
+export const CAPABILITY_LABELS: Partial<Record<Capability, { title: string; detail: string }>> = {
   "mesh.send": {
     title: "Mesaj gönderme",
     detail: "Uygulama sizin adınıza uçtan uca şifreli paket gönderebilir.",

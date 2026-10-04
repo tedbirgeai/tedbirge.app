@@ -120,7 +120,7 @@ export async function mcpCapabilities() {
 export interface AxiomLiveEvent {
   id: string | number | null;
   timestamp: string;
-  source: "LLM" | "USER" | "AGENT";
+  source: "LLM" | "USER" | "AGENT" | "CORE";
   agentName: string;
   inputProposition: string;
   status: "PROVED" | "UNDECIDED" | "PENDING";
