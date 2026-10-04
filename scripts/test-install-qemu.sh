@@ -134,7 +134,7 @@ kurulum_senaryosu() {
     -drive file="$disk",format=qcow2,if=virtio,cache=unsafe \
     -serial file:"$log1" 2>"build-iso/kurulum-${mod}-asama1.stderr.log" &
   local p1=$! rc
-  izle "$log1" "TEDBIRGE_INSTALL_OK|Kurulum tamamlandi" "TEDBIRGE_INSTALL_FAIL|Kernel panic|Attempted to kill init" "$p1" "$STALL"; rc=$?
+  izle "$log1" "TEDBIRGE_INSTALL_OK" "TEDBIRGE_INSTALL_FAIL|Kernel panic|Attempted to kill init" "$p1" "$STALL"; rc=$?
   if [ "$rc" = 0 ]; then
     qemu_temiz_kapat "$p1" "$qmp1" 1 || rc=4
   else
@@ -163,8 +163,8 @@ kurulum_senaryosu() {
     -serial file:"$log2" 2>"build-iso/kurulum-${mod}-asama2.stderr.log" &
   local p2=$!
   
-  # ÇÖZÜM: UEFI için login sinyali veya boot ready eklendi, böylece UEFI ekranı açtığında test yeşile döner.
-  izle "$log2" "TEDBIRGE_DESKTOP_HEALTHY|TEDBIRGE_BOOT_READY|localhost login:|login:|Reached target" "Kernel panic|Attempted to kill init|No bootable device|Operating System not found|grub rescue" "$p2" "$STALL"; rc=$?
+  # Yalnız masaüstü gerçekten sağlıklı açıldığında başarılı sayılır.
+  izle "$log2" "TEDBIRGE_DESKTOP_HEALTHY" "Kernel panic|Attempted to kill init|No bootable device|Operating System not found|grub rescue" "$p2" "$STALL"; rc=$?
   
   if [ "$rc" = 0 ]; then
     qemu_temiz_kapat "$p2" "$qmp2" 1 || rc=4

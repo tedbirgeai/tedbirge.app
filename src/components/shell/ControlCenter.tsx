@@ -20,7 +20,8 @@ import {
   Wifi,
 } from "lucide-react";
 
-import { applySystemVolume, isSoundMuted, setSoundMuted, tapSound } from "@/lib/chat/sounds";
+import { applySystemVolume, tapSound } from "@/lib/chat/sounds";
+import { isSystemMuted, setSystemMuted } from "@/os/system/audio";
 import { notify } from "@/lib/shell/notify";
 import { usePeerStatus } from "@/lib/shell/peer-status";
 import { setFocusMode, useFocusMode } from "@/lib/shell/focus-mode";
@@ -69,7 +70,7 @@ export function ControlCenter({
 
   useEffect(() => {
     if (!open) return;
-    setMuted(isSoundMuted());
+    setMuted(isSystemMuted());
     setRelay(isRelayEnabled());
     setThemeState(getTheme());
     void powerBridgeReady().then(setPowerReady);
@@ -113,7 +114,7 @@ export function ControlCenter({
             type="button"
             onClick={() => {
               const next = !muted;
-              setSoundMuted(next);
+              setSystemMuted(next);
               setMuted(next);
               notify(next ? "Sistem sesleri kapalı" : "Sistem sesleri açık");
             }}

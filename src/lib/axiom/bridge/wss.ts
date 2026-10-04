@@ -129,34 +129,6 @@ export function createWssBridge(options: WssBridgeOptions = {}): WssBridge {
         return;
       }
 
-      // --- KATMAN 2: CANLI HAKİKAT VE LLM LOG AKIŞI (EKLENDİ) ---
-      if (typeof window !== "undefined" && msg) {
-        const isProved = String((msg as any).verdict ?? "").toUpperCase() === "PROVED" ||
-                         String((msg as any).status ?? "").toUpperCase() === "PROVED";
-        const propositionText =
-          (msg as any).payload ||
-          (msg as any).proposition ||
-          (msg as any).text ||
-          `Çekirdek İşlem #${msg.id ?? "N/A"}`;
-        const timeMs = (msg as any).ms || 100;
-
-        window.dispatchEvent(
-          new CustomEvent("axiom-live-stream", {
-            detail: {
-              id: msg.id ?? crypto.randomUUID(),
-              timestamp: new Date().toLocaleTimeString("tr-TR", { hour12: false }),
-              source: (msg as any).source || "LLM",
-              agentName: (msg as any).agentName || "AXIOM WSS Kernel",
-              inputProposition: propositionText,
-              status: isProved ? "PROVED" : "UNDECIDED",
-              z3TimeMs: Math.floor(timeMs * 0.15),
-              lean4TimeMs: Math.floor(timeMs * 0.85),
-            },
-          })
-        );
-      }
-      // ----------------------------------------------------------
-
       const slot = waiting.get(msg.id);
       if (!slot) {
         // İstek numarası olmayan bildirim: olay akışına düşer.

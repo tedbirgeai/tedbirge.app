@@ -178,7 +178,6 @@ async function handleAxiomMethod(
     // --- KATMAN 2: SONUÇ YAYINI EKLENDİ ---
     if (liveBroadcaster) {
       const isProved = String(result.verdict).toUpperCase() === "PROVED";
-      const totalMs = result.ms || 0;
       liveBroadcaster({
         id,
         timestamp: new Date().toLocaleTimeString("tr-TR", { hour12: false }),
@@ -186,8 +185,9 @@ async function handleAxiomMethod(
         agentName: client || "Otonom İstemci",
         inputProposition: text,
         status: isProved ? "PROVED" : "UNDECIDED",
-        z3TimeMs: Math.floor(totalMs * 0.15), // Toplam süreden temsili Z3/Lean4 kırılımı
-        lean4TimeMs: Math.floor(totalMs * 0.85),
+        // Motor ayrı Z3/Lean4 süresi raporlamıyor; uydurma kırılım üretilmez.
+        z3TimeMs: 0,
+        lean4TimeMs: 0,
       });
     }
     // ---------------------------------------------------
