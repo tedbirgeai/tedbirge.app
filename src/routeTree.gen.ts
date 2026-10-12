@@ -9,99 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as YasalRouteImport } from './routes/yasal'
-import { Route as SohbetRouteImport } from './routes/sohbet'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as KosullarRouteImport } from './routes/kosullar'
-import { Route as IletisimRouteImport } from './routes/iletisim'
-import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
-import { Route as IadeRouteImport } from './routes/iade'
-import { Route as GizlilikRouteImport } from './routes/gizlilik'
-import { Route as FaturalarRouteImport } from './routes/faturalar'
-import { Route as DevRouteImport } from './routes/dev'
-import { Route as ChatRouteImport } from './routes/chat'
-import { Route as CevrimdisiRouteImport } from './routes/cevrimdisi'
-import { Route as AxiomRouteImport } from './routes/axiom'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiTranslateRouteImport } from './routes/api/translate'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AxiomRouteImport } from './routes/axiom'
+import { Route as CevrimdisiRouteImport } from './routes/cevrimdisi'
+import { Route as ChatRouteImport } from './routes/chat'
+import { Route as DevRouteImport } from './routes/dev'
+import { Route as FaturalarRouteImport } from './routes/faturalar'
+import { Route as GizlilikRouteImport } from './routes/gizlilik'
+import { Route as IadeRouteImport } from './routes/iade'
+import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
+import { Route as IletisimRouteImport } from './routes/iletisim'
+import { Route as KosullarRouteImport } from './routes/kosullar'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SohbetRouteImport } from './routes/sohbet'
+import { Route as YasalRouteImport } from './routes/yasal'
 import { Route as ApiAxiomBotRouteImport } from './routes/api/axiom-bot'
-import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
-import { Route as ApiPublicRelayRouteImport } from './routes/api/public/relay'
-import { Route as ApiPublicQueueRouteImport } from './routes/api/public/queue'
-import { Route as ApiPublicPushRouteImport } from './routes/api/public/push'
-import { Route as ApiPublicPingRouteImport } from './routes/api/public/ping'
-import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
-import { Route as ApiPublicIsoRouteImport } from './routes/api/public/iso'
-import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
-import { Route as ApiPublicHaberlerRouteImport } from './routes/api/public/haberler'
-import { Route as ApiPublicGecitRouteImport } from './routes/api/public/gecit'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiTranslateRouteImport } from './routes/api/translate'
 import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
-import { Route as ApiV1McpVerifyRouteImport } from './routes/api/v1/mcp/verify'
-import { Route as ApiPublicProofChipCidRouteImport } from './routes/api/public/proof-chip/$cid'
-import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
-import { Route as ApiPublicGatewaySlugRouteImport } from './routes/api/public/gateway/$slug'
+import { Route as ApiPublicGecitRouteImport } from './routes/api/public/gecit'
+import { Route as ApiPublicHaberlerRouteImport } from './routes/api/public/haberler'
+import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
+import { Route as ApiPublicIsoRouteImport } from './routes/api/public/iso'
+import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
+import { Route as ApiPublicPingRouteImport } from './routes/api/public/ping'
+import { Route as ApiPublicPushRouteImport } from './routes/api/public/push'
+import { Route as ApiPublicQueueRouteImport } from './routes/api/public/queue'
+import { Route as ApiPublicRelayRouteImport } from './routes/api/public/relay'
+import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as ApiPublicCronOfflineCheckRouteImport } from './routes/api/public/cron/offline-check'
+import { Route as ApiPublicGatewaySlugRouteImport } from './routes/api/public/gateway/$slug'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicProofChipCidRouteImport } from './routes/api/public/proof-chip/$cid'
+import { Route as ApiV1McpVerifyRouteImport } from './routes/api/v1/mcp/verify'
 import { Route as ApiPublicV1McpVerifyRouteImport } from './routes/api/public/v1/mcp/verify'
 
-const YasalRoute = YasalRouteImport.update({
-  id: '/yasal',
-  path: '/yasal',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SohbetRoute = SohbetRouteImport.update({
-  id: '/sohbet',
-  path: '/sohbet',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KosullarRoute = KosullarRouteImport.update({
-  id: '/kosullar',
-  path: '/kosullar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IletisimRoute = IletisimRouteImport.update({
-  id: '/iletisim',
-  path: '/iletisim',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IhracatUyumRoute = IhracatUyumRouteImport.update({
-  id: '/ihracat-uyum',
-  path: '/ihracat-uyum',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IadeRoute = IadeRouteImport.update({
-  id: '/iade',
-  path: '/iade',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GizlilikRoute = GizlilikRouteImport.update({
-  id: '/gizlilik',
-  path: '/gizlilik',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FaturalarRoute = FaturalarRouteImport.update({
-  id: '/faturalar',
-  path: '/faturalar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DevRoute = DevRouteImport.update({
-  id: '/dev',
-  path: '/dev',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChatRoute = ChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CevrimdisiRoute = CevrimdisiRouteImport.update({
-  id: '/cevrimdisi',
-  path: '/cevrimdisi',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AxiomRoute = AxiomRouteImport.update({
@@ -109,19 +54,64 @@ const AxiomRoute = AxiomRouteImport.update({
   path: '/axiom',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CevrimdisiRoute = CevrimdisiRouteImport.update({
+  id: '/cevrimdisi',
+  path: '/cevrimdisi',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiTranslateRoute = ApiTranslateRouteImport.update({
-  id: '/api/translate',
-  path: '/api/translate',
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
+const DevRoute = DevRouteImport.update({
+  id: '/dev',
+  path: '/dev',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaturalarRoute = FaturalarRouteImport.update({
+  id: '/faturalar',
+  path: '/faturalar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GizlilikRoute = GizlilikRouteImport.update({
+  id: '/gizlilik',
+  path: '/gizlilik',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IadeRoute = IadeRouteImport.update({
+  id: '/iade',
+  path: '/iade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IhracatUyumRoute = IhracatUyumRouteImport.update({
+  id: '/ihracat-uyum',
+  path: '/ihracat-uyum',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IletisimRoute = IletisimRouteImport.update({
+  id: '/iletisim',
+  path: '/iletisim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KosullarRoute = KosullarRouteImport.update({
+  id: '/kosullar',
+  path: '/kosullar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SohbetRoute = SohbetRouteImport.update({
+  id: '/sohbet',
+  path: '/sohbet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const YasalRoute = YasalRouteImport.update({
+  id: '/yasal',
+  path: '/yasal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAxiomBotRoute = ApiAxiomBotRouteImport.update({
@@ -129,54 +119,14 @@ const ApiAxiomBotRoute = ApiAxiomBotRouteImport.update({
   path: '/api/axiom-bot',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
-  id: '/api/public/telemetry',
-  path: '/api/public/telemetry',
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicRelayRoute = ApiPublicRelayRouteImport.update({
-  id: '/api/public/relay',
-  path: '/api/public/relay',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicQueueRoute = ApiPublicQueueRouteImport.update({
-  id: '/api/public/queue',
-  path: '/api/public/queue',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicPushRoute = ApiPublicPushRouteImport.update({
-  id: '/api/public/push',
-  path: '/api/public/push',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicPingRoute = ApiPublicPingRouteImport.update({
-  id: '/api/public/ping',
-  path: '/api/public/ping',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicOpenapiDotjsonRoute = ApiPublicOpenapiDotjsonRouteImport.update({
-  id: '/api/public/openapi.json',
-  path: '/api/public/openapi.json',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicIsoRoute = ApiPublicIsoRouteImport.update({
-  id: '/api/public/iso',
-  path: '/api/public/iso',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
-  id: '/api/public/health',
-  path: '/api/public/health',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHaberlerRoute = ApiPublicHaberlerRouteImport.update({
-  id: '/api/public/haberler',
-  path: '/api/public/haberler',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicGecitRoute = ApiPublicGecitRouteImport.update({
-  id: '/api/public/gecit',
-  path: '/api/public/gecit',
+const ApiTranslateRoute = ApiTranslateRouteImport.update({
+  id: '/api/translate',
+  path: '/api/translate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicEnrollRoute = ApiPublicEnrollRouteImport.update({
@@ -184,25 +134,54 @@ const ApiPublicEnrollRoute = ApiPublicEnrollRouteImport.update({
   path: '/api/public/enroll',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiV1McpVerifyRoute = ApiV1McpVerifyRouteImport.update({
-  id: '/api/v1/mcp/verify',
-  path: '/api/v1/mcp/verify',
+const ApiPublicGecitRoute = ApiPublicGecitRouteImport.update({
+  id: '/api/public/gecit',
+  path: '/api/public/gecit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicProofChipCidRoute = ApiPublicProofChipCidRouteImport.update({
-  id: '/api/public/proof-chip/$cid',
-  path: '/api/public/proof-chip/$cid',
+const ApiPublicHaberlerRoute = ApiPublicHaberlerRouteImport.update({
+  id: '/api/public/haberler',
+  path: '/api/public/haberler',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicPaymentsWebhookRoute =
-  ApiPublicPaymentsWebhookRouteImport.update({
-    id: '/api/public/payments/webhook',
-    path: '/api/public/payments/webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicGatewaySlugRoute = ApiPublicGatewaySlugRouteImport.update({
-  id: '/api/public/gateway/$slug',
-  path: '/api/public/gateway/$slug',
+const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
+  id: '/api/public/health',
+  path: '/api/public/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicIsoRoute = ApiPublicIsoRouteImport.update({
+  id: '/api/public/iso',
+  path: '/api/public/iso',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicOpenapiDotjsonRoute = ApiPublicOpenapiDotjsonRouteImport.update({
+  id: '/api/public/openapi.json',
+  path: '/api/public/openapi.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPingRoute = ApiPublicPingRouteImport.update({
+  id: '/api/public/ping',
+  path: '/api/public/ping',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPushRoute = ApiPublicPushRouteImport.update({
+  id: '/api/public/push',
+  path: '/api/public/push',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicQueueRoute = ApiPublicQueueRouteImport.update({
+  id: '/api/public/queue',
+  path: '/api/public/queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRelayRoute = ApiPublicRelayRouteImport.update({
+  id: '/api/public/relay',
+  path: '/api/public/relay',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
+  id: '/api/public/telemetry',
+  path: '/api/public/telemetry',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicCronOfflineCheckRoute =
@@ -211,6 +190,27 @@ const ApiPublicCronOfflineCheckRoute =
     path: '/api/public/cron/offline-check',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicGatewaySlugRoute = ApiPublicGatewaySlugRouteImport.update({
+  id: '/api/public/gateway/$slug',
+  path: '/api/public/gateway/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicProofChipCidRoute = ApiPublicProofChipCidRouteImport.update({
+  id: '/api/public/proof-chip/$cid',
+  path: '/api/public/proof-chip/$cid',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1McpVerifyRoute = ApiV1McpVerifyRouteImport.update({
+  id: '/api/v1/mcp/verify',
+  path: '/api/v1/mcp/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1McpVerifyRoute = ApiPublicV1McpVerifyRouteImport.update({
   id: '/api/public/v1/mcp/verify',
   path: '/api/public/v1/mcp/verify',
@@ -476,88 +476,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/yasal': {
-      id: '/yasal'
-      path: '/yasal'
-      fullPath: '/yasal'
-      preLoaderRoute: typeof YasalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sohbet': {
-      id: '/sohbet'
-      path: '/sohbet'
-      fullPath: '/sohbet'
-      preLoaderRoute: typeof SohbetRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kosullar': {
-      id: '/kosullar'
-      path: '/kosullar'
-      fullPath: '/kosullar'
-      preLoaderRoute: typeof KosullarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/iletisim': {
-      id: '/iletisim'
-      path: '/iletisim'
-      fullPath: '/iletisim'
-      preLoaderRoute: typeof IletisimRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ihracat-uyum': {
-      id: '/ihracat-uyum'
-      path: '/ihracat-uyum'
-      fullPath: '/ihracat-uyum'
-      preLoaderRoute: typeof IhracatUyumRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/iade': {
-      id: '/iade'
-      path: '/iade'
-      fullPath: '/iade'
-      preLoaderRoute: typeof IadeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/gizlilik': {
-      id: '/gizlilik'
-      path: '/gizlilik'
-      fullPath: '/gizlilik'
-      preLoaderRoute: typeof GizlilikRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faturalar': {
-      id: '/faturalar'
-      path: '/faturalar'
-      fullPath: '/faturalar'
-      preLoaderRoute: typeof FaturalarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dev': {
-      id: '/dev'
-      path: '/dev'
-      fullPath: '/dev'
-      preLoaderRoute: typeof DevRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/chat': {
-      id: '/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof ChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cevrimdisi': {
-      id: '/cevrimdisi'
-      path: '/cevrimdisi'
-      fullPath: '/cevrimdisi'
-      preLoaderRoute: typeof CevrimdisiRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/axiom': {
@@ -567,25 +490,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AxiomRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/cevrimdisi': {
+      id: '/cevrimdisi'
+      path: '/cevrimdisi'
+      fullPath: '/cevrimdisi'
+      preLoaderRoute: typeof CevrimdisiRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/translate': {
-      id: '/api/translate'
-      path: '/api/translate'
-      fullPath: '/api/translate'
-      preLoaderRoute: typeof ApiTranslateRouteImport
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
+    '/dev': {
+      id: '/dev'
+      path: '/dev'
+      fullPath: '/dev'
+      preLoaderRoute: typeof DevRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faturalar': {
+      id: '/faturalar'
+      path: '/faturalar'
+      fullPath: '/faturalar'
+      preLoaderRoute: typeof FaturalarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gizlilik': {
+      id: '/gizlilik'
+      path: '/gizlilik'
+      fullPath: '/gizlilik'
+      preLoaderRoute: typeof GizlilikRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iade': {
+      id: '/iade'
+      path: '/iade'
+      fullPath: '/iade'
+      preLoaderRoute: typeof IadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ihracat-uyum': {
+      id: '/ihracat-uyum'
+      path: '/ihracat-uyum'
+      fullPath: '/ihracat-uyum'
+      preLoaderRoute: typeof IhracatUyumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iletisim': {
+      id: '/iletisim'
+      path: '/iletisim'
+      fullPath: '/iletisim'
+      preLoaderRoute: typeof IletisimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kosullar': {
+      id: '/kosullar'
+      path: '/kosullar'
+      fullPath: '/kosullar'
+      preLoaderRoute: typeof KosullarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sohbet': {
+      id: '/sohbet'
+      path: '/sohbet'
+      fullPath: '/sohbet'
+      preLoaderRoute: typeof SohbetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/yasal': {
+      id: '/yasal'
+      path: '/yasal'
+      fullPath: '/yasal'
+      preLoaderRoute: typeof YasalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/axiom-bot': {
@@ -595,74 +581,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAxiomBotRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/telemetry': {
-      id: '/api/public/telemetry'
-      path: '/api/public/telemetry'
-      fullPath: '/api/public/telemetry'
-      preLoaderRoute: typeof ApiPublicTelemetryRouteImport
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/relay': {
-      id: '/api/public/relay'
-      path: '/api/public/relay'
-      fullPath: '/api/public/relay'
-      preLoaderRoute: typeof ApiPublicRelayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/queue': {
-      id: '/api/public/queue'
-      path: '/api/public/queue'
-      fullPath: '/api/public/queue'
-      preLoaderRoute: typeof ApiPublicQueueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/push': {
-      id: '/api/public/push'
-      path: '/api/public/push'
-      fullPath: '/api/public/push'
-      preLoaderRoute: typeof ApiPublicPushRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/ping': {
-      id: '/api/public/ping'
-      path: '/api/public/ping'
-      fullPath: '/api/public/ping'
-      preLoaderRoute: typeof ApiPublicPingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/openapi.json': {
-      id: '/api/public/openapi.json'
-      path: '/api/public/openapi.json'
-      fullPath: '/api/public/openapi.json'
-      preLoaderRoute: typeof ApiPublicOpenapiDotjsonRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/iso': {
-      id: '/api/public/iso'
-      path: '/api/public/iso'
-      fullPath: '/api/public/iso'
-      preLoaderRoute: typeof ApiPublicIsoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/health': {
-      id: '/api/public/health'
-      path: '/api/public/health'
-      fullPath: '/api/public/health'
-      preLoaderRoute: typeof ApiPublicHealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/haberler': {
-      id: '/api/public/haberler'
-      path: '/api/public/haberler'
-      fullPath: '/api/public/haberler'
-      preLoaderRoute: typeof ApiPublicHaberlerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/gecit': {
-      id: '/api/public/gecit'
-      path: '/api/public/gecit'
-      fullPath: '/api/public/gecit'
-      preLoaderRoute: typeof ApiPublicGecitRouteImport
+    '/api/translate': {
+      id: '/api/translate'
+      path: '/api/translate'
+      fullPath: '/api/translate'
+      preLoaderRoute: typeof ApiTranslateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/enroll': {
@@ -672,25 +602,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicEnrollRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/v1/mcp/verify': {
-      id: '/api/v1/mcp/verify'
-      path: '/api/v1/mcp/verify'
-      fullPath: '/api/v1/mcp/verify'
-      preLoaderRoute: typeof ApiV1McpVerifyRouteImport
+    '/api/public/gecit': {
+      id: '/api/public/gecit'
+      path: '/api/public/gecit'
+      fullPath: '/api/public/gecit'
+      preLoaderRoute: typeof ApiPublicGecitRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/proof-chip/$cid': {
-      id: '/api/public/proof-chip/$cid'
-      path: '/api/public/proof-chip/$cid'
-      fullPath: '/api/public/proof-chip/$cid'
-      preLoaderRoute: typeof ApiPublicProofChipCidRouteImport
+    '/api/public/haberler': {
+      id: '/api/public/haberler'
+      path: '/api/public/haberler'
+      fullPath: '/api/public/haberler'
+      preLoaderRoute: typeof ApiPublicHaberlerRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/payments/webhook': {
-      id: '/api/public/payments/webhook'
-      path: '/api/public/payments/webhook'
-      fullPath: '/api/public/payments/webhook'
-      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+    '/api/public/health': {
+      id: '/api/public/health'
+      path: '/api/public/health'
+      fullPath: '/api/public/health'
+      preLoaderRoute: typeof ApiPublicHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/iso': {
+      id: '/api/public/iso'
+      path: '/api/public/iso'
+      fullPath: '/api/public/iso'
+      preLoaderRoute: typeof ApiPublicIsoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/openapi.json': {
+      id: '/api/public/openapi.json'
+      path: '/api/public/openapi.json'
+      fullPath: '/api/public/openapi.json'
+      preLoaderRoute: typeof ApiPublicOpenapiDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ping': {
+      id: '/api/public/ping'
+      path: '/api/public/ping'
+      fullPath: '/api/public/ping'
+      preLoaderRoute: typeof ApiPublicPingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/push': {
+      id: '/api/public/push'
+      path: '/api/public/push'
+      fullPath: '/api/public/push'
+      preLoaderRoute: typeof ApiPublicPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/queue': {
+      id: '/api/public/queue'
+      path: '/api/public/queue'
+      fullPath: '/api/public/queue'
+      preLoaderRoute: typeof ApiPublicQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/relay': {
+      id: '/api/public/relay'
+      path: '/api/public/relay'
+      fullPath: '/api/public/relay'
+      preLoaderRoute: typeof ApiPublicRelayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/telemetry': {
+      id: '/api/public/telemetry'
+      path: '/api/public/telemetry'
+      fullPath: '/api/public/telemetry'
+      preLoaderRoute: typeof ApiPublicTelemetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/offline-check': {
+      id: '/api/public/cron/offline-check'
+      path: '/api/public/cron/offline-check'
+      fullPath: '/api/public/cron/offline-check'
+      preLoaderRoute: typeof ApiPublicCronOfflineCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/gateway/$slug': {
@@ -700,11 +686,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicGatewaySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/cron/offline-check': {
-      id: '/api/public/cron/offline-check'
-      path: '/api/public/cron/offline-check'
-      fullPath: '/api/public/cron/offline-check'
-      preLoaderRoute: typeof ApiPublicCronOfflineCheckRouteImport
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/proof-chip/$cid': {
+      id: '/api/public/proof-chip/$cid'
+      path: '/api/public/proof-chip/$cid'
+      fullPath: '/api/public/proof-chip/$cid'
+      preLoaderRoute: typeof ApiPublicProofChipCidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/mcp/verify': {
+      id: '/api/v1/mcp/verify'
+      path: '/api/v1/mcp/verify'
+      fullPath: '/api/v1/mcp/verify'
+      preLoaderRoute: typeof ApiV1McpVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/mcp/verify': {
